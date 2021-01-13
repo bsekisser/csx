@@ -3,173 +3,234 @@
 
 /* **** */
 
-void csx_core_arm_decode_coproc(csx_core_p core, uint32_t opcode, csx_coproc_data_p acp)
+void csx_core_arm_decode_coproc(csx_core_p core, const uint32_t opcode, csx_coproc_data_p acp)
 {
-	if(0xe == _bits(opcode, 27, 24))
+	if(0xe == BFEXT(opcode, 27, 24))
 	{
-		acp->bit.x4 = BIT_OF(opcode, 4);
+		acp->bit.x4 = BEXT(opcode, 4);
 		if(acp->bit.x4)
 		{
 			csx_core_arm_decode_rn_rd(opcode, &acp->crn, &acp->rd);
-			acp->bit.l = BIT_OF(opcode, 20);
+			acp->bit.l = BEXT(opcode, 20);
 		}
 		else
 		{
 			LOG_ACTION(core->csx->state |= CSX_STATE_HALT);
 		}
-			
+
 		csx_core_arm_decode_rm(opcode, &acp->crm);
 		
-		acp->opcode1 = _bits(opcode, 23, 21);
-		acp->cp_num = _bits(opcode, 11, 8);
-		acp->opcode2 = _bits(opcode, 7, 5);
+		acp->opcode1 = BFEXT(opcode, 23, 21);
+		acp->cp_num = BFEXT(opcode, 11, 8);
+		acp->opcode2 = BFEXT(opcode, 7, 5);
 	}
 }
 
-void csx_core_arm_decode_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls)
+void csx_core_arm_decode_ldst(csx_core_p core, const uint32_t opcode, csx_ldst_p ls)
 {
-	csx_core_arm_decode_rn_rd(opcode, &ls->rn, &ls->rd);
-	
-	ls->bit.i2x_76 = _bits(opcode, 27, 26);
-	ls->bit.i25 = BIT_OF(opcode, 25);
-	
-	ls->bit.l = BIT_OF(opcode, 20);
+	ls->ldstx = BFEXT(opcode, 27, 25);
 
-	switch(ls->bit.i2x_76)
+	ls->bit.p = BEXT(opcode, 24);
+	ls->bit.u = BEXT(opcode, 23);
+	ls->bit.bit22 = BEXT(opcode, 22);
+	ls->bit.w = BEXT(opcode, 21);
+	ls->bit.l = BEXT(opcode, 20);
+
+	csx_core_arm_decode_rn(opcode, &ls->rn);
+
+	ls->flags.s = 0;
+	switch(ls->ldstx) /* decode size */
 	{
-		case 0x01:
-			ls->bit.b = BIT_OF(opcode, 22);
-
-			ls->rw_size = ls->bit.b ? sizeof(uint8_t) : sizeof(uint32_t);
-
-			if(ls->bit.i25)
-			{
-				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
-				ls->shift_imm = _bits(opcode, 11, 7);
-				ls->shift = _bits(opcode, 6, 5);
-				ls->rm = _bits(opcode, 3, 0);
-			}
-			else
-			{
-				ls->rm = -1;
-				ls->rm_v = _bits(opcode, 11, 0);
-			}
-			break;
-		case 0x00:
-			ls->bit.i22 = BIT_OF(opcode, 22);
-			if(ls->bit.i22)
-			{
-				ls->rm = -1;
-				ls->rm_v = (_bits(opcode, 11, 8) << 4) | _bits(opcode, 3, 0);
-			}
-			else
-				csx_core_arm_decode_rm(opcode, &ls->rm);
-
-			ls->bit.s = BIT_OF(opcode, 6);
-			ls->bit.h = BIT_OF(opcode, 5);
-			
+		case	0x00:
+			ls->bit.s = BEXT(opcode, 6);
+			ls->bit.h = BEXT(opcode, 5);
 			ls->flags.s = ls->bit.l && ls->bit.s;
-			
-			switch(((!!ls->bit.l) << 2) | ((!!ls->bit.s) << 1) | !!ls->bit.h)
+			switch(BMOV(ls->bit.l, 0, 2) | BFEXT(opcode, 6, 5))
 			{
-				case	0x01:
-				case	0x05:
-				case	0x07:
+				case 0x01:
+				case 0x05:
+				case 0x07:
 					ls->rw_size = sizeof(uint16_t);
 					break;
-				case	0x02:
-				case	0x03:
+				case 0x02:
+				case 0x03:
 					ls->rw_size = sizeof(uint64_t);
 					break;
-				case	0x06:
+				case 0x06:
 					ls->rw_size = sizeof(uint8_t);
 					break;
 				default:
-					LOG_ACTION(core->csx->state = CSX_STATE_HALT);
+					LOG_ACTION(exit(1));
 					break;
+
 			}
+			break;
+		case	0x02:
+		case	0x03:
+			ls->rw_size = ls->bit.b22 ? sizeof(uint8_t) : sizeof(uint32_t);
+			break;
+		case	0x04:
+			ls->rw_size = sizeof(uint32_t);
 			break;
 	}
 
-	ls->bit.p = BIT_OF(opcode, 24);
-	ls->bit.u = BIT_OF(opcode, 23);
-	/* i22, b */
-	ls->bit.w = BIT_OF(opcode, 21);
+	if(!(ls->ldstx & 0x04))
+		csx_core_arm_decode_rd(opcode, &ls->rd);
 	
-	if(0)
+	ls->shift = 0;
+	ls->shift_imm = 0;
+	ls->rm = -1;
+	switch(ls->ldstx) /* decode addressing mode registers / data */
 	{
-		uint8_t ipubwl = _bits(opcode, 25, 20);
-		char* t, ts[8];
-		
-		if(0x01 == ls->bit.i2x_76)
+		case	0x00:
+			ls->rm_v = BFMOV(opcode, 11, 8, 4) | BFEXT(opcode, 3, 0);
+			break;
+		case	0x02:
+			ls->rm_v = BFEXT(opcode, 11, 0);
+			break;
+		case	0x03:
+			ls->shift_imm = BFEXT(opcode, 11, 7);
+			ls->shift = BFEXT(opcode, 6, 5);
+			
+			if(ls->shift || ls->shift_imm)
+				LOG_ACTION(exit(1));
+			
+			csx_core_arm_decode_rm(opcode, &ls->rm);
+			break;
+		case	0x04:
+			ls->rm_v = BFEXT(opcode, 15, 0);
+			break;
+	}
+	
+	if(0) LOG("ldrex = 0x%03x, rm = 0x%03x, rm_v = 0x%08x", ls->ldstx, ls->rm, ls->rm_v);
+}
+
+static void _csx_core_arm_decode_dpi(csx_core_p core, const uint32_t opcode, csx_dpi_p dpi)
+{
+	dpi->shift_op = CSX_SHIFTER_OP_ROR;
+
+	dpi->rm = -1;
+	dpi->rm_v = BFEXT(opcode, 7, 0);
+	dpi->rs = -1;
+	dpi->rs_v = BFMOV(opcode, 11, 8, 1);
+
+	if(0 == dpi->rs_v)
+		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+	else
+		dpi->out.c = BEXT(dpi->out.v, 31);
+}
+
+static void _csx_core_arm_decode_dpis(csx_core_p core, const uint32_t opcode, csx_dpi_p dpi)
+{
+	dpi->rs = -1;
+	dpi->rs_v = BFEXT(opcode, 11, 7);
+}
+
+static void _csx_core_arm_decode_dprs(csx_core_p core, const uint32_t opcode, csx_dpi_p dpi)
+{
+	dpi->bit.x7 = BEXT(opcode, 7);
+	if(dpi->bit.x7)
+	{
+		TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
+
+		csx_core_disasm(core, core->pc, opcode);
+		LOG_ACTION(exit(1));
+	}
+
+	dpi->rs = BFEXT(opcode, 11, 8);
+	dpi->rs_v = csx_reg_get(core, dpi->rs) & _BM(7);
+}
+
+static void _csx_core_arm_shifter_operation_asr(csx_core_p core, uint32_t opcode, csx_dpi_p dpi)
+{
+	uint8_t asr_v = dpi->rs_v;
+
+	if(!dpi->bit.x4)
+		asr_v = asr_v ? asr_v : 32;
+
+	dpi->out.v = ((signed)dpi->rm_v >> asr_v);
+
+	if(asr_v)
+		dpi->out.c = BEXT(dpi->rm_v, asr_v - 1);
+	else
+		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+}
+
+static void _csx_core_arm_shifter_operation_lsl(csx_core_p core, uint32_t opcode, csx_dpi_p dpi)
+{
+	dpi->out.v = dpi->rm_v << dpi->rs_v;
+	if(dpi->rs_v)
+		dpi->out.c = BEXT(dpi->rm_v, 32 - dpi->rs_v);
+	else
+		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+}
+
+static void _csx_core_arm_shifter_operation_lsr(csx_core_p core, uint32_t opcode, csx_dpi_p dpi)
+{
+	uint8_t lsr_v = dpi->rs_v;
+
+	if(!dpi->bit.x4)
+		lsr_v = lsr_v ? lsr_v : 32;
+
+	dpi->out.v = dpi->rm_v >> lsr_v;
+
+	if(lsr_v)
+		dpi->out.c = BEXT(dpi->rm_v, lsr_v - 1);
+	else
+		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+}
+
+static void _csx_core_arm_shifter_operation_ror(csx_core_p core, uint32_t opcode, csx_dpi_p dpi)
+{
+	if(!dpi->bit.i && !dpi->bit.x4 && (0 == dpi->rs_v))
+	{
+		dpi->out.v = BMOV(CPSR, CSX_PSR_BIT_C, 31);
+		dpi->out.v |= dpi->rm_v >> 1;
+		dpi->out.c = dpi->rm_v & 1;
+	}
+	else
+	{
+		dpi->out.v = _ror(dpi->rm_v, dpi->rs_v);
+		if(dpi->rs_v)
 		{
-			t = "ipubwl";
+			if(dpi->bit.i)
+			{
+				dpi->out.c = BEXT(dpi->out.v, 31);
+			}
+			else if(BFEXT(dpi->rs_v, 4, 0))
+				dpi->out.c = BEXT(dpi->rm_v, dpi->rs_v - 1);
+			else
+			{
+				dpi->out.v = dpi->rm_v;
+				dpi->out.c = BEXT(dpi->rm_v, 31);
+			}
 		}
 		else
-		{
-			t = " puiwl";
-		}
-
-		for(int i = 0; i < 6; i++)
-		{
-			if((ipubwl >> (5 - i)) & 1)
-				ts[i] = toupper(t[i]);
-			else
-				ts[i] = t[i];
-		}
-		
-		ts[6] = 0;
-		
-		TRACE("(0x%08x) (0x%02x) (0x%02x) %s", opcode, ls->bit.i2x_76, ipubwl, ts);
+			dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
 	}
 }
 
-void csx_core_arm_decode_shifter_operand(csx_core_p core, uint32_t opcode, csx_dpi_p dpi)
+void csx_core_arm_decode_shifter_operand(csx_core_p core, const uint32_t opcode, csx_dpi_p dpi)
 {
-	dpi->bit.i = (opcode >> 25) & 1;
-	dpi->bit.s = (opcode >> 20) & 1;
+	dpi->bit.i = BEXT(opcode, 25);
+	dpi->operation = BFEXT(opcode, 24, 21);
+	dpi->bit.s = BEXT(opcode, 20);
 	dpi->bit.x7 = 0;
 	dpi->bit.x4 = 0;
 
 	dpi->wb = 1;
-	dpi->flag_mode = CSX_CC_FLAGS_MODE_SHIFT_OUT;
 
 	if(dpi->bit.i)
-	{
-		dpi->shift_op = CSX_SHIFTER_OP_ROR;
-
-		dpi->rm = -1;
-		dpi->rm_v = _bits(opcode, 7, 0);
-		dpi->rs = -1;
-		dpi->rs_v = _bits(opcode, 11, 8) << 1;
-
-		if(0 == dpi->rs_v)
-			dpi->out.c = !!(CPSR & CSX_PSR_C);
-		else
-			dpi->out.c = (dpi->out.v >> 31) & 1;
-	}
+		_csx_core_arm_decode_dpi(core, opcode, dpi);
 	else
 	{
-		dpi->bit.x4 = (opcode >> 4) & 1; /* rs? */
-		dpi->shift_op = _bits(opcode, 6, 5);
+		dpi->bit.x4 = BEXT(opcode, 4); /* rs? */
+		dpi->shift_op = BFEXT(opcode, 6, 5);
 
 		if(dpi->bit.x4)
-		{
-			dpi->bit.x7 = (opcode >> 7) & 1;
-			if(dpi->bit.x7)
-			{
-				TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
-				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
-			}
-
-			dpi->rs = _bits(opcode, 11, 8);
-			dpi->rs_v = _bits(csx_reg_get(core, dpi->rs), 7, 0);
-		}
+			_csx_core_arm_decode_dprs(core, opcode, dpi);
 		else
-		{
-			dpi->rs = -1;
-			dpi->rs_v = _bits(opcode, 11, 7);
-		}
+			_csx_core_arm_decode_dpis(core, opcode, dpi);
 
 		csx_core_arm_decode_rm(opcode, &dpi->rm);
 		dpi->rm_v = csx_reg_get(core, dpi->rm);
@@ -178,67 +239,16 @@ void csx_core_arm_decode_shifter_operand(csx_core_p core, uint32_t opcode, csx_d
 	switch(dpi->shift_op)
 	{
 		case	CSX_SHIFTER_OP_ASR:
-		{
-			uint8_t asr_v = dpi->rs_v;
-
-			if(!dpi->bit.x4)
-				asr_v = asr_v ? asr_v : 32;
-
-			dpi->out.v = ((signed)dpi->rm_v >> asr_v);
-
-			if(asr_v)
-				dpi->out.c = (dpi->rm_v >> (asr_v - 1)) & 1;
-			else
-				dpi->out.c = CPSR & CSX_PSR_C;
-		}break;
+			_csx_core_arm_shifter_operation_asr(core, opcode, dpi);
+			break;
 		case	CSX_SHIFTER_OP_LSL:
-			dpi->out.v = dpi->rm_v << dpi->rs_v;
-			if(dpi->rs_v)
-				dpi->out.c = (dpi->rm_v >> (32 - dpi->rs_v)) & 1;
-			else
-				dpi->out.c = CPSR & CSX_PSR_C;
+			_csx_core_arm_shifter_operation_lsl(core, opcode, dpi);
 			break;
 		case	CSX_SHIFTER_OP_LSR:
-		{
-			uint8_t lsr_v = dpi->rs_v;
-
-			if(!dpi->bit.x4)
-				lsr_v = lsr_v ? lsr_v : 32;
-
-			dpi->out.v = dpi->rm_v >> lsr_v;
-
-			if(lsr_v)
-				dpi->out.c = (dpi->rm_v >> (lsr_v - 1)) & 1;
-			else
-				dpi->out.c = !!(CPSR & CSX_PSR_C);
-		}break;
+			_csx_core_arm_shifter_operation_lsr(core, opcode, dpi);
+			break;
 		case	CSX_SHIFTER_OP_ROR:
-			if(!dpi->bit.i && !dpi->bit.x4 && (0 == dpi->rs_v))
-			{
-				dpi->out.v = ((CPSR & CSX_PSR_C) ? (1 << 31) : 0);
-				dpi->out.v |= dpi->rm_v >> 1;
-				dpi->out.c = dpi->rm_v & 1;
-			}
-			else
-			{
-				dpi->out.v = _ror(dpi->rm_v, dpi->rs_v);
-				if(dpi->rs_v)
-				{
-					if(dpi->bit.i)
-					{
-						dpi->out.c = (dpi->out.v >> 31) & 1;
-					}
-					else if(_bits(dpi->rs_v, 4, 0))
-						dpi->out.c = (dpi->rm_v >> (dpi->rs_v - 1)) & 1;
-					else
-					{
-						dpi->out.v = dpi->rm_v;
-						dpi->out.c = (dpi->rm_v >> 31) & 1;
-					}
-				}
-				else
-					dpi->out.c = !!(CPSR & CSX_PSR_C);
-			}
+			_csx_core_arm_shifter_operation_ror(core, opcode, dpi);
 			break;
 		default:
 			TRACE("**** i = %u, s = %u, x7 = %u, x4 = %u",
@@ -256,7 +266,7 @@ static const char* shifter_op_string[] = {
 	"LSL", "LSR", "ASR", "ROR"
 };
 
-const char* csx_core_arm_decode_shifter_op_string(uint8_t shopc)
+const char* csx_core_arm_decode_shifter_op_string(const uint8_t shopc)
 {
 	return(shifter_op_string[shopc & 0x03]);
 }

@@ -1,8 +1,29 @@
+#include <assert.h>
+
 #include "csx.h"
 #include "csx_core.h"
 
-#include "csx_core_arm.h"
 #include "csx_core_arm_inst.h"
+
+static const char* _arm_creg_name(csx_reg_t r)
+{
+	const char* creg_names[16] = {
+		"c0",	"c1",	"c2",	"c3",	"c4",	"c5",	"c6",	"c7",
+		"c8",	"c9",	"c10",	"c11",	"c12",	"c13",	"c14",	"c15",
+	};
+	
+	return(creg_names[r]);
+}
+
+const char* _arm_reg_name(csx_reg_t r)
+{
+	const char* reg_names[16] = {
+		"r0",	"r1",	"r2",	"r3",	"r4",	"r5",	"r6",	"r7",
+		"r8",	"r9",	"r10",	"r11",	"r12",	"rSP",	"rLR",	"rPC",
+	};
+	
+	return(reg_names[r]);
+}
 
 static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t cce)
 {
@@ -15,10 +36,12 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 
 		if(dpi->bit.s)
 		{
-			if(rPC == dpi->rd /* && PSR = CPSR*/)
+			if(rPC == dpi->rd)
 			{
-				TRACE();
-				exit(1);
+				if(core->spsr)
+					csx_psr_mode_switch(core, *core->spsr);
+				else
+					UNPREDICTABLE;
 			}
 			else
 			{
@@ -26,16 +49,16 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 				uint32_t s1_v = dpi->rn_v;
 				uint32_t s2_v = dpi->out.v;
 
-				switch(dpi->flag_mode)
+				switch(dpi->operation)
 				{
-					case CSX_CC_FLAGS_MODE_ADD:
-					case CSX_CC_FLAGS_MODE_SUB:
+					case ARM_DPI_OPERATION_ADD:
+					case ARM_DPI_OPERATION_CMP:
+					case ARM_DPI_OPERATION_SUB:
 						csx_core_flags_nzcv(core, rd_v, s1_v, s2_v);
 						break;
 					default:
 						csx_core_flags_nz(core, rd_v);
-						CPSR &= ~CSX_PSR_C;
-						CPSR |= (dpi->out.c ? CSX_PSR_C : 0);
+						BMAS(CPSR, CSX_PSR_BIT_C, dpi->out.c);
 						break;
 				}
 			}
@@ -43,127 +66,210 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 	}
 }
 
-static void arm_inst_add(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_dpi_operation_add(csx_core_p core, csx_dpi_p dpi)
 {
-	csx_dpi_t	dpi;
+	dpi->rd_v = dpi->rn_v + dpi->out.v;
 
-	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.flag_mode = CSX_CC_FLAGS_MODE_ADD;
-
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v + dpi.out.v;
-
-	dpi.mnemonic = "add";
-	snprintf(dpi.op_string, 255,
+	dpi->mnemonic = "add";
+	snprintf(dpi->op_string, 255,
 		"/* 0x%08x + 0x%08x --> 0x%08x */",
-		dpi.rn_v, dpi.out.v, dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
+		dpi->rn_v, dpi->out.v, dpi->rd_v);
 }
 
-static void arm_inst_and(csx_core_p core, uint32_t opcode, uint32_t cce)
+static void arm_inst_dpi_operation_and(csx_core_p core, csx_dpi_p dpi)
+{
+	dpi->rd_v = dpi->rn_v & dpi->out.v;
+
+	dpi->mnemonic = "and";
+
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x & 0x%08x --> 0x%08x */",
+		dpi->rn_v, dpi->out.v, dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_bic(csx_core_p core, csx_dpi_p dpi)
+{
+	dpi->rd_v = dpi->rn_v & !dpi->out.v;
+
+	dpi->mnemonic = "bic";
+
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
+		dpi->rn_v, dpi->out.v, !dpi->out.v, dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_cmp(csx_core_p core, csx_dpi_p dpi)
+{
+	dpi->wb = 0;
+	dpi->rd_v = dpi->rn_v - dpi->out.v;
+
+	dpi->mnemonic = "cmp";
+
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x - 0x%08x ??? 0x%08x */",
+		dpi->rn_v, dpi->out.v, dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_mov(csx_core_p core, csx_dpi_p dpi)
+{
+	if(dpi->rn)
+	{
+		LOG("!! rn(%u) -- sbz", dpi->rn);
+		LOG_ACTION(exit(1));
+	}
+
+	dpi->rn = -1;
+	dpi->rd_v = dpi->out.v;
+
+	dpi->mnemonic = "mov";
+	
+	if(!dpi->bit.i && (dpi->rd == dpi->rm))
+		snprintf(dpi->op_string, 255, "/* nop */");
+	else
+		snprintf(dpi->op_string, 255, "/* 0x%08x */", dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_mvn(csx_core_p core, csx_dpi_p dpi)
+{
+	if(dpi->rn)
+	{
+		LOG("!! rn(%u) -- sbz", dpi->rn);
+		LOG_ACTION(exit(1));
+	}
+
+	dpi->rn = -1;
+	dpi->rd_v = ~dpi->out.v;
+
+	dpi->mnemonic = "mvn";
+	snprintf(dpi->op_string, 255, "/* 0x%08x */", dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_orr(csx_core_p core, csx_dpi_p dpi)
+{
+	dpi->rd_v = dpi->rn_v | dpi->out.v;
+
+	dpi->mnemonic = "orr";
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x | 0x%08x --> 0x%08x */",
+		dpi->rn_v, dpi->out.v, dpi->rd_v);
+}
+
+static void arm_inst_dpi_operation_sub(csx_core_p core, csx_dpi_p dpi)
+{
+	dpi->rd_v = dpi->rn_v - dpi->out.v;
+
+	dpi->mnemonic = "sub";
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x - 0x%08x --> 0x%08x */",
+		dpi->rn_v, dpi->out.v, dpi->rd_v);
+}
+
+static void arm_inst_dpi(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
 	csx_dpi_t	dpi;
 
 	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
 	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
 
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v & dpi.out.v;
+	if(ARM_DPI_OPERATION_MOV != dpi.operation)
+		dpi.rn_v = csx_reg_get(core, dpi.rn);
 
-	dpi.mnemonic = "and";
-
-	snprintf(dpi.op_string, 255,
-		"/* 0x%08x & 0x%08x --> 0x%08x, cce = %u, ccs = %s*/",
-		dpi.rn_v, dpi.out.v, dpi.rd_v, cce, core->ccs);
-
+	switch(dpi.operation)
+	{
+		case ARM_DPI_OPERATION_ADD:
+			arm_inst_dpi_operation_add(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_AND:
+			arm_inst_dpi_operation_and(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_BIC:
+			arm_inst_dpi_operation_bic(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_CMP:
+			if(dpi.bit.s)
+				arm_inst_dpi_operation_cmp(core, &dpi);
+			else
+				goto exit_fault;
+			break;
+		case ARM_DPI_OPERATION_MOV:
+			arm_inst_dpi_operation_mov(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_MVN:
+			arm_inst_dpi_operation_mvn(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_ORR:
+			arm_inst_dpi_operation_orr(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_SUB:
+			arm_inst_dpi_operation_sub(core, &dpi);
+			break;
+		default:
+			goto exit_fault;
+			break;
+	}
+	
 	arm_inst_dpi_final(core, opcode, &dpi, cce);
+	return;
 
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
-		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
+exit_fault:
+	LOG("operation = 0x%02x", dpi.operation);
+	csx_core_disasm(core, core->pc, opcode);
+	LOG_ACTION(exit(1));
 }
+
 
 static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
-	int link = BIT_OF(opcode, ARM_INST_BIT_LINK);
-	int32_t offset = _bits_sext(opcode, 23, 0);
+	int link = BEXT(opcode, ARM_INST_BIT_LINK);
+	int32_t offset = BFSEXT(opcode, 23, 0);
 
 	uint32_t pc = csx_reg_get(core, rPC);
 
 	uint32_t new_pc = pc + (offset << 2);
 
-	CORE_TRACE("b%s(0x%08x) /* 0x%08x */", link ? "l" : "", new_pc, offset);
+	uint8_t blx = (0x0f == BFEXT(opcode, 31, 28));
+	
+	if(blx)
+	{
+		new_pc |= (link << 1) | 1;
+		core->ccs = "AL";
+		link = cce = 1;
+	}
+
+	CORE_TRACE("b%s%s(0x%08x) /* 0x%08x */",
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, offset);
 
 	if(cce)
 	{
 		if(link)
-			csx_reg_set(core, rLR, pc);
+			csx_reg_set(core, rLR, csx_reg_get(core, TEST_PC));
 
-		csx_reg_set(core, rPC, new_pc);
-		core->csx->cycle += 2;
+		core->csx->cycle += 3;
+		
+		if(blx)
+			csx_reg_set(core, INSN_PC, new_pc);
+		else
+			csx_reg_set(core, rPC, new_pc);
 	}
-}
-
-static void arm_inst_bic(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	csx_dpi_t	dpi;
-
-	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v & !dpi.out.v;
-
-	dpi.mnemonic = "bic";
-
-	snprintf(dpi.op_string, 255,
-		"/* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
-		dpi.rn_v, dpi.out.v, !dpi.out.v, dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
 }
 
 static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
 	_setup_decode_rm(opcode, rm);
+	int link = BEXT(opcode, 5);
+
 	uint32_t rm_v = csx_reg_get(core, rm);
-	
-	CORE_TRACE("bx(0x%08x)", rm_v);
+
+	CORE_TRACE("b%sx(r(%u)) /* 0x%08x */", link ? "l" : "", rm, rm_v & ~1);
 
 	if(cce)
 	{
-		csx_reg_set(core, rPC, rm_v);
+		if(link)
+			csx_reg_set(core, rLR, csx_reg_get(core, TEST_PC));
 		
-		CPSR &= ~CSX_PSR_T;
-		CPSR |= BIT2BIT(rm_v, 1, CSX_PSR_BIT_T);
-		
-		core->csx->cycle += 2;
+		core->csx->cycle += 3;
+		csx_reg_set(core, INSN_PC, rm_v);
 	}
-}
-
-static void arm_inst_cmp(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	csx_dpi_t	dpi;
-
-	csx_core_arm_decode_rn(opcode, &dpi.rn);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.wb = 0;
-	dpi.flag_mode = CSX_CC_FLAGS_MODE_SUB;
-
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v - dpi.out.v;
-
-	dpi.mnemonic = "cmp";
-
-	snprintf(dpi.op_string, 255,
-		"/* 0x%08x - 0x%08x ??? 0x%08x */",
-		dpi.rn_v, dpi.out.v, dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
 }
 
 static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
@@ -171,18 +277,16 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 	csx_p csx = core->csx;
 	
 	csx_ldst_t ls;
+	csx_core_arm_decode_ldst(core, opcode, &ls);
+
 	csx->cycle++;
 
-	csx_core_arm_decode_ldst(core, opcode, &ls);
-	if((0x01 != ls.bit.i2x_76) && !ls.bit.i25)
+	if((ls.rm & 0x0f) == ls.rm)
 	{
-		if(!ls.bit.i22)
-		{
-			csx->cycle++;
-			ls.rm_v = csx_reg_get(core, ls.rm);
-		}
+		csx->cycle++;
+		ls.rm_v = csx_reg_get(core, ls.rm);
 	}
-
+	
 	ls.rn_v = csx_reg_get(core, ls.rn);
 	if(ls.bit.u)
 		ls.ea = ls.rn_v + ls.rm_v;
@@ -190,7 +294,11 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 		ls.ea = ls.rn_v - ls.rm_v;
 
 	if(ls.bit.l)
-		ls.rd_v = csx->mmu.read(csx, ls.ea, ls.rw_size);
+	{
+		ls.rd_v = csx_mmu_read(csx->mmu, ls.ea, ls.rw_size);
+		if(ls.flags.s)
+			ls.rd_v = BFSEXT(ls.rd_v, (ls.rw_size << 2), 0);
+	}
 	else
 		ls.rd_v = csx_reg_get(core, ls.rd);
 	
@@ -198,67 +306,173 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 	if(cce)
 	{
-		if(!!ls.bit.p && !!ls.bit.w) /* base update? */
-			LOG_ACTION(csx->state = CSX_STATE_HALT);
+		if(ls.bit.p && ls.bit.w) /* base update? */
+			csx_reg_set(core, ls.rn, ls.ea);
 
 		if(ls.bit.l)
 		{
 			csx_reg_set(core, ls.rd, ls.rd_v);
 		}
 		else
-			csx->mmu.write(csx, ls.ea, ls.rd_v, ls.rw_size);
+			csx_mmu_write(csx->mmu, ls.ea, ls.rd_v, ls.rw_size);
+	}
+}
+
+static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, uint8_t i)
+{
+	csx_p csx = core->csx;
+	uint32_t rxx_v;
+
+	if(ls->bit.p)
+		ls->ea += ls->bit.u ? 4 : -4;
+
+	if(ls->bit.l)
+	{
+		rxx_v = csx_mmu_read(csx->mmu, ls->ea, sizeof(uint32_t));
+		LOG("r(%u)==[0x%08x](0x%08x)", i, ls->ea, rxx_v);
+		csx_reg_set(core, i, rxx_v);
+	}
+	else
+	{
+		rxx_v = csx_reg_get(core, i);
+		LOG("[0x%08x]==r(%u)(0x%08x)", ls->ea, i, rxx_v);
+		csx_mmu_write(csx->mmu, ls->ea, rxx_v, sizeof(uint32_t));
+	}
+
+	if(!ls->bit.p)
+		ls->ea += ls->bit.u ? 4 : -4;
+}
+
+static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
+{
+	csx_p csx = core->csx;
+
+	csx_ldst_t ls;
+	csx_core_arm_decode_ldst(core, opcode, &ls);
+	ls.rn_v = csx_reg_get(core, ls.rn);
+
+	uint8_t ea_mode = BFEXT(opcode, 24, 23);
+	uint8_t rcount = __builtin_popcount(ls.rm_v) << 2;
+	
+	uint32_t start_address = ls.rn_v;
+	uint32_t end_address = ls.rn_v;
+	
+	switch(ea_mode)
+	{
+		case	0x00:	/*	DA	*/
+			start_address -= rcount + 4;
+			break;
+		case	0x01:	/*	IA	*/
+			end_address += rcount - 4;
+			break;
+		case	0x02:	/*	DB	*/
+			start_address -= rcount;
+			end_address -= 4;
+			break;
+		case	0x03:	/*	IB	*/
+			start_address += 4;
+			end_address += rcount;
+			break;
+	}
+
+	const char *opstr;
+	if(rSP == ls.rn)
+		opstr = ls.bit.l ? "pop" : "push";
+	else
+		opstr = ls.bit.l ? "ldm" : "stm";
+
+	LOG("%s, r(%u)(0x%08x), start_address = 0x%08x, end_address = 0x%08x",
+		opstr, ls.rn, ls.rn_v, start_address, end_address);
+
+//	ls.ea = start_address;
+	ls.ea = ls.rn_v;
+	
+	uint32_t rxx_v;
+
+	if(cce)
+	{
+		for(int i = 0; i < 15; i++)
+		{
+			if(BTST(ls.rm_v, i))
+			{
+				csx->cycle++;
+				_arm_inst_ldstm(core, &ls, i);
+			}
+		}
+		
+		if(ls.bit.l && ls.bit.s && core->spsr)
+			csx_psr_mode_switch(core, *core->spsr);
+		
+		if(BTST(ls.rm_v, 15))
+		{
+			if(ls.bit.p)
+				ls.ea += ls.bit.u ? 4 : -4;
+
+			csx->cycle++;
+//			_arm_inst_ldstm(core, ls, 15);
+
+			if(ls.bit.l)
+			{
+				rxx_v = csx_mmu_read(csx->mmu, ls.ea, sizeof(uint32_t));
+				LOG("r(%u)==[0x%08x](0x%08x)", 15, ls.ea, rxx_v);
+				csx_reg_set(core, INSN_PC, rxx_v);
+			}
+			else
+			{
+				rxx_v = csx_reg_get(core, rPC);
+				LOG("[0x%08x]==r(%u)(0x%08x)", ls.ea, 15, rxx_v);
+				csx_mmu_write(csx->mmu, ls.ea, rxx_v, sizeof(uint32_t));
+			}
+
+			if(ls.bit.p)
+				ls.ea += ls.bit.u ? 4 : -4;
+
+//			ls.ea += 4;
+		}
+
+		if(ls.bit.w) 
+		{
+			fflush(0);
+			if(0) switch(ea_mode)
+			{
+				case 0x00:	/*	DA	*/
+				case 0x02:	/*	DB	*/
+					assert(end_address == ls.ea - 4);
+//					assert(ls.ea == ls.rn - (rcount << 2));
+					break;
+				case 0x01:	/*	IA	*/
+				case 0x03:	/*	IB	*/
+					assert(ls.ea == ls.rn_v + rcount);
+					break;
+			}
+			csx->cycle++;
+			csx_reg_set(core, ls.rn, ls.ea);
+		}
 	}
 }
 
 static void arm_inst_mcr(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
+	csx_p csx = core->csx;
 	csx_coproc_data_t acp;
 	
 	csx_core_arm_decode_coproc(core, opcode, &acp);
 
 	if(acp.bit.l)
 	{
-		csx_coprocessor_read(core->csx, &acp);
-		CORE_TRACE("mrc(p(%u), %u, rd(%u), cn(%u), cm(%u), %u)",
-			acp.cp_num, acp.opcode1, acp.rd,
+		csx_coprocessor_read(csx, &acp);
+		CORE_TRACE("mrc(p(%u), %u, %s, cn(%u), cm(%u), %u)",
+			acp.cp_num, acp.opcode1, _arm_reg_name(acp.rd),
 			acp.crn, acp.crm, acp.opcode2);
 	}
 	else
 	{
-		CORE_TRACE("mcr(p(%u), %u, rd(%u), cn(%u), cm(%u), %u)",
-			acp.cp_num, acp.opcode1, acp.rd,
+		CORE_TRACE("mcr(p(%u), %u, %s, cn(%u), cm(%u), %u)",
+			acp.cp_num, acp.opcode1, _arm_reg_name(acp.rd),
 			acp.crn, acp.crm, acp.opcode2);
-		csx_coprocessor_write(core->csx, &acp);
+		csx_coprocessor_write(csx, &acp);
+		LOG();
 	}
-}
-
-static void arm_inst_mov(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	uint32_t test, result;
-
-	int tsbz = _check_sbz(opcode, 19, 16, &test, &result);
-	if(tsbz)
-	{
-		TRACE("!! sbz(19, 16, =0x%08x, =0x%08x (%u))", test, result, tsbz);
-		abort();
-	}
-
-	csx_dpi_t	dpi;
-
-	dpi.rn = -1;
-
-	csx_core_arm_decode_rd(opcode, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.rd_v = dpi.out.v;
-
-	dpi.mnemonic = "mov";
-	if(!dpi.bit.i && (dpi.rd == dpi.rm))
-		snprintf(dpi.op_string, 255, "/* nop */");
-	else
-		snprintf(dpi.op_string, 255, "/* 0x%08x */", dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
 }
 
 static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
@@ -281,10 +495,10 @@ static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
 	const char* psrs;
 	uint32_t rd_v;
 
-	if(BIT_OF(opcode, ARM_INST_BIT_R))
+	if(BTST(opcode, ARM_INST_BIT_R))
 	{
 		psrs = "SPSR";
-		rd_v = core->spsr;
+		rd_v = core->spsr ? *core->spsr : 0;
 	}
 	else
 	{
@@ -292,7 +506,7 @@ static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
 		rd_v = CPSR;
 	}
 
-	CORE_TRACE("mrs(r(%u), %s) /* 0x%08x */", rd, psrs, rd_v);
+	CORE_TRACE("mrs(%s, %s) /* 0x%08x */", _arm_reg_name(rd), psrs, rd_v);
 
 	if(cce)
 		csx_reg_set(core, rd, rd_v);
@@ -322,10 +536,10 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		uint8_t r;
 	}bit;
 
-	bit.i = BIT_OF(opcode, 25);
-	bit.r = BIT_OF(opcode, 22);
+	bit.i = BEXT(opcode, 25);
+	bit.r = BEXT(opcode, 22);
 	
-	uint8_t field_mask = _bits(opcode, 19, 16);
+	uint8_t field_mask = BFEXT(opcode, 19, 16);
 	
 	uint8_t rotate_imm, imm8;
 	uint8_t rm, rm_v;
@@ -333,19 +547,19 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	if(bit.i)
 	{
-		rotate_imm = _bits(opcode, 11, 8);
-		imm8 = _bits(opcode, 7, 0);
-		operand = imm8 << (rotate_imm << 1);
+		rotate_imm = BFEXT(opcode, 11, 8);
+		imm8 = BFEXT(opcode, 7, 0);
+		operand = _ror(imm8, (rotate_imm << 1));
 	}
 	else
 	{
-		if(0 == _bits(opcode, 7, 4))
+		if(0 == BFEXT(opcode, 7, 4))
 		{
 			int tsbz = _check_sbz(opcode, 11, 8, &test, &result);
 			if(tsbz)
 				TRACE("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbz);
 
-			rm = _bits(opcode, 3, 0);
+			rm = BFEXT(opcode, 3, 0);
 			rm_v = csx_reg_get(core, rm);
 			operand = rm_v;
 		}
@@ -356,7 +570,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 
 	uint32_t unalloc_mask = csx_msr_unalloc_mask[arm_v5tej];
-	TRACE("unalloc_mask = 0x%08x", unalloc_mask);
+	if(0) TRACE("unalloc_mask = 0x%08x", unalloc_mask);
 
 	if(operand & unalloc_mask)
 	{
@@ -365,34 +579,34 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 
 	uint32_t byte_mask = 0;
-	byte_mask |= BIT_OF(field_mask, 0) ? (0xff << 0) : 0;
-	byte_mask |= BIT_OF(field_mask, 1) ? (0xff << 8) : 0;
-	byte_mask |= BIT_OF(field_mask, 2) ? (0xff << 16) : 0;
-	byte_mask |= BIT_OF(field_mask, 3) ? (0xff << 24) : 0;
+	byte_mask |= BTST(field_mask, 0) ? (0xff << 0) : 0;
+	byte_mask |= BTST(field_mask, 1) ? (0xff << 8) : 0;
+	byte_mask |= BTST(field_mask, 2) ? (0xff << 16) : 0;
+	byte_mask |= BTST(field_mask, 3) ? (0xff << 24) : 0;
 	
 	uint32_t state_mask = csx_msr_state_mask[arm_v5tej];
 	uint32_t user_mask = csx_msr_user_mask[arm_v5tej];
 	uint32_t priv_mask = csx_msr_priv_mask[arm_v5tej];
 	
-	TRACE("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
+	if(0) TRACE("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
 		state_mask, user_mask, priv_mask);
 		
-	TRACE("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
+	if(0) TRACE("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
 	
 	uint32_t saved_psr, new_psr;
 	
 	uint32_t mask;
 	if(bit.r)
 	{
-		if(csx_current_mode_has_spsr(core))
+		if(core->spsr)
 		{
 			mask = byte_mask & (user_mask | priv_mask | state_mask);
 			
-			saved_psr = core->spsr;
+			saved_psr = *core->spsr;
 			new_psr = (saved_psr & ~mask) | (operand & mask);
 			
 			if(cce)
-				core->spsr = new_psr;
+				*core->spsr = new_psr;
 		}
 		else
 		{
@@ -418,19 +632,22 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		saved_psr = CPSR;
 		new_psr = (saved_psr & ~mask) | (operand & mask);
 
+		if(0)LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
+			csx_reg_get(core, rSP), csx_reg_get(core, rLR), core->pc);
+
 		if(cce)
 			csx_psr_mode_switch(core, new_psr);
 	}
 	
 	uint8_t cpsrs[5];
-	cpsrs[0] = BIT_OF(field_mask, 3) ? 'F' : 'f';
-	cpsrs[1] = BIT_OF(field_mask, 2) ? 'S' : 's';
-	cpsrs[2] = BIT_OF(field_mask, 1) ? 'X' : 'x';
-	cpsrs[3] = BIT_OF(field_mask, 0) ? 'C' : 'c';
+	cpsrs[0] = BTST(field_mask, 3) ? 'F' : 'f';
+	cpsrs[1] = BTST(field_mask, 2) ? 'S' : 's';
+	cpsrs[2] = BTST(field_mask, 1) ? 'X' : 'x';
+	cpsrs[3] = BTST(field_mask, 0) ? 'C' : 'c';
 	cpsrs[4] = 0;
 	
 	uint8_t cs = bit.r ? 'S' : 'C';
-	
+
 	csx_trace_psr(core, 0, saved_psr);
 
 	if(bit.i)
@@ -439,241 +656,107 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 	else
 	{
-		CORE_TRACE("msr(%cPSR_%s, rm(%u)) /* 0x%08x & 0x%08x -> 0x%08x*/", cs, cpsrs, rm, operand, mask, operand & mask);
+		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x*/",
+			cs, cpsrs, _arm_reg_name(rm), operand, mask, operand & mask);
 	}
-	
+
+	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
+		csx_reg_get(core, rSP), csx_reg_get(core, rLR), core->pc);
+
 	csx_trace_psr(core, 0, new_psr);
-}
-
-static void arm_inst_mvn(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	uint32_t test, result;
-
-	int tsbz = _check_sbz(opcode, 19, 16, &test, &result);
-	if(tsbz)
-	{
-		TRACE("!! sbz(19, 16, =0x%08x, =0x%08x (%u))", test, result, tsbz);
-		abort();
-	}
-
-	csx_dpi_t	dpi;
-
-	dpi.rn = -1;
-
-	csx_core_arm_decode_rd(opcode, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.rd_v = 0xffffffff ^ dpi.out.v;
-
-	dpi.mnemonic = "mvn";
-	snprintf(dpi.op_string, 255, "/* 0x%08x */", dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
-}
-
-static void arm_inst_orr(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	csx_dpi_t	dpi;
-
-	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v | dpi.out.v;
-
-	dpi.mnemonic = "orr";
-	snprintf(dpi.op_string, 255,
-		"/* 0x%08x | 0x%08x --> 0x%08x */",
-		dpi.rn_v, dpi.out.v, dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
-}
-
-static void arm_inst_sub(csx_core_p core, uint32_t opcode, uint8_t cce)
-{
-	csx_dpi_t	dpi;
-
-	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
-
-	dpi.flag_mode = CSX_CC_FLAGS_MODE_SUB;
-
-	dpi.rn_v = csx_reg_get(core, dpi.rn);
-	dpi.rd_v = dpi.rn_v - dpi.out.v;
-
-	dpi.mnemonic = "sub";
-	snprintf(dpi.op_string, 255,
-		"/* 0x%08x - 0x%08x --> 0x%08x */",
-		dpi.rn_v, dpi.out.v, dpi.rd_v);
-
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
 }
 
 /* **** */
 
 static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 {
-	uint8_t cc = _bits(opcode, 31, 28) & 0x0f;
+	uint8_t cc = BFEXT(opcode, 31, 28);
 	return(csx_core_check_cc(core, opcode, cc));
 }
 
+#define _INST0(_x0)			(((_x0) & 0x06) << 25)
 #define _INST1(_x1)			(((_x1) & 0x07) << 25)
-#define _INST1_2(_x1, _x2)	(_INST1(_x1) | (((_x2) & 0x0f) << 21))
 
-#define CORE_ARM1_INST3		_INST1(0x0)
-#define CORE_ARM1_LDST		_INST1(0x2)
-#define CORE_ARM1_INST2		_INST1(0x4)
-#define CORE_ARM1_COPROC	_INST1(0x6)
-#define CORE_ARM1_MASK		_INST1(0x6)
+#define _INST0_i74			(_BV(7) | _BV(4))
 
-#define CORE_ARM2_B			_INST1(0x5)
-#define CORE_ARM2_MASK		_INST1(0x7)
+#define _INST0_MISC0		_BV(24)
+#define _INST0_MISC0_MASK	(_BF(27, 23) | _BV(20))
 
-#define CORE_ARM3_AND		_INST1_2(0x0, 0x0)
-#define CORE_ARM3_SUB		_INST1_2(0x0, 0x2)
-#define CORE_ARM3_ADD		_INST1_2(0x0, 0x4)
-#define CORE_ARM3_MRS		_INST1_2(0x0, 0x8)
-#define CORE_ARM3_CMP		_INST1_2(0x0, 0xa)
-#define CORE_ARM3_ORR		_INST1_2(0x0, 0xc)
-#define CORE_ARM3_MOV		_INST1_2(0x0, 0xd)
-#define CORE_ARM3_BIC		_INST1_2(0x0, 0xe)
-#define CORE_ARM3_MVN		_INST1_2(0x0, 0xf)
-#define CORE_ARM3_MASK		_INST1_2(0x6, 0xf)
-
-#define CORE_ARM3_LDST		(_BV(7) | _BV(4))
-#define CORE_ARM3_LDST_MASK	(_INST1(7) | CORE_ARM3_LDST)
-
-#define CORE_ARM_DPI(_x2)	_INST1_2(0x01, _x2)
-#define CORE_ARM_DPIS(_x2)	_INST1_2(0x01, _x2)
-#define CORE_ARM_DPRS(_x2)	_INST1_2(0x01, _x2) | _BV(4)
-
-#define CORE_ARM_DPIS_MASK	_INST1_2(0x07, 0x0f) | _BV(4)
-#define CORE_ARM_DPRS_MASK	_INST1_2(0x07, 0x0f) | _BV(7) | _BV(4)
+#define _INST0_MISC1		(_INST0_MISC0 | _INST0_i74)
 
 void csx_core_arm_step(csx_core_p core)
 {
-	uint32_t pc = csx_reg_get(core, INSN_PC);
+	uint32_t pc;
+	uint32_t ir = csx_reg_pc_fetch_step(core, 4, &pc);
 
-	if(pc & 1) {
+	int thumb = pc & 1;
+	if(thumb)
+	{
 		LOG("!! pc & 1");
-		exit(1);
+		csx_reg_set(core, INSN_PC, pc);
+		return;
 	}
 
 	core->csx->cycle++;
 
-	csx_reg_set(core, rPC, pc + 4);
-
-	uint32_t ir = core->csx->mmu.read(core->csx, pc, sizeof(uint32_t));
-
 	uint8_t cce = csx_core_arm_check_cc(core, ir);
 
-	uint8_t ci1 = _bits(ir, 27, 25) & 0x06;
-	uint8_t ci2 = _bits(ir, 27, 25) & 0x07;
-	uint8_t ci3 = _bits(ir, 24, 21);
-	uint8_t	i74 = BIT2BIT(ir, 25, 2) | BIT2BIT(ir, 7, 1) | BIT_OF(ir, 4);
+	uint8_t check0 = BFEXT(ir, 27, 25) & ~1;
+	uint32_t check0_misc0 = ir & _INST0_MISC0_MASK;
 
-	uint32_t check = ir & CORE_ARM1_MASK;
+	uint8_t check1 = BFEXT(ir, 27, 25);
+	uint8_t	i74 = BMOV(ir, 25, 2) | BMOV(ir, 7, 1) | BEXT(ir, 4);
+
+	uint32_t check = ir & _INST1(7);
 
 //check1:
 	switch(check)	/* check 1 */
 	{
-		case CORE_ARM1_COPROC:
-			goto check_inst_coproc;
+		case _INST0(0):
+			if(_INST0_i74 == (ir & _INST0_i74))
+				return(arm_inst_ldst(core, ir, cce));
+			else if(_INST0_MISC0 != check0_misc0)
+			{
+				if(ARM_INST_DP == (ir & ARM_INST_DP_MASK))
+					return(arm_inst_dpi(core, ir, cce));
+			}
+			else
+			{
+				if(ARM_INST_BX == (ir & ARM_INST_BX_MASK))
+					return(arm_inst_bx(core, ir, cce));
+				if(ARM_INST_MRS == (ir & ARM_INST_MRS_MASK))
+					return(arm_inst_mrs(core, ir, cce));
+				else if(ARM_INST_MSR == (ir & ARM_INST_MSR_MASK))
+					return(arm_inst_msr(core, ir, cce));
+			}
 			break;
-		case CORE_ARM1_LDST:
-			arm_inst_ldst(core, ir, cce);
+		case _INST1(1):
+			if(ARM_INST_DP == (ir & ARM_INST_DP_MASK))
+				return(arm_inst_dpi(core, ir, cce));
 			break;
-		case CORE_ARM1_INST2:
-			goto check2;
-		case CORE_ARM1_INST3:
-			goto check3;
-		default:
-			TRACE("::1 >> ir = 0x%08x, check1 = 0x%08x, ci1 = 0x%02hhx, ci2 = 0x%02hhx, ci3 = 0x%02hhx, i74 = 0x%02hhx",
-				ir, check, ci1, ci2, ci3, i74);
-			exit(1);
+		case _INST1(2):
+			if(ARM_INST_LDST_O11 == (ir & ARM_INST_LDST_O11_MASK))
+				return(arm_inst_ldst(core, ir, cce));
 			break;
-	}
-	return;
-
-check2:
-	check = ir & CORE_ARM2_MASK;
-	switch(check)	/* check 2 */
-	{
-		case CORE_ARM2_B:
-			arm_inst_b(core, ir, cce);
+		case _INST1(4):
+			if(ARM_INST_LDSTM == (ir & ARM_INST_LDSTM_MASK))
+				return(arm_inst_ldstm(core, ir, cce));
 			break;
-		default:
-			TRACE("::2 >> ir = 0x%08x, check = 0x%08x, ci1 = 0x%02hhx, ci2 = 0x%02hhx, ci3 = 0x%02hhx, i74 = 0x%02hhx",
-				ir, check, ci1, ci2, ci3, i74);
-			exit(1);
+		case _INST1(5):
+			if(ARM_INST_B == (ir & ARM_INST_B_MASK))
+				return(arm_inst_b(core, ir, cce));
 			break;
-	}
-	return;
-
-check3:
-	if(CORE_ARM3_LDST == (ir & CORE_ARM3_LDST_MASK))
-	{
-		arm_inst_ldst(core, ir, cce);
-		return;
-	}
-	else if(ARM_INST_BX == (ir & ARM_INST_BX_MASK))
-	{
-		arm_inst_bx(core, ir, cce);
-		return;
-	}
-	else if(ARM_INST_MSR == (ir & ARM_INST_MSR_MASK))
-	{
-		arm_inst_msr(core, ir, cce);
-		return;
-	}
-
-	check = ir & CORE_ARM3_MASK;
-	switch(check)	/* check 3 */
-	{
-		case CORE_ARM3_ADD:
-			arm_inst_add(core, ir, cce);
-			break;
-		case CORE_ARM3_AND:
-			arm_inst_and(core, ir, cce);
-			break;
-		case CORE_ARM3_BIC:
-			arm_inst_bic(core, ir, cce);
-			break;
-		case CORE_ARM3_CMP:
-			arm_inst_cmp(core, ir, cce);
-			break;
-		case CORE_ARM3_MOV:
-			arm_inst_mov(core, ir, cce);
-			break;
-		case CORE_ARM3_MRS:
-			arm_inst_mrs(core, ir, cce);
-			break;
-		case CORE_ARM3_MVN:
-			arm_inst_mvn(core, ir, cce);
-			break;
-		case CORE_ARM3_ORR:
-			arm_inst_orr(core, ir, cce);
-			break;
-		case CORE_ARM3_SUB:
-			arm_inst_sub(core, ir, cce);
+		case _INST1(7):
+			if(ARM_INST_MCR == (ir & ARM_INST_MCR_MASK))
+				return(arm_inst_mcr(core, ir, cce));
 			break;
 		default:
-			TRACE("::3 >> opcode = 0x%08x, check = 0x%08x, ci1 = 0x%02hhx, ci2 = 0x%02hhx, ci3 = 0x%02hhx, i74 = 0x%02hhx",
-				ir, check, ci1, ci2, ci3, i74);
-			csx_core_disasm(core, pc, ir);
-			exit(1);
 			break;
 	}
-	return;
 
-check_inst_coproc:
-	check = ir & ARM_INST_MCR_MASK;
-	if(ARM_INST_MCR == check)
-		arm_inst_mcr(core, ir, cce);
-	else
-	{
-		TRACE("opcode = 0x%08x", ir);
-		csx_core_disasm(core, pc, ir);
-		exit(1);
-	}
+//decode_fault:
+	TRACE(">> ir = 0x%08x, check0 = 0x%02x, check1 = 0x%02x, i74 = 0x%02hhx",
+		ir, check0, check1, i74);
+	csx_core_disasm(core, pc, ir);
+	LOG_ACTION(exit(1));
 }

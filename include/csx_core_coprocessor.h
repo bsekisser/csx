@@ -1,3 +1,4 @@
+typedef struct csx_coprocessor_t** csx_coprocessor_h;
 typedef struct csx_coprocessor_t* csx_coprocessor_p;
 typedef struct csx_coproc_data_t* csx_coproc_data_p;
 

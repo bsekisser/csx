@@ -11,30 +11,48 @@ static const char* csx_trace_psr_mode_string[] = {
 	[0x08 + 0x07] = "System",
 };
 
+int csx_trace_core(csx_core_p core)
+{
+	csx_p csx = core->csx;
+//	csx_core_p core = csx->core;
+	
+	uint32_t pc = csx_reg_get(core, TEST_PC);
+	
+	csx_trace_p trace = csx->trace.head;
+	
+	if(!trace)
+		return(1);
+	
+	if(_in_bounds(pc, trace->start, trace->stop))
+		return(1);
+	
+	return(0);
+}
+
 void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 
 
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 31) ? 'N': 'n');
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 30) ? 'Z': 'z');
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 29) ? 'C': 'c');
-	dst += snprintf(dst, end - dst, "%c:", BIT_OF(psr, 28) ? 'V': 'v');
-	dst += snprintf(dst, end - dst, ":%c:", BIT_OF(psr, 27) ? 'Q': 'q');
-	dst += snprintf(dst, end - dst, ":0x%01x:", (psr >> 25) & 0x03);
-	dst += snprintf(dst, end - dst, ":%c:", psr & _BV(24) ? 'J': 'j');
-	dst += snprintf(dst, end - dst, ":0x%01x:", (psr >> 20) & 0x0f);
-	dst += snprintf(dst, end - dst, ":GE[19:16] = %1x:", (psr >> 16) & 0x0f);
-	dst += snprintf(dst, end - dst, ":0x%02x:", (psr >> 10) & 0x3f);
-	dst += snprintf(dst, end - dst, ":%c", BIT_OF(psr, 9) ? 'E': 'e');
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 8) ? 'A': 'a');
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 7) ? 'I': 'i');
-	dst += snprintf(dst, end - dst, "%c", BIT_OF(psr, 6) ? 'F': 'f');
-	dst += snprintf(dst, end - dst, "%c:", BIT_OF(psr, 5) ? 'T': 't');
-	uint8_t mode = psr & 0x1f;
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 31) ? 'N': 'n');
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 30) ? 'Z': 'z');
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 29) ? 'C': 'c');
+	dst += snprintf(dst, end - dst, "%c:", BEXT(psr, 28) ? 'V': 'v');
+	dst += snprintf(dst, end - dst, ":%c:", BEXT(psr, 27) ? 'Q': 'q');
+	dst += snprintf(dst, end - dst, ":0x%01x:", BFEXT(psr, 26, 25));
+	dst += snprintf(dst, end - dst, ":%c:", BEXT(psr, 24) ? 'J': 'j');
+	dst += snprintf(dst, end - dst, ":0x%01x:", BFEXT(psr, 23, 20));
+	dst += snprintf(dst, end - dst, ":GE[19:16] = %1x:", BFEXT(psr, 19, 16) & 0x0f);
+	dst += snprintf(dst, end - dst, ":0x%02x:", BFEXT(psr, 15, 10));
+	dst += snprintf(dst, end - dst, ":%c", BEXT(psr, 9) ? 'E': 'e');
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 8) ? 'A': 'a');
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 7) ? 'I': 'i');
+	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 6) ? 'F': 'f');
+	dst += snprintf(dst, end - dst, "%c:", BEXT(psr, 5) ? 'T': 't');
+	uint8_t mode = BFEXT(psr, 4, 0);
 	dst += snprintf(dst, end - dst, ":M[4:0] = 0x%01x", mode);
 	
-	const char* mode_string = csx_trace_psr_mode_string[mode & 0xf];
+	const char* mode_string = csx_trace_psr_mode_string[mode & 0x0f];
 	if(!mode_string)
 		mode_string = "";
 
@@ -57,10 +75,10 @@ void csx_trace_inst_dpi(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t
 			dpi->mnemonic, dpi->bit.s ? "s" : "");
 
 	if(dpi->wb)
-		dst += snprintf(dst, end - dst, "rd(%u)", dpi->rd);
+		dst += snprintf(dst, end - dst, "%s", _arm_reg_name(dpi->rd));
 
 	if((dpi->rn & 0x0f) == dpi->rn)
-		dst += snprintf(dst, end - dst, "%srn(%u)", dpi->wb ? ", " : "", dpi->rn);
+		dst += snprintf(dst, end - dst, "%s%s", dpi->wb ? ", " : "", _arm_reg_name(dpi->rn));
 
 	if(dpi->bit.i)
 	{
@@ -71,12 +89,12 @@ void csx_trace_inst_dpi(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t
 	}
 	else
 	{
-		dst += snprintf(dst, end - dst, ", rm(%u)", dpi->rm);
+		dst += snprintf(dst, end - dst, ", %s", _arm_reg_name(dpi->rm));
 
 		const char* sos = csx_core_arm_decode_shifter_op_string(dpi->shift_op);
 
 		if(dpi->bit.x4)
-			dst += snprintf(dst, end - dst, ", %s(rs(%u))", sos, dpi->rs);
+			dst += snprintf(dst, end - dst, ", %s(%s)", sos, _arm_reg_name(dpi->rs));
 		else if(dpi->rs_v)
 			dst += snprintf(dst, end - dst, ", %s(%u)", sos, dpi->rs_v);
 		else if(CSX_SHIFTER_OP_ROR == dpi->shift_op)
@@ -95,12 +113,12 @@ void csx_trace_inst_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls, uint8_
 	
 	dst += snprintf(dst, end - dst, "%sr", ls->bit.l ? "ld" : "st");
 	
-	if(0x01 == ls->bit.i2x_76)
+	if(ls->ldstx & 1)
 	{
 		int bit_t = !ls->bit.p && ls->bit.w;
 
 		dst += snprintf(dst, end - dst, "%s%s",
-			ls->bit.b ? "b" : "", bit_t ? "t" : "");
+			ls->bit.b22 ? "b" : "", bit_t ? "t" : "");
 	}
 	else
 	{
@@ -126,10 +144,10 @@ void csx_trace_inst_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls, uint8_
 		dst += snprintf(dst, end - dst, "%s%s", ls->flags.s ? "s" : "", rws);
 	}
 
-	dst += snprintf(dst, end - dst, "(rd(%u), rn(%u)", ls->rd, ls->rn);
+	dst += snprintf(dst, end - dst, "(%s, %s", _arm_reg_name(ls->rd), _arm_reg_name(ls->rn));
 
 	if((ls->rm & 0x0f) == ls->rm)
-		dst += snprintf(dst, end - dst, "[rm(%u)]", ls->rm);
+		dst += snprintf(dst, end - dst, "[%s]", _arm_reg_name(ls->rm));
 	else if(ls->rm_v)
 		dst += snprintf(dst, end - dst, "[0x%04x]", ls->rm_v);
 	else

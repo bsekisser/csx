@@ -1,3 +1,5 @@
+#pragma once
+
 enum {
 	arm_v4,
 	arm_v4t = 1,

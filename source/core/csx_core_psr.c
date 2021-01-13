@@ -91,7 +91,7 @@ uint8_t csx_core_check_cc(csx_core_p core, uint32_t opcode, uint8_t cc)
 			break;
 		default:
 			TRACE("opcode = 0x%08x, cc = %02x, cpsr = 0x%08x, cpsr_cc %02x",
-				opcode, cc, CPSR, _bits(CPSR, 31, 28));
+				opcode, cc, CPSR, BFEXT(CPSR, 31, 28));
 			LOG_ACTION(core->csx->state |= CSX_STATE_HALT);
 			exit(1);
 			break;
@@ -104,7 +104,7 @@ void csx_core_flags_nz(csx_core_p core, uint32_t rd_v)
 {
 	CPSR &= ~CSX_PSR_NZ;
 	
-	CPSR |= BIT2BIT(rd_v, 31, CSX_PSR_BIT_N);
+	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
 	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
@@ -116,14 +116,14 @@ void csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t
 {
 	CPSR &= ~CSX_PSR_NZCV;
 	
-	CPSR |= BIT2BIT(rd_v, 31, CSX_PSR_BIT_N);
+	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
 	uint32_t xvec = (s1_v ^ s2_v);
 	uint32_t ovec = (s1_v ^ rd_v) & ~xvec;
 
-	CPSR |= BIT2BIT((xvec ^ ovec ^ rd_v), 31, CSX_PSR_BIT_C);
-	CPSR |= BIT2BIT(ovec, 31, CSX_PSR_BIT_V);
+	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, CSX_PSR_BIT_C);
+	CPSR |= BMOV(ovec, 31, CSX_PSR_BIT_V);
 
 	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),

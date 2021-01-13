@@ -1,9 +1,3 @@
-enum {
-	CSX_CC_FLAGS_MODE_ADD = 1,
-	CSX_CC_FLAGS_MODE_SUB,
-	CSX_CC_FLAGS_MODE_SHIFT_OUT
-};
-
 #define _setup_decode_rd(_opcode, _rd) \
 	csx_reg_t _rd; \
 	csx_core_arm_decode_rd(_opcode, &_rd);
@@ -11,7 +5,7 @@ enum {
 static inline void csx_core_arm_decode_rd(uint32_t opcode, csx_reg_p rd)
 {
 	if(rd)
-		*rd = _bits(opcode, 15, 12);
+		*rd = BFEXT(opcode, 15, 12);
 }
 
 #define _setup_decode_rm(_opcode, _rm) \
@@ -21,17 +15,18 @@ static inline void csx_core_arm_decode_rd(uint32_t opcode, csx_reg_p rd)
 static inline void csx_core_arm_decode_rm(uint32_t opcode, csx_reg_p rm)
 {
 	if(rm)
-		*rm = _bits(opcode, 3, 0);
+		*rm = BFEXT(opcode, 3, 0);
 }
 
 static inline void csx_core_arm_decode_rn(uint32_t opcode, csx_reg_p rn)
 {
 	if(rn)
-		*rn = _bits(opcode, 19, 16);
+		*rn = BFEXT(opcode, 19, 16);
 }
 
 #define _setup_decode_rn_rd(_opcode, _rn, _rd) \
-	csx_reg_t _rn, _rd; \
+	csx_reg_t _rn \
+	csx_reg_t _rd; \
 	csx_core_arm_decode_rn_rd(_opcode, &_rn, &_rd);
 
 static inline void csx_core_arm_decode_rn_rd(uint32_t opcode, csx_reg_p rn, csx_reg_p rd)
@@ -74,6 +69,8 @@ typedef struct csx_ldst_t {
 	
 	uint32_t	ea;
 
+	uint8_t		ldstx;
+
 	uint8_t		rw_size;
 
 	uint8_t		shift_imm;
@@ -84,13 +81,13 @@ typedef struct csx_ldst_t {
 	}flags;
 	
 	struct {
-		uint8_t		i2x_76;
-		uint8_t		i25;
 		uint8_t		p;
 		uint8_t		u;
 		union {
+			uint8_t		bit22;
 			uint8_t		i22;
-			uint8_t		b;
+			uint8_t		b22;
+			uint8_t		s22;
 		};
 		uint8_t		w;
 		uint8_t		l;
@@ -113,9 +110,9 @@ typedef struct csx_dpi_t {
 	csx_reg_t	rs;
 	uint32_t	rs_v;	/* or imediate shift */
 
-	uint8_t		shift_op;
+	uint8_t		operation;
 
-	uint8_t		flag_mode;
+	uint8_t		shift_op;
 
 	struct {
 		uint8_t		i;

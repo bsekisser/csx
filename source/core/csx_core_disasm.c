@@ -8,9 +8,11 @@ void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
 	csh handle;
 	cs_insn *insn;
 
-	int b0 = BIT_OF(address, 0);
+	int b0 = BEXT(address, 0);
 	int size = b0 ? sizeof(uint16_t) : sizeof(uint32_t);
 	int mode = b0 ? CS_MODE_THUMB : CS_MODE_ARM;
+
+	address &= ~1;
 
 	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &handle));
 	

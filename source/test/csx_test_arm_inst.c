@@ -14,8 +14,12 @@
 static inline void _c_ea(csx_test_p t, uint32_t value)
 {
 	csx_p csx = t->csx;
+
+	value |= COND(EA);
 	
-	csx->mmu.write(csx, t->pc, COND(EA) | value, sizeof(uint32_t));
+	if(0) LOG("0x%08x: 0x%08x", t->pc, value);
+	
+	csx_mmu_write(csx->mmu, t->pc, value, sizeof(uint32_t));
 	t->pc += sizeof(uint32_t);
 }
 
@@ -50,14 +54,16 @@ static inline uint32_t _rn(csx_reg_t r)
 
 /* arm instruction utilities */
 
-static void _bxx(csx_test_p t, int32_t offset, int link)
+static void _bxx(csx_test_p t, uint32_t offset, int link)
 {
 	uint32_t opcode = (5 << 25);
 
 	if(link)
-		BIT_SET(opcode, ARM_INST_BIT_LINK);
+		BSET(opcode, ARM_INST_BIT_LINK);
 
-	uint32_t ea = (offset >> 2) & _BVM(23);
+	uint32_t ea = (offset >> 2) & _BM(23);
+
+	if(0) LOG("opcode = 0x%08x, offset = 0x%08x, ea = 0x%08x", opcode, offset, ea);
 
 	_c_ea(t, opcode | ea);
 }
@@ -78,8 +84,8 @@ static inline uint32_t _ldst_ipubwl(uint8_t i, uint8_t p, uint8_t u, uint8_t b, 
 
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 {
-	i &=_BVM(7);
-	shift &= _BVM(11 - 8);
+	i &=_BM(7);
+	shift = (shift & _BM(12 - 8)) >> 1;
 	
 	shifter_operand_t out = _BV(15) | (shift << 8) | i;
 
@@ -88,12 +94,12 @@ shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 
 /* arm instruction compilers */
 
-void arm_b(csx_test_p t, int32_t offset)
+void arm_b(csx_test_p t, uint32_t offset)
 {
 	_bxx(t, offset, 0);
 }
 
-void arm_bl(csx_test_p t, int32_t offset)
+void arm_bl(csx_test_p t, uint32_t offset)
 {
 	_bxx(t, offset, 1);
 }
@@ -109,7 +115,7 @@ void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 {
 	int u = offset > 0;
 
-	uint32_t ea = (u ? offset : 8 - offset) & _BVM(11);
+	uint32_t ea = (u ? offset : 8 - offset) & _BM(11);
 
 	if(0) LOG("rn = %02u, rd = %02u, offset = 0x%08x, ea = 0x%08x", rn, rd, offset, ea);
 
@@ -124,14 +130,14 @@ void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 	_c_ea(t, opcode | ea);
 }
 
-void arm_mov_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
+void arm_mov_rd_sop(csx_test_p t, csx_reg_t rd, shifter_operand_t shopt)
 {
 	uint32_t opcode = ARM_INST_MOV;
 	
-	opcode |= BIT2BIT(shopt, 15, 25);
+	opcode |= BMOV(shopt, 15, 25);
 	
-	opcode |= _rn(rn) | _rd(rd);
-	opcode |= shopt;
+	opcode |= _rd(rd);
+	opcode |= shopt & _BM(11);
 	
 	_c_ea(t, opcode);
 }
@@ -140,7 +146,7 @@ void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 {
 	int u = offset > 0;
 
-	uint32_t ea = (u ? offset : 8 - offset) & _BVM(11);
+	uint32_t ea = (u ? offset : 8 - offset) & _BM(11);
 
 	if(0) LOG("rn = %02u, rd = %02u, offset = 0x%08x, ea = 0x%08x", rn, rd, offset, ea);
 
@@ -157,5 +163,5 @@ void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 
 void arm_swi(csx_test_p t, uint32_t i24)
 {
-	_c_ea(t, (0x0f << 24) | (i24 & _BVM(23)));
+	_c_ea(t, (0x0f << 24) | (i24 & _BM(23)));
 }

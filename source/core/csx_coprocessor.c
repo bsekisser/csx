@@ -2,6 +2,7 @@
 #include "csx_core.h"
 
 typedef struct csx_coprocessor_t {
+	csx_p csx;
 	uint32_t creg[16];
 }csx_coprocessor_t;
 
@@ -22,12 +23,12 @@ void csx_coprocessor_write(csx_p csx, csx_coproc_data_p acp)
 
 int csx_coprocessor_init(csx_p csx)
 {
-	int err;
+	int err = 0;
 	csx_coprocessor_p cp;
 	
 	ERR_NULL(cp = malloc(sizeof(csx_coprocessor_t)));
 	
 	csx->cp = cp;
 
-	return(0);
+	return(err);
 }
