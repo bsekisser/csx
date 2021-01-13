@@ -702,7 +702,7 @@ void csx_core_thumb_step(csx_core_p core)
 					default:
 						return(csx_core_thumb_bxx(core, ir));
 						break;
-				}
+				} break;
 			case	0xe000:
 			case	0xf000:
 					return(csx_core_thumb_b(core, ir));
