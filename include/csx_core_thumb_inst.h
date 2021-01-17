@@ -1,3 +1,5 @@
+#define CSX_CORE_THUMB_ADD_RD_PCSP_I				(_BV(15) | _BV(13))
+#define CSX_CORE_THUMB_ADD_RD_PCSP_I_MASK			_BF(15, 12)
 #define CSX_CORE_THUMB_ADD_SUB_RN_RD				_BF(12, 11)
 #define CSX_CORE_THUMB_ADD_SUB_RN_RD_MASK			_BF(15, 11)
 #define CSX_CORE_THUMB_ADD_SUB_SP_I7				(_BV(15) | _BF(13, 12))
@@ -5,17 +7,19 @@
 #define CSX_CORE_THUMB_ASCM_RD_I8(_operation)		_BFI(_BV(13), _operation, 12, 11)
 #define CSX_CORE_THUMB_ASCM_RD_I8_MASK				_BF(15, 13)
 #define CSX_CORE_THUMB_BX							(_BV(14) | _BF(10, 8))
-#define CSX_CORE_THUMB_BX_MASK						_BF(15, 7)
+#define CSX_CORE_THUMB_BX_MASK						_BF(15, 8)
 #define CSX_CORE_THUMB_DP_RMS_RDN					_BV(14)
 #define CSX_CORE_THUMB_DP_RMS_RDN_MASK				_BF(15, 10)
-#define CSX_CORE_THUMB_LDR_RD_I						(_BV(14) | _BV(11))
-#define CSX_CORE_THUMB_LDR_RD_I_MASK				_BF(15, 11)
 #define CSX_CORE_THUMB_LDST_BW_O_RN_RD				_BF(14, 13)
 #define CSX_CORE_THUMB_LDST_BW_O_RN_RD_MASK			_BF(15, 13)
 #define CSX_CORE_THUMB_LDST_H_O_RN_RD				_BV(15)
 #define CSX_CORE_THUMB_LDST_H_O_RN_RD_MASK			_BF(15, 12)
+#define CSX_CORE_THUMB_LDST_PC_RD_I					_BV(14)
+#define CSX_CORE_THUMB_LDST_PC_RD_I_MASK			_BF(15, 12)
 #define CSX_CORE_THUMB_LDST_RM_RN_RD				(_BV(14) | _BV(12))
 #define CSX_CORE_THUMB_LDST_RM_RN_RD_MASK			_BF(15, 12)
+#define CSX_CORE_THUMB_LDST_SP_RD_I					(_BV(15) | _BV(12))
+#define CSX_CORE_THUMB_LDST_SP_RD_I_MASK			_BF(15, 12)
 #define CSX_CORE_THUMB_LDSTM_RN_RXX(_bit_l)			_BFI(_BF(15, 14), _bit_l, 11, 11) 
 #define CSX_CORE_THUMB_LDSTM_RN_RXX_MASK			_BF(15, 12)
 #define CSX_CORE_THUMB_POP_PUSH(_bit_l)				_BFI(_BV(15) | _BF(13, 12) | _BV(10), _bit_l, 11, 11)
@@ -47,6 +51,7 @@ enum {
 };
 
 enum {
+	THUMB_SDP_OP_ADD = 0x00,
 	THUMB_SDP_OP_MOV = 0x02,
 };
 

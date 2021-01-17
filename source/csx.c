@@ -41,6 +41,9 @@ int main(void)
 		for(int i = 0; i < limit; i++)
 		{
 			csx_core_p core = csx->core;
+
+			csx->cycle++;
+
 			core->step(core);
 
 			if(csx->state & CSX_STATE_HALT)

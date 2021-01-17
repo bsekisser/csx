@@ -41,18 +41,19 @@ void csx_test_thumb_b(csx_test_p t)
 
 	t->start_pc = t->pc = 0x100002b8;
 	
-	_cxx(t, 0xf013, sizeof(uint16_t));
-	_cxx(t, 0xfccc, sizeof(uint16_t));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+//	_cxx(t, 0xf013, sizeof(uint16_t));
+//	_cxx(t, 0xfccc, sizeof(uint16_t));
+	_cxx(t, 0xfcccf013, sizeof(uint32_t));
+//	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
 
 	uint32_t lr = csx_reg_get(core, rLR);
 //	uint32_t hlr = lr & ~_BVM(11);
 //	LOG("rLR = 0x%08x (0x%08x), rPC = 0x%08x", lr, hlr, pc(t));
 
-	assert(0x100132bc == lr);
-	assert(0x100002ba == pc(t));
+//	assert(0x100132bc == lr);
+//	assert(0x100002ba == pc(t));
 
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 2);
 
 //	pc_v = csx_reg_get(core, TEST_PC);
 	lr = csx_reg_get(core, rLR);

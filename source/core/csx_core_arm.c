@@ -29,6 +29,17 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 {
 	csx_trace_inst_dpi(core, opcode, dpi, cce);
 
+	if(rPC == dpi->rd)
+	{
+		int thumb = dpi->bit.s && core->spsr
+			&& BTST(*core->spsr, CSX_PSR_BIT_T);
+
+		if(thumb)
+			CORE_TRACE_THUMB;
+			
+		CORE_TRACE_BRANCH(dpi->rd_v);
+	}
+
 	if(cce)
 	{
 		if(dpi->wb)
@@ -52,9 +63,11 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 				switch(dpi->operation)
 				{
 					case ARM_DPI_OPERATION_ADD:
+						csx_core_flags_nzcv_add(core, rd_v, s1_v, s2_v);
+						break;
 					case ARM_DPI_OPERATION_CMP:
 					case ARM_DPI_OPERATION_SUB:
-						csx_core_flags_nzcv(core, rd_v, s1_v, s2_v);
+						csx_core_flags_nzcv_sub(core, rd_v, s1_v, s2_v);
 						break;
 					default:
 						csx_core_flags_nz(core, rd_v);
@@ -115,7 +128,7 @@ static void arm_inst_dpi_operation_mov(csx_core_p core, csx_dpi_p dpi)
 	if(dpi->rn)
 	{
 		LOG("!! rn(%u) -- sbz", dpi->rn);
-		LOG_ACTION(exit(1));
+		ILLEGAL_INSTRUCTION;
 	}
 
 	dpi->rn = -1;
@@ -134,7 +147,7 @@ static void arm_inst_dpi_operation_mvn(csx_core_p core, csx_dpi_p dpi)
 	if(dpi->rn)
 	{
 		LOG("!! rn(%u) -- sbz", dpi->rn);
-		LOG_ACTION(exit(1));
+		ILLEGAL_INSTRUCTION;
 	}
 
 	dpi->rn = -1;
@@ -214,7 +227,7 @@ static void arm_inst_dpi(csx_core_p core, uint32_t opcode, uint8_t cce)
 exit_fault:
 	LOG("operation = 0x%02x", dpi.operation);
 	csx_core_disasm(core, core->pc, opcode);
-	LOG_ACTION(exit(1));
+	UNIMPLIMENTED;
 }
 
 
@@ -236,20 +249,20 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 		link = cce = 1;
 	}
 
-	CORE_TRACE("b%s%s(0x%08x) /* 0x%08x */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, offset);
+	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) */",
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', offset);
+
+	if(link)
+		CORE_TRACE_LINK(csx_reg_get(core, TEST_PC));
+	
+	CORE_TRACE_BRANCH(new_pc);
 
 	if(cce)
 	{
 		if(link)
 			csx_reg_set(core, rLR, csx_reg_get(core, TEST_PC));
 
-		core->csx->cycle += 3;
-		
-		if(blx)
-			csx_reg_set(core, INSN_PC, new_pc);
-		else
-			csx_reg_set(core, rPC, new_pc);
+		csx_reg_set(core, INSN_PC, new_pc);
 	}
 }
 
@@ -259,16 +272,23 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 	int link = BEXT(opcode, 5);
 
 	uint32_t rm_v = csx_reg_get(core, rm);
+	uint8_t thumb = rm_v & 1;
+	uint32_t new_pc = (rm_v & ~3) | thumb;
 
-	CORE_TRACE("b%sx(r(%u)) /* 0x%08x */", link ? "l" : "", rm, rm_v & ~1);
+	CORE_TRACE("b%sx(r(%u)) /* %c(0x%08x) */",
+		link ? "l" : "", rm, thumb ? 'T' : 'A', new_pc & ~1);
+
+	if(link)
+		CORE_TRACE_LINK(csx_reg_get(core, TEST_PC));
+
+	CORE_TRACE_BRANCH(new_pc);
 
 	if(cce)
 	{
 		if(link)
 			csx_reg_set(core, rLR, csx_reg_get(core, TEST_PC));
-		
-		core->csx->cycle += 3;
-		csx_reg_set(core, INSN_PC, rm_v);
+
+		csx_reg_set(core, INSN_PC, new_pc);
 	}
 }
 
@@ -279,20 +299,20 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 	csx_ldst_t ls;
 	csx_core_arm_decode_ldst(core, opcode, &ls);
 
-	csx->cycle++;
-
 	if((ls.rm & 0x0f) == ls.rm)
 	{
-		csx->cycle++;
 		ls.rm_v = csx_reg_get(core, ls.rm);
 	}
 	
 	ls.rn_v = csx_reg_get(core, ls.rn);
-	if(ls.bit.u)
-		ls.ea = ls.rn_v + ls.rm_v;
-	else
-		ls.ea = ls.rn_v - ls.rm_v;
-
+	if(ls.bit.p)
+	{
+		if(ls.bit.u)
+			ls.ea = ls.rn_v + ls.rm_v;
+		else
+			ls.ea = ls.rn_v - ls.rm_v;
+	}
+	
 	if(ls.bit.l)
 	{
 		ls.rd_v = csx_mmu_read(csx->mmu, ls.ea, ls.rw_size);
@@ -304,43 +324,60 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	csx_trace_inst_ldst(core, opcode, &ls, cce);
 
+	if(ls.bit.l && (rPC == ls.rd))
+		CORE_TRACE_BRANCH(ls.rd_v);
+
 	if(cce)
 	{
-		if(ls.bit.p && ls.bit.w) /* base update? */
+		if(!ls.bit.p)
+		{
+			if(ls.bit.u)
+				ls.ea = ls.rn_v + ls.rm_v;
+			else
+				ls.ea = ls.rn_v - ls.rm_v;
+		}
+
+//		if(ls.bit.p && ls.bit.w) /* base update? */
+		if(!ls.bit.p || ls.bit.w) /* base update? */
 			csx_reg_set(core, ls.rn, ls.ea);
 
 		if(ls.bit.l)
 		{
-			csx_reg_set(core, ls.rd, ls.rd_v);
+			if(rPC == ls.rd)
+				csx_reg_set(core, INSN_PC, ls.rd_v);
+			else
+				csx_reg_set(core, ls.rd, ls.rd_v);
 		}
 		else
 			csx_mmu_write(csx->mmu, ls.ea, ls.rd_v, ls.rw_size);
 	}
 }
 
-static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, uint8_t i)
+static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, uint8_t i, uint8_t usr_mode_regs)
 {
 	csx_p csx = core->csx;
 	uint32_t rxx_v;
-
-	if(ls->bit.p)
-		ls->ea += ls->bit.u ? 4 : -4;
 
 	if(ls->bit.l)
 	{
 		rxx_v = csx_mmu_read(csx->mmu, ls->ea, sizeof(uint32_t));
 		LOG("r(%u)==[0x%08x](0x%08x)", i, ls->ea, rxx_v);
-		csx_reg_set(core, i, rxx_v);
+		if(usr_mode_regs)
+			csx_reg_usr(core, i, &rxx_v);
+		else
+			csx_reg_set(core, i, rxx_v);
 	}
 	else
 	{
-		rxx_v = csx_reg_get(core, i);
+		if(usr_mode_regs)
+			rxx_v = csx_reg_usr(core, i, 0);
+		else
+			rxx_v = csx_reg_get(core, i);
 		LOG("[0x%08x]==r(%u)(0x%08x)", ls->ea, i, rxx_v);
 		csx_mmu_write(csx->mmu, ls->ea, rxx_v, sizeof(uint32_t));
 	}
 
-	if(!ls->bit.p)
-		ls->ea += ls->bit.u ? 4 : -4;
+	ls->ea += 4;
 }
 
 static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
@@ -376,27 +413,35 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 
 	const char *opstr;
-	if(rSP == ls.rn)
+	if(0 && rSP == ls.rn)
 		opstr = ls.bit.l ? "pop" : "push";
 	else
 		opstr = ls.bit.l ? "ldm" : "stm";
 
-	LOG("%s, r(%u)(0x%08x), start_address = 0x%08x, end_address = 0x%08x",
-		opstr, ls.rn, ls.rn_v, start_address, end_address);
+	LOG("%s%c%c%s, r(%u)(0x%08x), start_address = 0x%08x, end_address = 0x%08x",
+		opstr, ls.bit.u ? 'i' : 'd', ls.bit.p ? 'b' : 'a',
+		ls.bit.w ? "!" : "", ls.rn, ls.rn_v, start_address, end_address);
 
-//	ls.ea = start_address;
-	ls.ea = ls.rn_v;
+	ls.ea = start_address;
 	
 	uint32_t rxx_v;
 
+	if(BTST(ls.rm_v, 15))
+	{
+		uint32_t r15_ea = rcount - 4;
+		CORE_TRACE_BRANCH(csx_mmu_read(csx->mmu, r15_ea, sizeof(uint32_t)));
+	}
+	
 	if(cce)
 	{
+		int usr_mode_regs = ls.bit.s && !BTST(ls.rm_v, 15);
+
 		for(int i = 0; i < 15; i++)
 		{
 			if(BTST(ls.rm_v, i))
 			{
 				csx->cycle++;
-				_arm_inst_ldstm(core, &ls, i);
+				_arm_inst_ldstm(core, &ls, i, usr_mode_regs);
 			}
 		}
 		
@@ -405,11 +450,7 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 		
 		if(BTST(ls.rm_v, 15))
 		{
-			if(ls.bit.p)
-				ls.ea += ls.bit.u ? 4 : -4;
-
 			csx->cycle++;
-//			_arm_inst_ldstm(core, ls, 15);
 
 			if(ls.bit.l)
 			{
@@ -424,29 +465,28 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 				csx_mmu_write(csx->mmu, ls.ea, rxx_v, sizeof(uint32_t));
 			}
 
-			if(ls.bit.p)
-				ls.ea += ls.bit.u ? 4 : -4;
-
-//			ls.ea += 4;
+			ls.ea += 4;
 		}
 
 		if(ls.bit.w) 
 		{
+//			LOG("ea = 0x%08x", ls.ea);
+			
 			fflush(0);
-			if(0) switch(ea_mode)
+			if(1) switch(ea_mode)
 			{
 				case 0x00:	/*	DA	*/
 				case 0x02:	/*	DB	*/
 					assert(end_address == ls.ea - 4);
+					csx_reg_set(core, ls.rn, end_address - 4);
 //					assert(ls.ea == ls.rn - (rcount << 2));
 					break;
 				case 0x01:	/*	IA	*/
 				case 0x03:	/*	IB	*/
 					assert(ls.ea == ls.rn_v + rcount);
+					csx_reg_set(core, ls.rn, start_address);
 					break;
 			}
-			csx->cycle++;
-			csx_reg_set(core, ls.rn, ls.ea);
 		}
 	}
 }
@@ -488,7 +528,7 @@ static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
 		TRACE("!! sbz(opcode = 0x%08x, 11, 0, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbz);
 
 	if(tsbo || tsbz)
-		abort();
+		UNPREDICTABLE;
 
 	_setup_decode_rd(opcode, rd);
 
@@ -528,8 +568,10 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	uint32_t test, result;
 
 	int tsbo = _check_sbo(opcode, 15, 12, &test, &result);
-	if(tsbo)
+	if(tsbo) {
 		TRACE("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbo);
+		UNPREDICTABLE;
+	}
 
 	struct {
 		uint8_t i;
@@ -557,7 +599,10 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		{
 			int tsbz = _check_sbz(opcode, 11, 8, &test, &result);
 			if(tsbz)
+			{
 				TRACE("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbz);
+				UNPREDICTABLE;
+			}
 
 			rm = BFEXT(opcode, 3, 0);
 			rm_v = csx_reg_get(core, rm);
@@ -565,7 +610,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		}
 		else
 		{
-			LOG_ACTION(csx->state |= CSX_STATE_HALT);
+			UNIMPLIMENTED;
 		}
 	}
 
@@ -574,7 +619,6 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 	if(operand & unalloc_mask)
 	{
-		LOG_ACTION(csx->state |= CSX_STATE_HALT);
 		UNPREDICTABLE;
 	}
 
@@ -610,7 +654,6 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		}
 		else
 		{
-			LOG_ACTION(csx->state |= CSX_STATE_HALT);
 			UNPREDICTABLE;
 		}
 	}
@@ -620,7 +663,6 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		{
 			if(operand & state_mask)
 			{
-				LOG_ACTION(csx->state |= CSX_STATE_HALT);
 				UNPREDICTABLE;
 			}
 			else
@@ -634,6 +676,9 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 		if(0)LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
 			csx_reg_get(core, rSP), csx_reg_get(core, rLR), core->pc);
+
+		if(BTST(saved_psr, CSX_PSR_BIT_T) != BTST(new_psr, CSX_PSR_BIT_T))
+			CORE_TRACE_THUMB;
 
 		if(cce)
 			csx_psr_mode_switch(core, new_psr);
@@ -687,7 +732,7 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 void csx_core_arm_step(csx_core_p core)
 {
 	uint32_t pc;
-	uint32_t ir = csx_reg_pc_fetch_step(core, 4, &pc);
+	uint32_t ir = csx_reg_pc_fetch_step(core, &pc);
 
 	int thumb = pc & 1;
 	if(thumb)
@@ -696,8 +741,6 @@ void csx_core_arm_step(csx_core_p core)
 		csx_reg_set(core, INSN_PC, pc);
 		return;
 	}
-
-	core->csx->cycle++;
 
 	uint8_t cce = csx_core_arm_check_cc(core, ir);
 
@@ -758,5 +801,5 @@ void csx_core_arm_step(csx_core_p core)
 	TRACE(">> ir = 0x%08x, check0 = 0x%02x, check1 = 0x%02x, i74 = 0x%02hhx",
 		ir, check0, check1, i74);
 	csx_core_disasm(core, pc, ir);
-	LOG_ACTION(exit(1));
+	UNIMPLIMENTED;
 }

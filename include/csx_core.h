@@ -8,6 +8,12 @@
 
 #define UNPREDICTABLE
 
+#define UNIMPLIMENTED \
+	LOG_ACTION(exit(1));
+
+#define ILLEGAL_INSTRUCTION \
+	LOG_ACTION(exit(1));
+
 typedef struct csx_t* csx_p;
 
 typedef uint8_t csx_reg_t;

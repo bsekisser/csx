@@ -23,7 +23,7 @@ int csx_trace_core(csx_core_p core)
 	if(!trace)
 		return(1);
 	
-	if(_in_bounds(pc, trace->start, trace->stop))
+	if(_in_bounds(pc, 4, trace->start, trace->stop))
 		return(1);
 	
 	return(0);
@@ -149,7 +149,7 @@ void csx_trace_inst_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls, uint8_
 	if((ls->rm & 0x0f) == ls->rm)
 		dst += snprintf(dst, end - dst, "[%s]", _arm_reg_name(ls->rm));
 	else if(ls->rm_v)
-		dst += snprintf(dst, end - dst, "[0x%04x]", ls->rm_v);
+		dst += snprintf(dst, end - dst, "[0x%04x]%s", ls->rm_v, ls->bit.w ? "!" : "");
 	else
 		dst += snprintf(dst, end - dst, "[0]");
 	

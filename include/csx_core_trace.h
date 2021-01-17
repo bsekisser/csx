@@ -11,12 +11,11 @@
 		do { \
 			if(csx_trace_core(core)) \
 			{ \
-				printf("%c(0x%08x, %s, /* %c 0x%08x */ " _f ")\n", \
+				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
 					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
-					core->pc, \
-					core->ccs, \
-					cce ? '>' : '|', \
-					opcode, ## args); \
+					core->pc, opcode, \
+					core->ccs, cce ? '>' : 'X', \
+					## args); \
 			} \
 		}while(0);
 #else
@@ -25,6 +24,11 @@
 	#define CORE_T(_x)
 	#define CORE_TRACE(_f, args...)
 #endif
+
+#define CORE_TRACE_LINK(_lr)
+#define CORE_TRACE_BRANCH(_pc)
+#define CORE_TRACE_BRANCH_CC(_pc)
+#define CORE_TRACE_THUMB
 
 int csx_trace_core(csx_core_p csx);
 

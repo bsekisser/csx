@@ -82,6 +82,38 @@ static inline uint32_t _ldst_ipubwl(uint8_t i, uint8_t p, uint8_t u, uint8_t b, 
 	return(opcode);
 }
 
+static shifter_operand_t _arm_dpi_sop_r_s(uint8_t sop, uint8_t r, uint8_t shift)
+{
+	shift = (shift & _BM(15 - 7)) >> 1;
+	
+	shifter_operand_t out = (shift << 7) | r;
+	
+	return(out);
+}
+
+static void _arm_dp_op_s_rn_rd_sop(csx_test_p t,
+	uint32_t opcode,
+	uint8_t s,
+	csx_reg_t rn,
+	csx_reg_t rd,
+	shifter_operand_t shopt)
+{
+	BMAS(opcode, ARM_INST_BIT_S, s);
+	
+	opcode |= _rn(rn) | _rd(rd);
+	
+	opcode |= BMOV(shopt, 15, 25);
+	opcode |= shopt & _BM(11);
+	
+	_c_ea(t, opcode);
+}
+
+
+shifter_operand_t arm_dpi_lsl_r_s(uint8_t r, uint8_t shift)
+{
+	return(_arm_dpi_sop_r_s(CSX_SHIFTER_OP_LSL, r, shift));
+}
+
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 {
 	i &=_BM(7);
@@ -130,13 +162,18 @@ void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 	_c_ea(t, opcode | ea);
 }
 
+void arm_adds_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 1, rn, rd, shopt);
+}
+
 void arm_mov_rd_sop(csx_test_p t, csx_reg_t rd, shifter_operand_t shopt)
 {
 	uint32_t opcode = ARM_INST_MOV;
 	
-	opcode |= BMOV(shopt, 15, 25);
-	
 	opcode |= _rd(rd);
+
+	opcode |= BMOV(shopt, 15, 25);
 	opcode |= shopt & _BM(11);
 	
 	_c_ea(t, opcode);
@@ -159,6 +196,11 @@ void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 	if(0) LOG("opcode = 0x%08x, ea = 0x%08x", opcode, ea);
 
 	_c_ea(t, opcode | ea);
+}
+
+void arm_subs_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(SUB), 1, rn, rd, shopt);
 }
 
 void arm_swi(csx_test_p t, uint32_t i24)

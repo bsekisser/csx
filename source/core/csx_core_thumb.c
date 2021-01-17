@@ -62,7 +62,11 @@ static void csx_core_thumb_add_sub_rn_rd(csx_core_p core, uint16_t opcode)
 	}
 
 	csx_reg_set(core, rd, rd_v);
-	csx_core_flags_nzcv(core, rd_v, rn_v, rm_v);
+
+	if(op2)
+		csx_core_flags_nzcv_sub(core, rd_v, rn_v, rm_v);
+	else
+		csx_core_flags_nzcv_add(core, rd_v, rn_v, rm_v);
 }
 
 static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
@@ -91,6 +95,29 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 	csx_reg_set(core, rSP, res);
 }
 
+static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
+{
+	int cce = 1;
+	
+	uint8_t pcsp = BEXT(opcode, 11);
+	uint8_t rd = BFEXT(opcode, 10, 8);
+	uint8_t imm8 = BFEXT(opcode, 7, 0);
+	
+	uint32_t rd_v;
+	if(pcsp)
+		rd_v = csx_reg_get(core, rSP);
+	else
+		rd_v = csx_reg_get(core, rPC) & ~3;
+	
+	uint32_t res = rd_v + imm8;
+
+	CORE_TRACE("add(%s, %s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
+				_arm_reg_name(rd), pcsp ? "rSP" : "rPC", imm8, rd_v, imm8, res);
+	
+	csx_reg_set(core, rd, res);
+}
+
+
 static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 {
 	int cce = 1, wb = 1;
@@ -108,25 +135,21 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 			res += imm8;
 			CORE_TRACE("adds(%s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
 				_arm_reg_name(rd), imm8, rd_v, imm8, res);
-			csx_core_flags_nzcv(core, res, rd_v, imm8);
 			break;
 		case THUMB_ASCM_OP_CMP:
 			wb = 0;
 			res -= imm8;
 			CORE_TRACE("cmp(%s, 0x%03x); /* 0x%08x - 0x%03x = 0x%08x */",
 				_arm_reg_name(rd), imm8, rd_v, imm8, res);
-			csx_core_flags_nzcv(core, res, rd_v, imm8);
 			break;
 		case THUMB_ASCM_OP_MOV:
 			res = imm8;
 			CORE_TRACE("mov(%s, 0x%03x);", _arm_reg_name(rd), imm8);
-			csx_core_flags_nz(core, res);
 			break;
 		case THUMB_ASCM_OP_SUB:
 			res -= imm8;
 			CORE_TRACE("subs(%s, 0x%03x); /* 0x%08x - 0x%03x = 0x%08x */",
 				_arm_reg_name(rd), imm8, rd_v, imm8, res);
-			csx_core_flags_nzcv(core, res, rd_v, imm8);
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
@@ -136,46 +159,79 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 	
 	if(wb)
 		csx_reg_set(core, rd, res);
+	
+	switch(operation)
+	{
+		case THUMB_ASCM_OP_ADD:
+			csx_core_flags_nzcv_add(core, res, rd_v, imm8);
+			break;
+		case THUMB_ASCM_OP_CMP:
+		case THUMB_ASCM_OP_SUB:
+			csx_core_flags_nzcv_sub(core, res, rd_v, imm8);
+			break;
+		case THUMB_ASCM_OP_MOV:
+			csx_core_flags_nz(core, res);
+			break;
+	}
 }
 
-static void csx_core_thumb_b(csx_core_p core, uint16_t opcode)
+static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 {
 	int cce = 1;
 	
-	uint16_t opcode1 = opcode & _BF(15, 11);
-	int bit_blx = BEXT(opcode, 12);
+	uint32_t pc = core->pc;
+	uint32_t eao = 0;
 
-	switch(opcode1)
+	if(0x2 == BFEXT(opcode0, 12, 11))
 	{
-		case	0xf000:
+		eao = BFSEXT(opcode0, 10, 0) << 12;
+	}	
+	else
+		UNPREDICTABLE;
+	
+	uint32_t lr = pc + eao;
+
+	if(0) LOG("rLR == (0x%08x + 0x%08x) == 0x%08x", pc, eao, lr);
+
+	uint16_t opcode1 = csx_reg_pc_fetch_step(core, &pc);
+	uint32_t opcode = (opcode0 << 16) | opcode1;
+
+	if(0) LOG("PC2 = 0x%08x, opcode = 0x%04x:0x%04x", pc, opcode0, opcode1);
+
+	if((0x7 == BFEXT(opcode, 15, 13)) && BEXT(opcode, 11))
+	{
+		pc += 2;
+		
+		int bit_blx = (0 == BEXT(opcode, 12));
+		eao += BFMOV(opcode, 10, 0, 1);
+
+		uint32_t new_lr = pc | 1;
+		uint32_t new_pc = pc + eao;
+
+		if(0) LOG("NEW_PC = 0x%08x, NEW_LR = 0x%08x", new_pc, new_lr & ~1);
+
+		if(bit_blx)
 		{
-			uint32_t pc = csx_reg_get(core, rPC);
-			uint32_t eao = _bits_sext(opcode, 10, 0) << 12;
-			uint32_t lr = pc + eao;
-			CORE_TRACE("add(rLR, rPC, LSL(0x%04x, 12)) /* LR = 0x%08x (PC = 0x%08x + 0x%08x) */",
-				eao >> 12, lr & ~1, pc, eao);
-			csx_reg_set(core, rLR, lr);
-		}	break;
-		case	0xe800:
-		case	0xf800:
+			CORE_TRACE_BRANCH(new_pc & ~3);
+			csx_reg_set(core, INSN_PC, new_pc & ~3);
+		}
+		else
 		{
-			uint32_t pc = csx_reg_get(core, TEST_PC);
-			uint32_t lr = csx_reg_get(core, rLR);
-			uint32_t eao = BFMOV(opcode, 10, 0, 1);
-			uint32_t new_pc = lr + eao;
-			uint32_t new_lr = pc;
-			CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%04x, LR = 0x%08x */",
-				bit_blx ? "" : "x", new_pc & ~1, lr & ~1, eao, new_lr);
-			if(bit_blx)
-				csx_reg_set(core, rPC, new_pc);
-			else
-				csx_reg_set(core, INSN_PC, (new_pc & ~3));
-			csx_reg_set(core, rLR, new_lr | 1);
-		}	break;
-		default:
-			TRACE("ir = 0x%04x, opcode = 0x%04x", opcode, opcode1);
-			LOG_ACTION(exit(1));
-			break;
+			CORE_TRACE_BRANCH(new_pc);
+			csx_reg_set(core, rPC, new_pc);
+
+			CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%08x, LR = 0x%08x */",
+				bit_blx ? "x" : "", new_pc & ~1, pc, eao, new_lr & ~1);
+		}
+
+		CORE_TRACE_LINK(new_lr);
+		csx_reg_set(core, rLR, new_lr);
+	}
+	else
+	{
+		csx_reg_set(core, rLR, pc | 1);
+		
+		UNPREDICTABLE;
 	}
 }
 
@@ -188,15 +244,23 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 		LOG_ACTION(exit(1));
 
 	csx_reg_t rm = BFEXT(opcode, 6, 3);
+	int link = BEXT(opcode, 7);
 	
 	uint32_t new_pc = csx_reg_get(core, rm);
 
 	CORE_TRACE("bx(%s); /* 0x%08x */", _arm_reg_name(rm), new_pc & ~1);
 
+	if(link) {
+		uint32_t new_lr = csx_reg_get(core, TEST_PC) | 1;
+		CORE_TRACE_LINK(new_lr);
+		csx_reg_set(core, rLR, new_lr);
+	}
+	
+	CORE_TRACE_BRANCH(new_pc);
 	csx_reg_set(core, INSN_PC, new_pc);
 }
 
-static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode)
+static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 {
 	uint8_t cond = BFEXT(opcode, 11, 8);
 	uint8_t cce = csx_core_check_cc(core, opcode, cond);
@@ -207,9 +271,10 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode)
 
 	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x */", new_pc & ~1, pc, imm8);
 
+	CORE_TRACE_BRANCH_CC(new_pc);
+
 	if(cce)
 	{
-		core->csx->cycle += 3;
 		csx_reg_set(core, rPC, new_pc);
 	}
 }
@@ -252,21 +317,53 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 	csx_reg_set(core, rd, res);
 }
 
-static void csx_core_thumb_ldr_rd_i(csx_core_p core, uint16_t opcode)
+static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 {
+	csx_mmu_p mmu = core->csx->mmu;
+
 	core->ccs = "EA";
 	int cce = 1;
-
+	
+	uint16_t operation = BFTST(opcode, 15, 12);
+	int	bit_l = BEXT(opcode, 11);
 	uint8_t rd = BFEXT(opcode, 10, 8);
 	uint8_t imm8 = BFMOV(opcode, 7, 0, 2);
 
-	uint32_t ea = (csx_reg_get(core, rPC) & ~0x03) + imm8;
-	uint32_t rd_v = csx_mmu_read(core->csx->mmu, ea, sizeof(uint32_t));
+	uint8_t rn;
+	uint32_t ea;
+	switch(operation)
+	{
+		case	0x4000:
+			rn = rPC;
+			ea = csx_reg_get(core, rPC) & ~0x03;
+			break;
+		case	0x9000:
+			rn = rSP;
+			ea = csx_reg_get(core, rSP);
+			break;
+		default:
+			LOG("operation = 0x%03x", operation);
+			csx_core_thumb_disasm(core, core->pc, opcode);
+			LOG_ACTION(exit(1));
+			break;
+	}
 
-	CORE_TRACE("ldr(%s, rPC[0x%03x]); /* [0x%08x](0x%08x) */",
-		_arm_reg_name(rd), imm8, ea, rd_v);
+	ea += imm8;
 
-	csx_reg_set(core, rd, rd_v);
+	uint32_t rd_v;
+	
+	if(bit_l)
+		rd_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+	else
+		rd_v = csx_reg_get(core, rd);
+
+	CORE_TRACE("%s(%s, %s[0x%03x]); /* [0x%08x](0x%08x) */",
+		bit_l ? "ldr" : "str", _arm_reg_name(rd), _arm_reg_name(rn), imm8, ea, rd_v);
+
+	if(bit_l)
+		csx_reg_set(core, rd, rd_v);
+	else
+		csx_mmu_write(mmu, ea, rd_v, sizeof(uint32_t));
 }
 
 static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
@@ -306,6 +403,8 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 		size = 16;
 	}
 	
+	assert(size != 0);
+	
 	uint32_t ea = rn_v + offset;
 
 	uint32_t rd_v;
@@ -313,7 +412,7 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 		rd_v = csx_mmu_read(core->csx->mmu, ea, size);
 	else
 		rd_v = csx_reg_get(core, rd);
-		
+
 	CORE_TRACE("%sr%s(%s, %s[0x%03x]); /* [(0x%08x + 0x%03x) = 0x%08x](0x%08x) */",
 		bit_l ? "ld" : "st", ss, _arm_reg_name(rd), _arm_reg_name(rn), offset, rn_v, offset, ea, rd_v);
 	
@@ -333,7 +432,6 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 //	}bit;
 	
 	uint8_t rm = BFEXT(opcode, 8, 6);
-	core->csx->cycle++;
 	uint32_t rm_v = csx_reg_get(core, rm);
 	
 	uint8_t rn = BFEXT(opcode, 5, 3);
@@ -407,13 +505,13 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 
 			if(bit_l)
 			{
-				rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
+				rxx_v = csx_mmu_read(csx->mmu, ea, 4);
 				csx_reg_set(core, i, rxx_v);
 			}
 			else
 			{	
 				rxx_v = csx_reg_get(core, i);
-				csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
+				csx_mmu_write(csx->mmu, ea, rxx_v, 4);
 			}
 			ea += 4;
 		}
@@ -463,6 +561,7 @@ static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core, uint16_t opcode)
 			}
 			break;
 		case THUMB_SBI_OP_LSL:
+			ops = "lsl";
 			if(shift)
 			{
 				BMAS(CPSR, CSX_PSR_BIT_C, BEXT(rm_v, (32 - shift)));
@@ -510,7 +609,8 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 	
 	const uint8_t rcount = bit_r + __builtin_popcount(rlist);
 
-	uint32_t start_address = sp_v, end_address = sp_v;
+	uint32_t start_address = sp_v;
+	uint32_t end_address = sp_v;
 	
 	if(bit_l)
 	{ /* pop */
@@ -540,7 +640,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 			csx->cycle++;
 			if(bit_l)
 			{ /* pop */
-				rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+				rxx_v = csx_mmu_read(mmu, ea, 4);
 				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
 				csx_reg_set(core, i, rxx_v);
 			}
@@ -548,7 +648,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 			{ /* push */
 				rxx_v = csx_reg_get(core, i);
 				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				csx_mmu_write(mmu, ea, rxx_v, sizeof(uint32_t));
+				csx_mmu_write(mmu, ea, rxx_v, 4);
 			}
 			ea += 4;
 		}
@@ -562,13 +662,13 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 	{
 		if(bit_l)
 		{ /* pop */
-			rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+			rxx_v = csx_mmu_read(mmu, ea, 4);
 			csx_reg_set(core, INSN_PC, rxx_v);
 		}
 		else
 		{ /* push */
 			rxx_v = csx_reg_get(core, rLR);
-			csx_mmu_write(mmu, ea, rxx_v, sizeof(uint32_t));
+			csx_mmu_write(mmu, ea, rxx_v, 4);
 		}
 		ea += 4;
 	}
@@ -602,6 +702,11 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core, uint16_t opcode)
 	
 	switch(operation)
 	{
+		case THUMB_SDP_OP_ADD:
+			res += rm_v;
+			CORE_TRACE("add(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
+				_arm_reg_name(rd), _arm_reg_name(rm), rd_v, rm_v, res);
+			break;
 		case THUMB_SDP_OP_MOV:
 			res = rm_v;
 			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
@@ -624,9 +729,7 @@ void csx_core_thumb_step(csx_core_p core)
 	core->ccs = "AL";
 
 	uint32_t pc;
-	uint32_t ir = csx_reg_pc_fetch_step(core, 2, &pc);
-
-	core->csx->cycle++;
+	uint32_t ir = csx_reg_pc_fetch_step(core, &pc);
 
 	uint8_t lsb;
 	uint32_t opcode;
@@ -667,8 +770,8 @@ void csx_core_thumb_step(csx_core_p core)
 					return(csx_core_thumb_ldst_rm_rn_rd(core, ir));
 				break;
 			case	0x4800:
-				if(CSX_CORE_THUMB_LDR_RD_I == (ir & CSX_CORE_THUMB_LDR_RD_I_MASK))
-					return(csx_core_thumb_ldr_rd_i(core, ir));
+				if(CSX_CORE_THUMB_LDST_PC_RD_I == (ir & CSX_CORE_THUMB_LDST_PC_RD_I_MASK))
+					return(csx_core_thumb_ldst_rd_i(core, ir));
 				break;
 			case	0x6000:
 				if(CSX_CORE_THUMB_LDST_BW_O_RN_RD == (ir & CSX_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
@@ -677,6 +780,14 @@ void csx_core_thumb_step(csx_core_p core)
 			case	0x8000:
 				if(CSX_CORE_THUMB_LDST_H_O_RN_RD == (ir & CSX_CORE_THUMB_LDST_H_O_RN_RD_MASK))
 					return(csx_core_thumb_ldst_bwh_o_rn_rd(core, ir));
+				break;
+			case	0x9000:
+				if(CSX_CORE_THUMB_LDST_SP_RD_I == (ir & CSX_CORE_THUMB_LDST_SP_RD_I_MASK))
+					return(csx_core_thumb_ldst_rd_i(core, ir));
+				break;
+			case	0xa000:
+				if(CSX_CORE_THUMB_ADD_RD_PCSP_I == (ir & CSX_CORE_THUMB_ADD_RD_PCSP_I_MASK))
+					return(csx_core_thumb_add_rd_pcsp_i(core, ir));
 				break;
 			case	0xb000:
 				if(CSX_CORE_THUMB_ADD_SUB_SP_I7 == (ir & CSX_CORE_THUMB_ADD_SUB_SP_I7_MASK))
@@ -700,12 +811,12 @@ void csx_core_thumb_step(csx_core_p core)
 //						TRACE("ir = 0x%04x, opcode = 0x%04x, lsb", ir, opcode);
 						break;
 					default:
-						return(csx_core_thumb_bxx(core, ir));
+						return(csx_core_thumb_bcc(core, ir));
 						break;
 				} break;
 			case	0xe000:
 			case	0xf000:
-					return(csx_core_thumb_b(core, ir));
+					return(csx_core_thumb_bxx(core, ir));
 				break;
 			default:
 //				TRACE("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", ir, opcode, lsb);

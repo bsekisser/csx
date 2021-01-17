@@ -40,6 +40,8 @@ int csx_core_init(csx_p csx, csx_core_h h2core)
 	core->csx = csx;
 	*h2core = core;
 
+	core->spsr = 0;
+
 	csx_core_reset(core);
 
 	_TRACE_(core, EXIT);

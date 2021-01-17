@@ -1,6 +1,7 @@
 #define ARM_INST_BIT_LINK			24
 #define ARM_INST_BIT_LOAD			20
 #define ARM_INST_BIT_R				22
+#define ARM_INST_BIT_S				20
 
 enum {
 	ARM_DPI_OPERATION_AND,
