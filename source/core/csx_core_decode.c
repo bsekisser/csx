@@ -72,6 +72,9 @@ void csx_core_arm_decode_ldst(csx_core_p core, const uint32_t opcode, csx_ldst_p
 		case	0x04:
 			ls->rw_size = sizeof(uint32_t);
 			break;
+		default:
+			LOG_ACTION(exit(1));
+			break;
 	}
 
 	if(!(ls->ldstx & 0x04))
@@ -79,16 +82,16 @@ void csx_core_arm_decode_ldst(csx_core_p core, const uint32_t opcode, csx_ldst_p
 	
 	ls->shift = 0;
 	ls->shift_imm = 0;
-	ls->rm = -1;
+	ls->rm = ~0;
 	switch(ls->ldstx) /* decode addressing mode registers / data */
 	{
 		case	0x00:
 			ls->rm_v = BFMOV(opcode, 11, 8, 4) | BFEXT(opcode, 3, 0);
 			break;
-		case	0x02:
+		case	0x02: /* immediate indexed */
 			ls->rm_v = BFEXT(opcode, 11, 0);
 			break;
-		case	0x03:
+		case	0x03: /* scaled register offset */
 			ls->shift_imm = BFEXT(opcode, 11, 7);
 			ls->shift = BFEXT(opcode, 6, 5);
 			
@@ -109,9 +112,9 @@ static void _csx_core_arm_decode_dpi(csx_core_p core, const uint32_t opcode, csx
 {
 	dpi->shift_op = CSX_SHIFTER_OP_ROR;
 
-	dpi->rm = -1;
+	dpi->rm = ~0;
 	dpi->rm_v = BFEXT(opcode, 7, 0);
-	dpi->rs = -1;
+	dpi->rs = ~0;
 	dpi->rs_v = BFMOV(opcode, 11, 8, 1);
 
 	if(0 == dpi->rs_v)
@@ -122,7 +125,7 @@ static void _csx_core_arm_decode_dpi(csx_core_p core, const uint32_t opcode, csx
 
 static void _csx_core_arm_decode_dpis(csx_core_p core, const uint32_t opcode, csx_dpi_p dpi)
 {
-	dpi->rs = -1;
+	dpi->rs = ~0;
 	dpi->rs_v = BFEXT(opcode, 11, 7);
 }
 
@@ -145,8 +148,8 @@ static void _csx_core_arm_shifter_operation_asr(csx_core_p core, uint32_t opcode
 {
 	uint8_t asr_v = dpi->rs_v;
 
-	if(!dpi->bit.x4)
-		asr_v = asr_v ? asr_v : 32;
+	if(!dpi->bit.x4 && !dpi->rs_v)
+		asr_v = 32;
 
 	dpi->out.v = ((signed)dpi->rm_v >> asr_v);
 
@@ -169,8 +172,8 @@ static void _csx_core_arm_shifter_operation_lsr(csx_core_p core, uint32_t opcode
 {
 	uint8_t lsr_v = dpi->rs_v;
 
-	if(!dpi->bit.x4)
-		lsr_v = lsr_v ? lsr_v : 32;
+	if(!dpi->bit.x4 && !lsr_v)
+		lsr_v = 32;
 
 	dpi->out.v = dpi->rm_v >> lsr_v;
 
@@ -184,8 +187,7 @@ static void _csx_core_arm_shifter_operation_ror(csx_core_p core, uint32_t opcode
 {
 	if(!dpi->bit.i && !dpi->bit.x4 && (0 == dpi->rs_v))
 	{
-		dpi->out.v = BMOV(CPSR, CSX_PSR_BIT_C, 31);
-		dpi->out.v |= dpi->rm_v >> 1;
+		dpi->out.v = BMOV(CPSR, CSX_PSR_BIT_C, 31) | (dpi->rm_v >> 1);
 		dpi->out.c = dpi->rm_v & 1;
 	}
 	else

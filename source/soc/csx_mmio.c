@@ -1,187 +1,174 @@
 #include "csx.h"
 #include "csx_mmio.h"
 
-enum {
-	MEM_READ_BIT = 0,
-	MEM_WRITE_BIT,
-	MEM_TRACE_READ_BIT,
-	MEM_TRACE_WRITE_BIT,
-};
+#include "csx_mmio_omap.h"
 
-#define MEM_READ (1 << MEM_READ_BIT)
-#define MEM_WRITE (1 << MEM_WRITE_BIT)
-#define MEM_READ_TRACE (1 << MEM_TRACE_READ_BIT)
-#define MEM_WRITE_TRACE (1 << MEM_TRACE_WRITE_BIT)
+#include "csx_mmio_cfg.h"
+#include "csx_mmio_dpll.h"
+#include "csx_mmio_mpu.h"
+#include "csx_mmio_ocp.h"
+#include "csx_mmio_timer.h"
+#include "csx_mmio_watchdog.h"
 
-#define MEM_RW (MEM_READ | MEM_WRITE)
-
-#define MEM_TRACE_RW (MEM_READ_TRACE | MEM_WRITE_TRACE)
-
-#define MEM_R_TRACE_R (MEM_READ | MEM_READ_TRACE)
-#define MEM_RW_TRACE_RW (MEM_RW | MEM_TRACE_RW)
+#include "page.h"
 
 #define MMIO_LIST \
-	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1) \
-	\
-	\
-	MMIO(0xfffe, 0x100c, 0x0000, 0x0000, 32, MEM_RW, COMP_MODE_CTRL_0) \
-	MMIO(0xfffe, 0x1038, 0x0000, 0x0000, 32, MEM_RW, FUNC_MUX_CTRL_D) \
-	MMIO(0xfffe, 0x1060, 0x0000, 0x0000, 32, MEM_RW, VOLTAGE_CTRL_0) \
-	MMIO(0xfffe, 0x1110, 0x0000, 0x0000, 32, MEM_RW, MOD_CONF_CTRL_1) \
-	MMIO(0xfffe, 0x1140, 0x0000, 0x007f, 32, MEM_RW, RESET_CTL) \
-	MMIO(0xfffe, 0x1160, 0x0000, 0x0000, 32, MEM_TRACE_RW, x0xfffe_0x1160) \
-	\
-	MMIO(0xfffe, 0xb034, 0x0000, 0x0000, 32, MEM_RW, WWPS) \
-	MMIO(0xfffe, 0xb048, 0x0000, 0x0000, 32, MEM_RW, WSPR) \
-	\
-	MMIO(0xfffe, 0xc700, 0x0000, 0x0000, 32, MEM_RW, MPU_CNTL_TIMER_3) \
-	MMIO(0xfffe, 0xc704, 0x0000, 0x0000, 32, MEM_WRITE, MPU_LOAD_TIM_3) \
-	MMIO(0xfffe, 0xc708, 0x0000, 0x0000, 32, MEM_R_TRACE_R, MPU_READ_TIM_3) \
-	\
-	MMIO(0xfffe, 0xc808, 0x0000, 0x8000, 16, MEM_RW, MPU_TIMER_MODE_WD) \
-	\
-	MMIO(0xfffe, 0xcc14, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS1_CONFIG) \
-	MMIO(0xfffe, 0xcc18, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS2_CONFIG) \
-	MMIO(0xfffe, 0xcc1c, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS3_CONFIG) \
-	MMIO(0xfffe, 0xcc50, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS0_CONFIG) \
-	MMIO(0xfffe, 0xcc54, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS1_CONFIG) \
-	MMIO(0xfffe, 0xcc58, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS2_CONFIG) \
-	MMIO(0xfffe, 0xcc5c, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS3_CONFIG) \
-	\
-	MMIO(0xfffe, 0xce00, 0x0000, 0x3000, 32, MEM_RW, ARM_CKCTL) \
-	MMIO(0xfffe, 0xce04, 0x0000, 0x0400, 32, MEM_RW, ARM_IDLECT1) \
-	MMIO(0xfffe, 0xce08, 0x0000, 0x0100, 32, MEM_RW, ARM_IDLECT2) \
-	MMIO(0xfffe, 0xce14, 0x0000, 0x0000, 32, MEM_RW, ARM_RSTCT2) \
-	MMIO(0xfffe, 0xce18, 0x0000, 0x0038, 32, MEM_RW, ARM_SYSST) \
-	\
-	MMIO(0xfffe, 0xcf00, 0x0000, 0x2002, 32, MEM_RW, DPLL1_CTL_REG)
+	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1)
 
-#undef MMIO
-#define MMIO(_ahi, _alo, _dhi, _dlo, _size, _access, _name) \
-	_name = ((_ahi ## ULL << 16) + _alo ## ULL),
+#include "csx_mmio_trace.h"
 
-enum {
-	MMIO_LIST
-};
-
-typedef struct ea_trace_t* ea_trace_p;
-typedef struct ea_trace_t {
-	uint32_t	address;
-	uint32_t	reset_value;
-	uint8_t		size;
-	uint32_t	access;
-	const char *name;
-}ea_trace_t;
-
-#undef MMIO
-#define MMIO(_ahi, _alo, _dhi, _dlo, _size, _access, _name) \
-	{ ((_ahi ## ULL << 16) | _alo ## ULL), \
-		((_dhi ## ULL << 16) | _dlo ## ULL), \
-		((_size) >> 3), _access, #_name, },
-	
-static struct ea_trace_t trace_list[] = {
-	MMIO_LIST
-	{ 0ULL,0ULL,0,0UL,0 }
-};
-
-ea_trace_p omap_mmio_get_trace(uint64_t address)
+ea_trace_p csx_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
+	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
+
 	int i = 0;
 	do {
-		ea_trace_p tl = &trace_list[i++];
+		ea_trace_p tle = &tl[i++];
 
-		if(tl->address == address)
-			return(tl);
-		if(0 == tl->address)
+		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+
+		if(tle->address == address)
+			return(tle);
+		if(0 == tle->address)
 			return(0);
-	}while(trace_list[i].address);
+	}while(tl[i].address);
 
 	return(0);
 }
 
 typedef struct csx_mmio_t* csx_mmio_p;
 typedef struct csx_mmio_t {
-	csx_p		csx;
-	uint8_t		data[CSX_MMIO_SIZE];
-	uint8_t		data_size;
-	uint64_t	timer_base[4];
+	csx_p					csx;
+	
+	csx_mmio_cfg_p			cfg;
+	csx_mmio_dpll_p			dpll;
+	csx_mmio_mpu_p			mpu;
+	csx_mmio_ocp_p			ocp;
+	csx_mmio_timer_p		timer[3];
+	csx_mmio_watchdog_p		wdt;
+
+	uint8_t					upld[_BV(8)];
+	uint32_t				usb_clnt_syscon1;
 }csx_mmio_t;
+
+ea_trace_p csx_mmio_trace(csx_mmio_p mmio, ea_trace_p tl, uint32_t address)
+{
+	ea_trace_p eat = csx_mmio_get_trace(tl, address);
+	const char *name = eat ? eat->name : "";
+
+	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+	
+	return(eat);
+}
 
 uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
-	csx_p csx = mmio->csx;
-	
-	ea_trace_p eat = omap_mmio_get_trace(vaddr);
-	const char *name = eat ? eat->name : "";
-	
-	uint32_t paddr = vaddr - CSX_MMIO_BASE;
-	
-	LOG("cycle = 0x%016llx, vaddr = 0x%08x, paddr = 0x%08x, name = %s", mmio->csx->cycle, vaddr, paddr, name);
-	
-	if(!eat)
-		LOG_ACTION(exit(1));
+	uint32_t module = vaddr & _BF(31, 8);
 
-	if(vaddr >= CSX_MMIO_BASE && vaddr <= CSX_MMIO_STOP)
+	switch(module)
 	{
-		uint8_t value_size = eat ? eat->size : 4;
-		uint32_t value = csx_data_read(&mmio->data[paddr], value_size);
-
-		switch(vaddr)
-		{
-			case MPU_READ_TIM_3:
-				value = csx->cycle - mmio->timer_base[3];
-				csx_data_write(&mmio->data[paddr], value, value_size);
-				break;
-		}
-		
-		return(csx_data_read((uint8_t*)&value, size));
+		case	CSX_MMIO_CFG_BASE + 0x000:
+		case	CSX_MMIO_CFG_BASE + 0x100:
+			return(csx_mmio_cfg_read(mmio->cfg, vaddr, size));
+			break;
+		case	CSX_MMIO_DPLL_BASE:
+			return(csx_mmio_dpll_read(mmio->dpll, vaddr, size));
+			break;
+		case	CSX_MMIO_MPU_BASE:
+			return(csx_mmio_mpu_read(mmio->mpu, vaddr, size));
+			break;
+		case	CSX_MMIO_OCP_BASE:
+			return(csx_mmio_ocp_read(mmio->ocp, vaddr, size));
+			break;
+		case	CSX_MMIO_TIMER(2):
+			return(csx_mmio_timer_read(mmio->timer[(vaddr >> 8) & 0x03], vaddr, size));
+			break;
+		case	CSX_MMIO_WATCHDOG_BASE:
+		case	CSX_MMIO_TIMER_WDT_BASE:
+			return(csx_mmio_watchdog_read(mmio->wdt, vaddr, size));
+			break;
 	}
 
-	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-	
+	csx_mmio_trace(mmio, trace_list, vaddr);
+
+	switch(vaddr)
+	{
+//		case	CSX_MMIO_UPLD_BASE:
+//			return(csx_data_read(&mmio->upld[vaddr & _BM(8)], size));
+//			break;
+		case	USB_CLNT_SYSCON1:
+			return(mmio->usb_clnt_syscon1);
+			break;
+	}
+
+	LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, module);
+	LOG_ACTION(exit(1));
 	return(0);
 }
 
 void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
-	csx_p csx = mmio->csx;
-	
-	ea_trace_p eat = omap_mmio_get_trace(vaddr);
-	const char* name = eat ? eat->name :  "";
+	uint32_t module = vaddr & _BF(31, 8);
 
-	uint32_t paddr = vaddr - CSX_MMIO_BASE;
-
-	LOG("cycle = 0x%016llx, vaddr = 0x%08x, paddr = 0x%08x, value = 0x%08x, name = %s",
-		csx->cycle, vaddr, paddr, value, name);
-
-	if(!eat)
-		LOG_ACTION(exit(1));
-
-	if(vaddr >= CSX_MMIO_BASE && vaddr <= CSX_MMIO_STOP)
+	switch(module)
 	{
-		uint8_t value_size = eat ? eat->size : 4;
-		
-		switch(vaddr)
-		{
-			case DPLL1_CTL_REG:
-				value |= 1;
-				break;
-			case MPU_LOAD_TIM_3:
-				mmio->timer_base[3] = csx->cycle;
-				csx_mmio_write(mmio, MPU_READ_TIM_3, value, value_size);
-				break;
-		}
-		
-		csx_data_write(&mmio->data[paddr], value, value_size);
+		case	CSX_MMIO_CFG_BASE + 0x000:
+		case	CSX_MMIO_CFG_BASE + 0x100:
+			return(csx_mmio_cfg_write(mmio->cfg, vaddr, value, size));
+			break;
+		case	CSX_MMIO_DPLL_BASE:
+			return(csx_mmio_dpll_write(mmio->dpll, vaddr, value, size));
+			break;
+		case	CSX_MMIO_MPU_BASE:
+			return(csx_mmio_mpu_write(mmio->mpu, vaddr, value, size));
+			break;
+		case	CSX_MMIO_OCP_BASE:
+			return(csx_mmio_ocp_write(mmio->ocp, vaddr, value, size));
+			break;
+		case	CSX_MMIO_TIMER(2):
+			return(csx_mmio_timer_write(mmio->timer[(vaddr >> 8) & 0x03], vaddr, value, size));
+			break;
+		case	CSX_MMIO_WATCHDOG_BASE:
+		case	CSX_MMIO_TIMER_WDT_BASE:
+			return(csx_mmio_watchdog_write(mmio->wdt, vaddr, value, size));
+			break;
 	}
-	else
+
+	csx_mmio_trace(mmio, trace_list, vaddr);
+
+	switch(vaddr)
 	{
-		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+//		case	CSX_MMIO_UPLD_BASE:
+//			return(csx_data_write(&mmio->upld[vaddr & _BM(8)], value, size));
+//			break;
+		case	USB_CLNT_SYSCON1:
+			mmio->usb_clnt_syscon1 = value;
+			return;
+			break;
 	}
+
+	LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, module);
+	LOG_ACTION(exit(1));
+	return;
+}
+
+void csx_mmio_reset(csx_mmio_p mmio)
+{
+	csx_mmio_cfg_reset(mmio->cfg);
+	csx_mmio_dpll_reset(mmio->dpll);
+	csx_mmio_mpu_reset(mmio->mpu);
+	csx_mmio_ocp_reset(mmio->ocp);
+	csx_mmio_timer_reset(mmio->timer[0]);
+	csx_mmio_timer_reset(mmio->timer[1]);
+	csx_mmio_timer_reset(mmio->timer[2]);
+	csx_mmio_watchdog_reset(mmio->wdt);
+
+	csx_data_write(&mmio->upld[0x08], 0x00008000, sizeof(uint32_t));
 }
 
 int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 {
+	int err;
 	csx_mmio_p mmio;
 	
 	ERR_NULL(mmio = malloc(sizeof(csx_mmio_t)));
@@ -191,17 +178,14 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 	mmio->csx = csx;
 	*h2mmio = mmio;
 	
-	int i = 0;
-	do {
-		ea_trace_p te = &trace_list[i++];
-		
-		uint32_t paddr = te->address - CSX_MMIO_BASE;
+	ERR(err = csx_mmio_cfg_init(csx, mmio, &mmio->cfg));
+	ERR(err = csx_mmio_dpll_init(csx, mmio, &mmio->dpll));
+	ERR(err = csx_mmio_mpu_init(csx, mmio, &mmio->mpu));
+	ERR(err = csx_mmio_ocp_init(csx, mmio, &mmio->ocp));
+	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[0]));
+	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[1]));
+	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[2]));
+	ERR(err = csx_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
-		LOG("[0x%08x, 0x%08x] = 0x%08x, size = 0x%02x, access = 0x%04x, name: %s",
-			te->address, paddr, te->reset_value, te->size, te->access, te->name);
-		
-		csx_data_write(&mmio->data[paddr], te->reset_value, te->size);
-	}while(trace_list[i].address);
-
-	return(0);
+	return(err);
 }

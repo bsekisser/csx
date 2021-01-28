@@ -2,8 +2,13 @@
 #define rLR 14
 #define rPC 15
 
-#define INSN_PC (0x10 | (rPC))
-#define TEST_PC (0x20 | (rPC))
+enum {
+	_THUMB = 0x04,
+	_TEST,
+};
+
+#define rTHUMB(_r)		(_BV(_THUMB) | ((_r) & 0x0f))
+#define rTEST(_r)		(_BV(_TEST) | ((_r) & 0x0f))
 
 /* **** */
 

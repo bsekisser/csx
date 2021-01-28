@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "csx.h"
 #include "csx_core.h"
 
@@ -47,14 +49,16 @@ void csx_data_write(uint8_t* dst, uint32_t value, uint8_t size)
 
 uint32_t csx_mmu_read(csx_mmu_p mmu, uint32_t addr, uint8_t size)
 {
-	csx_p csx = mmu->csx;
+	assert((size == 1) || (size == 2) || (size == 4));
+
+	const csx_p csx = mmu->csx;
 	
 	if(_in_bounds(addr, size, 0, mmu->loader.size))
 		return(csx_data_read(&mmu->loader.data[addr], size));
 	if(_in_bounds(addr, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP))
 		return(csx_data_read(&mmu->sdram[addr - CSX_SDRAM_BASE], size));
-	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
-		return(csx_data_read(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], size));
+//	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
+//		return(csx_data_read(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], size));
 	else if(_in_bounds(addr, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
 		return(csx_mmio_read(csx->mmio, addr, size));
 
@@ -67,12 +71,14 @@ uint32_t csx_mmu_read(csx_mmu_p mmu, uint32_t addr, uint8_t size)
 
 void csx_mmu_write(csx_mmu_p mmu, uint32_t addr, uint32_t value, uint8_t size)
 {
-	csx_p csx = mmu->csx;
+	assert((size == 1) || (size == 2) || (size == 4));
+
+	const csx_p csx = mmu->csx;
 	
 	if(_in_bounds(addr, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP))
 		return(csx_data_write(&mmu->sdram[addr - CSX_SDRAM_BASE], value, size));
-	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
-		return(csx_data_write(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], value, size));
+//	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
+//		return(csx_data_write(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], value, size));
 	else if(_in_bounds(addr, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
 		return(csx_mmio_write(csx->mmio, addr, value, size));
 
@@ -107,8 +113,8 @@ int csx_mmu_init(csx_p csx, csx_mmu_h h2mmu)
 	mmu->loader.data = data;
 	mmu->loader.size = sb.st_size;
 
-	uint32_t base = 0x10020000 - CSX_SDRAM_BASE;
-	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
+//	const uint32_t base = 0x10020000 - CSX_SDRAM_BASE;
+//	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
 	
 	LOG("data = 0x%08x, size = 0x%08x", (uint32_t)mmu->loader.data, mmu->loader.size);
 	

@@ -1,3 +1,5 @@
+#include <assert.h>
+
 #include "csx.h"
 #include "csx_core.h"
 
@@ -13,13 +15,23 @@ int csx_soc_init(csx_p csx)
 	ERR(err = csx_coprocessor_init(csx));
 	ERR(err = csx_mmu_init(csx, &csx->mmu));
 	ERR(err = csx_mmio_init(csx, &csx->mmio));
+	
+	csx_mmio_reset(csx->mmio);
+	
 	return(err);
 }
 
-#define Kb(_k) (_k * 1024)
+#define Kb(_k) ((_k) * 1024)
+#define Mb(_k) Kb((_k) * 1024)
 
 int main(void)
 {
+	assert(0x01 == sizeof(uint8_t));
+	assert(0x02 == sizeof(uint16_t));
+	assert(0x04 == sizeof(uint32_t));
+	assert(0x08 == sizeof(uint64_t));
+	assert(~0UL == _BM(31));
+
 	int err;
 	csx_t ccsx, *csx = &ccsx;
 	
@@ -37,7 +49,7 @@ int main(void)
 	{
 		csx->state = CSX_STATE_RUN;
 		
-		int limit = Kb(512) + Kb(0);
+		int limit = Mb(2) + Kb(0) + Kb(0);
 		for(int i = 0; i < limit; i++)
 		{
 			csx_core_p core = csx->core;
@@ -54,7 +66,7 @@ int main(void)
 		}
 	}
 
-	LOG("0x%08x", csx_reg_get(csx->core, INSN_PC));
+	LOG("0x%08x", csx->core->pc);
 
 	_TRACE_(csx, EXIT);
 

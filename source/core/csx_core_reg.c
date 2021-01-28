@@ -11,7 +11,7 @@ enum {
 	CSX_PSR_MODE_SYSTEM = (0x18 + 0x07),
 };
 
-static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, uint8_t *reg)
+static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, csx_reg_p reg)
 {
 	*reg = 13;
 	
@@ -37,6 +37,7 @@ static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, uint8_t *reg)
 		case CSX_PSR_MODE_USER:
 			break;
 		default:
+			LOG("mode = 0x%03x", mode);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -47,30 +48,32 @@ static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, uint8_t *reg)
 
 uint32_t csx_reg_pc_fetch_step(csx_core_p core, uint32_t *pc)
 {
-	int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
+	const int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
 	core->pc = (core->reg[rPC] & (~3 >> thumb));
 	if(pc)
 		*pc = core->pc;
-	uint8_t size = (4 >> thumb);
+	const uint8_t size = (4 >> thumb);
 	core->reg[rPC] += size;
 	
-	return(csx_mmu_read(core->csx->mmu, *pc, size));
+	return(csx_mmu_read(core->csx->mmu, core->pc, size));
 }
 
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)
 {
-	uint32_t res = core->reg[r & 0x0f];
+	const uint8_t rr = r & 0x0f;
+	uint32_t res = core->reg[rr & 0x0f];
 
-	switch(r)
+	switch(rr)
 	{
 		case rPC:
 		{
-			int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-			res &= (~3 >> thumb);
-			res += (4 >> thumb);
+			if(!(r & rTEST(0)))
+			{
+				int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
+				res &= (~3 >> thumb);
+				res += (4 >> thumb);
+			}
 		}	break;
-		case TEST_PC:
-			break;
 	}
 
 	return(res);
@@ -78,20 +81,22 @@ uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)
 
 void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v)
 {
-	uint8_t rr = r & 0x0f;
+	const uint8_t rr = r & 0x0f;
 	
-	switch(r)
+	switch(rr)
 	{
 		case rPC:
 		{
-			int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-			v &= (~3 >> thumb);
-		}	break;
-		case INSN_PC:
-		{
-			int thumb = v & 1;
-			BMAS(CPSR, CSX_PSR_BIT_T, thumb);
-			core->step = thumb ? csx_core_thumb_step : csx_core_arm_step;
+			int thumb;
+			if(r & rTHUMB(0))
+			{
+				thumb = v & 1;
+				BMAS(CPSR, CSX_PSR_BIT_T, thumb);
+				core->step = thumb ? csx_core_thumb_step : csx_core_arm_step;
+			}
+			else
+				thumb = BEXT(CPSR, CSX_PSR_BIT_T);
+			
 			v &= (~3 >> thumb);
 		}	break;
 	}
@@ -101,12 +106,13 @@ void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v)
 
 uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)
 {
-	uint8_t reg;
-	uint8_t mode = BFEXT(CPSR, 4, 0);
+	csx_reg_t reg;
+	
+	const uint8_t mode = BFEXT(CPSR, 4, 0);
 	uint32_t* usr_regs = csx_psr_mode_regs(core, mode, &reg);
 
 	uint32_t vout;
-	if(reg && r >= reg)
+	if(reg && ((r & 0x0f) < 15) && r >= reg)
 	{
 		uint8_t umreg = r - reg;
 		vout = usr_regs[umreg];
@@ -124,8 +130,8 @@ uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)
 
 void csx_psr_mode_switch(csx_core_p core, uint32_t v)
 {
-	uint8_t old_mode = BFEXT(core->cpsr, 4, 0);
-	uint8_t new_mode = BFEXT(v, 4, 0);
+	const uint8_t old_mode = BFEXT(core->cpsr, 4, 0);
+	const uint8_t new_mode = BFEXT(v, 4, 0);
 
 	uint32_t *src = 0, *dst = 0;
 	uint8_t sreg;

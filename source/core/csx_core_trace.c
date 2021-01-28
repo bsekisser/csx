@@ -13,17 +13,17 @@ static const char* csx_trace_psr_mode_string[] = {
 
 int csx_trace_core(csx_core_p core)
 {
-	csx_p csx = core->csx;
+	const csx_p csx = core->csx;
 //	csx_core_p core = csx->core;
 	
-	uint32_t pc = csx_reg_get(core, TEST_PC);
+	const uint32_t pc = csx_reg_get(core, rTEST(rPC));
 	
 	csx_trace_p trace = csx->trace.head;
 	
 	if(!trace)
 		return(1);
 	
-	if(_in_bounds(pc, 4, trace->start, trace->stop))
+	if(_in_bounds(pc, sizeof(uint32_t), trace->start, trace->stop))
 		return(1);
 	
 	return(0);
@@ -49,7 +49,7 @@ void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr)
 	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 7) ? 'I': 'i');
 	dst += snprintf(dst, end - dst, "%c", BEXT(psr, 6) ? 'F': 'f');
 	dst += snprintf(dst, end - dst, "%c:", BEXT(psr, 5) ? 'T': 't');
-	uint8_t mode = BFEXT(psr, 4, 0);
+	const uint8_t mode = BFEXT(psr, 4, 0);
 	dst += snprintf(dst, end - dst, ":M[4:0] = 0x%01x", mode);
 	
 	const char* mode_string = csx_trace_psr_mode_string[mode & 0x0f];
@@ -115,7 +115,7 @@ void csx_trace_inst_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls, uint8_
 	
 	if(ls->ldstx & 1)
 	{
-		int bit_t = !ls->bit.p && ls->bit.w;
+		const int bit_t = !ls->bit.p && ls->bit.w;
 
 		dst += snprintf(dst, end - dst, "%s%s",
 			ls->bit.b22 ? "b" : "", bit_t ? "t" : "");

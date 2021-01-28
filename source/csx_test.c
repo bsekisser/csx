@@ -17,12 +17,12 @@ uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t
 	
 	uint32_t pc = start_pc;
 	
-	csx_reg_set(core, INSN_PC, pc);
+	csx_reg_set(core, rTHUMB(rPC), pc);
 	for(; count ; count--)
 	{
 		core->step(core);
 	
-		pc = csx_reg_get(core, TEST_PC);
+		pc = csx_reg_get(core, rTEST(rPC));
 		if(pc >= end_pc)
 			break;
 	}
@@ -35,9 +35,18 @@ uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t
 int csx_soc_init(csx_p csx)
 {
 	int err;
+	
+	csx->cycle = 0;
+	csx->trace.head = 0;
+	csx->trace.tail = 0;
+	
 	ERR(err = csx_core_init(csx, &csx->core));
+	ERR(err = csx_coprocessor_init(csx));
 	ERR(err = csx_mmu_init(csx, &csx->mmu));
 	ERR(err = csx_mmio_init(csx, &csx->mmio));
+	
+	csx_mmio_reset(csx->mmio);
+	
 	return(err);
 }
 
@@ -51,17 +60,15 @@ int main(void)
 	_TRACE_(t, ENTER);
 	
 	t->csx = csx;
-	csx->trace.head = 0;
-	csx->trace.tail = 0;
 	
-	csx_soc_init(csx);
+	ERR(csx_soc_init(csx));
 
 	t->start_pc = CSX_SDRAM_BASE;
-	csx->cycle = 0;
 	csx->state = CSX_STATE_HALT;
 	
 	_TRACE_(t, ENTER);
 	
+#if 0
 	if(0)
 	{
 		LOG("0 - 0x%08x, 1 - 0x%08x, 2 - 0x%08x", _BM(0), _BM1(0), _BM2(0));
@@ -69,6 +76,7 @@ int main(void)
 		LOG("0 - 0x%08x, 1 - 0x%08x, 2 - 0x%08x", _BM(15), _BM1(15), _BM2(15));
 		LOG("0 - 0x%08x, 1 - 0x%08x, 2 - 0x%08x", _BM(31), _BM1(31), _BM2(31));
 	}
+#endif
 
 	csx_test_arm(t);
 	csx_test_thumb(t);

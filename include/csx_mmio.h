@@ -9,4 +9,5 @@ typedef struct csx_mmio_t* csx_mmio_p;
 
 uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t addr, uint8_t size);
 void csx_mmio_write(csx_mmio_p mmio, uint32_t addr, uint32_t value, uint8_t size);
+void csx_mmio_reset(csx_mmio_p mmio);
 int csx_mmio_init(csx_p csx, csx_mmio_h mmio);

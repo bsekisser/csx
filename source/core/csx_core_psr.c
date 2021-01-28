@@ -34,7 +34,7 @@ static const char* inst_ccs[16] = {
 
 uint8_t csx_core_check_cc(csx_core_p core, uint32_t opcode, uint8_t cc)
 {
-	uint32_t psr = CPSR;
+	const uint32_t psr = CPSR;
 
 	core->ccs = inst_ccs[cc];
 
@@ -107,53 +107,9 @@ void csx_core_flags_nz(csx_core_p core, uint32_t rd_v)
 	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
 		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
-}
-
-static uint32_t _avr_flags_zns(uint32_t psr, uint32_t res)
-{
-	psr |= BMOV(res, 31, CSX_PSR_BIT_N);
-	psr |= ((res == 0) ? CSX_PSR_Z : 0);
-	return(psr);
-}
-
-static void _avr_flags_add(uint32_t res, uint32_t rd, uint32_t rr)
-{
-	/* carry & half carry */
-	
-	uint32_t add_carry = (rd & rr) | (rr & ~res) | (~res & rd);
-	uint32_t psr = BMOV(add_carry, 31, CSX_PSR_BIT_C);
-
-	/* overflow */
-	uint32_t add_overflow = (rd & rr & ~res) | (~rd & ~rr & res);
-	psr |= BMOV(add_overflow, 31, CSX_PSR_BIT_V);
-
-	/* zns */
-	psr = _avr_flags_zns(psr, res);
-
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(psr & CSX_PSR_N), !!(psr & CSX_PSR_Z),
-		!!(psr & CSX_PSR_C), !!(psr & CSX_PSR_V));
-}
-
-static void _avr_flags_sub(uint32_t res, uint32_t rd, uint32_t rr)
-{
-	/* carry & half carry */
-	
-	uint32_t sub_carry = (~rd & rr) | (rr & res) | (res & ~rd);
-	uint32_t psr = BMOV(sub_carry, 31, CSX_PSR_BIT_C);
-
-	/* overflow */
-	uint32_t sub_overflow = (rd & ~rr & ~res) | (~rd & rr & res);
-	psr |= BMOV(sub_overflow, 31, CSX_PSR_BIT_V);
-
-	psr = _avr_flags_zns(psr, res);
-
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(psr & CSX_PSR_N), !!(psr & CSX_PSR_Z),
-		!!(psr & CSX_PSR_C), !!(psr & CSX_PSR_V));
 }
 
 /*
@@ -175,7 +131,7 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
-	uint32_t xvec = (s1_v ^ s2_v);
+	const uint32_t xvec = (s1_v ^ s2_v);
 	uint32_t ovec;
 
 	if(is_add)
@@ -191,14 +147,9 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 		
 	CPSR |= BMOV(ovec, 31, CSX_PSR_BIT_V);
 
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
 		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
-	
-	/* **** */
-	
-	if(1) _avr_flags_add(rd_v, s1_v, s2_v);
-	if(1) _avr_flags_sub(rd_v, s1_v, s2_v);
 }
 
 void csx_core_flags_nzcv_add(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
