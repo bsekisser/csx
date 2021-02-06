@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <ctype.h>
 
+#include <capstone/capstone.h>
+
 #include "err_test.h"
 #include "data.h"
 
@@ -41,7 +43,7 @@ typedef struct csx_t {
 	
 	T(uint32_t			trace_flags);
 	
-//	csh					handle;
+	csh					cs_handle;
 }csx_t;
 
 void csx_init(csx_p csx);

@@ -1,3 +1,7 @@
+#define CSX_MMIO_MPU_GPIO3_BASE		0xfffbb400
+#define CSX_MMIO_MPU_GPIO4_BASE		0xfffbbc00
+#define CSX_MMIO_MPU_GPIO1_BASE		0xfffbe400
+#define CSX_MMIO_MPU_GPIO2_BASE		0xfffbec00
 #define CSX_MMIO_CFG_BASE			0xfffe1000
 #define CSX_MMIO_WATCHDOG_BASE		0xfffeb000
 #define CSX_MMIO_TIMER_BASE			0xfffec500

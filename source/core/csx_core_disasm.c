@@ -5,8 +5,8 @@
 
 void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
 {
-	csh handle;
-	cs_insn *insn;
+	csh handle = 0;
+	cs_insn *insn = 0;
 
 	const int thumb = address & 1;
 	const int size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
@@ -15,10 +15,11 @@ void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
 	address &= ~1;
 
 	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &handle));
-	
+
 	const uint8_t *insn_data = (uint8_t*)&opcode;
 
 	int count = cs_disasm(handle, insn_data, size, address, 0, &insn);
+
 	if (count > 0) {
 		size_t j;
 		for (j = 0; j < count; j++) {

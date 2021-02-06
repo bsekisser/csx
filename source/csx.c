@@ -39,6 +39,7 @@ int main(void)
 	_TRACE_ENABLE_(csx, EXIT);
 	_TRACE_(csx, ENTER);
 
+//	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &csx->cs_handle));
 
 	ERR(err = csx_soc_init(csx));
 
@@ -58,13 +59,16 @@ int main(void)
 
 			core->step(core);
 
-			if(csx->state & CSX_STATE_HALT)
+			if((csx->state & CSX_STATE_HALT) ||
+				(0 == csx_reg_get(core, rTEST(rPC))))
 			{
 				i = limit;
 				LOG_ACTION(break);
 			}
 		}
 	}
+
+//	cs_close(&handle);
 
 	LOG("0x%08x", csx->core->pc);
 

@@ -131,6 +131,8 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
+	
+
 	const uint32_t xvec = (s1_v ^ s2_v);
 	uint32_t ovec;
 
@@ -142,9 +144,9 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	else
 	{
 		ovec = (s1_v ^ rd_v) & xvec;
-		CPSR |= BMOV((xvec ^ ovec), 31, CSX_PSR_BIT_C);
+		CPSR |= BMOV(!(s1_v < s2_v), 0, CSX_PSR_BIT_C);
 	}
-		
+	
 	CPSR |= BMOV(ovec, 31, CSX_PSR_BIT_V);
 
 	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",

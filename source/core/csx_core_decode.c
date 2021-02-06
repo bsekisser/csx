@@ -42,9 +42,9 @@ void csx_core_arm_decode_ldst(csx_core_p core, const uint32_t opcode, csx_ldst_p
 	switch(ls->ldstx) /* decode size */
 	{
 		case	0x00:
-			ls->bit.s = BEXT(opcode, 6);
+			ls->bit.s6 = BEXT(opcode, 6);
 			ls->bit.h = BEXT(opcode, 5);
-			ls->flags.s = ls->bit.l && ls->bit.s;
+			ls->flags.s = ls->bit.l && ls->bit.s6;
 			switch(BMOV(ls->bit.l, 0, 2) | BFEXT(opcode, 6, 5))
 			{
 				case 0x01:
@@ -95,7 +95,7 @@ void csx_core_arm_decode_ldst(csx_core_p core, const uint32_t opcode, csx_ldst_p
 			ls->shift_imm = BFEXT(opcode, 11, 7);
 			ls->shift = BFEXT(opcode, 6, 5);
 			
-			if(ls->shift || ls->shift_imm)
+			if((0 != ls->shift) || (0 != ls->shift_imm))
 				LOG_ACTION(exit(1));
 			
 			csx_core_arm_decode_rm(opcode, &ls->rm);

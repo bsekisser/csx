@@ -264,15 +264,18 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 	uint32_t new_pc = pc + (offset << 2);
 	
+	int thumb = 0;
 	if(blx)
 	{
+		thumb = 1;
 		new_pc |= (link << 1) | 1;
 		core->ccs = "AL";
 		link = cce = 1;
 	}
 
+
 	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', offset);
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', offset);
 
 	if(link)
 		CORE_TRACE_LINK(csx_reg_get(core, rTEST(rPC)));
@@ -293,9 +296,8 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 	_setup_decode_rm(opcode, rm);
 	const int link = BEXT(opcode, 5);
 
-	const uint32_t rm_v = csx_reg_get(core, rm);
-	const int thumb = rm_v & 1;
-	const uint32_t new_pc = (rm_v & ~3) | thumb;
+	const uint32_t new_pc = csx_reg_get(core, rm);
+	const int thumb = new_pc & 1;
 
 	CORE_TRACE("b%sx(r(%u)) /* %c(0x%08x) */",
 		link ? "l" : "", rm, thumb ? 'T' : 'A', new_pc & ~1);
@@ -432,23 +434,39 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 	csx_core_arm_decode_ldst(core, opcode, &ls);
 	ls.rn_v = csx_reg_get(core, ls.rn);
 
-	const uint8_t ea_mode = BFEXT(opcode, 24, 23);
 	const uint8_t rcount = (__builtin_popcount(ls.rm_v) << 2);
 	
-	uint32_t start_address = ls.rn_v;
-	uint32_t end_address = ls.rn_v;
+	uint32_t sp_in = ls.rn_v;
+	uint32_t sp_out;
 	
-	if(ls.bit.u)
+	/*
+	 * DA	!ls.bit.u && !ls.bit.p
+	 * DB	!ls.bit.u && ls.bit.p
+	 * IA	ls.bit.u && !ls.bit.p
+	 * IB	ls.bit.u && ls.bit.p
+	 * 
+	 */
+
+	uint32_t start_address;
+	uint32_t end_address;
+
+	if(ls.bit.u) /* increment */
 	{
-		start_address += ls.bit.p << 2;
-		end_address += rcount + ((ls.bit.p) << 2);
+		start_address = sp_in + (ls.bit.p << 2);
+		end_address = start_address + rcount;
+		sp_out = sp_in + rcount;
 	}
-	else
+	else /* decrement */
 	{
-		start_address -= rcount + ((!ls.bit.p) << 2);
-		end_address -= ((ls.bit.p) << 2);
+		end_address = sp_in + (!ls.bit.p << 2);
+		start_address = end_address - rcount;
+		sp_out = sp_in - rcount;
 	}
-	
+
+	if(0) LOG("sp_in = 0x%08x, start_address = 0x%08x, end_address = 0x%08x",
+		sp_in, start_address, end_address);
+	if(0) LOG("sp_out = 0x%08x", sp_out);
+
 	const char *opstr;
 	if(0 && rSP == ls.rn)
 		opstr = ls.bit.l ? "pop" : "push";
@@ -461,24 +479,23 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 		uint8_t c = (i > 9 ? ('a' + (i - 10)) : '0' + i);
 		reglist[i] = BTST(ls.rm_v, i) ? c : '.';
 	}
-	reglist[15] = 0;
+	reglist[16] = 0;
 	
-	int load_spsr = ls.bit.s && ls.bit.l && BTST(ls.rm_v, 15);
+	int load_spsr = ls.bit.s22 && ls.bit.l && BTST(ls.rm_v, 15);
 
-	int user_mode_regs_load = ls.bit.s && !ls.bit.w && !BTST(ls.rm_v, 15);
-	int user_mode_regs_store = ls.bit.s && !ls.bit.l;
+	int user_mode_regs_load = ls.bit.s22 && ls.bit.l && !ls.bit.w && !BTST(ls.rm_v, 15);
+	int user_mode_regs_store = ls.bit.s22 && !ls.bit.l;
+
+	if(0) LOG("s = %01u, umrl = %01u, umrs = %01u", ls.bit.s22, user_mode_regs_load, user_mode_regs_store);
 
 	int user_mode_regs = user_mode_regs_load || user_mode_regs_store;
 
-	CORE_TRACE("%s%c%c%s(r(%u), {%s}%s%s)" ,
+	CORE_TRACE("%s%c%c(r(%u)%s, {%s}%s%s) /* 0x%08x */" ,
 		opstr, ls.bit.u ? 'i' : 'd', ls.bit.p ? 'b' : 'a',
-		ls.bit.w ? "!" : "", ls.rn, reglist,
+		ls.rn, ls.bit.w ? "!" : "", reglist,
 		user_mode_regs ? ", USER" : "",
-		load_spsr ? ", SPSR" : "");
+		load_spsr ? ", SPSR" : "", sp_in);
 	
-	if(0) LOG("sp_in = 0x%08x, start_address = 0x%08x, end_address = 0x%08x",
-		ls.rn_v, start_address, end_address);
-
 	ls.ea = start_address;
 
 	/* CP15_r1_Ubit == 0 */
@@ -511,43 +528,29 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 			if(ls.bit.l)
 			{
 				rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
-				LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
+				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
 				csx_reg_set(core, rTHUMB(rPC), rxx_v);
 			}
 			else
 			{
 				rxx_v = csx_reg_get(core, rPC);
-				LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
+				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
 				csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
 			}
 
 			ls.ea += sizeof(uint32_t);
 		}
 
+		if((ls.bit.w && (user_mode_regs || load_spsr))
+			|| (user_mode_regs && load_spsr))
+				LOG_ACTION(exit(1));
+
 		if(ls.bit.w) 
 		{
 			if(0) LOG("ea = 0x%08x", ls.ea);
 
-			uint32_t sp_out;
-			fflush(0);
-			if(1) switch(ea_mode)
-			{
-				case 0x00:	/*	DA	*/
-				case 0x02:	/*	DB	*/
-					assert(end_address == ls.ea - 4);
-					sp_out = start_address;
-					csx_reg_set(core, ls.rn, start_address);
-					break;
-				case 0x01:	/*	IA	*/
-				case 0x03:	/*	IB	*/
-					assert(end_address == ls.ea);
-					sp_out = end_address;
-					csx_reg_set(core, ls.rn, end_address);
-					break;
-			}
-
-			if(0) LOG("sp_out = 0x%08x, start_address = 0x%08x, end_address = 0x%08x",
-				sp_out, ls.rn_v, ls.ea);
+			assert(end_address == ls.ea);
+			csx_reg_set(core, ls.rn, sp_out);
 		}
 	}
 }

@@ -63,8 +63,8 @@ uint32_t csx_mmu_read(csx_mmu_p mmu, uint32_t addr, uint8_t size)
 		return(csx_mmio_read(csx->mmio, addr, size));
 
 	LOG("addr = 0x%08x", addr);
-	LOG("csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ)");
-//	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
+//	LOG("csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ)");
+	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
 
 	return(0);
 }
@@ -77,14 +77,14 @@ void csx_mmu_write(csx_mmu_p mmu, uint32_t addr, uint32_t value, uint8_t size)
 	
 	if(_in_bounds(addr, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP))
 		return(csx_data_write(&mmu->sdram[addr - CSX_SDRAM_BASE], value, size));
-//	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
-//		return(csx_data_write(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], value, size));
+	else if(_in_bounds(addr, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP))
+		return(csx_data_write(&mmu->frame_buffer[addr - CSX_FRAMEBUFFER_BASE], value, size));
 	else if(_in_bounds(addr, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
 		return(csx_mmio_write(csx->mmio, addr, value, size));
 
 	LOG("addr = 0x%08x", addr);
-	LOG("csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE)");
-//	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+//	LOG("csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE)");
+	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 }
 
 int csx_mmu_init(csx_p csx, csx_mmu_h h2mmu)

@@ -91,66 +91,24 @@ void csx_test_thumb_ldstm(csx_test_p t)
 	csx_core_p core = csx->core;
 	csx_mmu_p mmu = csx->mmu;
 
-	uint32_t test_ldmia_addr = 0x10001000;
+	t->start_pc = t->pc = 0x10000000;
+	
+	csx_reg_set(core, 0, 0x10001004);
 
-	uint32_t ea = test_ldmia_addr;
-	for(int i = 0; i < 4; i++)
-	{
-		uint32_t test_value = _test_value(4 + i);
-		csx_mmu_write(mmu, ea, test_value, sizeof(uint32_t));
-		ea += 4;
-	}
+	for(int i = 0; i < 8; i++)
+		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
 
-	csx_reg_set(core, 0, test_ldmia_addr);
-	thumb_ldmia_rd_reglist(t, 0, 0xf0);
-
+	thumb_ldmia_rd_reglist(t, 0, 0xcc);
 	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
 
-	for(int i = 4; i <= 7; i++)
-	{
-		uint32_t test_value = _test_value(i);
-		uint32_t rxx_v = csx_reg_get(core, i);
+	for(int i = 0; i < 8; i++)
+		LOG("r[%02u] = 0x%08x", i, csx_reg_get(core, i));
 		
-		LOG("(test_value = 0x%08x) ?==? (r(%u) = 0x%08x)",
-			test_value, i, rxx_v);
-		
-		assert(test_value == rxx_v);
-	}
-
-	uint32_t test_ldmia_addr_end = csx_reg_get(core, 0);
-	LOG("r(0) == 0x%08x -- 0x%08x", test_ldmia_addr, test_ldmia_addr_end);
-	
-	uint32_t test_ldmia_addr_expect = test_ldmia_addr + (4 << 2);
-	assert(test_ldmia_addr_end == test_ldmia_addr_expect);
-	
-	/* stmia */
-	
-	uint32_t test_stmia_addr = test_ldmia_addr + 0x1000;
-	
-	csx_reg_set(core, 0, test_stmia_addr);
-	thumb_stmia_rd_reglist(t, 0, 0xf0);
-
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
-	
-	ea = test_stmia_addr;
-	for(int i = 4; i <= 7; i++)
-	{
-		uint32_t test_value = _test_value(i);
-		uint32_t rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
-		
-		LOG("(test_value = 0x%08x) ?==? (ea(%u) = 0x%08x)",
-			test_value, i, rxx_v);
-		
-		assert(test_value == rxx_v);
-
-		ea += 4;
-	}
-
-	uint32_t test_stmia_addr_end = csx_reg_get(core, 0);
-	LOG("r(0) == 0x%08x -- 0x%08x", test_stmia_addr, test_stmia_addr_end);
-	
-	uint32_t test_stmia_addr_expect = test_stmia_addr + (4 << 2);
-	assert(test_stmia_addr_end == test_stmia_addr_expect);
+	assert(0x10001014 == csx_reg_get(core, 0));
+	assert(_test_value(1) == csx_reg_get(core, 2));
+	assert(_test_value(2) == csx_reg_get(core, 3));
+	assert(_test_value(3) == csx_reg_get(core, 6));
+	assert(_test_value(4) == csx_reg_get(core, 7));
 }
 
 void csx_test_pop_push(csx_test_p t)

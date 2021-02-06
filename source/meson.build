@@ -21,11 +21,11 @@ executable(
 	csx_sources,
 	include_directories: inc,
 	link_with: [ csx_lib_soc, csx_lib_core ],
-	)
+	dependencies: [ capstone ])
 
 executable(
 	'csx_test',
 	csx_test_sources,
 	include_directories: inc,
 	link_with: [ csx_lib_soc, csx_lib_core ],
-	)
+	dependencies: [ capstone ])

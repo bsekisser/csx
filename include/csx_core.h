@@ -6,7 +6,8 @@
 #include "err_test.h"
 #include "data.h"
 
-#define UNPREDICTABLE
+#define UNPREDICTABLE \
+	TRACE("UNPREDICTABLE");
 
 #define UNIMPLIMENTED \
 	LOG_ACTION(exit(1));
@@ -57,7 +58,7 @@ typedef struct csx_core_t {
 
 static inline int csx_in_a_privaleged_mode(csx_core_p core)
 {
-	UNPREDICTABLE;
+//	UNPREDICTABLE;
 	if(0x00 != _bits(CPSR, 4, 0))
 		return(1);
 	else

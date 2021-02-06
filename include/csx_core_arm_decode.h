@@ -91,7 +91,7 @@ typedef struct csx_ldst_t {
 		};
 		uint8_t		w;
 		uint8_t		l;
-		uint8_t		s;
+		uint8_t		s6;
 		uint8_t		h;
 	}bit;
 }csx_ldst_t;

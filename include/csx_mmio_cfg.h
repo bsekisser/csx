@@ -4,19 +4,7 @@ typedef struct csx_mmio_cfg_t {
 	csx_p			csx;
 	csx_mmio_p		mmio;
 
-	uint32_t		oxfffe1160;
-	
-	struct	{
-		uint32_t	ctrl;
-	}mux[('D' - 'A') + 1];
-
-	struct {
-		uint32_t	mode_ctrl;
-	}comp;
-
-	uint32_t		mod_conf_ctrl_0;
-	uint32_t		voltage_ctrl_0;
-	uint32_t		reset_ctl;
+	uint8_t			data[0x1ff];
 }csx_mmio_cfg_t;
 
 int csx_mmio_cfg_init(csx_p csx, csx_mmio_p mmio, csx_mmio_cfg_h cfg);
