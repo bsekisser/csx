@@ -21,9 +21,10 @@
 #define ARM_RSTCT2			_MPU(0x014)
 #define ARM_SYSST			_MPU(0x018)
 
-uint32_t csx_mmio_mpu_read(csx_mmio_mpu_p mpu, uint32_t addr, uint8_t size)
+static uint32_t csx_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
 {
-	csx_p csx = mpu->csx;
+	const csx_mmio_mpu_p mpu = data;
+	const csx_p csx = mpu->csx;
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
@@ -55,9 +56,10 @@ uint32_t csx_mmio_mpu_read(csx_mmio_mpu_p mpu, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-void csx_mmio_mpu_write(csx_mmio_mpu_p mpu, uint32_t addr, uint32_t value, uint8_t size)
+static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	csx_p csx = mpu->csx;
+	const csx_mmio_mpu_p mpu = data;
+	const csx_p csx = mpu->csx;
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
@@ -124,14 +126,25 @@ void csx_mmio_mpu_write(csx_mmio_mpu_p mpu, uint32_t addr, uint32_t value, uint8
 	}
 }
 
-void csx_mmio_mpu_reset(csx_mmio_mpu_p mpu)
+static void csx_mmio_mpu_reset(void* data)
 {
+	const csx_mmio_mpu_p mpu = data;
+
 	mpu->arm_ckctl		= 0x00003000;
 	mpu->arm_idlect[0]	= 0x00000400;
 	mpu->arm_idlect[1]	= 0x00000100;
 	mpu->arm_rstct2		= 0x00000000;
 	mpu->arm_sysst		= 0x00000038;
 }
+
+static csx_mmio_peripheral_t mpu_peripheral = {
+	.base = CSX_MMIO_MPU_BASE,
+
+	.reset = csx_mmio_mpu_reset,
+
+	.read = csx_mmio_mpu_read,
+	.write = csx_mmio_mpu_write,
+};
 
 int csx_mmio_mpu_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_h h2mpu)
 {
@@ -145,6 +158,8 @@ int csx_mmio_mpu_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_h h2mpu)
 	mpu->mmio = mmio;
 	
 	*h2mpu = mpu;
+	
+	csx_mmio_peripheral(mmio, &mpu_peripheral, mpu);
 	
 	return(0);
 }

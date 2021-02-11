@@ -14,9 +14,10 @@
 
 #define DPLL1_CTL_REG		_DPLL(0x000)
 
-uint32_t csx_mmio_dpll_read(csx_mmio_dpll_p dpll, uint32_t addr, uint8_t size)
+static uint32_t csx_mmio_dpll_read(void* data, uint32_t addr, uint8_t size)
 {
-	csx_p csx = dpll->csx;
+	const csx_mmio_dpll_p dpll = data;
+	const csx_p csx = dpll->csx;
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
@@ -36,9 +37,10 @@ uint32_t csx_mmio_dpll_read(csx_mmio_dpll_p dpll, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-void csx_mmio_dpll_write(csx_mmio_dpll_p dpll, uint32_t addr, uint32_t value, uint8_t size)
+void csx_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	csx_p csx = dpll->csx;
+	const csx_mmio_dpll_p dpll = data;
+	const csx_p csx = dpll->csx;
 	
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
@@ -66,10 +68,22 @@ void csx_mmio_dpll_write(csx_mmio_dpll_p dpll, uint32_t addr, uint32_t value, ui
 	}
 }
 
-void csx_mmio_dpll_reset(csx_mmio_dpll_p dpll)
+void csx_mmio_dpll_reset(void* data)
 {
+	const csx_mmio_dpll_p dpll = data;
+
 	dpll->ctl_reg[0] = 0x00002002;	/* 1 */
 }
+
+static csx_mmio_peripheral_t dpll_peripheral = {
+	.base = CSX_MMIO_DPLL_BASE,
+
+	.reset = csx_mmio_dpll_reset,
+
+	.read = csx_mmio_dpll_read,
+	.write = csx_mmio_dpll_write,
+};
+
 
 int csx_mmio_dpll_init(csx_p csx, csx_mmio_p mmio, csx_mmio_dpll_h h2dpll)
 {
@@ -83,6 +97,8 @@ int csx_mmio_dpll_init(csx_p csx, csx_mmio_p mmio, csx_mmio_dpll_h h2dpll)
 	dpll->mmio = mmio;
 	
 	*h2dpll = dpll;
+	
+	csx_mmio_peripheral(mmio, &dpll_peripheral, dpll);
 	
 	return(0);
 }

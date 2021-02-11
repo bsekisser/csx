@@ -5,6 +5,7 @@ csx_soc_sources = [
 	'csx_mmio_mpu.c',
 	'csx_mmio_mpu_gpio.c',
 	'csx_mmio_ocp.c',
+	'csx_mmio_os_timer.c',
 	'csx_mmio_timer.c',
 	'csx_mmio_watchdog.c',
 	'csx_mmu.c',

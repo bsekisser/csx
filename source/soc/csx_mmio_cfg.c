@@ -65,8 +65,10 @@ static uint32_t cfg_data_rw(csx_mmio_cfg_p cfg, uint32_t addr, uint32_t* value, 
 	
 	return(0);
 }
-uint32_t csx_mmio_cfg_read(csx_mmio_cfg_p cfg, uint32_t addr, uint8_t size)
+
+static uint32_t csx_mmio_cfg_read(void* data, uint32_t addr, uint8_t size)
 {
+	csx_mmio_cfg_p cfg = data;
 	csx_p csx = cfg->csx;
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
@@ -99,8 +101,9 @@ uint32_t csx_mmio_cfg_read(csx_mmio_cfg_p cfg, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-void csx_mmio_cfg_write(csx_mmio_cfg_p cfg, uint32_t addr, uint32_t value, uint8_t size)
+static void csx_mmio_cfg_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
+	csx_mmio_cfg_p cfg = data;
 	csx_p csx = cfg->csx;
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
@@ -130,8 +133,10 @@ void csx_mmio_cfg_write(csx_mmio_cfg_p cfg, uint32_t addr, uint32_t value, uint8
 	cfg_data_rw(cfg, addr, &value, size);
 }
 
-void csx_mmio_cfg_reset(csx_mmio_cfg_p cfg)
+static void csx_mmio_cfg_reset(void* data)
 {
+	csx_mmio_cfg_p cfg = data;
+
 	for(int i = 0; i < 0x1ff; i++)
 		cfg->data[i] = 0;
 
@@ -147,6 +152,26 @@ void csx_mmio_cfg_reset(csx_mmio_cfg_p cfg)
 	}while(trace_list[i].address);
 }
 
+static csx_mmio_peripheral_t cfg_peripheral[2] = {
+	[0] = {
+		.base = CSX_MMIO_CFG_BASE,
+
+		.reset = csx_mmio_cfg_reset,
+		
+		.read = csx_mmio_cfg_read,
+		.write = csx_mmio_cfg_write,
+	},
+
+	[1] = {
+		.base = CSX_MMIO_CFG_BASE + 0x100,
+
+	//	.reset = csx_mmio_cfg_reset,
+		
+		.read = csx_mmio_cfg_read,
+		.write = csx_mmio_cfg_write,
+	}
+};
+
 int csx_mmio_cfg_init(csx_p csx, csx_mmio_p mmio, csx_mmio_cfg_h h2cfg)
 {
 	csx_mmio_cfg_p cfg;
@@ -159,6 +184,9 @@ int csx_mmio_cfg_init(csx_p csx, csx_mmio_p mmio, csx_mmio_cfg_h h2cfg)
 	cfg->mmio = mmio;
 	
 	*h2cfg = cfg;
+	
+	csx_mmio_peripheral(mmio, &cfg_peripheral[0], (void*)cfg);
+	csx_mmio_peripheral(mmio, &cfg_peripheral[1], (void*)cfg);
 	
 	return(0);
 }

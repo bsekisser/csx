@@ -47,4 +47,4 @@ static struct ea_trace_t trace_list[] = {
 
 ea_trace_p csx_mmio_get_trace(ea_trace_p trace_list, uint32_t address);
 ea_trace_p csx_mmio_trace(csx_mmio_p mmio, ea_trace_p tl, uint32_t address);
-void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst);
+void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t base_mask);
