@@ -113,8 +113,8 @@ int csx_mmu_init(csx_p csx, csx_mmu_h h2mmu)
 	mmu->loader.data = data;
 	mmu->loader.size = sb.st_size;
 
-//	const uint32_t base = 0x10020000 - CSX_SDRAM_BASE;
-//	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
+	const uint32_t base = 0x10020000 - CSX_SDRAM_BASE;
+	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
 	
 	LOG("data = 0x%08x, size = 0x%08x", (uint32_t)mmu->loader.data, mmu->loader.size);
 	

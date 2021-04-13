@@ -1,2 +1,2 @@
 archive/private/*
-build/*
+build*/*

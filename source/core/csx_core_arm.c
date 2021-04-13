@@ -269,7 +269,7 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 	{
 		thumb = 1;
 		new_pc |= (link << 1) | 1;
-		core->ccs = "AL";
+		CORE_T(core->ccs = "AL");
 		link = cce = 1;
 	}
 

@@ -1,18 +1,11 @@
 typedef struct csx_mmio_mpu_gpio_t** csx_mmio_mpu_gpio_h;
 typedef struct csx_mmio_mpu_gpio_t* csx_mmio_mpu_gpio_p;
 
-typedef struct csx_mmio_mpu_xgpio_t* csx_mmio_mpu_xgpio_p;
-typedef struct csx_mmio_mpu_xgpio_t {
-	csx_mmio_mpu_gpio_p		gpio;
-	uint32_t				base;
-	uint8_t					data[256];
-}csx_mmio_mpu_xgpio_t;
-
 typedef struct csx_mmio_mpu_gpio_t {
 	csx_p					csx;
 	csx_mmio_p				mmio;
 	
-	csx_mmio_mpu_xgpio_t	x[4];
+	uint8_t					data[4][256];
 }csx_mmio_mpu_gpio_t;
 
 int csx_mmio_mpu_gpio_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_gpio_h h2gpio);

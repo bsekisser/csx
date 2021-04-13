@@ -137,7 +137,7 @@ static void csx_mmio_cfg_reset(void* data)
 {
 	csx_mmio_cfg_p cfg = data;
 
-	for(int i = 0; i < 0x1ff; i++)
+	for(int i = 0; i < 0x200; i++)
 		cfg->data[i] = 0;
 
 	int i = 0;

@@ -31,15 +31,16 @@
 
 static uint32_t csx_mmio_mpu_gpio_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_mpu_xgpio_p xgpio = data;
-	const csx_mmio_mpu_gpio_p gpio = xgpio->gpio;
+	const csx_mmio_mpu_gpio_p gpio = data;
 	const csx_mmio_p mmio = gpio->mmio;
 	const csx_p csx = gpio->csx;
 
 	ea_trace_p eat = csx_mmio_trace(mmio, trace_list, addr);
 	if(eat)
 	{
-		uint32_t value = csx_data_read(&xgpio->data[addr & 0xff], size);
+		uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
+		
+		uint32_t value = csx_data_read(&gpio->data[unit][addr & 0xff], size);
 		
 		switch(addr)
 		{
@@ -55,19 +56,20 @@ static uint32_t csx_mmio_mpu_gpio_read(void* data, uint32_t addr, uint8_t size)
 
 static void csx_mmio_mpu_gpio_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_mpu_xgpio_p xgpio = data;
-	const csx_mmio_mpu_gpio_p gpio = xgpio->gpio;
+	const csx_mmio_mpu_gpio_p gpio = data;
 	const csx_mmio_p mmio = gpio->mmio;
 	const csx_p csx = gpio->csx;
 
 	ea_trace_p eat = csx_mmio_trace(mmio, trace_list, addr);
 	if(eat)
 	{
+		uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
+
 		switch(addr)
 		{
 		}
 
-		return(csx_data_write(&xgpio->data[addr & 0xff], value, size));
+		return(csx_data_write(&gpio->data[unit][addr & 0xff], value, size));
 	}
 
 	LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
@@ -75,12 +77,30 @@ static void csx_mmio_mpu_gpio_write(void* data, uint32_t addr, uint32_t value, u
 
 static void csx_mmio_mpu_gpio_reset(void* data)
 {
-	const csx_mmio_mpu_xgpio_p xgpio = data;
-	const csx_mmio_mpu_gpio_p gpio = xgpio->gpio;
+	const csx_mmio_mpu_gpio_p gpio = data;
 	const csx_mmio_p mmio = gpio->mmio;
 //	const csx_p csx = gpio->csx;
 	
-	csx_mmio_trace_reset(mmio, trace_list, xgpio->data, xgpio->base);
+	for(int unit = 0; unit < 4; unit++)
+	{
+		for(int i = 0; i < 256; i++)
+			gpio->data[unit][i] = 0;
+	}
+	
+	int i = 0;
+	do {
+		ea_trace_p tle = &trace_list[i++];
+
+		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+
+		uint32_t value = tle->reset_value;
+		if(value)
+		{
+			uint32_t addr = tle->address;
+			uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
+			csx_data_write(&gpio->data[unit][addr & 0xff], value, tle->size);
+		}
+	}while(trace_list[i].address);
 }
 
 static csx_mmio_peripheral_t mpu_gpio_peripheral[] = {
@@ -95,7 +115,7 @@ static csx_mmio_peripheral_t mpu_gpio_peripheral[] = {
 	[1] = {
 		.base = CSX_MMIO_MPU_GPIO2_BASE,
 
-		.reset = csx_mmio_mpu_gpio_reset,
+//		.reset = csx_mmio_mpu_gpio_reset,
 
 		.read = csx_mmio_mpu_gpio_read,
 		.write = csx_mmio_mpu_gpio_write,
@@ -103,7 +123,7 @@ static csx_mmio_peripheral_t mpu_gpio_peripheral[] = {
 	[2] = {
 		.base = CSX_MMIO_MPU_GPIO3_BASE,
 
-		.reset = csx_mmio_mpu_gpio_reset,
+//		.reset = csx_mmio_mpu_gpio_reset,
 
 		.read = csx_mmio_mpu_gpio_read,
 		.write = csx_mmio_mpu_gpio_write,
@@ -111,7 +131,7 @@ static csx_mmio_peripheral_t mpu_gpio_peripheral[] = {
 	[3] = {
 		.base = CSX_MMIO_MPU_GPIO4_BASE,
 
-		.reset = csx_mmio_mpu_gpio_reset,
+//		.reset = csx_mmio_mpu_gpio_reset,
 
 		.read = csx_mmio_mpu_gpio_read,
 		.write = csx_mmio_mpu_gpio_write,
@@ -133,11 +153,7 @@ int csx_mmio_mpu_gpio_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_gpio_h h2gpi
 	*h2gpio = gpio;
 	
 	for(int i = 0; i < 4; i++)
-	{
-		gpio->x[i].base = mpu_gpio_peripheral[i].base;
-		gpio->x[i].gpio = gpio;
-		csx_mmio_peripheral(mmio, &mpu_gpio_peripheral[i], &gpio->x[i]);
-	}
+		csx_mmio_peripheral(mmio, &mpu_gpio_peripheral[i], gpio);
 	
 	return(0);
 }

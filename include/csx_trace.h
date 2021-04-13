@@ -14,7 +14,7 @@ typedef struct csx_trace_t {
 	uint32_t	stop;
 }csx_trace_t;
 
-#if 1
+#if 0
 	#define T(_x) _x
 	#define TRACE(_f, args...) \
 		printf("// %s:%s:%u: " _f ")\n", __FILE__, __FUNCTION__, __LINE__, ## args);
@@ -28,5 +28,6 @@ typedef struct csx_trace_t {
 #else
 	#define T(_x)
 	#define TRACE(_f, args...)
+	#define _TRACE_(_m, _x)
 	#define _TRACE_ENABLE_(_m, _x)
 #endif

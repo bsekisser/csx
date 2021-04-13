@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdio.h>
 
 #if 1

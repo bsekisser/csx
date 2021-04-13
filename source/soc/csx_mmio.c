@@ -8,6 +8,7 @@
 #include "csx_mmio_mpu.h"
 #include "csx_mmio_mpu_gpio.h"
 #include "csx_mmio_ocp.h"
+#include "csx_mmio_gp_timer.h"
 #include "csx_mmio_os_timer.h"
 #include "csx_mmio_timer.h"
 #include "csx_mmio_watchdog.h"
@@ -58,6 +59,7 @@ typedef struct csx_mmio_t {
 	csx_mmio_mpu_p			mpu;
 	csx_mmio_mpu_gpio_p		mpu_gpio[4];
 	csx_mmio_ocp_p			ocp;
+	csx_mmio_gp_timer_p		gp_timer;
 	csx_mmio_os_timer_p		os_timer;
 	csx_mmio_timer_p		timer[3];
 	csx_mmio_watchdog_p		wdt;
@@ -142,9 +144,9 @@ uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 //		case	CSX_MMIO_OS_TIMER_BASE:
 //			return(csx_mmio_os_timer_read(mmio->os_timer, vaddr, size));
 //			break;
-		case	CSX_MMIO_TIMER(2):
-			return(csx_mmio_timer_read(mmio->timer[(vaddr >> 8) & 0x03], vaddr, size));
-			break;
+//		case	CSX_MMIO_TIMER(2):
+//			return(csx_mmio_timer_read(mmio->timer[(vaddr >> 8) & 0x03], vaddr, size));
+//			break;
 //		case	CSX_MMIO_WATCHDOG_BASE:
 //		case	CSX_MMIO_TIMER_WDT_BASE:
 //			return(csx_mmio_watchdog_read(mmio->wdt, vaddr, size));
@@ -215,9 +217,9 @@ void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 //		case	CSX_MMIO_OS_TIMER_BASE:
 //			return(csx_mmio_os_timer_write(mmio->os_timer, vaddr, value, size));
 //			break;
-		case	CSX_MMIO_TIMER(2):
-			return(csx_mmio_timer_write(mmio->timer[(vaddr >> 8) & 0x03], vaddr, value, size));
-			break;
+//		case	CSX_MMIO_TIMER(2):
+//			return(csx_mmio_timer_write(mmio->timer[(vaddr >> 8) & 0x03], vaddr, value, size));
+//			break;
 //		case	CSX_MMIO_WATCHDOG_BASE:
 //		case	CSX_MMIO_TIMER_WDT_BASE:
 //			return(csx_mmio_watchdog_write(mmio->wdt, vaddr, value, size));
@@ -265,9 +267,9 @@ void csx_mmio_reset(csx_mmio_p mmio)
 //	csx_mmio_mpu_gpio_reset(mmio->mpu_gpio[3]);
 //	csx_mmio_ocp_reset(mmio->ocp);
 //	csx_mmio_os_timer_reset(mmio->os_timer);
-	csx_mmio_timer_reset(mmio->timer[0]);
-	csx_mmio_timer_reset(mmio->timer[1]);
-	csx_mmio_timer_reset(mmio->timer[2]);
+//	csx_mmio_timer_reset(mmio->timer[0]);
+//	csx_mmio_timer_reset(mmio->timer[1]);
+//	csx_mmio_timer_reset(mmio->timer[2]);
 //	csx_mmio_watchdog_reset(mmio->wdt);
 
 	csx_data_write(&mmio->upld[0x08], 0x00008000, sizeof(uint32_t));
@@ -345,10 +347,11 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[2]));
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[3]));
 	ERR(err = csx_mmio_ocp_init(csx, mmio, &mmio->ocp));
+	ERR(err = csx_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = csx_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
 	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[0]));
-	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[1]));
-	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[2]));
+//	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[1]));
+//	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[2]));
 	ERR(err = csx_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
 	return(err);

@@ -16,7 +16,7 @@ static void csx_core_thumb_disasm(csx_core_p core, uint32_t address, uint32_t op
 
 static void csx_core_thumb_add_sub_rn_rd(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 
 	const int bit_i = BEXT(opcode, 10);
 	const uint8_t op2 = BEXT(opcode, 9);
@@ -71,7 +71,7 @@ static void csx_core_thumb_add_sub_rn_rd(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 
 	const int sub = BEXT(opcode, 7);
 	const uint16_t imm7 = BFEXT(opcode, 6, 0) << 2;
@@ -97,7 +97,7 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	const int pcsp = BEXT(opcode, 11);
 	const csx_reg_t rd = BFEXT(opcode, 10, 8);
@@ -121,7 +121,7 @@ static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	int wb = 1;
 	
 	const uint8_t operation = BFEXT(opcode, 12, 11);
@@ -179,7 +179,7 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	uint32_t pc = core->pc;
 	uint32_t eao = 0;
@@ -246,7 +246,7 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 
 static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 
 	const int tsbz = _check_sbz(opcode, 2, 0, 0, 0);
 	if(tsbz)
@@ -294,7 +294,7 @@ static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	const uint8_t operation = BFEXT(opcode, 9, 6);
 
@@ -341,10 +341,10 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 {
-	csx_mmu_p mmu = core->csx->mmu;
+	const csx_mmu_p mmu = core->csx->mmu;
 
 //	core->ccs = "EA"; /* ??? */
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	const uint16_t operation = BFTST(opcode, 15, 12);
 	const int bit_l = BEXT(opcode, 11);
@@ -390,7 +390,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 //	struct {
 		const int bit_b = BEXT(opcode, 12);
@@ -445,7 +445,7 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 //	struct {
 		const int bit_l = BEXT(opcode, 11);
@@ -501,8 +501,8 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 {
-	csx_p csx = core->csx;
-	const int cce = 1;
+	const csx_p csx = core->csx;
+	CORE_T(const int cce = 1);
 
 //	struct {
 		const int bit_l = BEXT(opcode, 11);
@@ -564,7 +564,7 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	const uint8_t operation = BFEXT(opcode, 12, 11);
 	const uint8_t imm5 = BFEXT(opcode, 10, 6);
@@ -628,10 +628,10 @@ static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 {
-	int cce = 1;
+	CORE_T(const int cce = 1);
 	
-	csx_p csx = core->csx;
-	csx_mmu_p mmu = csx->mmu;
+	const csx_p csx = core->csx;
+	const csx_mmu_p mmu = csx->mmu;
 	
 //	struct {
 		const int bit_l = BEXT(opcode, 11);
@@ -722,7 +722,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_sdp_rms_rdn(csx_core_p core, uint16_t opcode)
 {
-	const int cce = 1;
+	CORE_T(const int cce = 1);
 	
 	const uint8_t operation = BFEXT(opcode, 9, 8);
 
@@ -760,7 +760,7 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core, uint16_t opcode)
 
 void csx_core_thumb_step(csx_core_p core)
 {
-	core->ccs = "AL";
+	CORE_T(core->ccs = "AL");
 
 	uint32_t pc;
 	const uint32_t ir = csx_reg_pc_fetch_step(core, &pc);
