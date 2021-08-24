@@ -248,7 +248,7 @@ static void arm_inst_dpi(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 exit_fault:
 	LOG("operation = 0x%02x", dpi.operation);
-	csx_core_disasm(core, core->pc, opcode);
+	csx_core_disasm(core, IP, opcode);
 	UNIMPLIMENTED;
 }
 
@@ -739,7 +739,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		new_psr = (saved_psr & ~mask) | (operand & mask);
 
 		if(0)LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
-			csx_reg_get(core, rSP), csx_reg_get(core, rLR), core->pc);
+			csx_reg_get(core, rSP), csx_reg_get(core, rLR), IP);
 
 		if(BTST(saved_psr, CSX_PSR_BIT_T) != BTST(new_psr, CSX_PSR_BIT_T))
 			CORE_TRACE_THUMB;
@@ -771,7 +771,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 
 	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
-		csx_reg_get(core, rSP), csx_reg_get(core, rLR), core->pc);
+		csx_reg_get(core, rSP), csx_reg_get(core, rLR), IP);
 
 	csx_trace_psr(core, 0, new_psr);
 }

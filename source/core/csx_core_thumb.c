@@ -181,7 +181,7 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 {
 	CORE_T(const int cce = 1);
 	
-	uint32_t pc = core->pc;
+	uint32_t pc = IP;
 	uint32_t eao = 0;
 
 	if(0x2 == _MLBFX(opcode0, 12, 11))
@@ -330,7 +330,7 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, core->pc, opcode);
+			csx_core_thumb_disasm(core, IP, opcode);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -365,7 +365,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, core->pc, opcode);
+			csx_core_thumb_disasm(core, IP, opcode);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -748,7 +748,7 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core, uint16_t opcode)
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);
-			csx_core_thumb_disasm(core, core->pc, opcode);
+			csx_core_thumb_disasm(core, IP, opcode);
 			LOG_ACTION(exit(1));
 			break;
 	}

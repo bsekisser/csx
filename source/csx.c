@@ -77,7 +77,7 @@ int main(void)
 
 //	cs_close(&handle);
 
-	LOG("0x%08x", csx->core->pc);
+	LOG("0x%08x", csx->IP);
 
 	_TRACE_(csx, EXIT);
 

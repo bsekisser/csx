@@ -15,7 +15,7 @@
 			{ \
 				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
 					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
-					core->pc, opcode, \
+					IP, opcode, \
 					core->ccs, cce ? '>' : 'X', \
 					## args); \
 			} \
@@ -35,7 +35,7 @@
 			{ \
 				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
 					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
-					core->pc, opcode, \
+					IP, opcode, \
 					core->ccs, cce ? '>' : 'X', \
 					## args); \
 			} \

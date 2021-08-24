@@ -137,7 +137,7 @@ static void _csx_core_arm_decode_dprs(csx_core_p core, const uint32_t opcode, cs
 	{
 		TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
 
-		csx_core_disasm(core, core->pc, opcode);
+		csx_core_disasm(core, IP, opcode);
 		LOG_ACTION(exit(1));
 	}
 

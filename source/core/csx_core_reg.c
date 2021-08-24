@@ -49,13 +49,13 @@ static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, csx_reg_p reg)
 uint32_t csx_reg_pc_fetch_step(csx_core_p core, uint32_t *pc)
 {
 	const int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-	core->pc = (core->reg[rPC] & (~3 >> thumb));
+	IP = (core->reg[rPC] & (~3 >> thumb));
 	if(pc)
-		*pc = core->pc;
+		*pc = IP;
 	const uint8_t size = (4 >> thumb);
 	core->reg[rPC] += size;
 	
-	return(csx_mmu_read(core->csx->mmu, core->pc, size));
+	return(csx_mmu_read(core->csx->mmu, IP, size));
 }
 
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)

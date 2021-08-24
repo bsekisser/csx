@@ -38,7 +38,8 @@ typedef void (*csx_core_step_fn)(csx_core_p csx);
 typedef struct csx_core_t {
 	uint32_t			reg[16];
 
-	uint32_t			pc;
+#define IP core->ip
+	uint32_t			ip;
 
 	uint32_t			cpsr;
 	uint32_t			*spsr;

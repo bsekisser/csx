@@ -1,3 +1,5 @@
+*.geany
+*.o
 archive/private/*
 build*/*
 private/*
