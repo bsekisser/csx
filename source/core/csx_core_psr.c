@@ -107,7 +107,7 @@ void csx_core_flags_nz(csx_core_p core, uint32_t rd_v)
 	CPSR |= BMOV(rd_v, 31, CSX_PSR_BIT_N);
 	CPSR |= ((rd_v == 0) ? CSX_PSR_Z : 0);
 	
-	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
 		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
 }
@@ -137,7 +137,7 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, CSX_PSR_BIT_C);
 	CPSR |= BMOV(ovec, 31, CSX_PSR_BIT_V);
 
-	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
 		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
 }

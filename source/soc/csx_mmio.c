@@ -94,7 +94,7 @@ void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
 		uint32_t value = tle->reset_value;
-		uint32_t module = tle->address & _BF(31, 8);
+		uint32_t module = tle->address & _MLBF(31, 8);
 		uint32_t offset = tle->address & 0xff;
 		
 		if(base_mask && (base_mask != module))
@@ -112,7 +112,7 @@ void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 
 uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
-	uint32_t module = vaddr & _BF(31, 8);
+	uint32_t module = vaddr & _MLBF(31, 8);
 
 	switch(module)
 	{
@@ -185,7 +185,7 @@ uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 
 void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
-	uint32_t module = vaddr & _BF(31, 8);
+	uint32_t module = vaddr & _MLBF(31, 8);
 
 	switch(module)
 	{
@@ -287,6 +287,35 @@ void csx_mmio_reset(csx_mmio_p mmio)
 	}
 }
 
+uint32_t csx_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl)
+{}
+
+void csx_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
+{
+	for(int i = 0; i < 256; i++)
+		data[i] = 0;
+
+	for(int i = 0;; i++)
+	{
+		ea_trace_p tle = &tl[i];
+
+		if(!trace_list[i].address)
+			break;
+
+		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+
+		uint32_t value = tle->reset_value;
+		if(value)
+		{
+			uint32_t addr = tle->address;
+			csx_data_write(&data[addr & 0xff], value, tle->size);
+		}
+	}
+}
+
+void csx_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl)
+{}
+
 void csx_mmio_peripheral(csx_mmio_p mmio, csx_mmio_peripheral_p p, void* data)
 {
 	const uint16_t page = ((p->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
@@ -346,6 +375,7 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[1]));
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[2]));
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[3]));
+	ERR(err = csx_mmio_mpu_l1_ihr_init(csx, mmio, &mmio->mpu));
 	ERR(err = csx_mmio_ocp_init(csx, mmio, &mmio->ocp));
 	ERR(err = csx_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = csx_mmio_os_timer_init(csx, mmio, &mmio->os_timer));

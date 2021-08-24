@@ -18,3 +18,5 @@ uint32_t csx_reg_get(csx_core_p core, csx_reg_t r);
 void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v);
 
 uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v);
+
+void csx_psr_mode_switch(csx_core_p core, uint32_t v);

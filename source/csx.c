@@ -30,7 +30,14 @@ int main(void)
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));
 	assert(0x08 == sizeof(uint64_t));
+
+#if 0
+	printf("0x%08lx -- 0x%08x\n", ~0UL, _BM(0));
+	printf("0x%08lx -- 0x%08x\n", ~0UL, _BM(1));
+	printf("0x%08lx -- 0x%08x\n", ~0UL, _BM(31));
+	printf("0x%08lx -- 0x%08x\n", ~0UL, _BM(32));
 	assert(~0UL == _BM(31));
+#endif
 
 	int err;
 	csx_t ccsx, *csx = &ccsx;

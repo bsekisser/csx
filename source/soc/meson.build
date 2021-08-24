@@ -4,6 +4,7 @@ csx_soc_sources = [
 	'csx_mmio_dpll.c',
 	'csx_mmio_mpu.c',
 	'csx_mmio_mpu_gpio.c',
+	'csx_mmio_mpu_l1_ihr.c',
 	'csx_mmio_ocp.c',
 	'csx_mmio_gp_timer.c',
 	'csx_mmio_os_timer.c',

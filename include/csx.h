@@ -15,7 +15,8 @@
 #include <capstone/capstone.h>
 
 #include "err_test.h"
-#include "data.h"
+#include "bitfield.h"
+//#include "data.h"
 
 #include "csx_trace.h"
 

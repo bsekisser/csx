@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-#if 1
+#if 0
 	#define T(_x) _x
 		#ifndef TRACE
 			#define TRACE(_f, args...) \
@@ -21,8 +21,26 @@
 			} \
 		}while(0);
 #else
-	#define T(_x)
-	#define TRACE(_f, args...)
+//	#define T(_x)
+//	#define TRACE(_f, args...)
+//	#define CORE_T(_x)
+//	#define CORE_TRACE(_f, args...)
+#endif
+
+#if 1
+	#define CORE_T(_x) _x
+	#define CORE_TRACE(_f, args...) \
+		do { \
+			if(csx_trace_core(core)) \
+			{ \
+				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
+					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
+					core->pc, opcode, \
+					core->ccs, cce ? '>' : 'X', \
+					## args); \
+			} \
+		}while(0);
+#else
 	#define CORE_T(_x)
 	#define CORE_TRACE(_f, args...)
 #endif

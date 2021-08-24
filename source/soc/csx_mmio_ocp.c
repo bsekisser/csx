@@ -59,19 +59,19 @@ static void csx_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_
 		case EMIFS_ADV_CS_CONFIG(0):
 		{
 			LOG("BTMODE: %01u, ADVHOLD: %01u, OEHOLD: %01u, OESETUP: %01u",
-				BEXT(value, 9), BEXT(value, 8), BFEXT(value, 7, 4), BFEXT(value, 3, 0));
+				BEXT(value, 9), BEXT(value, 8), _MLBFX(value, 7, 4), _MLBFX(value, 3, 0));
 
 			ocp->emifs[addr & 0xc].adv_config = value;
 		}	break;
 		case EMIFS_CS_CONFIG(0):
 		{
 			LOG("PGWSTEN: %01u, PGWST: %01u, BTWST: %01u, MAD: %01u, BW: %01u",
-				BEXT(value, 31), BFEXT(value, 30, 27),
-				BFEXT(value, 26, 23), BEXT(value, 22), BEXT(value, 20));
+				BEXT(value, 31), _MLBFX(value, 30, 27),
+				_MLBFX(value, 26, 23), BEXT(value, 22), BEXT(value, 20));
 			
-			int rdmode = BFEXT(value, 18, 16);
+			int rdmode = _MLBFX(value, 18, 16);
 			LOG("RDMODE: %01u, PGWST/WELEN: %01u, WRWST: %01u, RDWST: %01u",
-				rdmode, BFEXT(value, 15, 12), BFEXT(value, 11, 8), BFEXT(value, 7, 4));
+				rdmode, _MLBFX(value, 15, 12), _MLBFX(value, 11, 8), _MLBFX(value, 7, 4));
 			
 			const char *rdmodesl[] = {
 				"0x000, Mode 0: Asyncronous read",
@@ -85,7 +85,7 @@ static void csx_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_
 			
 			LOG("%s", rdmodesl[rdmode & 0x07]);
 			
-			LOG("RT: %01u, FCLKDIV: %01u", BEXT(value, 2), BFEXT(value, 1, 0));
+			LOG("RT: %01u, FCLKDIV: %01u", BEXT(value, 2), _MLBFX(value, 1, 0));
 			
 			ocp->emifs[addr & 0xc].config = value;
 		}	break;		

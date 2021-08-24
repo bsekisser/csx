@@ -42,7 +42,7 @@ typedef struct ea_trace_t {
 	
 static struct ea_trace_t trace_list[] = {
 	MMIO_LIST
-	{ 0ULL,0ULL,0,0UL,0 }
+	MMIO(0, 0, 0, 0, 0, 0, 0)
 };
 
 ea_trace_p csx_mmio_get_trace(ea_trace_p trace_list, uint32_t address);

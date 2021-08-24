@@ -59,7 +59,7 @@ typedef struct csx_core_t {
 static inline int csx_in_a_privaleged_mode(csx_core_p core)
 {
 //	UNPREDICTABLE;
-	if(0x00 != _bits(CPSR, 4, 0))
+	if(0x00 != _MLBFX(CPSR, 4, 0))
 		return(1);
 	else
 		return(0);

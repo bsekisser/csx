@@ -54,14 +54,14 @@ static inline uint32_t _rn(csx_reg_t r)
 
 /* arm instruction utilities */
 
-static void _bxx(csx_test_p t, uint32_t offset, int link)
+static void _bxx(csx_test_p t, int32_t offset, int link)
 {
 	uint32_t opcode = (5 << 25);
 
 	if(link)
 		BSET(opcode, ARM_INST_BIT_LINK);
 
-	uint32_t ea = (offset >> 2) & _BM(23);
+	uint32_t ea = (offset >> 2) & _BM(24);
 
 	if(0) LOG("opcode = 0x%08x, offset = 0x%08x, ea = 0x%08x", opcode, offset, ea);
 
@@ -116,7 +116,7 @@ shifter_operand_t arm_dpi_lsl_r_s(uint8_t r, uint8_t shift)
 
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 {
-	i &=_BM(7);
+	i &= _BM(7);
 	shift = (shift & _BM(12 - 8)) >> 1;
 	
 	shifter_operand_t out = _BV(15) | (shift << 8) | i;
@@ -138,7 +138,7 @@ void arm_bl(csx_test_p t, uint32_t offset)
 
 void arm_bx(csx_test_p t, csx_reg_t rm)
 {
-	uint32_t opcode = _BV(24) | _BV(21) | _BF(19, 8) | _BV(4) | _rm(rm);
+	uint32_t opcode = _BV(24) | _BV(21) | _MLBF(19, 8) | _BV(4) | _rm(rm);
 
 	_c_ea(t, opcode);
 }

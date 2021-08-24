@@ -21,14 +21,14 @@ static void csx_core_thumb_add_sub_rn_rd(csx_core_p core, uint16_t opcode)
 	const int bit_i = BEXT(opcode, 10);
 	const uint8_t op2 = BEXT(opcode, 9);
 
-	const csx_reg_t rm = BFEXT(opcode, 8, 6);
+	const csx_reg_t rm = _MLBFX(opcode, 8, 6);
 	uint32_t rm_v = rm;
 	if(!bit_i)
 		rm_v = csx_reg_get(core, rm);
 	
-	const csx_reg_t rn = BFEXT(opcode, 5, 3);
+	const csx_reg_t rn = _MLBFX(opcode, 5, 3);
 	const uint32_t rn_v = csx_reg_get(core, rn);
-	const csx_reg_t rd = BFEXT(opcode, 2, 0);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0);
 	
 	uint32_t rd_v = rn_v;
 	
@@ -74,7 +74,7 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 	CORE_T(const int cce = 1);
 
 	const int sub = BEXT(opcode, 7);
-	const uint16_t imm7 = BFEXT(opcode, 6, 0) << 2;
+	const uint16_t imm7 = _MLBFMOV(opcode, 6, 0, 2);
 
 	const uint32_t sp_v = csx_reg_get(core, rSP);
 	uint32_t res = sp_v;
@@ -100,8 +100,8 @@ static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
 	CORE_T(const int cce = 1);
 	
 	const int pcsp = BEXT(opcode, 11);
-	const csx_reg_t rd = BFEXT(opcode, 10, 8);
-	const uint16_t imm8 = BFMOV(opcode, 7, 0, 2);
+	const csx_reg_t rd = _MLBFX(opcode, 10, 8);
+	const uint16_t imm8 = _MLBFMOV(opcode, 7, 0, 2);
 	
 	uint32_t rd_v;
 	if(pcsp)
@@ -124,10 +124,10 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 	CORE_T(const int cce = 1);
 	int wb = 1;
 	
-	const uint8_t operation = BFEXT(opcode, 12, 11);
-	const csx_reg_t rd = BFEXT(opcode, 10, 8);
+	const uint8_t operation = _MLBFX(opcode, 12, 11);
+	const csx_reg_t rd = _MLBFX(opcode, 10, 8);
 	const uint32_t rd_v = csx_reg_get(core, rd);
-	const uint8_t imm8 = BFEXT(opcode, 7, 0);
+	const uint8_t imm8 = _MLBFX(opcode, 7, 0);
 	
 	uint32_t res = rd_v;
 	
@@ -184,9 +184,9 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 	uint32_t pc = core->pc;
 	uint32_t eao = 0;
 
-	if(0x2 == BFEXT(opcode0, 12, 11))
+	if(0x2 == _MLBFX(opcode0, 12, 11))
 	{
-		eao = BFSEXT(opcode0, 10, 0) << 12;
+		eao = _MLBFSEXT(opcode0, 10, 0) << 12;
 	}	
 	else
 	{
@@ -204,12 +204,12 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 
 	if(0) LOG("PC2 = 0x%08x, opcode = 0x%04x:0x%04x", pc, opcode0, opcode1);
 
-	if((0x7 == BFEXT(opcode, 15, 13)) && BEXT(opcode, 11))
+	if((0x7 == _MLBFX(opcode, 15, 13)) && BEXT(opcode, 11))
 	{
 		pc += 2;
 		
 		const int bit_blx = (0 == BEXT(opcode, 12));
-		eao += BFMOV(opcode, 10, 0, 1);
+		eao += _MLBFMOV(opcode, 10, 0, 1);
 
 		const uint32_t new_lr = pc | 1;
 		const uint32_t new_pc = pc + eao;
@@ -252,7 +252,7 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 	if(tsbz)
 		LOG_ACTION(exit(1));
 
-	const csx_reg_t rm = BFEXT(opcode, 6, 3);
+	const csx_reg_t rm = _MLBFX(opcode, 6, 3);
 	const int link = BEXT(opcode, 7);
 	
 	const uint32_t new_pc = csx_reg_get(core, rm);
@@ -275,9 +275,9 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 {
-	const uint8_t cond = BFEXT(opcode, 11, 8);
+	const uint8_t cond = _MLBFX(opcode, 11, 8);
 	const uint8_t cce = csx_core_check_cc(core, opcode, cond);
-	const int32_t imm8 = BFSEXT(opcode, 7, 0) << 1;
+	const int32_t imm8 = _MLBFSEXT(opcode, 7, 0) << 1;
 
 	const uint32_t pc = csx_reg_get(core, rPC);
 	const uint32_t new_pc = pc + imm8;
@@ -296,12 +296,12 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 {
 	CORE_T(const int cce = 1);
 	
-	const uint8_t operation = BFEXT(opcode, 9, 6);
+	const uint8_t operation = _MLBFX(opcode, 9, 6);
 
-	const csx_reg_t rm = BFEXT(opcode, 5, 3);
+	const csx_reg_t rm = _MLBFX(opcode, 5, 3);
 	const uint32_t rm_v = csx_reg_get(core, rm);
 	
-	const csx_reg_t rd = BFEXT(opcode, 2, 0);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0);
 	const uint32_t rd_v = csx_reg_get(core, rd);
 	
 	uint32_t res = rd_v;
@@ -346,10 +346,10 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 //	core->ccs = "EA"; /* ??? */
 	CORE_T(const int cce = 1);
 	
-	const uint16_t operation = BFTST(opcode, 15, 12);
+	const uint16_t operation = _MLBFTST(opcode, 15, 12);
 	const int bit_l = BEXT(opcode, 11);
-	const csx_reg_t rd = BFEXT(opcode, 10, 8);
-	const uint16_t imm8 = BFMOV(opcode, 7, 0, 2);
+	const csx_reg_t rd = _MLBFX(opcode, 10, 8);
+	const uint16_t imm8 = _MLBFMOV(opcode, 7, 0, 2);
 
 	uint8_t rn;
 	uint32_t ea;
@@ -397,10 +397,10 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 		const int bit_l = BEXT(opcode, 11);
 //	}bit;
 	
-	const uint8_t imm5 = BFEXT(opcode, 10, 6);
-	const csx_reg_t rn = BFEXT(opcode, 5, 3);
+	const uint8_t imm5 = _MLBFX(opcode, 10, 6);
+	const csx_reg_t rn = _MLBFX(opcode, 5, 3);
 	const uint32_t rn_v = csx_reg_get(core, rn);
-	const csx_reg_t rd = BFEXT(opcode, 2, 0);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0);
 	
 	const char *ss = "";
 	uint8_t size = 0;
@@ -449,16 +449,16 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 	
 //	struct {
 		const int bit_l = BEXT(opcode, 11);
-		const uint8_t bwh = BFEXT(opcode, 10, 9);
+		const uint8_t bwh = _MLBFX(opcode, 10, 9);
 //	}bit;
 	
-	const csx_reg_t rm = BFEXT(opcode, 8, 6);
+	const csx_reg_t rm = _MLBFX(opcode, 8, 6);
 	const uint32_t rm_v = csx_reg_get(core, rm);
 	
-	const csx_reg_t rn = BFEXT(opcode, 5, 3);
+	const csx_reg_t rn = _MLBFX(opcode, 5, 3);
 	const uint32_t rn_v = csx_reg_get(core, rn);
 	
-	const csx_reg_t rd = BFEXT(opcode, 2, 0);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0);
 	
 	const char *ss = "";
 	uint8_t size = 0;
@@ -508,10 +508,10 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 		const int bit_l = BEXT(opcode, 11);
 //	}bit;
 
-	const csx_reg_t rn = BFEXT(opcode, 10, 8);
+	const csx_reg_t rn = _MLBFX(opcode, 10, 8);
 	const uint32_t rn_v = csx_reg_get(core, rn);
 
-	const uint8_t rlist = BFEXT(opcode, 7, 0);
+	const uint8_t rlist = _MLBFX(opcode, 7, 0);
 	
 	const uint32_t start_address = rn_v;
 	const uint32_t end_address = start_address + (__builtin_popcount(rlist) << 2) - 4;
@@ -566,13 +566,13 @@ static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core, uint16_t opcode)
 {
 	CORE_T(const int cce = 1);
 	
-	const uint8_t operation = BFEXT(opcode, 12, 11);
-	const uint8_t imm5 = BFEXT(opcode, 10, 6);
+	const uint8_t operation = _MLBFX(opcode, 12, 11);
+	const uint8_t imm5 = _MLBFX(opcode, 10, 6);
 
-	const csx_reg_t rm = BFEXT(opcode, 5, 3);
+	const csx_reg_t rm = _MLBFX(opcode, 5, 3);
 	const uint32_t rm_v = csx_reg_get(core, rm);
 
-	const csx_reg_t rd = BFEXT(opcode, 2, 0);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0);
 	
 	uint8_t shift = imm5;
 	const char *ops = "";
@@ -638,7 +638,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		const int bit_r = BEXT(opcode, 8);
 //	}bit;
 	
-	const uint8_t rlist = BFEXT(opcode, 7, 0);
+	const uint8_t rlist = _MLBFX(opcode, 7, 0);
 
 	const uint32_t sp_v = csx_reg_get(core, rSP);
 	
@@ -687,7 +687,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		}
 	}
 
-	T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
+	CORE_T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
 	reglist[8] = 0;
 	CORE_TRACE("%s(rSP, r{%s%s});", bit_l ? "pop" : "push", reglist, pclrs);
 
@@ -724,12 +724,12 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core, uint16_t opcode)
 {
 	CORE_T(const int cce = 1);
 	
-	const uint8_t operation = BFEXT(opcode, 9, 8);
+	const uint8_t operation = _MLBFX(opcode, 9, 8);
 
-	const csx_reg_t rm = BFEXT(opcode, 6, 3);
+	const csx_reg_t rm = _MLBFX(opcode, 6, 3);
 	const uint32_t rm_v = csx_reg_get(core, rm);
 
-	const csx_reg_t rd = BFEXT(opcode, 2, 0) | BMOV(opcode, 7, 3);
+	const csx_reg_t rd = _MLBFX(opcode, 2, 0) | BMOV(opcode, 7, 3);
 	const uint32_t rd_v = csx_reg_get(core, rd);
 	
 	uint32_t res = rd_v;
@@ -770,7 +770,7 @@ void csx_core_thumb_step(csx_core_p core)
 	
 	for(lsb = 8; lsb <= 13; lsb++)
 	{
-		opcode = ir & _BF(15, lsb);
+		opcode = ir & _MLBF(15, lsb);
 
 		switch(opcode)
 		{
@@ -840,7 +840,7 @@ void csx_core_thumb_step(csx_core_p core)
 					return(csx_core_thumb_ldstm_rn_rxx(core, ir));
 				break;
 			case	0xd000:
-				opcode = ir & _BF(15, 8);
+				opcode = ir & _MLBF(15, 8);
 				switch(opcode)
 				{
 					case	0xde00: /* undefined */

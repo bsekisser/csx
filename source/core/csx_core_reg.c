@@ -108,7 +108,7 @@ uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)
 {
 	csx_reg_t reg;
 	
-	const uint8_t mode = BFEXT(CPSR, 4, 0);
+	const uint8_t mode = _MLBFX(CPSR, 4, 0);
 	uint32_t* usr_regs = csx_psr_mode_regs(core, mode, &reg);
 
 	uint32_t vout;
@@ -130,8 +130,8 @@ uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)
 
 void csx_psr_mode_switch(csx_core_p core, uint32_t v)
 {
-	const uint8_t old_mode = BFEXT(core->cpsr, 4, 0);
-	const uint8_t new_mode = BFEXT(v, 4, 0);
+	const uint8_t old_mode = _MLBFX(core->cpsr, 4, 0);
+	const uint8_t new_mode = _MLBFX(v, 4, 0);
 
 	uint32_t *src = 0, *dst = 0;
 	uint8_t sreg;

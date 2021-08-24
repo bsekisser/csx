@@ -4,6 +4,14 @@ enum {
 	INSTR_SET_T32,
 }intstr_set_t;
 
+void alu_exception_return(arm_p arm, uint32_t address)
+{
+	if(!arm->spsr)
+		return;
+
+	exception_return(arm, address, *arm->spsr);
+}
+
 void alu_write_pc(arm_p arm, uint32_t address)
 {
 	if(current_instr_set(arm) == _instr_set_a32)
@@ -42,14 +50,6 @@ void bx_write_pc(arm_p arm, uint32_t address, branch_type_t branch_type)
 instr_set_t current_instr_set(arm_p arm)
 {
 	return(BEXT(PSTATE, PSTATE_BIT_T) ? INSTR_SET_T32 : ISNTR_SET_A32);
-}
-
-void alu_exception_return(arm_p arm, uint32_t address)
-{
-	if(!arm->spsr)
-		return;
-
-	exception_return(arm, address, *arm->spsr);
 }
 
 void exception_return(arm_p arm, uint32_t address, uint32_t spsr)
