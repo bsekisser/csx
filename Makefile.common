@@ -1,0 +1,41 @@
+CFLAGS = -g -Wall -Os $(INCLUDE)
+CFLAGS += -march=native
+#CFLAGS += -MD -MP
+#CFLAGS += -save-temps
+
+#TARGET_DIR = $(TARGET)
+
+SRC_DIR = source
+#OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)/$(TARGET_DIR)
+OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)
+
+INCLUDE += -I$(TOP_DIR)/../include
+INCLUDE += -Iinclude
+
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
+DEPS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.d, $(SRCS))
+
+
+$(BUILD_DIR):
+	-mkdir -p $(TOP_DIR)/$(BUILD_DIR)
+
+$(OBJ_DIR): $(BUILD_DIR)
+	-mkdir -p $(OBJ_DIR)
+
+
+
+$(TARGET) : $(OBJ_DIR) $(OBJ_DIR)/$(TARGET)
+	ln -s $(OBJ_DIR)/$(TARGET) $(TOP_DIR)/$(TARGET)
+
+$(OBJ_DIR)/$(TARGET) : $(OBJS)
+	$(CC) $(LFLAGS) $^ -o $@ $(LDFLAGS)
+
+$(OBJS) : $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
+	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+
+clean-obj:
+	-rm $(OBJ_DIR)/*.d $(OBJ_DIR)/*.o $(OBJ_DIR)/$(TARGET)
+
+-include $(OBJ_DIR)/*.d
