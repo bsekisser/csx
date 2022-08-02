@@ -5,8 +5,9 @@
 
 /* **** */
 
-#define LOCAL_RGNDIR "../../garmin/rgn_files/"
-#include "../../garmin/rgn_files/038201000610.h"
+#define LOCAL_RGNDIR "../garmin/rgn_files/"
+#define RGNFileName "038201000610"
+//#include "../../garmin/rgn_files/038201000610.h"
 
 #define LOCAL_RGNFileName "_loader.bin"
 //#define LOCAL_RGNFileName "_firmware.bin"

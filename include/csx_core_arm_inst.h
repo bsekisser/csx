@@ -26,30 +26,30 @@ enum {
 };
 
 #define ARM_INST_DP					0
-#define ARM_INST_DP_MASK			_MLBF(27, 26)
+#define ARM_INST_DP_MASK			mlBF(27, 26)
 #define ARM_INST_LDST_O11			_BV(26)
-#define ARM_INST_LDST_O11_MASK		_MLBF(27, 25)
+#define ARM_INST_LDST_O11_MASK		mlBF(27, 25)
 #define ARM_INST_LDSTM				_BV(27)
-#define ARM_INST_LDSTM_MASK			_MLBF(27, 25)
+#define ARM_INST_LDSTM_MASK			mlBF(27, 25)
 
 
 #define ARM_INST_DPI(_x)			(ARM_DPI_OPERATION_ ## _x << 21)
-#define ARM_INST_DPI_MASK			(_MLBF(27, 26) | _MLBF(24, 21))
+#define ARM_INST_DPI_MASK			(mlBF(27, 26) | mlBF(24, 21))
 
 
 #define ARM_INST_B					(_BV(27) | _BV(25))
-#define ARM_INST_B_MASK				_MLBF(27, 25)
+#define ARM_INST_B_MASK				mlBF(27, 25)
 #define ARM_INST_BX					(_BV(24) | _BV(21) | _BV(4))
-#define ARM_INST_BX_MASK			(_MLBF(27, 20) | _MLBF(7, 4))
+#define ARM_INST_BX_MASK			(mlBF(27, 20) | mlBF(7, 4))
 #define ARM_INST_BIC				ARM_INST_DPI(BIC)
-#define ARM_INST_MCR				(_MLBF(27, 25) |  _BV(4))
-#define ARM_INST_MCR_MASK			(_MLBF(27, 24) | _BV(20) | _BV(4))
+#define ARM_INST_MCR				(mlBF(27, 25) |  _BV(4))
+#define ARM_INST_MCR_MASK			(mlBF(27, 24) | _BV(20) | _BV(4))
 #define ARM_INST_MOV				ARM_INST_DPI(MOV)
 #define ARM_INST_MOV_MASK			ARM_INST_DPI_MASK
 #define ARM_INST_MRS				_BV(24)
-#define ARM_INST_MRS_MASK			(_MLBF(27, 23) | _MLBF(21, 20))
+#define ARM_INST_MRS_MASK			(mlBF(27, 23) | mlBF(21, 20))
 #define ARM_INST_MSR				(_BV(24) | _BV(21))
-#define ARM_INST_MSR_MASK			((_MLBF(27, 23) | _MLBF(21, 20)) & (~_BV(25)))
+#define ARM_INST_MSR_MASK			((mlBF(27, 23) | mlBF(21, 20)) & (~_BV(25)))
 #define ARM_INST_MVN				ARM_INST_DPI(MVN)
 #define ARM_INST_MVN_MASK			ARM_INST_DPI_MASK
 #define ARM_INST_ORR				ARM_INST_DPI(ORR)

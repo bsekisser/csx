@@ -4,7 +4,7 @@
 #include <stdlib.h>
 
 #include "err_test.h"
-#include "data.h"
+//#include "data.h"
 
 #define UNPREDICTABLE \
 	TRACE("UNPREDICTABLE");
@@ -38,7 +38,7 @@ typedef void (*csx_core_step_fn)(csx_core_p csx);
 typedef struct csx_core_t {
 	uint32_t			reg[16];
 
-#define IP core->ip
+#define IP				core->ip
 	uint32_t			ip;
 
 	uint32_t			cpsr;
@@ -60,7 +60,7 @@ typedef struct csx_core_t {
 static inline int csx_in_a_privaleged_mode(csx_core_p core)
 {
 //	UNPREDICTABLE;
-	if(0x00 != _MLBFX(CPSR, 4, 0))
+	if(0x00 != mlBFEXT(CPSR, 4, 0))
 		return(1);
 	else
 		return(0);

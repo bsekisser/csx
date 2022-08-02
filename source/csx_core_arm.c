@@ -255,10 +255,10 @@ exit_fault:
 
 static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
-	const int blx = (0x0f == _MLBFX(opcode, 31, 28));
+	const int blx = (0x0f == mlBFEXT(opcode, 31, 28));
 
 	int link = BEXT(opcode, ARM_INST_BIT_LINK);
-	const int32_t offset = _MLBFSEXT(opcode, 23, 0);
+	const int32_t offset = mlBFEXTs(opcode, 23, 0);
 
 	const uint32_t pc = csx_reg_get(core, rPC);
 
@@ -350,7 +350,7 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 		}
 
 		if(ls.flags.s) /* sign extend ? */
-			ls.rd_v = _MLBFSEXT(ls.rd_v, (8 << (ls.rw_size >> 1)), 0);
+			ls.rd_v = mlBFEXTs(ls.rd_v, (8 << (ls.rw_size >> 1)), 0);
 	}
 	else
 		ls.rd_v = csx_reg_get(core, ls.rd);
@@ -645,7 +645,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		const int bit_r = BEXT(opcode, 22);
 //	}bit;
 	
-	const uint8_t field_mask = _MLBFX(opcode, 19, 16);
+	const uint8_t field_mask = mlBFEXT(opcode, 19, 16);
 	
 	uint8_t rotate_imm, imm8;
 	uint8_t rm, rm_v;
@@ -653,13 +653,13 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	if(bit_i)
 	{
-		rotate_imm = _MLBFX(opcode, 11, 8);
-		imm8 = _MLBFX(opcode, 7, 0);
+		rotate_imm = mlBFEXT(opcode, 11, 8);
+		imm8 = mlBFEXT(opcode, 7, 0);
 		operand = _ror(imm8, (rotate_imm << 1));
 	}
 	else
 	{
-		if(0 == _MLBFX(opcode, 7, 4))
+		if(0 == mlBFEXT(opcode, 7, 4))
 		{
 			const int tsbz = _check_sbz(opcode, 11, 8, &test, &result);
 			if(tsbz)
@@ -668,7 +668,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 				UNPREDICTABLE;
 			}
 
-			rm = _MLBFX(opcode, 3, 0);
+			rm = mlBFEXT(opcode, 3, 0);
 			rm_v = csx_reg_get(core, rm);
 			operand = rm_v;
 		}
@@ -780,7 +780,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 {
-	const uint8_t cc = _MLBFX(opcode, 31, 28);
+	const uint8_t cc = mlBFEXT(opcode, 31, 28);
 	return(csx_core_check_cc(core, opcode, cc));
 }
 
@@ -790,7 +790,7 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 #define _INST0_i74			(_BV(7) | _BV(4))
 
 #define _INST0_MISC0		_BV(24)
-#define _INST0_MISC0_MASK	(_MLBF(27, 23) | _BV(20))
+#define _INST0_MISC0_MASK	(mlBF(27, 23) | _BV(20))
 
 #define _INST0_MISC1		(_INST0_MISC0 | _INST0_i74)
 
@@ -808,17 +808,17 @@ void csx_core_arm_step(csx_core_p core)
 	}
 
 	const uint8_t cce = csx_core_arm_check_cc(core, ir);
-	if(!cce && (0x0f == _MLBFX(ir, 31, 28)))
+	if(!cce && (0x0f == mlBFEXT(ir, 31, 28)))
 	{
 		if(ARM_INST_B == (ir & ARM_INST_B_MASK))
 			return(arm_inst_b(core, ir, cce));
 		goto decode_fault;
 	}
 
-	uint8_t check0 = _MLBFX(ir, 27, 25) & ~1;
+	uint8_t check0 = mlBFEXT(ir, 27, 25) & ~1;
 	uint32_t check0_misc0 = ir & _INST0_MISC0_MASK;
 
-	uint8_t check1 = _MLBFX(ir, 27, 25);
+	uint8_t check1 = mlBFEXT(ir, 27, 25);
 	const uint8_t	i74 = BMOV(ir, 25, 2) | BMOV(ir, 7, 1) | BEXT(ir, 4);
 
 	uint32_t check = ir & _INST1(7);
@@ -845,7 +845,7 @@ void csx_core_arm_step(csx_core_p core)
 			}
 			break;
 		case _INST1(1): /* xxxx 001x xxxx xxxx */
-			if((_MLBF(25, 24) | _BV(21)) == (ir & (_MLBF(27, 23) | _MLBF(21, 20))))
+			if((mlBF(25, 24) | _BV(21)) == (ir & (mlBF(27, 23) | mlBF(21, 20))))
 				;
 			else if(ARM_INST_DP == (ir & ARM_INST_DP_MASK))
 				return(arm_inst_dpi(core, ir, cce));

@@ -1,3 +1,7 @@
+#include "csx.h"
+#include "csx_mmio_cfg.h"
+
+#if 0
 static csx_mmio_peripheral_t cfg_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_CFG_BASE,
@@ -26,3 +30,4 @@ static csx_mmio_peripheral_t dpll_peripheral = {
 	.read = csx_mmio_dpll_read,
 	.write = csx_mmio_dpll_write,
 };
+#endif

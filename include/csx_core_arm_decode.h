@@ -5,7 +5,7 @@
 static inline void csx_core_arm_decode_rd(uint32_t opcode, csx_reg_p rd)
 {
 	if(rd)
-		*rd = _MLBFX(opcode, 15, 12);
+		*rd = mlBFEXT(opcode, 15, 12);
 }
 
 #define _setup_decode_rm(_opcode, _rm) \
@@ -15,13 +15,13 @@ static inline void csx_core_arm_decode_rd(uint32_t opcode, csx_reg_p rd)
 static inline void csx_core_arm_decode_rm(uint32_t opcode, csx_reg_p rm)
 {
 	if(rm)
-		*rm = _MLBFX(opcode, 3, 0);
+		*rm = mlBFEXT(opcode, 3, 0);
 }
 
 static inline void csx_core_arm_decode_rn(uint32_t opcode, csx_reg_p rn)
 {
 	if(rn)
-		*rn = _MLBFX(opcode, 19, 16);
+		*rn = mlBFEXT(opcode, 19, 16);
 }
 
 #define _setup_decode_rn_rd(_opcode, _rn, _rd) \

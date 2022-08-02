@@ -55,9 +55,9 @@ void csx_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size
 					BEXT(value, 15), BEXT(value, 14), BEXT(value, 13),
 					BEXT(value, 12));
 				LOG("PLL_MULT: %02u, PLL_DIV: %01u, PLL_ENABLE: %01u",
-					_MLBFX(value, 11, 7), _MLBFX(value, 6, 5), pll_enable);
+					mlBFEXT(value, 11, 7), mlBFEXT(value, 6, 5), pll_enable);
 				LOG("BYPASS_DIV: %01u, BREAKLN: %01u, LOCK: %01u",
-					 _MLBFX(value, 3, 2), BEXT(value, 1), BEXT(value, 0));
+					 mlBFEXT(value, 3, 2), BEXT(value, 1), BEXT(value, 0));
 			}
 //			dpll->ctl_reg[0] = value | 1;
 			dpll->ctl_reg[0] = value | pll_enable;

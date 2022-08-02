@@ -138,7 +138,7 @@ void arm_bl(csx_test_p t, uint32_t offset)
 
 void arm_bx(csx_test_p t, csx_reg_t rm)
 {
-	uint32_t opcode = _BV(24) | _BV(21) | _MLBF(19, 8) | _BV(4) | _rm(rm);
+	uint32_t opcode = _BV(24) | _BV(21) | mlBF(19, 8) | _BV(4) | _rm(rm);
 
 	_c_ea(t, opcode);
 }

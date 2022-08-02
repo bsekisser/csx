@@ -72,11 +72,11 @@ static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_
 			{
 				LOG("ARM_INTHCK_SEL: %01u, EN_DSPCK: %01u, ARM_TIMXO: %01u, DSPMMUDIV: %01u",
 					BEXT(value, 14), BEXT(value, 13),
-					BEXT(value, 12), _MLBFX(value, 11, 10));
+					BEXT(value, 12), mlBFEXT(value, 11, 10));
 				LOG("TCDIV: %01u, DSPDIV: %01u, ARMDIV: %01u, LCDDIV: %01u, ARM_PERDIV: %01u",
-					_MLBFX(value, 9, 8), _MLBFX(value, 7, 6),
-					_MLBFX(value, 5, 4), _MLBFX(value, 3, 2),
-					_MLBFX(value, 1, 0));
+					mlBFEXT(value, 9, 8), mlBFEXT(value, 7, 6),
+					mlBFEXT(value, 5, 4), mlBFEXT(value, 3, 2),
+					mlBFEXT(value, 1, 0));
 			}
 			mpu->arm_ckctl = value;
 			break;
@@ -112,13 +112,13 @@ static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_
 			if(1)
 			{
 				LOG("CLOCK_SELECT: %01u, IDLE_DSP: %01u, POR: %01u, EXT_RST: %01u",
-					_MLBFX(value, 13, 11), BEXT(value, 6),
+					mlBFEXT(value, 13, 11), BEXT(value, 6),
 					BEXT(value, 5), BEXT(value, 4));
 				LOG("ARM_MCRST: %01u, ARM_WDRST: %01u, GLOB_SWRST: %01u, DSP_WDRST: %01u",
 					BEXT(value, 3), BEXT(value, 2),
 					BEXT(value, 1), BEXT(value, 0));
 			}
-			mpu->arm_sysst = value & ~_MLBF(5, 0);
+			mpu->arm_sysst = value & ~mlBF(5, 0);
 			break;
 		default:
 			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));

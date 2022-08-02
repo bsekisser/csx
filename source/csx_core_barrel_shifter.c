@@ -1,3 +1,5 @@
+#include "csx.h"
+
 static uint32_t _csx_core_arm_shifter_operation_asr(csx_core_p core, uint32_t vin, uint8_t shift, uint8_t* cout)
 {
 	uint8_t asr_shift = shift & _BM(6);
@@ -5,7 +7,8 @@ static uint32_t _csx_core_arm_shifter_operation_asr(csx_core_p core, uint32_t vi
 	if(!asr_shift && BTST(shift, 7))
 		asr_shift = 32;
 
-	if(asr_v)
+//	if(asr_v)
+	if(vin)
 		*cout = BEXT(vin, asr_shift - 1);
 	else
 		*cout = BEXT(CPSR, CSX_PSR_BIT_C);
@@ -52,4 +55,5 @@ uint32_t csx_core_barrel_shifter(csx_core_p core, uint32_t vin, uint32_t shift, 
 		case CSX_SHIFTER_OP_LSR:
 			return(_csx_core_arm_shifter_operation_lsr(core, vin, shift, cout));
 			break;
+	}
 }

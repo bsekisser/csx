@@ -218,7 +218,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_add_inst(t, &cpsr, ~0, 1);
 	
 	assert(xres == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
@@ -228,7 +228,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_add_inst(t, &cpsr, 12, 1);
 
 	assert(13 == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_C));
@@ -238,7 +238,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_sub_inst(t, &cpsr, 13, 12);
 
 	assert(1 == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
@@ -248,7 +248,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_sub_inst(t, &cpsr, 12, 13);
 
 	assert(-1 == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_C));
@@ -259,7 +259,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_sub_inst(t, &cpsr, 0x1c, 0x1c);
 
 	assert(0 == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
@@ -269,7 +269,7 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_sub_inst(t, &cpsr, 0x1d, 0x1c);
 
 	assert(1 == res);
-	assert((xpsr & _MLBF(31, 28)) == (cpsr & _MLBF(31, 28)));
+	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
 	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));

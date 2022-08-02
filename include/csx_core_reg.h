@@ -1,6 +1,11 @@
-#define rSP 13
-#define rLR 14
-#define rPC 15
+enum {
+	rSP = 13,
+	rLR = 14,
+	rPC = 15,
+};
+
+#define PC8							(PC + 4)
+#define PC							core->pc
 
 enum {
 	_THUMB = 0x04,

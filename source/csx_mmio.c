@@ -94,7 +94,7 @@ void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
 		uint32_t value = tle->reset_value;
-		uint32_t module = tle->address & _MLBF(31, 8);
+		uint32_t module = tle->address & mlBF(31, 8);
 		uint32_t offset = tle->address & 0xff;
 		
 		if(base_mask && (base_mask != module))
@@ -112,7 +112,7 @@ void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 
 uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
-	uint32_t module = vaddr & _MLBF(31, 8);
+	uint32_t module = vaddr & mlBF(31, 8);
 
 	switch(module)
 	{
@@ -185,7 +185,7 @@ uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 
 void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
-	uint32_t module = vaddr & _MLBF(31, 8);
+	uint32_t module = vaddr & mlBF(31, 8);
 
 	switch(module)
 	{

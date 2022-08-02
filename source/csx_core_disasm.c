@@ -1,6 +1,8 @@
 #include "csx.h"
 #include "csx_core.h"
 
+#include "capstone_assert_test.h"
+
 #include <capstone/capstone.h>
 
 void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)

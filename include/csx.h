@@ -16,7 +16,9 @@
 
 #include "err_test.h"
 #include "bitfield.h"
+#include "bounds.h"
 //#include "data.h"
+#include "log.h"
 
 #include "csx_trace.h"
 

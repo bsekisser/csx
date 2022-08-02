@@ -32,6 +32,7 @@ uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t
 	return(pc);
 }
 
+#if 0
 int csx_soc_init(csx_p csx)
 {
 	int err;
@@ -49,8 +50,9 @@ int csx_soc_init(csx_p csx)
 	
 	return(err);
 }
+#endif
 
-int main(void)
+int csx_test_main(void)
 {
 	csx_t ccsx, *csx = &ccsx;
 	csx_test_t test, *t = &test;
