@@ -797,7 +797,7 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 void csx_core_arm_step(csx_core_p core)
 {
 	uint32_t pc;
-	const uint32_t ir = csx_reg_pc_fetch_step(core, &pc);
+	const uint32_t ir = csx_reg_pc_fetch_step_arm(core, &pc);
 
 	const int thumb = pc & 1;
 	if(thumb)

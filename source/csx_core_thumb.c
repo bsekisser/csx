@@ -763,7 +763,7 @@ void csx_core_thumb_step(csx_core_p core)
 	CORE_T(core->ccs = "AL");
 
 	uint32_t pc;
-	const uint32_t ir = csx_reg_pc_fetch_step(core, &pc);
+	const uint32_t ir = csx_reg_pc_fetch_step_thumb(core, &pc);
 
 	uint8_t lsb;
 	uint32_t opcode;
