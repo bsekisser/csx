@@ -15,21 +15,18 @@ uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t
 	
 	csx->state = CSX_STATE_RUN;
 	
-	uint32_t pc = start_pc;
-	
-	csx_reg_set(core, rTHUMB(rPC), pc);
+	csx_reg_set_pcx(core, start_pc);
 	for(; count ; count--)
 	{
 		core->step(core);
 	
-		pc = csx_reg_get(core, rTEST(rPC));
-		if(pc >= end_pc)
+		if(PC >= end_pc)
 			break;
 	}
 
 	csx->state = CSX_STATE_HALT;
 
-	return(pc);
+	return(PC);
 }
 
 #if 0

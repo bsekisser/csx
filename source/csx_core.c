@@ -18,7 +18,7 @@ void csx_core_reset(csx_core_p core)
 	const int high_vectors = 0;
 	uint32_t reset_pc = !high_vectors ? 0 : 0xffff0000;	/* if high vectors */
 
-	csx_reg_set(core, rTHUMB(rPC), reset_pc);
+	csx_reg_set_pcx(core, reset_pc);
 
 	csx_trace_psr(core, __FUNCTION__, CPSR);
 

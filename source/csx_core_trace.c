@@ -16,14 +16,12 @@ int csx_trace_core(csx_core_p core)
 	const csx_p csx = core->csx;
 //	csx_core_p core = csx->core;
 	
-	const uint32_t pc = csx_reg_get(core, rTEST(rPC));
-	
 	csx_trace_p trace = csx->trace.head;
 	
 	if(!trace)
 		return(1);
 	
-	if(_in_bounds(pc, sizeof(uint32_t), trace->start, trace->stop))
+	if(_in_bounds(PC, sizeof(uint32_t), trace->start, trace->stop))
 		return(1);
 	
 	return(0);

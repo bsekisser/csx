@@ -1,5 +1,6 @@
 #pragma once
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -21,6 +22,11 @@
 #include "log.h"
 
 #include "csx_trace.h"
+
+/* **** */
+
+extern const int _check_pedantic_pc;
+
 
 /* **** */
 

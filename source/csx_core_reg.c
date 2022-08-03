@@ -46,26 +46,21 @@ static uint32_t* csx_psr_mode_regs(csx_core_p core, uint8_t mode, csx_reg_p reg)
 	return(0);
 }
 
-uint32_t csx_reg_pc_fetch_step_arm(csx_core_p core, uint32_t *pc)
+uint32_t csx_reg_pc_fetch_step_arm(csx_core_p core)
 {
-	IP = core->reg[rPC] & ~3;
-	
-	if(pc)
-		*pc = IP;
+	if(_check_pedantic_pc)
+		assert(PC & 1);
 
-	core->reg[rPC] += 4;
+	IP = PC & ~3;
+	PC += 4;
 	
 	return(csx_mmu_read(core->csx->mmu, IP, sizeof(uint32_t)));
 }
 
-uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core, uint32_t *pc)
+uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core)
 {
-	IP = core->reg[rPC] & ~1;
-
-	if(pc)
-		*pc = IP;
-
-	core->reg[rPC] += 2;
+	IP = PC & ~1;
+	PC += 2;
 	
 	return(csx_mmu_read(core->csx->mmu, IP, sizeof(uint16_t)));
 }
@@ -73,20 +68,22 @@ uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core, uint32_t *pc)
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)
 {
 	const uint8_t rr = r & 0x0f;
+
+	if(_check_pedantic_pc)
+		assert(rPC != rr);
+
 	uint32_t res = core->reg[rr & 0x0f];
 
-	switch(rr)
-	{
-		case rPC:
-		{
-			if(!(r & rTEST(0)))
-			{
-				int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-				res &= (~3 >> thumb);
-				res += (4 >> thumb);
-			}
-		}	break;
-	}
+	return(res);
+}
+
+uint32_t csx_reg_get_pc(csx_core_p core)
+{
+	uint32_t res = PC;
+
+	int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
+	res &= (~3 >> thumb);
+	res += (4 >> thumb);
 
 	return(res);
 }
@@ -94,26 +91,21 @@ uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)
 void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v)
 {
 	const uint8_t rr = r & 0x0f;
-	
-	switch(rr)
-	{
-		case rPC:
-		{
-			int thumb;
-			if(r & rTHUMB(0))
-			{
-				thumb = v & 1;
-				BMAS(CPSR, CSX_PSR_BIT_T, thumb);
-				core->step = thumb ? csx_core_thumb_step : csx_core_arm_step;
-			}
-			else
-				thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-			
-			v &= (~3 >> thumb);
-		}	break;
-	}
-	
+
+	if(_check_pedantic_pc)
+		assert(rPC != rr);
+
 	core->reg[rr] = v;
+}
+
+void csx_reg_set_pcx(csx_core_p core, uint32_t new_pc)
+{
+	int thumb = new_pc & 1;
+	BMAS(CPSR, CSX_PSR_BIT_T, thumb);
+	core->step = thumb ? csx_core_thumb_step : csx_core_arm_step;
+	new_pc &= (~3 >> thumb);
+
+	PC = new_pc;
 }
 
 uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)

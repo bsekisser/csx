@@ -107,7 +107,7 @@ static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
 	if(pcsp)
 		rd_v = csx_reg_get(core, rSP);
 	else
-		rd_v = csx_reg_get(core, rPC) & ~3;
+		rd_v = PC_THUMB & ~3;
 	
 	uint32_t res = rd_v + imm8;
 
@@ -155,7 +155,7 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, csx_reg_get(core, rTEST(rPC)), opcode);
+			csx_core_thumb_disasm(core, PC, opcode);
 			LOG_ACTION(exit(1));
 	}
 	
@@ -222,12 +222,12 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 		if(bit_blx)
 		{
 			CORE_TRACE_BRANCH(new_pc & ~3);
-			csx_reg_set(core, rTHUMB(rPC), new_pc & ~3);
+			csx_reg_set_pcx(core, new_pc & ~3);
 		}
 		else
 		{
 			CORE_TRACE_BRANCH(new_pc);
-			csx_reg_set(core, rPC, new_pc);
+			PC = new_pc;
 		}
 
 		CORE_TRACE_LINK(new_lr);
@@ -235,7 +235,7 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 	}
 	else
 	{
-		csx_reg_set(core, rPC, pc);
+		PC = pc;
 		csx_reg_set(core, rLR, lr | 1);
 		
 		
@@ -263,14 +263,14 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 		thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link) {
-		const uint32_t new_lr = csx_reg_get(core, rTEST(rPC)) | 1;
+		const uint32_t new_lr = PC | 1;
 		CORE_TRACE_LINK(new_lr);
 		csx_reg_set(core, rLR, new_lr);
 	}
 	
 	CORE_TRACE_BRANCH(new_pc);
-	csx_reg_set(core, rTHUMB(rPC), new_pc);
-	if(0) LOG("PC(0x%08x)", csx_reg_get(core, rTEST(rPC)));
+	csx_reg_set_pcx(core, new_pc);
+	if(0) LOG("PC(0x%08x)", PC);
 }
 
 static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
@@ -279,16 +279,15 @@ static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 	const uint8_t cce = csx_core_check_cc(core, opcode, cond);
 	const int32_t imm8 = mlBFEXTs(opcode, 7, 0) << 1;
 
-	const uint32_t pc = csx_reg_get(core, rPC);
-	const uint32_t new_pc = pc + imm8;
+	const uint32_t new_pc = PC_THUMB + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, pc, imm8, cce);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, cce);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 
 	if(cce)
 	{
-		csx_reg_set(core, rPC, new_pc);
+		PC = new_pc;
 	}
 }
 
@@ -357,7 +356,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 	{
 		case	0x4000:
 			rn = rPC;
-			ea = csx_reg_get(core, rPC) & ~0x03;
+			ea = PC_THUMB & ~0x03;
 			break;
 		case	0x9000:
 			rn = rSP;
@@ -696,7 +695,10 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		if(bit_l)
 		{ /* pop */
 			rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
-			csx_reg_set(core, rTHUMB(rPC), rxx_v);
+			if(1/*(_arm_version >= ARMv5)*/)
+				csx_reg_set_pcx(core, rxx_v);
+			else
+				csx_reg_set(core, rPC, rxx_v);
 		}
 		else
 		{ /* push */
@@ -706,7 +708,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		ea += sizeof(uint32_t);
 	}
 	
-	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, csx_reg_get(core, rTEST(rPC)));
+	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);
 	
 	if(bit_l)
 	{ /* pop */
@@ -762,8 +764,7 @@ void csx_core_thumb_step(csx_core_p core)
 {
 	CORE_T(core->ccs = "AL");
 
-	uint32_t pc;
-	const uint32_t ir = csx_reg_pc_fetch_step_thumb(core, &pc);
+	const uint32_t ir = csx_reg_pc_fetch_step_thumb(core);
 
 	uint8_t lsb;
 	uint32_t opcode;
@@ -864,6 +865,6 @@ void csx_core_thumb_step(csx_core_p core)
 
 	TRACE("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", ir, opcode, lsb);
 
-	csx_core_thumb_disasm(core, pc, ir);
+	csx_core_thumb_disasm(core, PC, ir);
 	LOG_ACTION(exit(1));
 }

@@ -79,7 +79,7 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 		if(dpi->wb)
 		{
 			if(!dpi->bit.s && (rPC == dpi->rd))
-				csx_reg_set(core, rTHUMB(dpi->rd), dpi->rd_v);
+				csx_reg_set_pcx(core, dpi->rd_v);
 			else
 				csx_reg_set(core, dpi->rd, dpi->rd_v);
 		}
@@ -260,9 +260,7 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 	int link = BEXT(opcode, ARM_INST_BIT_LINK);
 	const int32_t offset = mlBFEXTs(opcode, 23, 0);
 
-	const uint32_t pc = csx_reg_get(core, rPC);
-
-	uint32_t new_pc = pc + (offset << 2);
+	uint32_t new_pc = PC_ARM + (offset << 2);
 	
 	int thumb = 0;
 	if(blx)
@@ -278,16 +276,16 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', offset);
 
 	if(link)
-		CORE_TRACE_LINK(csx_reg_get(core, rTEST(rPC)));
+		CORE_TRACE_LINK(PC);
 	
 	CORE_TRACE_BRANCH(new_pc);
 
 	if(cce)
 	{
 		if(link)
-			csx_reg_set(core, rLR, csx_reg_get(core, rTEST(rPC)));
+			csx_reg_set(core, rLR, PC);
 
-		csx_reg_set(core, rTHUMB(rPC), new_pc);
+		csx_reg_set_pcx(core, new_pc);
 	}
 }
 
@@ -303,16 +301,16 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 		link ? "l" : "", rm, thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link)
-		CORE_TRACE_LINK(csx_reg_get(core, rTEST(rPC)));
+		CORE_TRACE_LINK(PC);
 
 	CORE_TRACE_BRANCH(new_pc);
 
 	if(cce)
 	{
 		if(link)
-			csx_reg_set(core, rLR, csx_reg_get(core, rTEST(rPC)));
+			csx_reg_set(core, rLR, PC);
 
-		csx_reg_set(core, rTHUMB(rPC), new_pc);
+		csx_reg_set_pcx(core, new_pc);
 	}
 }
 
@@ -328,7 +326,11 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 		ls.rm_v = csx_reg_get(core, ls.rm);
 	}
 	
-	ls.rn_v = csx_reg_get(core, ls.rn);
+	if(rPC == ls.rn)
+		ls.rn_v = PC_ARM;
+	else
+		ls.rn_v = csx_reg_get(core, ls.rn);
+	
 	if(ls.bit.p)
 	{
 		if(ls.bit.u)
@@ -345,8 +347,9 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 		/*	ARMv5, CP15_r1_Ubit == 0 */
 		if(ls.rw_size == sizeof(uint32_t))
 		{
-			assert(0 == (ls.ea & 3));
+//			assert(0 == (ls.ea & 3));
 			ls.rd_v = _ror(ls.rd_v, ((ls.ea & 3) << 3));
+//			assert(0 == (ls.ea & 3));
 		}
 
 		if(ls.flags.s) /* sign extend ? */
@@ -376,11 +379,10 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 		if(ls.bit.l)
 		{
-//			if(rPC == ls.rd)
-//				csx_reg_set(core, rTHUMB(rPC), ls.rd_v);
-//			else
-//				csx_reg_set(core, ls.rd, ls.rd_v);
-				csx_reg_set(core, rTHUMB(ls.rd), ls.rd_v);
+			if(rPC == ls.rd)
+				csx_reg_set_pcx(core, ls.rd_v);
+			else
+				csx_reg_set(core, ls.rd, ls.rd_v);
 		}
 		else
 		{
@@ -529,11 +531,11 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 			{
 				rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
 				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
-				csx_reg_set(core, rTHUMB(rPC), rxx_v);
+				csx_reg_set_pcx(core, rxx_v);
 			}
 			else
 			{
-				rxx_v = csx_reg_get(core, rPC);
+				rxx_v = PC_ARM;
 				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
 				csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
 			}
@@ -796,14 +798,13 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 
 void csx_core_arm_step(csx_core_p core)
 {
-	uint32_t pc;
-	const uint32_t ir = csx_reg_pc_fetch_step_arm(core, &pc);
+	const uint32_t ir = csx_reg_pc_fetch_step_arm(core);
 
-	const int thumb = pc & 1;
+	const int thumb = PC & 1;
 	if(thumb)
 	{
 		LOG("!! pc & 1");
-		csx_reg_set(core, rTHUMB(rPC), pc);
+		csx_reg_set_pcx(core, PC);
 		return;
 	}
 
@@ -873,7 +874,7 @@ void csx_core_arm_step(csx_core_p core)
 decode_fault:
 	TRACE(">> ir = 0x%08x, check0 = 0x%02x, check1 = 0x%02x, i74 = 0x%02hhx",
 		ir, check0, check1, i74);
-	csx_core_disasm(core, pc, ir);
+	csx_core_disasm(core, PC, ir);
 	UNIMPLIMENTED;
 	(void)check0;
 	(void)check1;
