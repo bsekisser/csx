@@ -5,6 +5,24 @@
 
 #include "csx_test_arm_inst.h"
 
+static void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
+{
+	cpsr &= mlBF(31, 28);
+	xpsr &= mlBF(31, 28);
+	
+	assert(cpsr == xpsr);
+}
+
+static void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
+{
+	csx_core_p core = t->csx->core;
+	
+	assert(n == BEXT(CPSR, CSX_PSR_BIT_N));
+	assert(z == BEXT(CPSR, CSX_PSR_BIT_Z));
+	assert(c == BEXT(CPSR, CSX_PSR_BIT_C));
+	assert(v == BEXT(CPSR, CSX_PSR_BIT_V));
+}
+
 static inline uint32_t epc(csx_test_p t)
 {
 	return(pc(t) + 8);
@@ -75,59 +93,6 @@ static void csx_test_arm_fn(csx_test_p t)
 
 		TRACE_PSR(psr);
 	}while(--count);
-}
-
-static void _csx_test_arm_add(csx_test_p t, int i)
-{
-	/* result : inputs : clobbers */
-
-	uint32_t psr;
-	uint32_t res = 0;
-	
-	switch(i)
-	{
-		case 1:
-			asm(
-				"mov r1, #-1\n\t"
-				"mov r2, #1\n\t"
-				"adds r3, r1, r2\n\t"
-				"mrs %[result], CPSR\n\t"
-				: [result] "=r" (psr) :: "r1", "r2", "r3"
-				);
-			break;
-		case 2:
-			asm(
-				"mov r1, #12\n\t"
-				"mov r2, #13\n\t"
-				"subs r3, r1, r2\n\t"
-				"mrs %[result], CPSR\n\t"
-				: [result] "=r" (psr) :: "r1", "r2", "r3"
-				);
-			break;
-		case 3:
-			asm(
-				"mov r0, #0x1c\n\t"
-				"mov r1, #0x1c\n\t"
-				"subs %[result], r0, r1\n\t"
-				"mrs %[psr], CPSR\n\t"
-				: [psr] "=r" (psr), [result] "=r" (res)
-				:: "r0", "r1"
-				);
-			break;
-		case 4:
-			asm(
-				"mov r0, #0x1c\n\t"
-				"mov r1, #0x1d\n\t"
-				"subs %[result], r0, r1\n\t"
-				"mrs %[psr], CPSR\n\t"
-				: [psr] "=r" (psr), [result] "=r" (res)
-				:: "r0", "r1"
-				);
-			break;
-	}
-
-	LOG("result = 0x%08x", res);
-	TRACE_PSR(psr);
 }
 
 static uint32_t csx_test_arm_add_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -208,7 +173,7 @@ static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 static void csx_test_arm_add(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+//	csx_core_p core = t->csx->core;
 	t->start_pc = t->pc = 0x10000000;
 
 	uint32_t res, xres;
@@ -218,62 +183,43 @@ static void csx_test_arm_add(csx_test_p t)
 	res = csx_test_arm_add_inst(t, &cpsr, ~0, 1);
 	
 	assert(xres == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 0, 1, 1, 0);
 	
 	xres = csx_test_arm_add_asm(t, &xpsr, 12, 1);
 	res = csx_test_arm_add_inst(t, &cpsr, 12, 1);
 
 	assert(13 == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 0, 0, 0, 0);
 	
 	xres = csx_test_arm_sub_asm(t, &xpsr, 13, 12);
 	res = csx_test_arm_sub_inst(t, &cpsr, 13, 12);
 
 	assert(1 == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 0, 0, 1, 0);
 
 	xres = csx_test_arm_sub_asm(t, &xpsr, 12, 13);
 	res = csx_test_arm_sub_inst(t, &cpsr, 12, 13);
 
 	assert(-1 == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
-	
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 1, 0, 0, 0);
 	
 	xres = csx_test_arm_sub_asm(t, &xpsr, 0x1c, 0x1c);
 	res = csx_test_arm_sub_inst(t, &cpsr, 0x1c, 0x1c);
 
 	assert(0 == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 0, 1, 1, 0);
 
 	xres = csx_test_arm_sub_asm(t, &xpsr, 0x1d, 0x1c);
 	res = csx_test_arm_sub_inst(t, &cpsr, 0x1d, 0x1c);
 
 	assert(1 == res);
-	assert((xpsr & mlBF(31, 28)) == (cpsr & mlBF(31, 28)));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_N));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_Z));
-	assert(1 == BEXT(CPSR, CSX_PSR_BIT_C));
-	assert(0 == BEXT(CPSR, CSX_PSR_BIT_V));
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	_assert_nzcv(t, 0, 0, 1, 0);
 }
 
 static void csx_test_arm_b(csx_test_p t)
@@ -311,12 +257,12 @@ static void csx_test_arm_b(csx_test_p t)
 
 static inline uint32_t _test_value(uint8_t i)
 {
-		uint32_t test_value = i | i << 16;
+	uint32_t test_value = i | i << 16;
 
-		test_value |= test_value << 4;
-		test_value |= test_value << 8;
+	test_value |= test_value << 4;
+	test_value |= test_value << 8;
 
-		return(test_value);
+	return(test_value);
 }
 
 static void csx_test_arm_ldm_dump_stack(
