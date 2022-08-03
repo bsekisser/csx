@@ -4,9 +4,10 @@
 
 #include "csx_test_arm.h"
 #include "csx_test_thumb.h"
+#include "csx_test_utility.h"
 
 
-uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
+uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
 {
 	csx_p csx = t->csx;
 	csx_core_p core = csx->core;
@@ -27,6 +28,16 @@ uint32_t csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t
 	csx->state = CSX_STATE_HALT;
 
 	return(PC);
+}
+
+uint32_t csx_test_run(csx_test_p t, uint32_t count)
+{
+	return(_csx_test_run(t, t->start_pc, pc(t), count));
+}
+
+uint32_t csx_test_run_thumb(csx_test_p t, uint32_t count)
+{
+	return(_csx_test_run(t, t->start_pc | 1, pc(t), count));
 }
 
 #if 0

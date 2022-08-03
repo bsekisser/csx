@@ -76,7 +76,7 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 	const int sub = BEXT(opcode, 7);
 	const uint16_t imm7 = mlBFMOV(opcode, 6, 0, 2);
 
-	const uint32_t sp_v = csx_reg_get(core, rSP);
+	const uint32_t sp_v = SP;
 	uint32_t res = sp_v;
 	
 	if(sub)
@@ -92,7 +92,7 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core, uint16_t opcode)
 			imm7, sp_v, imm7, res);
 	}
 
-	csx_reg_set(core, rSP, res);
+	SP = res;
 }
 
 static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
@@ -105,7 +105,7 @@ static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core, uint16_t opcode)
 	
 	uint32_t rd_v;
 	if(pcsp)
-		rd_v = csx_reg_get(core, rSP);
+		rd_v = SP;
 	else
 		rd_v = PC_THUMB & ~3;
 	
@@ -231,14 +231,13 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 		}
 
 		CORE_TRACE_LINK(new_lr);
-		csx_reg_set(core, rLR, new_lr);
+		LR = new_lr;
 	}
 	else
 	{
 		PC = pc;
-		csx_reg_set(core, rLR, lr | 1);
-		
-		
+		LR = lr | 1;
+
 		LOG("PC = 0x%08x, LR = 0x%08x", pc, lr);
 		UNPREDICTABLE;
 	}
@@ -265,7 +264,7 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 	if(link) {
 		const uint32_t new_lr = PC | 1;
 		CORE_TRACE_LINK(new_lr);
-		csx_reg_set(core, rLR, new_lr);
+		LR = new_lr;
 	}
 	
 	CORE_TRACE_BRANCH(new_pc);
@@ -360,7 +359,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 			break;
 		case	0x9000:
 			rn = rSP;
-			ea = csx_reg_get(core, rSP);
+			ea = SP;
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
@@ -639,7 +638,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 	
 	const uint8_t rlist = mlBFEXT(opcode, 7, 0);
 
-	const uint32_t sp_v = csx_reg_get(core, rSP);
+	const uint32_t sp_v = SP;
 	
 	const uint8_t rcount = (bit_r + __builtin_popcount(rlist)) << 2;
 
@@ -702,7 +701,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		}
 		else
 		{ /* push */
-			rxx_v = csx_reg_get(core, rLR);
+			rxx_v = LR;
 			csx_mmu_write(mmu, ea, rxx_v, sizeof(uint32_t));
 		}
 		ea += sizeof(uint32_t);
@@ -713,12 +712,12 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 	if(bit_l)
 	{ /* pop */
 		assert(end_address == ea);
-		csx_reg_set(core, rSP, end_address);
+		SP = end_address;
 	}
 	else
 	{ /* push */
 		assert(end_address == (ea - 4));
-		csx_reg_set(core, rSP, start_address);
+		SP = start_address;
 	}
 }
 

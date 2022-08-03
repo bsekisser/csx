@@ -172,7 +172,7 @@ static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_adds_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 3);
+	t->start_pc = t->pc = csx_test_run(t, 3);
 
 	*psr = CPSR;
 
@@ -194,7 +194,7 @@ static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_subs_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 3);
+	t->start_pc = t->pc = csx_test_run(t, 3);
 
 	*psr = CPSR;
 
@@ -287,7 +287,7 @@ static void csx_test_arm_b(csx_test_p t)
 		pc(t), t->start_pc, offset, new_pc);
 	
 	arm_b(t, offset);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 
 	if(0) LOG("pc = 0x%08x", pc(t));
 
@@ -302,11 +302,11 @@ static void csx_test_arm_b(csx_test_p t)
 	arm_bl(t, offset);
 	uint32_t expect_lr = pc(t);
 
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 	assert(new_pc == PC);
-	assert(expect_lr == csx_reg_get(core, rLR));
+	assert(expect_lr == LR);
 	
-	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), csx_reg_get(core, rLR));
+	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
 }
 
 static inline uint32_t _test_value(uint8_t i)
@@ -392,7 +392,7 @@ static void csx_test_arm_ldmda(csx_test_p t)
 	
 	t->start_pc = t->pc = 0x10000000;
 	
-	csx_reg_set(core, rSP, 0x10001000 + (4 << 2));
+	SP = 0x10001000 + (4 << 2);
 
 	for(int i = 0; i < 16; i++)
 		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
@@ -400,8 +400,8 @@ static void csx_test_arm_ldmda(csx_test_p t)
 
 	_cxx(t, _ldm_sp | _ldstm_da | _ldstm_reglist, sizeof(uint32_t));
 	
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
-	assert(0x10001000 == csx_reg_get(core, rSP));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x10001000 == SP);
 	assert(_test_value(1) == csx_reg_get(core, 1));
 	assert(_test_value(2) == csx_reg_get(core, 2));
 	assert(_test_value(3) == csx_reg_get(core, 3));
@@ -445,7 +445,7 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 	
 	t->start_pc = t->pc = 0x10000000;
 	
-	csx_reg_set(core, rSP, 0x10001000 + (4 << 2));
+	SP = 0x10001000 + (4 << 2);
 
 	for(int i = 0; i < 16; i++)
 		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
@@ -453,8 +453,8 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 
 	_cxx(t, _ldm_sp | _ldstm_db | _ldstm_reglist, sizeof(uint32_t));
 	
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
-	assert(0x10001000 == csx_reg_get(core, rSP));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x10001000 == SP);
 	assert(_test_value(0) == csx_reg_get(core, 1));
 	assert(_test_value(1) == csx_reg_get(core, 2));
 	assert(_test_value(2) == csx_reg_get(core, 3));
@@ -498,7 +498,7 @@ static void csx_test_arm_ldmia(csx_test_p t)
 	
 	t->start_pc = t->pc = 0x10000000;
 	
-	csx_reg_set(core, rSP, 0x10001000 + (4 << 2));
+	SP = 0x10001000 + (4 << 2);
 
 	for(int i = 0; i < 16; i++)
 		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
@@ -506,7 +506,7 @@ static void csx_test_arm_ldmia(csx_test_p t)
 
 	_cxx(t, _ldm_sp | _ldstm_ia | _ldstm_reglist, sizeof(uint32_t));
 	
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 //	assert(0x10001020 == csx_reg_get(core, rSP));
 //	assert(_test_value(4) == csx_reg_get(core, 1));
 //	assert(_test_value(5) == csx_reg_get(core, 2));
@@ -551,7 +551,7 @@ static void csx_test_arm_ldmib(csx_test_p t)
 	
 	t->start_pc = t->pc = 0x10000000;
 	
-	csx_reg_set(core, rSP, 0x10001000 + (4 << 2));
+	SP = 0x10001000 + (4 << 2);
 
 	for(int i = 0; i < 16; i++)
 		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
@@ -559,8 +559,8 @@ static void csx_test_arm_ldmib(csx_test_p t)
 
 	_cxx(t, _ldm_sp | _ldstm_ib | _ldstm_reglist, sizeof(uint32_t));
 	
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
-	assert(0x10001020 == csx_reg_get(core, rSP));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x10001020 == SP);
 	assert(_test_value(5) == csx_reg_get(core, 1));
 	assert(_test_value(6) == csx_reg_get(core, 2));
 	assert(_test_value(7) == csx_reg_get(core, 3));
@@ -584,15 +584,15 @@ static void csx_test_arm_mov(csx_test_p t)
 	t->start_pc = pc(t);
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0, 0));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 	assert(0x00000000 == csx_reg_get(core, 0));
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 0));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 	assert(0x00000040 == csx_reg_get(core, 0));
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 26));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 //	assert(0x00001000 == csx_reg_get(core, 0));
 	assert(0x10000000 == csx_reg_get(core, 0));
 }

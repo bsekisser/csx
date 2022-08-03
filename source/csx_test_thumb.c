@@ -20,15 +20,15 @@ void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 	t->start_pc = t->pc = 0x10000000;
 	
 	thumb_mov_rd_i(t, 1, 64);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	
 	thumb_add_sub_i3_rn_rd(t, _ADD, 1, 1, 0);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	assert(csx_reg_get(core, 0) > csx_reg_get(core, 1));
 	assert(65 == csx_reg_get(core, 0));
 	
 	thumb_add_sub_i3_rn_rd(t, _SUB, 1, 1, 0);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	assert(csx_reg_get(core, 0) < csx_reg_get(core, 1));
 	assert(63 == csx_reg_get(core, 0));
 }
@@ -44,7 +44,7 @@ void csx_test_thumb_b(csx_test_p t)
 //	_cxx(t, 0xf013, sizeof(uint16_t));
 //	_cxx(t, 0xfccc, sizeof(uint16_t));
 	_cxx(t, 0xfcccf013, sizeof(uint32_t));
-//	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+//	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
 	uint32_t lr = csx_reg_get(core, rLR);
 //	uint32_t hlr = lr & ~_BVM(11);
@@ -53,7 +53,7 @@ void csx_test_thumb_b(csx_test_p t)
 //	assert(0x100132bc == lr);
 //	assert(0x100002ba == pc(t));
 
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 2);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 2);
 
 //	pc_v = csx_reg_get(core, TEST_PC);
 	lr = csx_reg_get(core, rLR);
@@ -65,10 +65,10 @@ void csx_test_thumb_b(csx_test_p t)
 	t->start_pc = t->pc = 0x10013c58 - 2;
 	
 	thumb_mov_rd_i(t, 0, 0);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	
 	_cxx(t, 0xd00d, sizeof(uint16_t));
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
 //	LOG("rLR = 0x%08x, rPC = 0x%08x", lr, pc(t));
 
@@ -99,7 +99,7 @@ void csx_test_thumb_ldstm(csx_test_p t)
 		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
 
 	thumb_ldmia_rd_reglist(t, 0, 0xcc);
-	t->start_pc = t->pc = csx_test_run(t, t->start_pc | 1, pc(t), 1);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
 	for(int i = 0; i < 8; i++)
 		LOG("r[%02u] = 0x%08x", i, csx_reg_get(core, i));

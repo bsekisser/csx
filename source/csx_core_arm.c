@@ -283,7 +283,7 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 	if(cce)
 	{
 		if(link)
-			csx_reg_set(core, rLR, PC);
+			LR = PC;
 
 		csx_reg_set_pcx(core, new_pc);
 	}
@@ -308,7 +308,7 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 	if(cce)
 	{
 		if(link)
-			csx_reg_set(core, rLR, PC);
+			LR = PC;
 
 		csx_reg_set_pcx(core, new_pc);
 	}
@@ -740,8 +740,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		saved_psr = CPSR;
 		new_psr = (saved_psr & ~mask) | (operand & mask);
 
-		if(0)LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
-			csx_reg_get(core, rSP), csx_reg_get(core, rLR), IP);
+		if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
 		if(BTST(saved_psr, CSX_PSR_BIT_T) != BTST(new_psr, CSX_PSR_BIT_T))
 			CORE_TRACE_THUMB;
@@ -772,8 +771,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 			cs, cpsrs, _arm_reg_name(rm), operand, mask, operand & mask);
 	}
 
-	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x",
-		csx_reg_get(core, rSP), csx_reg_get(core, rLR), IP);
+	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
 	csx_trace_psr(core, 0, new_psr);
 }

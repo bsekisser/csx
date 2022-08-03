@@ -4,9 +4,13 @@ enum {
 	rPC = 15,
 };
 
+#define LR							core->reg[rLR]
+
 #define PC							core->reg[rPC]
 #define PC_ARM						((PC + 4) & ~3)
 #define PC_THUMB					((PC + 2) & ~1)
+
+#define SP							core->reg[rSP]
 
 /* **** */
 

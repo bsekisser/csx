@@ -57,4 +57,4 @@ typedef struct csx_t {
 	csh					cs_handle;
 }csx_t;
 
-void csx_init(csx_p csx);
+int csx_soc_init(csx_p csx);
