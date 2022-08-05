@@ -1,5 +1,6 @@
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_utility.h"
 
 /* **** */
 

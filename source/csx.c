@@ -39,8 +39,13 @@ int csx_soc_main(void)
 	assert(~0UL == _BM(31));
 #endif
 
-	int err;
-	csx_t ccsx, *csx = &ccsx;
+	int err = 0;
+	csx_p csx = 0;
+	ERR_NULL(csx = malloc(sizeof(csx_t)));
+	if(!csx)
+		return(-1);
+	
+	memset(csx, 0, sizeof(csx_t));
 	
 	_TRACE_ENABLE_(csx, ENTER);
 	_TRACE_ENABLE_(csx, EXIT);
@@ -81,6 +86,26 @@ int csx_soc_main(void)
 	_TRACE_(csx, EXIT);
 
 	return(err);
+}
+
+uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
+{
+	uint32_t data = 0;
+	
+	if(csx_mmu_read(csx->mmu, va, &data, size))
+		;
+	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
+		data = csx_mmio_read(csx->mmio, va, size);
+	
+	return(data);
+}
+
+void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
+{
+	if(csx_mmu_write(csx->mmu, va, data, size))
+		;
+	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
+		csx_mmio_write(csx->mmio, va, data, size);
 }
 
 int main(int argc, char **argv)

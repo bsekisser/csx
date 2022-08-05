@@ -2,6 +2,7 @@
 
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_utility.h"
 
 #include "csx_core_arm_inst.h"
 
@@ -43,7 +44,7 @@ static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, 
 	if(cce)
 	{
 		if((dpi->rs & 0x0f) == dpi->rs)
-			core->csx->cycle++;
+			CYCLE++;
 
 		if(dpi->bit.s)
 		{
@@ -316,8 +317,6 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
-	csx_p csx = core->csx;
-	
 	csx_ldst_t ls;
 	csx_core_arm_decode_ldst(core, opcode, &ls);
 
@@ -341,7 +340,7 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	if(ls.bit.l)
 	{
-		ls.rd_v = csx_mmu_read(csx->mmu, ls.ea, ls.rw_size);
+		ls.rd_v = csx_core_read(core, ls.ea, ls.rw_size);
 //		ls.rd_v &= _BM((ls.rw_size << 3) - 1);
 
 		/*	ARMv5, CP15_r1_Ubit == 0 */
@@ -389,14 +388,13 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 			if(ls.rw_size == sizeof(uint32_t))
 				ls.ea &= ~3;
 				
-			csx_mmu_write(csx->mmu, ls.ea, ls.rd_v, ls.rw_size);
+			csx_core_write(core, ls.ea, ls.rd_v, ls.rw_size);
 		}
 	}
 }
 
 static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t user_mode_regs)
 {
-	csx_p csx = core->csx;
 	uint32_t rxx_v;
 
 	/* CP15_r1_Ubit == 0 */
@@ -404,7 +402,7 @@ static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t
 
 	if(ls->bit.l)
 	{
-		rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
+		rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
 
 		if(0) LOG("r(%u)==[0x%08x](0x%08x)", i, ea, rxx_v);
 
@@ -422,7 +420,7 @@ static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t
 		
 		if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, i, rxx_v);
 
-		csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
+		csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
 	}
 
 	ls->ea += sizeof(uint32_t);
@@ -430,8 +428,6 @@ static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t
 
 static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
-	csx_p csx = core->csx;
-
 	csx_ldst_t ls;
 	csx_core_arm_decode_ldst(core, opcode, &ls);
 	ls.rn_v = csx_reg_get(core, ls.rn);
@@ -512,7 +508,7 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 		{
 			if(BTST(ls.rm_v, i))
 			{
-				csx->cycle++;
+				CYCLE++;
 				_arm_inst_ldstm(core, &ls, i, user_mode_regs);
 			}
 		}
@@ -522,14 +518,14 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 		if(BTST(ls.rm_v, 15))
 		{
-			csx->cycle++;
+			CYCLE++;
 
 			/* CP15_r1_Ubit == 0 */
 			uint32_t ea = ls.ea & ~3;
 
 			if(ls.bit.l)
 			{
-				rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
+				rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
 				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
 				csx_reg_set_pcx(core, rxx_v);
 			}
@@ -537,7 +533,7 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 			{
 				rxx_v = PC_ARM;
 				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
-				csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
+				csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
 			}
 
 			ls.ea += sizeof(uint32_t);

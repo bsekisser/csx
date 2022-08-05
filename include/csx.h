@@ -20,6 +20,7 @@
 #include "bounds.h"
 //#include "data.h"
 #include "log.h"
+#include "page.h"
 
 #include "csx_trace.h"
 
@@ -58,3 +59,5 @@ typedef struct csx_t {
 }csx_t;
 
 int csx_soc_init(csx_p csx);
+uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size);
+void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size);

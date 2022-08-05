@@ -2,6 +2,7 @@
 
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_utility.h"
 
 #include "csx_core_thumb_inst.h"
 
@@ -199,7 +200,7 @@ static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
 	if(0) LOG("rLR == (0x%08x + 0x%08x) == 0x%08x", pc, eao, lr);
 
 	pc += 2;
-	uint16_t opcode1 = csx_mmu_read(core->csx->mmu, pc & ~1, sizeof(uint16_t));
+	uint16_t opcode1 = csx_core_read(core, pc & ~1, sizeof(uint16_t));
 	uint32_t opcode = (opcode0 << 16) | opcode1;
 
 	if(0) LOG("PC2 = 0x%08x, opcode = 0x%04x:0x%04x", pc, opcode0, opcode1);
@@ -339,8 +340,6 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 {
-	const csx_mmu_p mmu = core->csx->mmu;
-
 //	core->ccs = "EA"; /* ??? */
 	CORE_T(const int cce = 1);
 	
@@ -373,7 +372,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 	uint32_t rd_v;
 	
 	if(bit_l)
-		rd_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+		rd_v = csx_core_read(core, ea, sizeof(uint32_t));
 	else
 		rd_v = csx_reg_get(core, rd);
 
@@ -383,7 +382,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core, uint16_t opcode)
 	if(bit_l)
 		csx_reg_set(core, rd, rd_v);
 	else
-		csx_mmu_write(mmu, ea, rd_v, sizeof(uint32_t));
+		csx_core_write(core, ea, rd_v, sizeof(uint32_t));
 }
 
 static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
@@ -428,7 +427,7 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 
 	uint32_t rd_v;
 	if(bit_l)
-		rd_v = csx_mmu_read(core->csx->mmu, ea, size);
+		rd_v = csx_core_read(core, ea, size);
 	else
 		rd_v = csx_reg_get(core, rd);
 
@@ -438,7 +437,7 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core, uint16_t opcode)
 	if(bit_l)
 		csx_reg_set(core, rd, rd_v);
 	else
-		csx_mmu_write(core->csx->mmu, ea, rd_v, size);
+		csx_core_write(core, ea, rd_v, size);
 }
 
 static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
@@ -484,7 +483,7 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 
 	uint32_t rd_v;
 	if(bit_l)
-		rd_v = csx_mmu_read(core->csx->mmu, ea, size);
+		rd_v = csx_core_read(core, ea, size);
 	else
 		rd_v = csx_reg_get(core, rd);
 		
@@ -494,12 +493,11 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core, uint16_t opcode)
 	if(bit_l)
 		csx_reg_set(core, rd, rd_v);
 	else
-		csx_mmu_write(core->csx->mmu, ea, rd_v, size);
+		csx_core_write(core, ea, rd_v, size);
 }
 
 static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 {
-	const csx_p csx = core->csx;
 	CORE_T(const int cce = 1);
 
 //	struct {
@@ -529,17 +527,17 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core, uint16_t opcode)
 		if(rxx)
 		{
 			uint32_t rxx_v;
-			csx->cycle++;
+			CYCLE++;
 
 			if(bit_l)
 			{
-				rxx_v = csx_mmu_read(csx->mmu, ea, sizeof(uint32_t));
+				rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
 				csx_reg_set(core, i, rxx_v);
 			}
 			else
 			{	
 				rxx_v = csx_reg_get(core, i);
-				csx_mmu_write(csx->mmu, ea, rxx_v, sizeof(uint32_t));
+				csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
 			}
 			ea += sizeof(uint32_t);
 		}
@@ -628,9 +626,6 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 {
 	CORE_T(const int cce = 1);
 	
-	const csx_p csx = core->csx;
-	const csx_mmu_p mmu = csx->mmu;
-	
 //	struct {
 		const int bit_l = BEXT(opcode, 11);
 		const int bit_r = BEXT(opcode, 8);
@@ -668,10 +663,10 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 
 		if(rxx)
 		{
-			csx->cycle++;
+			CYCLE++;
 			if(bit_l)
 			{ /* pop */
-				rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+				rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
 				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
 				csx_reg_set(core, i, rxx_v);
 			}
@@ -679,7 +674,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 			{ /* push */
 				rxx_v = csx_reg_get(core, i);
 				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				csx_mmu_write(mmu, ea, rxx_v, sizeof(uint32_t));
+				csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
 			}
 			ea += sizeof(uint32_t);
 		}
@@ -693,7 +688,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 	{
 		if(bit_l)
 		{ /* pop */
-			rxx_v = csx_mmu_read(mmu, ea, sizeof(uint32_t));
+			rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
 			if(1/*(_arm_version >= ARMv5)*/)
 				csx_reg_set_pcx(core, rxx_v);
 			else
@@ -702,7 +697,7 @@ static void csx_core_thumb_pop_push(csx_core_p core, uint16_t opcode)
 		else
 		{ /* push */
 			rxx_v = LR;
-			csx_mmu_write(mmu, ea, rxx_v, sizeof(uint32_t));
+			csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
 		}
 		ea += sizeof(uint32_t);
 	}

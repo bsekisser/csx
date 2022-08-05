@@ -1,5 +1,7 @@
 #pragma once
 
+#define CYCLE core->csx->cycle
+
 static inline int _check_sbo(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t *test, uint32_t *result)
 {
 	uint32_t set_bit_count = (msb + 1) - lsb;
@@ -54,4 +56,14 @@ static inline uint32_t _ror(uint32_t data, uint8_t shift)
 	uint32_t r = data << ((-shift) & 31);
 	
 	return(l | r);
+}
+
+static inline uint32_t csx_core_read(csx_core_p core, uint32_t va, size_t size)
+{
+	return(csx_soc_read(core->csx, va, size));
+}
+
+static inline void csx_core_write(csx_core_p core, uint32_t va, uint32_t data, size_t size)
+{
+	csx_soc_write(core->csx, va, data, size);
 }

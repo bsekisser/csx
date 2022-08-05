@@ -1,5 +1,6 @@
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_utility.h"
 
 enum {
 	CSX_PSR_MODE_USER = 0x10,
@@ -54,7 +55,7 @@ uint32_t csx_reg_pc_fetch_step_arm(csx_core_p core)
 	IP = PC & ~3;
 	PC += 4;
 	
-	return(csx_mmu_read(core->csx->mmu, IP, sizeof(uint32_t)));
+	return(csx_core_read(core, IP, sizeof(uint32_t)));
 }
 
 uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core)
@@ -62,7 +63,7 @@ uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core)
 	IP = PC & ~1;
 	PC += 2;
 	
-	return(csx_mmu_read(core->csx->mmu, IP, sizeof(uint16_t)));
+	return(csx_core_read(core, IP, sizeof(uint16_t)));
 }
 
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)

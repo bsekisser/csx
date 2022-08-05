@@ -33,7 +33,6 @@ typedef void (*csx_core_step_fn)(csx_core_p csx);
 #include "csx_core_reg.h"
 #include "csx_core_thumb.h"
 #include "csx_core_trace.h"
-#include "csx_core_utility.h"
 
 typedef struct csx_core_t {
 	uint32_t			reg[16];
