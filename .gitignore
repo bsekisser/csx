@@ -1,4 +1,5 @@
 *.geany
+*.log
 *.o
 archive/private/*
 build*/*
