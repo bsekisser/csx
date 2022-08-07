@@ -89,7 +89,6 @@ void csx_test_thumb_ldstm(csx_test_p t)
 {
 	csx_p csx = t->csx;
 	csx_core_p core = csx->core;
-	csx_mmu_p mmu = csx->mmu;
 
 	t->start_pc = t->pc = 0x10000000;
 	

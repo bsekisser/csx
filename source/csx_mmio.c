@@ -7,6 +7,7 @@
 #include "csx_mmio_dpll.h"
 #include "csx_mmio_mpu.h"
 #include "csx_mmio_mpu_gpio.h"
+#include "csx_mmio_mpu_l1_ihr.h"
 #include "csx_mmio_ocp.h"
 #include "csx_mmio_gp_timer.h"
 #include "csx_mmio_os_timer.h"
@@ -58,6 +59,7 @@ typedef struct csx_mmio_t {
 	csx_mmio_dpll_p			dpll;
 	csx_mmio_mpu_p			mpu;
 	csx_mmio_mpu_gpio_p		mpu_gpio[4];
+	csx_mmio_mpu_l1_ihr_p	mpu_l1_ihr;
 	csx_mmio_ocp_p			ocp;
 	csx_mmio_gp_timer_p		gp_timer;
 	csx_mmio_os_timer_p		os_timer;
@@ -288,7 +290,7 @@ void csx_mmio_reset(csx_mmio_p mmio)
 }
 
 uint32_t csx_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl)
-{}
+{ return(0); }
 
 void csx_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
 {
@@ -375,7 +377,7 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[1]));
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[2]));
 //	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[3]));
-	ERR(err = csx_mmio_mpu_l1_ihr_init(csx, mmio, &mmio->mpu));
+	ERR(err = csx_mmio_mpu_l1_ihr_init(csx, mmio, &mmio->mpu_l1_ihr));
 	ERR(err = csx_mmio_ocp_init(csx, mmio, &mmio->ocp));
 	ERR(err = csx_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = csx_mmio_os_timer_init(csx, mmio, &mmio->os_timer));

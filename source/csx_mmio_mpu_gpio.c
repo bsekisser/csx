@@ -78,7 +78,7 @@ static void csx_mmio_mpu_gpio_write(void* data, uint32_t addr, uint32_t value, u
 static void csx_mmio_mpu_gpio_reset(void* data)
 {
 	const csx_mmio_mpu_gpio_p gpio = data;
-	const csx_mmio_p mmio = gpio->mmio;
+//	const csx_mmio_p mmio = gpio->mmio;
 //	const csx_p csx = gpio->csx;
 	
 	for(int unit = 0; unit < 4; unit++)

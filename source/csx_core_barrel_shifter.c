@@ -56,4 +56,6 @@ uint32_t csx_core_barrel_shifter(csx_core_p core, uint32_t vin, uint32_t shift, 
 			return(_csx_core_arm_shifter_operation_lsr(core, vin, shift, cout));
 			break;
 	}
+
+	return(0);
 }

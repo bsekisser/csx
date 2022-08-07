@@ -92,4 +92,6 @@ int csx_test_main(void)
 	csx_test_thumb(t);
 
 	_TRACE_(t, EXIT);
+	
+	return(0);
 }

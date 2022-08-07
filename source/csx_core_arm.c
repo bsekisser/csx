@@ -582,7 +582,7 @@ static void arm_inst_mcr(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
-	uint32_t test, result;
+	uint32_t test = 0, result = 0;
 
 	const int tsbo = _check_sbo(opcode, 19, 16, &test, &result);
 	if(tsbo)
@@ -597,8 +597,8 @@ static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 	_setup_decode_rd(opcode, rd);
 
-	const char* psrs;
-	uint32_t rd_v;
+	const char* psrs = "";
+	uint32_t rd_v = 0;
 
 	if(BTST(opcode, ARM_INST_BIT_R))
 	{
@@ -630,7 +630,7 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 {
 	csx_p csx = core->csx; (void)csx;
 	
-	uint32_t test, result;
+	uint32_t test = 0, result = 0;
 
 	const int tsbo = _check_sbo(opcode, 15, 12, &test, &result);
 	if(tsbo) {
@@ -645,9 +645,9 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	const uint8_t field_mask = mlBFEXT(opcode, 19, 16);
 	
-	uint8_t rotate_imm, imm8;
-	uint8_t rm, rm_v;
-	uint8_t operand;
+	uint8_t rotate_imm = 0, imm8 = 0;
+	uint8_t rm = 0, rm_v = 0;
+	uint8_t operand = 0;
 	
 	if(bit_i)
 	{
@@ -699,9 +699,9 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 		
 	if(0) TRACE("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
 	
-	uint32_t saved_psr, new_psr;
+	uint32_t saved_psr = 0, new_psr = 0;
 	
-	uint32_t mask;
+	uint32_t mask = 0;
 	if(bit_r)
 	{
 		if(core->spsr)

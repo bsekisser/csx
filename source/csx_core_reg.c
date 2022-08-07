@@ -116,7 +116,7 @@ uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v)
 	const uint8_t mode = mlBFEXT(CPSR, 4, 0);
 	uint32_t* usr_regs = csx_psr_mode_regs(core, mode, &reg);
 
-	uint32_t vout;
+	uint32_t vout = 0;
 	if(reg && ((r & 0x0f) < 15) && r >= reg)
 	{
 		uint8_t umreg = r - reg;
@@ -139,7 +139,7 @@ void csx_psr_mode_switch(csx_core_p core, uint32_t v)
 	const uint8_t new_mode = mlBFEXT(v, 4, 0);
 
 	uint32_t *src = 0, *dst = 0;
-	uint8_t sreg;
+	uint8_t sreg = 0;
 
 	if(0) LOG("old_mode = 0x%03x, new_mode = 0x%03x", old_mode, new_mode);
 

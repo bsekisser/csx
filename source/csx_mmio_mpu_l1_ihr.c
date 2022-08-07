@@ -57,7 +57,7 @@ static void csx_mmio_mpu_l1_ihr_write(void* data, uint32_t addr, uint32_t value,
 
 static void csx_mmio_mpu_l1_ihr_reset(void* data)
 {
-	const csx_mmio_mpu_l1_ihr_p l1ihr = data;
+//	const csx_mmio_mpu_l1_ihr_p l1ihr = data;
 
 	csx_mmio_peripheral_reset(data, trace_list);
 }

@@ -30,7 +30,7 @@ static uint32_t csx_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
 
 	uint8_t offset = addr & _BM(8);
 
-	uint32_t value;
+	uint32_t value = 0;
 	
 	switch(addr)
 	{
@@ -39,7 +39,7 @@ static uint32_t csx_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
 			break;
 		case ARM_IDLECT(1):
 		case ARM_IDLECT(2):
-			value = mpu->arm_idlect[offset - 1];
+			value = mpu->arm_idlect[(offset - 1) & 1];
 			break;
 		case ARM_RSTCT2:
 			value = mpu->arm_rstct2;
@@ -90,7 +90,7 @@ static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_
 					BEXT(value, 7), BEXT(value, 6), BEXT(value, 2),
 					BEXT(value, 1), BEXT(value, 0));
 			}
-			mpu->arm_idlect[offset - 1] = value;
+			mpu->arm_idlect[(offset - 1) & 1] = value;
 			break;
 		case ARM_IDLECT(2):
 			if(1)
@@ -101,7 +101,7 @@ static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_
 				LOG("EN_LCDCK: %01u, EN_PERCK: %01u, EN_XORPCK: %01u, EN_WDTCK: %01u",
 					BEXT(value, 3), BEXT(value, 2), BEXT(value, 1), BEXT(value, 0));
 			}
-			mpu->arm_idlect[offset - 1] = value;
+			mpu->arm_idlect[(offset - 1) & 1] = value;
 			break;
 		case ARM_RSTCT2:
 			if(1)

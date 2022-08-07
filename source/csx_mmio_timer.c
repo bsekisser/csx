@@ -32,7 +32,7 @@ static uint32_t csx_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
-	uint32_t value;
+	uint32_t value = 0;
 	
 	switch(addr)
 	{

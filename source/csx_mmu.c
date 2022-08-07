@@ -70,7 +70,7 @@ static void set_tlbe_urwx_rwx(csx_tlb_p t, int ur, int uw, int ux, int r, int w,
 
 static inline int csx_mmu__tlb_entry(csx_mmu_p mmu, uint32_t va, csx_tlb_h h2tlbe)
 {
-	if(0) LOG("mmu = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", mmu, va, h2tlbe);
+	if(0) LOG("mmu = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)mmu, va, (uint)h2tlbe);
 
 	const uint vp = PAGE(va);
 	const uint vp_tlbe = vp & 0xff;
@@ -81,10 +81,11 @@ static inline int csx_mmu__tlb_entry(csx_mmu_p mmu, uint32_t va, csx_tlb_h h2tlb
 
 	*h2tlbe = tlbe;
 
-	if(0) LOG("tlbe = 0x%08x", tlbe);
+	if(0) LOG("tlbe = 0x%08x", (uint)tlbe);
 
 	if(!tlbe->i || (vp != tlbe->vp)) {
-		if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x, tlbe = 0x%08x, i = 1u, tlbe->vp = 0x%08x", vp, vp_tlbe, tlbe, tlbe->i, tlbe->vp);
+		if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x, tlbe = 0x%08x, i = %01u, tlbe->vp = 0x%08x",
+			vp, vp_tlbe, (uint)tlbe, tlbe->i, tlbe->vp);
 		return(0);
 	}
 
@@ -120,7 +121,7 @@ static inline int csx_mmu__tlb_read(csx_mmu_p mmu, uint32_t va, void** data)
 {
 	csx_tlb_p tlbe = 0;
 	
-	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x", mmu, va, data);
+	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)mmu, va, (uint)data);
 
 	if(!csx_mmu__tlb_entry(mmu, va, &tlbe)) {
 		if(!csx_mmu__tlb_fill(mmu, va, tlbe))
@@ -164,13 +165,13 @@ int csx_mmu_read(csx_mmu_p mmu, uint32_t va, uint32_t* data, size_t size)
 	const uint32_t va_page_size = PAGE(va + (size - 1));
 
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x, size = 0x%08x, va_page = 0x%08x",
-		mmu, va, data, size, va_page);
+		(uint)mmu, va, (uint)data, size, va_page);
 
 	uint count = 0;
 
 	if(1 && (va_page != va_page_size)) {
 		LOG("va = 0x%08x (0x%08x, 0x%08x), data = 0x%08x, size = 0x%02x",
-			va, va_page, va_page_size, data, size);
+			va, va_page, va_page_size, (uint)data, size);
 
 		count = (size |= 0x80);
 	}
@@ -202,7 +203,7 @@ int csx_mmu_write(csx_mmu_p mmu, uint32_t va, uint32_t data, size_t size)
 
 	if(1 && (va_page != va_page_size)) {
 		LOG("va = 0x%08x (0x%08x, 0x%08x), data = 0x%08x, size = 0x%02x",
-			va, va_page, va_page_size, data, size);
+			va, va_page, va_page_size, (uint)data, size);
 
 		count = (size |= 0x80);
 	}
@@ -256,7 +257,7 @@ int csx_mmu_init(csx_p csx, csx_mmu_h h2mmu)
 	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
 	
 	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		mmu->loader.base, (uint32_t)mmu->loader.data, mmu->loader.size);
+		mmu->loader.base, (uint)mmu->loader.data, mmu->loader.size);
 	
 	close(fd);
 

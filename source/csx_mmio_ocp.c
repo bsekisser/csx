@@ -28,7 +28,7 @@ static uint32_t csx_mmio_ocp_read(void* data, uint32_t addr, uint8_t size)
 
 	csx_mmio_trace(csx->mmio, trace_list, addr);
 
-	uint32_t value;
+	uint32_t value = 0;
 	
 	switch(addr & ~0xf)
 	{

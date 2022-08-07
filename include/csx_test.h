@@ -10,5 +10,6 @@ typedef struct csx_test_t {
 	T(uint32_t		trace_flags);
 }csx_test_t;
 
+int csx_test_main(void);
 uint32_t csx_test_run(csx_test_p t, uint32_t count);
 uint32_t csx_test_run_thumb(csx_test_p t, uint32_t count);
