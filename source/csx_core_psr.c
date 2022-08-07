@@ -32,7 +32,7 @@ static const char* inst_ccs[16] = {
 	"HI", "LS", "GE", "LT", "GT", "LE", "AL", "XX"
 };
 
-uint8_t csx_core_check_cc(csx_core_p core, uint32_t opcode, uint8_t cc)
+uint8_t csx_core_check_cc(csx_core_p core, uint8_t cc)
 {
 	const uint32_t psr = CPSR;
 

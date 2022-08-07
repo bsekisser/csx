@@ -32,7 +32,7 @@
 
 /* function prototypes */
 
-uint8_t csx_core_check_cc(csx_core_p core, uint32_t opcode, uint8_t cond);
+uint8_t csx_core_check_cc(csx_core_p core, uint8_t cond);
 
 void csx_core_flags_nz(csx_core_p core, uint32_t rd_v);
 void csx_core_flags_nzcv_add(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v);

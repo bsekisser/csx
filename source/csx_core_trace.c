@@ -65,7 +65,7 @@ void csx_trace_psr_change(csx_core_p core, const char* pfn, uint32_t saved_psr, 
 
 /* **** */
 
-void csx_trace_inst_dpi(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t cce)
+void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 
@@ -102,7 +102,7 @@ void csx_trace_inst_dpi(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t
 	CORE_TRACE("%s) %s", tout, dpi->op_string);
 }
 
-void csx_trace_inst_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls, uint8_t cce)
+void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls, uint8_t cce)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 

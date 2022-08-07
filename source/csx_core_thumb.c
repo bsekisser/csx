@@ -180,8 +180,10 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 
 static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 {
+	IR = opcode;
+
 	const uint8_t cond = mlBFEXT(opcode, 11, 8);
-	const uint8_t cce = csx_core_check_cc(core, opcode, cond);
+	const uint8_t cce = csx_core_check_cc(core, cond);
 	const int32_t imm8 = mlBFEXTs(opcode, 7, 0) << 1;
 
 	const uint32_t new_pc = PC_THUMB + imm8;

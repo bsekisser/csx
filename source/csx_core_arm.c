@@ -26,9 +26,9 @@ const char* _arm_reg_name(csx_reg_t r)
 	return(reg_names[r]);
 }
 
-static void arm_inst_dpi_final(csx_core_p core, uint32_t opcode, csx_dpi_p dpi, uint8_t cce)
+static void arm_inst_dpi_final(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
 {
-	csx_trace_inst_dpi(core, opcode, dpi, cce);
+	csx_trace_inst_dpi(core, dpi, cce);
 
 	if(rPC == dpi->rd)
 	{
@@ -197,12 +197,12 @@ static void arm_inst_dpi_operation_sub(csx_core_p core, csx_dpi_p dpi)
 		dpi->rn_v, dpi->out.v, dpi->rd_v);
 }
 
-static void arm_inst_dpi(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_dpi(csx_core_p core, uint8_t cce)
 {
 	csx_dpi_t	dpi;
 
-	csx_core_arm_decode_rn_rd(opcode, &dpi.rn, &dpi.rd);
-	csx_core_arm_decode_shifter_operand(core, opcode, &dpi);
+	csx_core_arm_decode_rn_rd(IR, &dpi.rn, &dpi.rd);
+	csx_core_arm_decode_shifter_operand(core, &dpi);
 
 	if(ARM_DPI_OPERATION_MOV != dpi.operation)
 		dpi.rn_v = csx_reg_get(core, dpi.rn);
@@ -244,22 +244,22 @@ static void arm_inst_dpi(csx_core_p core, uint32_t opcode, uint8_t cce)
 			break;
 	}
 	
-	arm_inst_dpi_final(core, opcode, &dpi, cce);
+	arm_inst_dpi_final(core, &dpi, cce);
 	return;
 
 exit_fault:
 	LOG("operation = 0x%02x", dpi.operation);
-	csx_core_disasm(core, IP, opcode);
+	csx_core_disasm(core, IP, IR);
 	UNIMPLIMENTED;
 }
 
 
-static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_b(csx_core_p core, uint8_t cce)
 {
-	const int blx = (0x0f == mlBFEXT(opcode, 31, 28));
+	const int blx = (0x0f == mlBFEXT(IR, 31, 28));
 
-	int link = BEXT(opcode, ARM_INST_BIT_LINK);
-	const int32_t offset = mlBFEXTs(opcode, 23, 0);
+	int link = BEXT(IR, ARM_INST_BIT_LINK);
+	const int32_t offset = mlBFEXTs(IR, 23, 0);
 
 	uint32_t new_pc = PC_ARM + (offset << 2);
 	
@@ -290,10 +290,10 @@ static void arm_inst_b(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 }
 
-static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_bx(csx_core_p core, uint8_t cce)
 {
-	_setup_decode_rm(opcode, rm);
-	const int link = BEXT(opcode, 5);
+	_setup_decode_rm(IR, rm);
+	const int link = BEXT(IR, 5);
 
 	const uint32_t new_pc = csx_reg_get(core, rm);
 	const int thumb = new_pc & 1;
@@ -315,10 +315,10 @@ static void arm_inst_bx(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 }
 
-static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_ldst(csx_core_p core, uint8_t cce)
 {
 	csx_ldst_t ls;
-	csx_core_arm_decode_ldst(core, opcode, &ls);
+	csx_core_arm_decode_ldst(core, &ls);
 
 	if((ls.rm & 0x0f) == ls.rm)
 	{
@@ -354,7 +354,7 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 	else
 		ls.rd_v = csx_reg_get(core, ls.rd);
 	
-	csx_trace_inst_ldst(core, opcode, &ls, cce);
+	csx_trace_inst_ldst(core, &ls, cce);
 
 	if(ls.bit.l && (rPC == ls.rd))
 		CORE_TRACE_BRANCH(ls.rd_v);
@@ -423,10 +423,10 @@ static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t
 	ls->ea += sizeof(uint32_t);
 }
 
-static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 {
 	csx_ldst_t ls;
-	csx_core_arm_decode_ldst(core, opcode, &ls);
+	csx_core_arm_decode_ldst(core, &ls);
 	ls.rn_v = csx_reg_get(core, ls.rn);
 
 	const uint8_t rcount = (__builtin_popcount(ls.rm_v) << 2);
@@ -550,12 +550,12 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 }
 
-static void arm_inst_mcr(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_mcr(csx_core_p core, uint8_t cce)
 {
 	csx_p csx = core->csx;
 	csx_coproc_data_t acp;
 	
-	csx_core_arm_decode_coproc(core, opcode, &acp);
+	csx_core_arm_decode_coproc(core, &acp);
 
 	if(acp.bit.l)
 	{
@@ -577,27 +577,27 @@ static void arm_inst_mcr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	}
 }
 
-static void arm_inst_mrs(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_mrs(csx_core_p core, uint8_t cce)
 {
 	uint32_t test = 0, result = 0;
 
-	const int tsbo = _check_sbo(opcode, 19, 16, &test, &result);
+	const int tsbo = _check_sbo(IR, 19, 16, &test, &result);
 	if(tsbo)
-		TRACE("!! sbo(opcode = 0x%08x, 19, 16, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbo);
+		TRACE("!! sbo(opcode = 0x%08x, 19, 16, =0x%08x, =0x%08x (%u))", test, result, tsbo);
 
-	const int tsbz = _check_sbz(opcode, 11, 0, &test, &result);
+	const int tsbz = _check_sbz(IR, 11, 0, &test, &result);
 	if(tsbz)
-		TRACE("!! sbz(opcode = 0x%08x, 11, 0, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbz);
+		TRACE("!! sbz(opcode = 0x%08x, 11, 0, =0x%08x, =0x%08x (%u))", test, result, tsbz);
 
 	if(tsbo || tsbz)
 		UNPREDICTABLE;
 
-	_setup_decode_rd(opcode, rd);
+	_setup_decode_rd(IR, rd);
 
 	const char* psrs = "";
 	uint32_t rd_v = 0;
 
-	if(BTST(opcode, ARM_INST_BIT_R))
+	if(BTST(IR, ARM_INST_BIT_R))
 	{
 		psrs = "SPSR";
 		rd_v = core->spsr ? *core->spsr : 0;
@@ -623,24 +623,24 @@ static const uint32_t csx_msr_unalloc_mask[] =
 static const uint32_t csx_msr_user_mask[] = 
 	{ 0xf0000000, 0xf0000000, 0xf8000000, 0xf8000000, 0xf80f0200 };
 
-static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
+static void arm_inst_msr(csx_core_p core, uint8_t cce)
 {
 	csx_p csx = core->csx; (void)csx;
 	
 	uint32_t test = 0, result = 0;
 
-	const int tsbo = _check_sbo(opcode, 15, 12, &test, &result);
+	const int tsbo = _check_sbo(IR, 15, 12, &test, &result);
 	if(tsbo) {
-		TRACE("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbo);
+		TRACE("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", test, result, tsbo);
 		UNPREDICTABLE;
 	}
 
 //	struct {
-		const int bit_i = BEXT(opcode, 25);
-		const int bit_r = BEXT(opcode, 22);
+		const int bit_i = BEXT(IR, 25);
+		const int bit_r = BEXT(IR, 22);
 //	}bit;
 	
-	const uint8_t field_mask = mlBFEXT(opcode, 19, 16);
+	const uint8_t field_mask = mlBFEXT(IR, 19, 16);
 	
 	uint8_t rotate_imm = 0, imm8 = 0;
 	uint8_t rm = 0, rm_v = 0;
@@ -648,22 +648,22 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 	
 	if(bit_i)
 	{
-		rotate_imm = mlBFEXT(opcode, 11, 8);
-		imm8 = mlBFEXT(opcode, 7, 0);
+		rotate_imm = mlBFEXT(IR, 11, 8);
+		imm8 = mlBFEXT(IR, 7, 0);
 		operand = _ror(imm8, (rotate_imm << 1));
 	}
 	else
 	{
-		if(0 == mlBFEXT(opcode, 7, 4))
+		if(0 == mlBFEXT(IR, 7, 4))
 		{
-			const int tsbz = _check_sbz(opcode, 11, 8, &test, &result);
+			const int tsbz = _check_sbz(IR, 11, 8, &test, &result);
 			if(tsbz)
 			{
-				TRACE("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", opcode, test, result, tsbz);
+				TRACE("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", test, result, tsbz);
 				UNPREDICTABLE;
 			}
 
-			rm = mlBFEXT(opcode, 3, 0);
+			rm = mlBFEXT(IR, 3, 0);
 			rm_v = csx_reg_get(core, rm);
 			operand = rm_v;
 		}
@@ -771,10 +771,10 @@ static void arm_inst_msr(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 /* **** */
 
-static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
+static uint8_t csx_core_arm_check_cc(csx_core_p core)
 {
-	const uint8_t cc = mlBFEXT(opcode, 31, 28);
-	return(csx_core_check_cc(core, opcode, cc));
+	const uint8_t cc = mlBFEXT(IR, 31, 28);
+	return(csx_core_check_cc(core, cc));
 }
 
 #define _INST0(_x0)			(((_x0) & 0x06) << 25)
@@ -789,7 +789,7 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core, uint32_t opcode)
 
 void csx_core_arm_step(csx_core_p core)
 {
-	const uint32_t ir = csx_reg_pc_fetch_step_arm(core);
+	IR = csx_reg_pc_fetch_step_arm(core);
 
 	const int thumb = PC & 1;
 	if(thumb)
@@ -799,64 +799,64 @@ void csx_core_arm_step(csx_core_p core)
 		return;
 	}
 
-	const uint8_t cce = csx_core_arm_check_cc(core, ir);
-	if(!cce && (0x0f == mlBFEXT(ir, 31, 28)))
+	const uint8_t cce = csx_core_arm_check_cc(core);
+	if(!cce && (0x0f == mlBFEXT(IR, 31, 28)))
 	{
-		if(ARM_INST_B == (ir & ARM_INST_B_MASK))
-			return(arm_inst_b(core, ir, cce));
+		if(ARM_INST_B == (IR & ARM_INST_B_MASK))
+			return(arm_inst_b(core, cce));
 		goto decode_fault;
 	}
 
-	uint8_t check0 = mlBFEXT(ir, 27, 25) & ~1;
-	uint32_t check0_misc0 = ir & _INST0_MISC0_MASK;
+	uint8_t check0 = mlBFEXT(IR, 27, 25) & ~1;
+	uint32_t check0_misc0 = IR & _INST0_MISC0_MASK;
 
-	uint8_t check1 = mlBFEXT(ir, 27, 25);
-	const uint8_t	i74 = BMOV(ir, 25, 2) | BMOV(ir, 7, 1) | BEXT(ir, 4);
+	uint8_t check1 = mlBFEXT(IR, 27, 25);
+	const uint8_t	i74 = BMOV(IR, 25, 2) | BMOV(IR, 7, 1) | BEXT(IR, 4);
 
-	uint32_t check = ir & _INST1(7);
+	uint32_t check = IR & _INST1(7);
 
 //check1:
 	switch(check)	/* check 1 */
 	{
 		case _INST1(0): /* xxxx 000x xxxx xxxx */
-			if(_INST0_i74 == (ir & _INST0_i74))
-				return(arm_inst_ldst(core, ir, cce));
+			if(_INST0_i74 == (IR & _INST0_i74))
+				return(arm_inst_ldst(core, cce));
 			else if(_INST0_MISC0 != check0_misc0)
 			{
-				if(ARM_INST_DP == (ir & ARM_INST_DP_MASK))
-					return(arm_inst_dpi(core, ir, cce));
+				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK))
+					return(arm_inst_dpi(core, cce));
 			}
 			else
 			{
-				if(ARM_INST_BX == (ir & ARM_INST_BX_MASK))
-					return(arm_inst_bx(core, ir, cce));
-				if(ARM_INST_MRS == (ir & ARM_INST_MRS_MASK))
-					return(arm_inst_mrs(core, ir, cce));
-				else if(ARM_INST_MSR == (ir & ARM_INST_MSR_MASK))
-					return(arm_inst_msr(core, ir, cce));
+				if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
+					return(arm_inst_bx(core, cce));
+				if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
+					return(arm_inst_mrs(core, cce));
+				else if(ARM_INST_MSR == (IR & ARM_INST_MSR_MASK))
+					return(arm_inst_msr(core, cce));
 			}
 			break;
 		case _INST1(1): /* xxxx 001x xxxx xxxx */
-			if((mlBF(25, 24) | _BV(21)) == (ir & (mlBF(27, 23) | mlBF(21, 20))))
+			if((mlBF(25, 24) | _BV(21)) == (IR & (mlBF(27, 23) | mlBF(21, 20))))
 				;
-			else if(ARM_INST_DP == (ir & ARM_INST_DP_MASK))
-				return(arm_inst_dpi(core, ir, cce));
+			else if(ARM_INST_DP == (IR & ARM_INST_DP_MASK))
+				return(arm_inst_dpi(core, cce));
 			break;
 		case _INST1(2): /* xxxx 010x xxxx xxxx */
-			if(ARM_INST_LDST_O11 == (ir & ARM_INST_LDST_O11_MASK))
-				return(arm_inst_ldst(core, ir, cce));
+			if(ARM_INST_LDST_O11 == (IR & ARM_INST_LDST_O11_MASK))
+				return(arm_inst_ldst(core, cce));
 			break;
 		case _INST1(4): /* xxxx 100x xxxx xxxx */
-			if(ARM_INST_LDSTM == (ir & ARM_INST_LDSTM_MASK))
-				return(arm_inst_ldstm(core, ir, cce));
+			if(ARM_INST_LDSTM == (IR & ARM_INST_LDSTM_MASK))
+				return(arm_inst_ldstm(core, cce));
 			break;
 		case _INST1(5): /* xxxx 101x xxxx xxxx */
-			if(ARM_INST_B == (ir & ARM_INST_B_MASK))
-				return(arm_inst_b(core, ir, cce));
+			if(ARM_INST_B == (IR & ARM_INST_B_MASK))
+				return(arm_inst_b(core, cce));
 			break;
 		case _INST1(7): /* xxxx 111x xxxx xxxx */
-			if(ARM_INST_MCR == (ir & ARM_INST_MCR_MASK))
-				return(arm_inst_mcr(core, ir, cce));
+			if(ARM_INST_MCR == (IR & ARM_INST_MCR_MASK))
+				return(arm_inst_mcr(core, cce));
 			break;
 		default:
 			break;
@@ -864,8 +864,8 @@ void csx_core_arm_step(csx_core_p core)
 
 decode_fault:
 	TRACE(">> ir = 0x%08x, check0 = 0x%02x, check1 = 0x%02x, i74 = 0x%02hhx",
-		ir, check0, check1, i74);
-	csx_core_disasm(core, PC, ir);
+		IR, check0, check1, i74);
+	csx_core_disasm(core, PC, IR);
 	UNIMPLIMENTED;
 	(void)check0;
 	(void)check1;

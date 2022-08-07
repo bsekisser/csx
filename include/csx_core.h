@@ -40,6 +40,9 @@ typedef struct csx_core_t {
 #define IP				core->ip
 	uint32_t			ip;
 
+#define IR				core->ir
+	uint32_t			ir;
+
 	uint32_t			cpsr;
 	uint32_t			*spsr;
 

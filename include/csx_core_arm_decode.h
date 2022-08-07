@@ -139,7 +139,7 @@ enum {
 
 /* **** */
 
-void csx_core_arm_decode_coproc(csx_core_p core, uint32_t opcode, csx_coproc_data_p acp);
-void csx_core_arm_decode_ldst(csx_core_p core, uint32_t opcode, csx_ldst_p ls);
-void csx_core_arm_decode_shifter_operand(csx_core_p core, uint32_t opcode, csx_dpi_p dpi);
+void csx_core_arm_decode_coproc(csx_core_p core, csx_coproc_data_p acp);
+void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls);
+void csx_core_arm_decode_shifter_operand(csx_core_p core, csx_dpi_p dpi);
 const char* csx_core_arm_decode_shifter_op_string(uint8_t shopc);
