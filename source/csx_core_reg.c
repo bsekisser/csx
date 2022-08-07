@@ -68,35 +68,23 @@ uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core)
 
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r)
 {
-	const uint8_t rr = r & 0x0f;
+	uint32_t res = core->reg[r];
 
-	if(_check_pedantic_pc)
-		assert(rPC != rr);
-
-	uint32_t res = core->reg[rr & 0x0f];
-
-	return(res);
-}
-
-uint32_t csx_reg_get_pc(csx_core_p core)
-{
-	uint32_t res = PC;
-
-	int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
-	res &= (~3 >> thumb);
-	res += (4 >> thumb);
+	if(rPC == r) {
+		int thumb = BEXT(CPSR, CSX_PSR_BIT_T);
+		res &= (~3 >> thumb);
+		res += (4 >> thumb);
+	}
 
 	return(res);
 }
 
 void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v)
 {
-	const uint8_t rr = r & 0x0f;
-
 	if(_check_pedantic_pc)
-		assert(rPC != rr);
+		assert(rPC != r);
 
-	core->reg[rr] = v;
+	core->reg[r] = v;
 }
 
 void csx_reg_set_pcx(csx_core_p core, uint32_t new_pc)

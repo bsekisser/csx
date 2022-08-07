@@ -325,10 +325,7 @@ static void arm_inst_ldst(csx_core_p core, uint32_t opcode, uint8_t cce)
 		ls.rm_v = csx_reg_get(core, ls.rm);
 	}
 	
-	if(rPC == ls.rn)
-		ls.rn_v = PC_ARM;
-	else
-		ls.rn_v = csx_reg_get(core, ls.rn);
+	ls.rn_v = csx_reg_get(core, ls.rn);
 	
 	if(ls.bit.p)
 	{
@@ -504,7 +501,7 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 
 	if(cce)
 	{
-		for(int i = 0; i < 15; i++)
+		for(int i = 0; i <= 15; i++)
 		{
 			if(BTST(ls.rm_v, i))
 			{
@@ -516,7 +513,7 @@ static void arm_inst_ldstm(csx_core_p core, uint32_t opcode, uint8_t cce)
 		if(load_spsr && core->spsr)
 			csx_psr_mode_switch(core, *core->spsr);
 
-		if(BTST(ls.rm_v, 15))
+		if(0 && BTST(ls.rm_v, 15))
 		{
 			CYCLE++;
 

@@ -18,7 +18,6 @@ uint32_t csx_reg_pc_fetch_step_arm(csx_core_p core);
 uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core);
 
 uint32_t csx_reg_get(csx_core_p core, csx_reg_t r);
-uint32_t csx_reg_get_pc(csx_core_p core);
 
 void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v);
 void csx_reg_set_pcx(csx_core_p core, uint32_t new_pc);
