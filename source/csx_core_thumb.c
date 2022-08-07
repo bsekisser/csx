@@ -178,69 +178,21 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core, uint16_t opcode)
 	}
 }
 
-static void csx_core_thumb_bxx(csx_core_p core, uint16_t opcode0)
+static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
 {
-	CORE_T(const int cce = 1);
-	
-	uint32_t pc = IP;
-	uint32_t eao = 0;
+	const uint8_t cond = mlBFEXT(opcode, 11, 8);
+	const uint8_t cce = csx_core_check_cc(core, opcode, cond);
+	const int32_t imm8 = mlBFEXTs(opcode, 7, 0) << 1;
 
-	if(0x2 == mlBFEXT(opcode0, 12, 11))
+	const uint32_t new_pc = PC_THUMB + imm8;
+
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, cce);
+
+	CORE_TRACE_BRANCH_CC(new_pc);
+
+	if(cce)
 	{
-		eao = mlBFEXTs(opcode0, 10, 0) << 12;
-	}	
-	else
-	{
-		csx_core_thumb_disasm(core, pc, opcode0);
-		UNPREDICTABLE;
-	}
-	
-	const uint32_t lr = pc + eao;
-
-	if(0) LOG("rLR == (0x%08x + 0x%08x) == 0x%08x", pc, eao, lr);
-
-	pc += 2;
-	uint16_t opcode1 = csx_core_read(core, pc & ~1, sizeof(uint16_t));
-	uint32_t opcode = (opcode0 << 16) | opcode1;
-
-	if(0) LOG("PC2 = 0x%08x, opcode = 0x%04x:0x%04x", pc, opcode0, opcode1);
-
-	if((0x7 == mlBFEXT(opcode, 15, 13)) && BEXT(opcode, 11))
-	{
-		pc += 2;
-		
-		const int bit_blx = (0 == BEXT(opcode, 12));
-		eao += mlBFMOV(opcode, 10, 0, 1);
-
-		const uint32_t new_lr = pc | 1;
-		const uint32_t new_pc = pc + eao;
-
-		if(0) LOG("NEW_PC = 0x%08x, NEW_LR = 0x%08x", new_pc, new_lr & ~1);
-
-		CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%08x, LR = 0x%08x */",
-			bit_blx ? "x" : "", new_pc & ~1, pc, eao, new_lr & ~1);
-
-		if(bit_blx)
-		{
-			CORE_TRACE_BRANCH(new_pc & ~3);
-			csx_reg_set_pcx(core, new_pc & ~3);
-		}
-		else
-		{
-			CORE_TRACE_BRANCH(new_pc);
-			PC = new_pc;
-		}
-
-		CORE_TRACE_LINK(new_lr);
-		LR = new_lr;
-	}
-	else
-	{
-		PC = pc;
-		LR = lr | 1;
-
-		LOG("PC = 0x%08x, LR = 0x%08x", pc, lr);
-		UNPREDICTABLE;
+		PC = new_pc;
 	}
 }
 
@@ -273,21 +225,81 @@ static void csx_core_thumb_bx(csx_core_p core, uint16_t opcode)
 	if(0) LOG("PC(0x%08x)", PC);
 }
 
-static void csx_core_thumb_bcc(csx_core_p core, uint16_t opcode)
+static void csx_core_thumb_bxx_b(csx_core_p core, int32_t eao, uint32_t opcode)
 {
-	const uint8_t cond = mlBFEXT(opcode, 11, 8);
-	const uint8_t cce = csx_core_check_cc(core, opcode, cond);
-	const int32_t imm8 = mlBFEXTs(opcode, 7, 0) << 1;
+	CORE_T(const int cce = 1);
 
-	const uint32_t new_pc = PC_THUMB + imm8;
+	uint32_t new_pc = PC + eao;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, cce);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/", new_pc & ~1, PC, eao);
 
-	CORE_TRACE_BRANCH_CC(new_pc);
+	PC = new_pc;
+}
 
-	if(cce)
-	{
-		PC = new_pc;
+static void csx_core_thumb_bxx_blx(
+	csx_core_p core,
+	int32_t eao,
+	uint32_t opcode)
+{
+	CORE_T(const int cce = 1);
+
+	uint32_t new_pc = (LR + eao);
+
+	if(1) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+
+	LR = PC | 1;
+
+	int blx = (0 == BEXT(opcode, 12));
+	
+	if(blx)
+		new_pc &= ~3;
+
+	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%08x, LR = 0x%08x */",
+		blx ? "x" : "", new_pc & ~1, PC, eao, LR & ~1);
+
+	if(blx)
+		csx_reg_set_pcx(core, new_pc);
+	else
+		PC = new_pc & ~1;
+
+	if(1) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+}
+
+static void csx_core_thumb_bxx(csx_core_p core, uint32_t opcode)
+{
+	CORE_T(const int cce = 1);
+
+	for(int i = 0; i < 2; i++) {
+		int32_t eao = mlBFEXTs(opcode, 10, 0);
+		uint8_t h = mlBFEXT(opcode, 12, 11);
+
+		if(0) CORE_TRACE("H = 0x%02x, LR = 0x%08x, PC = 0x%08x, EAO = 0x%08x",
+			h, LR, PC, eao);
+
+		switch(h) {
+			case 0x00:
+				/* branch offset is from PC + 4, ie.. lr */
+				return(csx_core_thumb_bxx_b(core, eao << 1, opcode));
+			case 0x01:
+			case 0x03:
+				eao = mlBFMOV(opcode, 10, 0, 1);
+				return(csx_core_thumb_bxx_blx(core, eao, opcode));
+			case 0x02:
+				eao <<= 12;
+				LR = 2 + PC + eao;
+
+				opcode <<= 16;
+				opcode += csx_core_read(core, PC & ~1, sizeof(uint16_t));
+				
+				if((0x7 != mlBFEXT(opcode, 15, 13)) && !BEXT(opcode, 11)) {
+					CORE_TRACE("/* xxx -- LR = 0x%08x + 0x%03x = 0x%08x */", PC, eao, LR);
+					return;
+				}
+
+				PC += 2;
+
+				break;
+		}
 	}
 }
 

@@ -97,22 +97,22 @@ static int csx_mmu__tlb_fill(csx_mmu_p mmu, uint32_t va, csx_tlb_p tlbe)
 	const size_t size = 1;
 	
 	void* data = 0;
-	uint32_t vp = va;
+	uint32_t vpo = va;
 	
 	if(_in_bounds(va, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP)) {
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->sdram;
-		vp -= CSX_SDRAM_BASE;
+		vpo -= CSX_SDRAM_BASE;
 	} else if(_in_bounds(va, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP)) {
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->frame_buffer;
-		vp -= CSX_FRAMEBUFFER_BASE;
+		vpo -= CSX_FRAMEBUFFER_BASE;
 	} else 
 		return(0);
 
 	tlbe->i = 1;
 	tlbe->vp = PAGE(va);
-	tlbe->data = data + vp;
+	tlbe->data = data + (vpo & PAGE_MASK);
 
 	return(1);
 }
@@ -123,7 +123,7 @@ static inline int csx_mmu__tlb_read(csx_mmu_p mmu, uint32_t va, void** data)
 	
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)mmu, va, (uint)data);
 
-	if(!csx_mmu__tlb_entry(mmu, va, &tlbe)) {
+	if(!csx_mmu__tlb_entry(mmu, va, &tlbe))	{
 		if(!csx_mmu__tlb_fill(mmu, va, tlbe))
 			return(0);
 	}
