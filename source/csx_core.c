@@ -26,8 +26,6 @@ void csx_core_reset(csx_core_p core)
 
 	csx_psr_mode_switch(core, CPSR);
 	
-	core->step = csx_core_arm_step;
-	
 	_TRACE_(core, EXIT);
 }
 
