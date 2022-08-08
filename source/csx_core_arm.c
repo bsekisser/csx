@@ -322,27 +322,25 @@ static void arm_inst_ldst(csx_core_p core, uint8_t cce)
 		ls.rm_v = csx_reg_get(core, ls.rm);
 	}
 	
-	ls.rn_v = csx_reg_get(core, ls.rn);
+	ls.ea = ls.rn_v = csx_reg_get(core, ls.rn);
 	
 	if(ls.bit.p)
 	{
 		if(ls.bit.u)
-			ls.ea = ls.rn_v + ls.rm_v;
+			ls.ea += ls.rm_v;
 		else
-			ls.ea = ls.rn_v - ls.rm_v;
+			ls.ea -= ls.rm_v;
 	}
 	
 	if(ls.bit.l)
 	{
 		ls.rd_v = csx_core_read(core, ls.ea, ls.rw_size);
-//		ls.rd_v &= _BM((ls.rw_size << 3) - 1);
 
 		/*	ARMv5, CP15_r1_Ubit == 0 */
 		if(ls.rw_size == sizeof(uint32_t))
 		{
-//			assert(0 == (ls.ea & 3));
+			assert(0 == (ls.ea & 3));
 			ls.rd_v = _ror(ls.rd_v, ((ls.ea & 3) << 3));
-//			assert(0 == (ls.ea & 3));
 		}
 
 		if(ls.flags.s) /* sign extend ? */
@@ -360,13 +358,14 @@ static void arm_inst_ldst(csx_core_p core, uint8_t cce)
 	{
 		if(!ls.bit.p)
 		{
+			ls.ea = ls.rn_v;
+			
 			if(ls.bit.u)
-				ls.ea = ls.rn_v + ls.rm_v;
+				ls.ea += ls.rm_v;
 			else
-				ls.ea = ls.rn_v - ls.rm_v;
+				ls.ea -= ls.rm_v;
 		}
 
-//		if(ls.bit.p && ls.bit.w) /* base update? */
 		if(!ls.bit.p || ls.bit.w) /* base update? */
 			csx_reg_set(core, ls.rn, ls.ea);
 
@@ -389,10 +388,10 @@ static void arm_inst_ldst(csx_core_p core, uint8_t cce)
 
 static void _arm_inst_ldstm(csx_core_p core, csx_ldst_p ls, csx_reg_t i, uint8_t user_mode_regs)
 {
-	uint32_t rxx_v;
+	uint32_t rxx_v = 0;
 
 	/* CP15_r1_Ubit == 0 */
-	uint32_t ea = ls->ea & ~3;
+	const uint32_t ea = ls->ea & ~3;
 
 	if(ls->bit.l)
 	{
@@ -428,8 +427,8 @@ static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 
 	const uint8_t rcount = (__builtin_popcount(ls.rm_v) << 2);
 	
-	uint32_t sp_in = ls.rn_v;
-	uint32_t sp_out;
+	const uint32_t sp_in = ls.rn_v;
+	uint32_t sp_out = sp_in;
 	
 	/*
 	 * DA	!ls.bit.u && !ls.bit.p
@@ -439,33 +438,33 @@ static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 	 * 
 	 */
 
-	uint32_t start_address;
-	uint32_t end_address;
+	uint32_t start_address = 0;
+	uint32_t end_address = 0;
 
 	if(ls.bit.u) /* increment */
 	{
 		start_address = sp_in + (ls.bit.p << 2);
 		end_address = start_address + rcount;
-		sp_out = sp_in + rcount;
+		sp_out += rcount;
 	}
 	else /* decrement */
 	{
 		end_address = sp_in + (!ls.bit.p << 2);
 		start_address = end_address - rcount;
-		sp_out = sp_in - rcount;
+		sp_out -= rcount;
 	}
 
 	if(0) LOG("sp_in = 0x%08x, start_address = 0x%08x, end_address = 0x%08x",
 		sp_in, start_address, end_address);
 	if(0) LOG("sp_out = 0x%08x", sp_out);
 
-	const char *opstr;
+	const char *opstr; (void)opstr;
 	if(0 && rSP == ls.rn)
 		opstr = ls.bit.l ? "pop" : "push";
 	else
 		opstr = ls.bit.l ? "ldm" : "stm";
 
-	char reglist[17];
+	char reglist[17]; (void)reglist;
 	for(int i = 0; i <= 15; i++)
 	{
 		uint8_t c = (i > 9 ? ('a' + (i - 10)) : '0' + i);
@@ -473,14 +472,14 @@ static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 	}
 	reglist[16] = 0;
 	
-	int load_spsr = ls.bit.s22 && ls.bit.l && BTST(ls.rm_v, 15);
+	const int load_spsr = ls.bit.s22 && ls.bit.l && BTST(ls.rm_v, 15);
 
-	int user_mode_regs_load = ls.bit.s22 && ls.bit.l && !ls.bit.w && !BTST(ls.rm_v, 15);
-	int user_mode_regs_store = ls.bit.s22 && !ls.bit.l;
+	const int user_mode_regs_load = ls.bit.s22 && ls.bit.l && !ls.bit.w && !BTST(ls.rm_v, 15);
+	const int user_mode_regs_store = ls.bit.s22 && !ls.bit.l;
 
 	if(0) LOG("s = %01u, umrl = %01u, umrs = %01u", ls.bit.s22, user_mode_regs_load, user_mode_regs_store);
 
-	int user_mode_regs = user_mode_regs_load || user_mode_regs_store;
+	const int user_mode_regs = user_mode_regs_load || user_mode_regs_store;
 
 	CORE_TRACE("%s%c%c(r(%u)%s, {%s}%s%s) /* 0x%08x */" ,
 		opstr, ls.bit.u ? 'i' : 'd', ls.bit.p ? 'b' : 'a',
@@ -494,7 +493,7 @@ static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 	assert(0 == (ls.ea & 3));
 //	ls.ea &= ~3;
 	
-	uint32_t rxx_v;
+	uint32_t rxx_v = 0;
 
 	if(cce)
 	{
@@ -509,29 +508,6 @@ static void arm_inst_ldstm(csx_core_p core, uint8_t cce)
 		
 		if(load_spsr && core->spsr)
 			csx_psr_mode_switch(core, *core->spsr);
-
-		if(0 && BTST(ls.rm_v, 15))
-		{
-			CYCLE++;
-
-			/* CP15_r1_Ubit == 0 */
-			uint32_t ea = ls.ea & ~3;
-
-			if(ls.bit.l)
-			{
-				rxx_v = csx_core_read(core, ea, sizeof(uint32_t));
-				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
-				csx_reg_set_pcx(core, rxx_v);
-			}
-			else
-			{
-				rxx_v = PC_ARM;
-				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
-				csx_core_write(core, ea, rxx_v, sizeof(uint32_t));
-			}
-
-			ls.ea += sizeof(uint32_t);
-		}
 
 		if((ls.bit.w && (user_mode_regs || load_spsr))
 			|| (user_mode_regs && load_spsr))
