@@ -7,20 +7,25 @@
 
 /* arm compiler utilities */
 
-#define COND_EA     0x0e
+#define COND_AL     0x0e
+#define COND_NV		0x0f
 
 #define COND(_cc) ((COND_ ## _cc) << 28)
 
-static inline void _c_ea(csx_test_p t, uint32_t value)
+static inline void _c_cc(csx_test_p t, uint cc, uint32_t value)
 {
 	csx_p csx = t->csx;
 
-	value |= COND(EA);
+	value |= ((cc & 0x0f) << 28);
 	
 	if(0) LOG("0x%08x: 0x%08x", t->pc, value);
 	
-	csx_mmu_write(csx->mmu, t->pc, value, sizeof(uint32_t));
-	t->pc += sizeof(uint32_t);
+	_cxx(t, value, sizeof(uint32_t));
+}
+
+static inline void _c_al(csx_test_p t, uint32_t value)
+{
+	_c_cc(t, COND_AL, value);
 }
 
 /* arm instruction register utilities */
@@ -54,7 +59,7 @@ static inline uint32_t _rn(csx_reg_t r)
 
 /* arm instruction utilities */
 
-static void _bxx(csx_test_p t, int32_t offset, int link)
+static void _bcc(csx_test_p t, uint cc, int32_t offset, int link)
 {
 	uint32_t opcode = (5 << 25);
 
@@ -65,7 +70,12 @@ static void _bxx(csx_test_p t, int32_t offset, int link)
 
 	if(0) LOG("opcode = 0x%08x, offset = 0x%08x, ea = 0x%08x", opcode, offset, ea);
 
-	_c_ea(t, opcode | ea);
+	_c_cc(t, cc, opcode | ea);
+}
+
+static void _bcc_al(csx_test_p t, int32_t offset, int link)
+{
+	_bcc(t, COND_AL, offset, link);
 }
 
 static inline uint32_t _ldst_ipubwl(uint8_t i, uint8_t p, uint8_t u, uint8_t b, uint8_t w, uint8_t l)
@@ -105,7 +115,7 @@ static void _arm_dp_op_s_rn_rd_sop(csx_test_p t,
 	opcode |= BMOV(shopt, 15, 25);
 	opcode |= shopt & _BM(11);
 	
-	_c_ea(t, opcode);
+	_c_al(t, opcode);
 }
 
 
@@ -128,19 +138,24 @@ shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 
 void arm_b(csx_test_p t, uint32_t offset)
 {
-	_bxx(t, offset, 0);
+	_bcc_al(t, offset, 0);
 }
 
 void arm_bl(csx_test_p t, uint32_t offset)
 {
-	_bxx(t, offset, 1);
+	_bcc_al(t, offset, 1);
+}
+
+void arm_blx(csx_test_p t, uint32_t offset)
+{
+	_bcc(t, COND_NV, offset, (offset >> 1) & 1);
 }
 
 void arm_bx(csx_test_p t, csx_reg_t rm)
 {
 	uint32_t opcode = _BV(24) | _BV(21) | mlBF(19, 8) | _BV(4) | _rm(rm);
 
-	_c_ea(t, opcode);
+	_c_al(t, opcode);
 }
 
 void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
@@ -159,7 +174,7 @@ void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 
 	if(0) LOG("opcode = 0x%08x, ea = 0x%08x", opcode, ea);
 
-	_c_ea(t, opcode | ea);
+	_c_al(t, opcode | ea);
 }
 
 void arm_adds_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
@@ -176,7 +191,7 @@ void arm_mov_rd_sop(csx_test_p t, csx_reg_t rd, shifter_operand_t shopt)
 	opcode |= BMOV(shopt, 15, 25);
 	opcode |= shopt & _BM(11);
 	
-	_c_ea(t, opcode);
+	_c_al(t, opcode);
 }
 
 void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
@@ -195,7 +210,7 @@ void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 
 	if(0) LOG("opcode = 0x%08x, ea = 0x%08x", opcode, ea);
 
-	_c_ea(t, opcode | ea);
+	_c_al(t, opcode | ea);
 }
 
 void arm_subs_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
@@ -205,5 +220,5 @@ void arm_subs_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operan
 
 void arm_swi(csx_test_p t, uint32_t i24)
 {
-	_c_ea(t, (0x0f << 24) | (i24 & _BM(23)));
+	_c_al(t, (0x0f << 24) | (i24 & _BM(23)));
 }

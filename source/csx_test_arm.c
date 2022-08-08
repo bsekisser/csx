@@ -253,6 +253,32 @@ static void csx_test_arm_b(csx_test_p t)
 	assert(expect_lr == LR);
 	
 	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
+	
+	offset = eao(t, 1) | 2;
+	new_pc = epc(t) + offset;
+	
+	arm_blx(t, offset);
+	expect_lr = pc(t);
+	
+	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
+	assert(new_pc == PC);
+	assert(expect_lr == LR);
+	assert(CPSR & CSX_PSR_BIT_T);
+
+	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
+
+	offset = eao(t, 2) | 2;
+	new_pc = epc(t) + offset;
+	
+	arm_blx(t, offset);
+	expect_lr = pc(t);
+	
+	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
+	assert(new_pc == PC);
+	assert(expect_lr == LR);
+	assert(CPSR & CSX_PSR_BIT_T);
+
+	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
 }
 
 static inline uint32_t _test_value(uint8_t i)

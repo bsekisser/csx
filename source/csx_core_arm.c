@@ -257,24 +257,21 @@ exit_fault:
 static void arm_inst_b(csx_core_p core, uint8_t cce)
 {
 	const int blx = (0x0f == mlBFEXT(IR, 31, 28));
-
-	int link = BEXT(IR, ARM_INST_BIT_LINK);
+	const int hl = BEXT(IR, ARM_INST_BIT_LINK);
 	const int32_t offset = mlBFEXTs(IR, 23, 0);
 
+	const int link = blx || (!blx && hl);
 	uint32_t new_pc = PC_ARM + (offset << 2);
 	
-	int thumb = 0;
 	if(blx)
 	{
-		thumb = 1;
-		new_pc |= (link << 1) | 1;
+		new_pc |= (hl << 1) | 1;
 		CORE_T(core->ccs = "AL");
-		link = cce = 1;
+		cce = 1;
 	}
 
-
-	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', offset);
+	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) hl = %01u */",
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', offset, hl);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
