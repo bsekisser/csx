@@ -33,33 +33,39 @@ void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 	assert(63 == csx_reg_get(core, 0));
 }
 
-
 void csx_test_thumb_b(csx_test_p t)
 {
 	csx_p csx = t->csx;
 	csx_core_p core = csx->core;
 
-	t->start_pc = t->pc = 0x100002b8;
+	if(1) {
+		t->start_pc = t->pc = 0x100002b8;
 	
-//	_cxx(t, 0xf013, sizeof(uint16_t));
-//	_cxx(t, 0xfccc, sizeof(uint16_t));
+		_cxx(t, 0xf013, sizeof(uint16_t)); /* theoretical test */
+		t->start_pc = t->pc = csx_test_run_thumb(t, 1);
+
+		if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+
+		assert(0x100132bc == LR);
+		assert(0x100002ba == pc(t));
+
+		_cxx(t, 0xfccc, sizeof(uint16_t)); /* theoretical test */
+		t->start_pc = t->pc = csx_test_run_thumb(t, 1);
+
+		if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+
+		assert(0x100002bd == LR);
+		assert(0x10013c54 == pc(t));
+	}
+
+	t->start_pc = t->pc = 0x100002b8;
+
 	_cxx(t, 0xfcccf013, sizeof(uint32_t));
-//	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
-
-	uint32_t lr = csx_reg_get(core, rLR);
-//	uint32_t hlr = lr & ~_BVM(11);
-//	LOG("rLR = 0x%08x (0x%08x), rPC = 0x%08x", lr, hlr, pc(t));
-
-//	assert(0x100132bc == lr);
-//	assert(0x100002ba == pc(t));
-
 	t->start_pc = t->pc = csx_test_run_thumb(t, 2);
 
-//	pc_v = csx_reg_get(core, TEST_PC);
-	lr = csx_reg_get(core, rLR);
-//	LOG("rLR = 0x%08x, rPC = 0x%08x", lr, pc(t));
+	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 
-	assert(0x100002bd == lr);
+	assert(0x100002bd == LR);
 	assert(0x10013c54 == pc(t));
 	
 	t->start_pc = t->pc = 0x10013c58 - 2;
@@ -70,7 +76,7 @@ void csx_test_thumb_b(csx_test_p t)
 	_cxx(t, 0xd00d, sizeof(uint16_t));
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
-//	LOG("rLR = 0x%08x, rPC = 0x%08x", lr, pc(t));
+	if(0) LOG("rLR = 0x%08x, rPC = 0x%08x", LR, pc(t));
 
 	assert(0x10013c76 == pc(t));
 }
