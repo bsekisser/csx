@@ -20,29 +20,44 @@ typedef struct csx_t* csx_p;
 typedef uint8_t csx_reg_t;
 typedef csx_reg_t* csx_reg_p;
 
+enum	{
+	rRD,
+	rRN,
+	rRM,
+	rRS,
+	rR_COUNT
+};
+
 typedef struct csx_core_t** csx_core_h;
 typedef struct csx_core_t* csx_core_p;
 
 typedef void (*csx_core_step_fn)(csx_core_p csx);
 
-#include "csx_state.h"
+typedef struct csx_inst_t {
+	uint32_t					v[rR_COUNT];
+#define vR(_x)					vRX(rR##_x)
+#define vRX(_x)					SCIx->v[_x]
 
-#include "csx_core_arm.h"
-#include "csx_core_arm_decode.h"
-#include "csx_core_psr.h"
-#include "csx_core_reg.h"
-#include "csx_core_thumb.h"
-#include "csx_core_trace.h"
+	uint32_t					ip;
+#define IP						SCIx->ip
+	uint32_t					ir;
+#define IR						SCIx->ir
+
+	csx_reg_t					r[rR_COUNT];
+#define rR(_x)					rRX(rR##_x)
+#define rRX(_x)					SCIx->r[_x]
+
+	struct {
+		const char*				s;
+		int						e:1;
+								}ccx;
+#define CCx	SCIx->ccx
+}csx_inst_t;
 
 typedef struct csx_core_t {
 	uint32_t			reg[16];
 
-#define IP				core->ip
-	uint32_t			ip;
-
-#define IR				core->ir
-	uint32_t			ir;
-
+#define CPSR			core->cpsr
 	uint32_t			cpsr;
 	uint32_t			*spsr;
 
@@ -52,12 +67,26 @@ typedef struct csx_core_t {
 	uint32_t			svc_reg[4];
 	uint32_t			und_reg[4];
 
+#define SCIx			(&core->inst)
+	csx_inst_t			inst;
+
 	csx_core_step_fn	step;
 	csx_p				csx;
 
-	CORE_T(const char*		ccs);
+	const char*		ccs;
 	T(uint32_t			trace_flags);
 }csx_core_t;
+
+#include "csx_state.h"
+
+#include "csx_core_arm.h"
+#include "csx_core_psr.h"
+#include "csx_core_reg.h"
+#include "csx_core_thumb.h"
+
+#include "csx_core_arm_decode.h"
+
+#include "csx_core_trace.h"
 
 static inline int csx_in_a_privaleged_mode(csx_core_p core)
 {

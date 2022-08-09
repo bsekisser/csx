@@ -58,6 +58,8 @@ int csx_soc_main(void)
 //	csx_reg_set(csx, rPC, 0x2b5);
 //	csx_reg_set(csx->core, rPC, CSX_SDRAM_BASE);
 	
+	csx_core_p core = csx->core;
+
 	if(!err)
 	{
 		csx->state = CSX_STATE_RUN;
@@ -65,8 +67,6 @@ int csx_soc_main(void)
 		int limit = Mb(2) + Kb(0) + Kb(0);
 		for(int i = 0; i < limit; i++)
 		{
-			csx_core_p core = csx->core;
-
 			csx->cycle++;
 
 			core->step(core);
@@ -81,7 +81,7 @@ int csx_soc_main(void)
 
 //	cs_close(&handle);
 
-	LOG("0x%08x", csx->IP);
+	LOG("0x%08x", IP);
 
 	_TRACE_(csx, EXIT);
 

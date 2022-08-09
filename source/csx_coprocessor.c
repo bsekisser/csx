@@ -8,17 +8,19 @@ typedef struct csx_coprocessor_t {
 
 void csx_coprocessor_read(csx_p csx, csx_coproc_data_p acp)
 {
+	csx_core_p core = csx->core;
 	csx_coprocessor_p cp = csx->cp;
 	
-	acp->crn_v = cp->creg[acp->crn & 0x0f];
-	acp->rd_v = acp->crn_v;
+	vR(N) = cp->creg[rR(N) & 0x0f];
+	vR(D) = vR(N);
 }
 
 void csx_coprocessor_write(csx_p csx, csx_coproc_data_p acp)
 {
+	csx_core_p core = csx->core;
 	csx_coprocessor_p cp = csx->cp;
 
-	cp->creg[acp->crn & 0x0f] = acp->rd_v;
+	cp->creg[rR(N) & 0x0f] = vR(D);
 }
 
 int csx_coprocessor_init(csx_p csx)

@@ -73,28 +73,28 @@ void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
 			dpi->mnemonic, dpi->bit.s ? "s" : "");
 
 	if(dpi->wb)
-		dst += snprintf(dst, end - dst, "%s", _arm_reg_name(dpi->rd));
+		dst += snprintf(dst, end - dst, "%s", _arm_reg_name(rR(D)));
 
-	if((dpi->rn & 0x0f) == dpi->rn)
-		dst += snprintf(dst, end - dst, "%s%s", dpi->wb ? ", " : "", _arm_reg_name(dpi->rn));
+	if((rR(N) & 0x0f) == rR(N))
+		dst += snprintf(dst, end - dst, "%s%s", dpi->wb ? ", " : "", _arm_reg_name(rR(N)));
 
 	if(dpi->bit.i)
 	{
-		dst += snprintf(dst, end - dst, ", %u", dpi->rm_v);
+		dst += snprintf(dst, end - dst, ", %u", vR(M));
 
-		if(dpi->rs_v)
-			dst += snprintf(dst, end - dst, ", %u", dpi->rs_v);
+		if(vR(S))
+			dst += snprintf(dst, end - dst, ", %u", vR(S));
 	}
 	else
 	{
-		dst += snprintf(dst, end - dst, ", %s", _arm_reg_name(dpi->rm));
+		dst += snprintf(dst, end - dst, ", %s", _arm_reg_name(rR(M)));
 
 		const char* sos = csx_core_arm_decode_shifter_op_string(dpi->shift_op);
 
 		if(dpi->bit.x4)
-			dst += snprintf(dst, end - dst, ", %s(%s)", sos, _arm_reg_name(dpi->rs));
-		else if(dpi->rs_v)
-			dst += snprintf(dst, end - dst, ", %s(%u)", sos, dpi->rs_v);
+			dst += snprintf(dst, end - dst, ", %s(%s)", sos, _arm_reg_name(rR(S)));
+		else if(vR(S))
+			dst += snprintf(dst, end - dst, ", %s(%u)", sos, vR(S));
 		else if(CSX_SHIFTER_OP_ROR == dpi->shift_op)
 			dst += snprintf(dst, end - dst, ", RRX");
 	}
@@ -142,17 +142,17 @@ void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls, uint8_t cce)
 		dst += snprintf(dst, end - dst, "%s%s", ls->flags.s ? "s" : "", rws);
 	}
 
-	dst += snprintf(dst, end - dst, "(%s, %s", _arm_reg_name(ls->rd), _arm_reg_name(ls->rn));
+	dst += snprintf(dst, end - dst, "(%s, %s", _arm_reg_name(rR(D)), _arm_reg_name(rR(N)));
 
-	if((ls->rm & 0x0f) == ls->rm)
-		dst += snprintf(dst, end - dst, "[%s]", _arm_reg_name(ls->rm));
-	else if(ls->rm_v)
-		dst += snprintf(dst, end - dst, "[0x%04x]%s", ls->rm_v, ls->bit.w ? "!" : "");
+	if((rR(M) & 0x0f) == rR(M))
+		dst += snprintf(dst, end - dst, "[%s]", _arm_reg_name(rR(M)));
+	else if(vR(M))
+		dst += snprintf(dst, end - dst, "[0x%04x]%s", vR(M), ls->bit.w ? "!" : "");
 	else
 		dst += snprintf(dst, end - dst, "[0]");
 	
 	dst += snprintf(dst, end - dst, ") /* 0x%08x: 0x%08x */",
-		ls->ea, ls->rd_v);
+		ls->ea, vR(D));
 
 	CORE_TRACE("%s", tout);
 }
