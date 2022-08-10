@@ -1,5 +1,6 @@
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_arm_decode.h"
 #include "csx_core_utility.h"
 
 /* **** */
@@ -135,7 +136,7 @@ static void _csx_core_arm_decode_dprs(csx_core_p core, csx_dpi_p dpi)
 	{
 		TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
 
-		csx_core_disasm(core, IP, IR);
+		csx_core_disasm_arm(core, IP, IR);
 		LOG_ACTION(exit(1));
 	}
 

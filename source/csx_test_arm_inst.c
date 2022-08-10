@@ -1,5 +1,6 @@
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_arm_decode.h"
 #include "csx_core_arm_inst.h"
 #include "csx_test.h"
 #include "csx_test_arm.h"

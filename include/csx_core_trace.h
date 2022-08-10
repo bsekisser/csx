@@ -54,9 +54,3 @@ int csx_trace_core(csx_core_p csx);
 
 void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr);
 void csx_trace_psr_change(csx_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr);
-void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi, uint8_t cce);
-void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls, uint8_t cce);
-
-/* csx_core_disasm.h */
-
-void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode);

@@ -80,12 +80,11 @@ typedef struct csx_core_t {
 #include "csx_state.h"
 
 #include "csx_core_arm.h"
-#include "csx_core_psr.h"
 #include "csx_core_reg.h"
+
+#include "csx_core_decode.h"
+#include "csx_core_psr.h"
 #include "csx_core_thumb.h"
-
-#include "csx_core_arm_decode.h"
-
 #include "csx_core_trace.h"
 
 static inline int csx_in_a_privaleged_mode(csx_core_p core)
@@ -99,5 +98,4 @@ static inline int csx_in_a_privaleged_mode(csx_core_p core)
 
 /* csx_core.c */
 
-const char* _arm_reg_name(csx_reg_t r);
 int csx_core_init(csx_p csx, csx_core_h h2core);

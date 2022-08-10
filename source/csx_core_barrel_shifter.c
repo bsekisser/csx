@@ -1,4 +1,6 @@
 #include "csx.h"
+#include "csx_core.h"
+#include "csx_core_arm_decode.h"
 
 static uint32_t _csx_core_arm_shifter_operation_asr(csx_core_p core, uint32_t vin, uint8_t shift, uint8_t* cout)
 {

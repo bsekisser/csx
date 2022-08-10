@@ -2,30 +2,16 @@
 
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_disasm.h"
 #include "csx_core_utility.h"
 
+#include "csx_core_arm.h"
 #include "csx_core_arm_decode.h"
 #include "csx_core_arm_inst.h"
 
-static const char* _arm_creg_name(csx_reg_t r)
-{
-	const char* creg_names[16] = {
-		"c0",	"c1",	"c2",	"c3",	"c4",	"c5",	"c6",	"c7",
-		"c8",	"c9",	"c10",	"c11",	"c12",	"c13",	"c14",	"c15",
-	};
-	
-	return(creg_names[r]);
-}
+#include "csx_core_reg_trace.h"
 
-const char* _arm_reg_name(csx_reg_t r)
-{
-	const char* reg_names[16] = {
-		"r0",	"r1",	"r2",	"r3",	"r4",	"r5",	"r6",	"r7",
-		"r8",	"r9",	"r10",	"r11",	"r12",	"rSP",	"rLR",	"rPC",
-	};
-	
-	return(reg_names[r]);
-}
+#include "csx_core_trace_arm.h"
 
 static void arm_inst_dpi_final(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
 {
@@ -246,7 +232,7 @@ static void arm_inst_dpi(csx_core_p core, uint8_t cce)
 
 exit_fault:
 	LOG("operation = 0x%02x", dpi.operation);
-	csx_core_disasm(core, IP, IR);
+	csx_core_disasm_arm(core, IP, IR);
 	UNIMPLIMENTED;
 }
 
@@ -314,6 +300,8 @@ static void arm_inst_ldst(csx_core_p core, uint8_t cce)
 {
 	csx_ldst_t ls;
 	csx_core_arm_decode_ldst(core, &ls);
+
+	ls.ea = vR(N);
 
 	if(ls.bit.p)
 	{
@@ -735,27 +723,20 @@ static uint8_t csx_core_arm_check_cc(csx_core_p core)
 	return(csx_core_check_cc(core, cc));
 }
 
-#define _INST0(_x0)			(((_x0) & 0x06) << 25)
-#define _INST1(_x1)			(((_x1) & 0x07) << 25)
+const uint _inst0_0_i74 = _BV(7) | _BV(4);
 
-#define _INST0_i74			(_BV(7) | _BV(4))
+const uint _inst0_1_misc = _BV(24);
+const uint _inst0_1_misc_mask = mlBF(27, 23) | _BV(20);
 
-#define _INST0_MISC0		_BV(24)
-#define _INST0_MISC0_MASK	(mlBF(27, 23) | _BV(20))
-
-#define _INST0_MISC1		(_INST0_MISC0 | _INST0_i74)
+const uint _inst1_0_undef = mlBF(25, 24);
+const uint _inst1_0_mitsr = _inst1_0_undef | _BV(21);
+const uint _inst1_0_mitsr_mask = mlBF(27, 23) | mlBF(21, 20);
 
 void csx_core_arm_step(csx_core_p core)
 {
 	IR = csx_reg_pc_fetch_step_arm(core);
 
-	const int thumb = PC & 1;
-	if(thumb)
-	{
-		LOG("!! pc & 1");
-		csx_reg_set_pcx(core, PC);
-		return;
-	}
+	const uint opcode = mlBFEXT(IR, 27, 25);
 
 	const uint8_t cce = csx_core_arm_check_cc(core);
 	if(!cce && (0x0f == mlBFEXT(IR, 31, 28)))
@@ -765,54 +746,48 @@ void csx_core_arm_step(csx_core_p core)
 		goto decode_fault;
 	}
 
-	uint8_t check0 = mlBFEXT(IR, 27, 25) & ~1;
-	uint32_t check0_misc0 = IR & _INST0_MISC0_MASK;
-
-	uint8_t check1 = mlBFEXT(IR, 27, 25);
-	const uint8_t	i74 = BMOV(IR, 25, 2) | BMOV(IR, 7, 1) | BEXT(IR, 4);
-
-	uint32_t check = IR & _INST1(7);
-
-//check1:
-	switch(check)	/* check 1 */
+	uint dpi_opcode = 0;
+	
+	switch(opcode)
 	{
-		case _INST1(0): /* xxxx 000x xxxx xxxx */
-			if(_INST0_i74 == (IR & _INST0_i74))
+		case 0x00: /* xxxx 000x xxxx xxxx */
+			if(_inst0_0_i74 == (IR & _inst0_0_i74))
 				return(arm_inst_ldst(core, cce));
-			else if(_INST0_MISC0 != check0_misc0)
-			{
-				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK))
+			else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
+				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
+					dpi_opcode = mlBFEXT(IR, 24, 21);
 					return(arm_inst_dpi(core, cce));
-			}
-			else
-			{
+			}} else {
 				if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
 					return(arm_inst_bx(core, cce));
 				if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
 					return(arm_inst_mrs(core, cce));
-				else if(ARM_INST_MSR == (IR & ARM_INST_MSR_MASK))
-					return(arm_inst_msr(core, cce));
+				if((ARM_INST_MSR_I == (IR & ARM_INST_MSR_I_MASK))
+					|| (ARM_INST_MSR_R == (IR & ARM_INST_MSR_R_MASK)))
+						return(arm_inst_msr(core, cce));
 			}
 			break;
-		case _INST1(1): /* xxxx 001x xxxx xxxx */
-			if((mlBF(25, 24) | _BV(21)) == (IR & (mlBF(27, 23) | mlBF(21, 20))))
+		case 0x01: /* xxxx 001x xxxx xxxx */
+			
+			if(_inst1_0_mitsr == (IR & _inst1_0_mitsr_mask))
 				;
-			else if(ARM_INST_DP == (IR & ARM_INST_DP_MASK))
-				return(arm_inst_dpi(core, cce));
+			else if((_inst1_0_undef != (IR & _inst1_0_mitsr_mask))
+				&&(ARM_INST_DP == (IR & ARM_INST_DP_MASK)))
+					return(arm_inst_dpi(core, cce));
 			break;
-		case _INST1(2): /* xxxx 010x xxxx xxxx */
+		case 0x02: /* xxxx 010x xxxx xxxx */
 			if(ARM_INST_LDST_O11 == (IR & ARM_INST_LDST_O11_MASK))
 				return(arm_inst_ldst(core, cce));
 			break;
-		case _INST1(4): /* xxxx 100x xxxx xxxx */
+		case 0x04: /* xxxx 100x xxxx xxxx */
 			if(ARM_INST_LDSTM == (IR & ARM_INST_LDSTM_MASK))
 				return(arm_inst_ldstm(core, cce));
 			break;
-		case _INST1(5): /* xxxx 101x xxxx xxxx */
+		case 0x05: /* xxxx 101x xxxx xxxx */
 			if(ARM_INST_B == (IR & ARM_INST_B_MASK))
 				return(arm_inst_b(core, cce));
 			break;
-		case _INST1(7): /* xxxx 111x xxxx xxxx */
+		case 0x07: /* xxxx 111x xxxx xxxx */
 			if(ARM_INST_MCR == (IR & ARM_INST_MCR_MASK))
 				return(arm_inst_mcr(core, cce));
 			break;
@@ -821,11 +796,8 @@ void csx_core_arm_step(csx_core_p core)
 	}
 
 decode_fault:
-	TRACE(">> ir = 0x%08x, check0 = 0x%02x, check1 = 0x%02x, i74 = 0x%02hhx",
-		IR, check0, check1, i74);
-	csx_core_disasm(core, PC, IR);
+	CORE_TRACE(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
+		IR, opcode, dpi_opcode);
+	csx_core_disasm_arm(core, PC, IR);
 	UNIMPLIMENTED;
-	(void)check0;
-	(void)check1;
-	(void)i74;
 }

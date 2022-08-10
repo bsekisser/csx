@@ -1,36 +1,21 @@
 #pragma once
 
-#define _setup_rR_vR(_rvx, _rr, _vr) \
-	({ \
-		rR(_rvx) = _rr; \
-		vR(_rvx) = _vr; \
-	})
-
 static inline void csx_core_arm_decode_rd(csx_core_p core,
 	const int get_rd)
 {
-	rR(D) = mlBFEXT(IR, 15, 12);
-
-	if(get_rd)
-		vR(D) = csx_reg_get(core, rR(D));
+	csx_core_decode_get(core, rRD, 15, 12, get_rd);
 }
 
 static inline void csx_core_arm_decode_rm(csx_core_p core,
 	const int get_rm)
 {
-	rR(M) = mlBFEXT(IR, 3, 0);
-
-	if(get_rm)
-		vR(M) = csx_reg_get(core, rR(M));
+	csx_core_decode_get(core, rRM, 3, 0, get_rm);
 }
 
 static inline void csx_core_arm_decode_rn(csx_core_p core,
 	const int get_rn)
 {
-	rR(N) = mlBFEXT(IR, 19, 16);
-
-	if(get_rn)
-		vR(N) = csx_reg_get(core, rR(N));
+	csx_core_decode_get(core, rRN, 19, 16, get_rn);
 }
 
 static inline void csx_core_arm_decode_rn_rd(csx_core_p core,

@@ -5,16 +5,13 @@
 
 #include <capstone/capstone.h>
 
-void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
+static void _csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode, int thumb)
 {
 	csh handle = 0;
 	cs_insn *insn = 0;
 
-	const int thumb = address & 1;
 	const int size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
 	const int mode = thumb ? CS_MODE_THUMB : CS_MODE_ARM;
-
-	address &= ~1;
 
 	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &handle));
 
@@ -38,4 +35,14 @@ void csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
 		printf("0x%08x:(0x%02x): Failed to disassemble given code!\n", address, size);
 
 	cs_close(&handle);
+}
+
+void csx_core_disasm_arm(csx_core_p core, uint32_t address, uint32_t opcode)
+{
+	_csx_core_disasm(core, address & ~3, opcode, 0);
+}
+
+void csx_core_disasm_thumb(csx_core_p core, uint32_t address, uint32_t opcode)
+{
+	_csx_core_disasm(core, address & ~1, opcode, 1);
 }

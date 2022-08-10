@@ -6,14 +6,7 @@
 
 #include "csx_core_thumb_inst.h"
 
-/* **** */
-
-static void csx_core_thumb_disasm(csx_core_p core, uint32_t address, uint32_t opcode)
-{
-	csx_core_disasm(core, address | 1, opcode);
-}
-
-/* **** */
+#include "csx_core_reg_trace.h"
 
 static void csx_core_thumb_add_sub_rn_rd(csx_core_p core)
 {
@@ -156,7 +149,7 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, IP, IR);
+			csx_core_disasm_thumb(core, IP, IR);
 			LOG_ACTION(exit(1));
 	}
 	
@@ -340,7 +333,7 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, IP, IR);
+			csx_core_disasm_thumb(core, IP, IR);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -373,7 +366,7 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core)
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
-			csx_core_thumb_disasm(core, IP, IR);
+			csx_core_disasm_thumb(core, IP, IR);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -755,7 +748,7 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core)
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);
-			csx_core_thumb_disasm(core, IP, IR);
+			csx_core_disasm_thumb(core, IP, IR);
 			LOG_ACTION(exit(1));
 			break;
 	}
@@ -870,6 +863,6 @@ void csx_core_thumb_step(csx_core_p core)
 
 	TRACE("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
 
-	csx_core_thumb_disasm(core, IP, IR);
+	csx_core_disasm_thumb(core, IP, IR);
 	LOG_ACTION(exit(1));
 }
