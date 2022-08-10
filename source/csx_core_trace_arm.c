@@ -3,7 +3,7 @@
 #include "csx_core_arm_decode.h"
 #include "csx_core_reg_trace.h"
 
-void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
+void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 
@@ -40,7 +40,7 @@ void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi, uint8_t cce)
 	CORE_TRACE("%s) %s", tout, dpi->op_string);
 }
 
-void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls, uint8_t cce)
+void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 

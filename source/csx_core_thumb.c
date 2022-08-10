@@ -2,6 +2,7 @@
 
 #include "csx.h"
 #include "csx_core.h"
+#include "csx_core_disasm.h"
 #include "csx_core_utility.h"
 
 #include "csx_core_thumb_inst.h"
@@ -10,8 +11,6 @@
 
 static void csx_core_thumb_add_sub_rn_rd(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-
 	const int bit_i = BEXT(IR, 10);
 	const uint8_t op2 = BEXT(IR, 9);
 
@@ -65,8 +64,6 @@ static void csx_core_thumb_add_sub_rn_rd(csx_core_p core)
 
 static void csx_core_thumb_add_sub_sp_i7(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-
 	const int sub = BEXT(IR, 7);
 	const uint16_t imm7 = mlBFMOV(IR, 6, 0, 2);
 
@@ -91,8 +88,6 @@ static void csx_core_thumb_add_sub_sp_i7(csx_core_p core)
 
 static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 	const int pcsp = BEXT(IR, 11);
 	const csx_reg_t rd = mlBFEXT(IR, 10, 8);
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
@@ -115,7 +110,6 @@ static void csx_core_thumb_add_rd_pcsp_i(csx_core_p core)
 
 static void csx_core_thumb_ascm_rd_i(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
 	int wb = 1;
 	
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
@@ -174,16 +168,17 @@ static void csx_core_thumb_ascm_rd_i(csx_core_p core)
 static void csx_core_thumb_bcc(csx_core_p core)
 {
 	const uint8_t cond = mlBFEXT(IR, 11, 8);
-	const uint8_t cce = csx_core_check_cc(core, cond);
 	const int32_t imm8 = mlBFEXTs(IR, 7, 0) << 1;
+
+	CCx.e = csx_core_check_cc(core, cond);
 
 	const uint32_t new_pc = PC_THUMB + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, cce);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, CCx.e);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 
-	if(cce)
+	if(CCx.e)
 	{
 		PC = new_pc;
 	}
@@ -191,8 +186,6 @@ static void csx_core_thumb_bcc(csx_core_p core)
 
 static void csx_core_thumb_bx(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-
 	const int tsbz = _check_sbz(IR, 2, 0, 0, 0);
 	if(tsbz)
 		LOG_ACTION(exit(1));
@@ -220,8 +213,6 @@ static void csx_core_thumb_bx(csx_core_p core)
 
 static void csx_core_thumb_bxx_b(csx_core_p core, int32_t eao)
 {
-	CORE_T(const int cce = 1);
-
 	uint32_t new_pc = PC + eao;
 
 	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/", new_pc & ~1, PC, eao);
@@ -233,8 +224,6 @@ static void csx_core_thumb_bxx_blx(
 	csx_core_p core,
 	int32_t eao)
 {
-	CORE_T(const int cce = 1);
-
 	uint32_t new_pc = (LR + eao);
 
 	if(1) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
@@ -259,8 +248,6 @@ static void csx_core_thumb_bxx_blx(
 
 static void csx_core_thumb_bxx(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-
 	for(int i = 0; i < 2; i++) {
 		int32_t eao = mlBFEXTs(IR, 10, 0);
 		uint8_t h = mlBFEXT(IR, 12, 11);
@@ -297,8 +284,6 @@ static void csx_core_thumb_bxx(csx_core_p core)
 
 static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 	const uint8_t operation = mlBFEXT(IR, 9, 6);
 
 	const csx_reg_t rm = mlBFEXT(IR, 5, 3);
@@ -344,9 +329,6 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 
 static void csx_core_thumb_ldst_rd_i(csx_core_p core)
 {
-//	core->ccs = "EA"; /* ??? */
-	CORE_T(const int cce = 1);
-	
 	const uint16_t operation = mlBFTST(IR, 15, 12);
 	const int bit_l = BEXT(IR, 11);
 	const csx_reg_t rd = mlBFEXT(IR, 10, 8);
@@ -391,8 +373,6 @@ static void csx_core_thumb_ldst_rd_i(csx_core_p core)
 
 static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 //	struct {
 		const int bit_b = BEXT(IR, 12);
 		const int bit_l = BEXT(IR, 11);
@@ -446,8 +426,6 @@ static void csx_core_thumb_ldst_bwh_o_rn_rd(csx_core_p core)
 
 static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 //	struct {
 		const int bit_l = BEXT(IR, 11);
 		const uint8_t bwh = mlBFEXT(IR, 10, 9);
@@ -502,8 +480,6 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core)
 
 static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-
 //	struct {
 		const int bit_l = BEXT(IR, 11);
 //	}bit;
@@ -564,8 +540,6 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core)
 
 static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
 	const uint8_t imm5 = mlBFEXT(IR, 10, 6);
 
@@ -628,8 +602,6 @@ static void csx_core_thumb_sbi_imm5_rm_rd(csx_core_p core)
 
 static void csx_core_thumb_pop_push(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 //	struct {
 		const int bit_l = BEXT(IR, 11);
 		const int bit_r = BEXT(IR, 8);
@@ -722,8 +694,6 @@ static void csx_core_thumb_pop_push(csx_core_p core)
 
 static void csx_core_thumb_sdp_rms_rdn(csx_core_p core)
 {
-	CORE_T(const int cce = 1);
-	
 	const uint8_t operation = mlBFEXT(IR, 9, 8);
 
 	const csx_reg_t rm = mlBFEXT(IR, 6, 3);
@@ -760,8 +730,9 @@ static void csx_core_thumb_sdp_rms_rdn(csx_core_p core)
 
 void csx_core_thumb_step(csx_core_p core)
 {
-	CORE_T(core->ccs = "AL");
-
+	CCx.e = 1;
+	CORE_T(CCx.s = "AL");
+	
 	IR = csx_reg_pc_fetch_step_thumb(core);
 
 	uint8_t lsb;

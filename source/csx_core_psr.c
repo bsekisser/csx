@@ -36,7 +36,7 @@ uint8_t csx_core_check_cc(csx_core_p core, uint8_t cc)
 {
 	const uint32_t psr = CPSR;
 
-	CORE_T(core->ccs = inst_ccs[cc]);
+	CORE_T(CCx.s = inst_ccs[cc]);
 
 	uint32_t res = 0;
 	switch(cc)

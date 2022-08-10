@@ -73,7 +73,6 @@ typedef struct csx_core_t {
 	csx_core_step_fn	step;
 	csx_p				csx;
 
-	const char*		ccs;
 	T(uint32_t			trace_flags);
 }csx_core_t;
 
