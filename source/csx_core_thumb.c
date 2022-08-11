@@ -510,7 +510,7 @@ static void csx_core_thumb_ldstm_rn_rxx(csx_core_p core)
 	assert(end_address == ea - 4);
 	
 	const int wb_l = bit_l && (0 == BTST(rlist, rR(N)));
-	const int wb = !bit_l && wb_l;
+	const int wb = !bit_l || wb_l;
 	
 	if(wb)
 		csx_reg_set(core, rR(N), ea);

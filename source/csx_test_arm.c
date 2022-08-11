@@ -291,34 +291,83 @@ static inline uint32_t _test_value(uint8_t i)
 	return(test_value);
 }
 
+typedef struct ldstm_t* ldstm_p;
+typedef struct ldstm_t {
+	uint32_t						stack[16];
+	uint32_t						r[4];
+
+	uint32_t*						asp[2];
+	uint32_t						esp[2];
+}ldstm_t;
+
+static void csx_test_arm_ldstm_assert_check(csx_test_p t,
+	ldstm_p l,
+	uint tvs,
+	uint rvs)
+{
+	uint32_t asp_diff = (uint32_t)l->asp[1] - (uint32_t)l->asp[0];
+	uint32_t esp_diff = (uint32_t)l->esp[1] - (uint32_t)l->esp[0];
+
+	if(0) LOG("esp_in = 0x%08x, esp_out 0x%08x, esp_diff = 0x%08x",
+		(uint32_t)l->esp[0], (uint32_t)l->esp[1], esp_diff);
+
+	assert(asp_diff == esp_diff);
+	
+	for(int i = 0; i < 16; i++)
+	{
+		uint32_t espv = 0x10001000 + (i << 2);
+		uint32_t esiv = csx_soc_read(t->csx, espv, sizeof(uint32_t)); 
+		assert(l->stack[i] == esiv);
+	}
+	
+	for(int i = 0; i < 4; i++) {
+		uint32_t rv = csx_reg_get(t->csx->core, rvs + i);
+		if(0) LOG("r[%02x] = 0x%08x", i, rv);
+		
+		assert(_test_value(tvs + i) == rv);
+	}
+}
+
+static void csx_test_arm_ldstm_setup_stack(csx_test_p t, ldstm_p l, uint spat)
+{
+	l->esp[0] = 0x10001000 + (spat << 2);
+	l->esp[1] = l->esp[0];
+
+	for(int i = 0; i < 16; i++) {
+		uint32_t tvi = _test_value(i);
+		
+		l->stack[i] = tvi;
+
+		csx_soc_write(t->csx, 0x10001000 + (i << 2), tvi, sizeof(uint32_t));
+	}
+	
+	l->asp[0] = &l->stack[spat];
+	l->asp[1] = l->asp[0];
+}
+
 static void csx_test_arm_ldm_dump_stack(
 	csx_test_p t,
-	uint32_t* stack,
-	uint32_t* sp_in,
-	uint32_t* sp_out,
-	uint32_t* r)
+	ldstm_p l)
 {
-	uint32_t sp_diff = (uint32_t)sp_out - (uint32_t)sp_in;
+	uint32_t sp_diff = (uint32_t)l->asp[1] - (uint32_t)l->asp[0];
 
-	uint32_t vsp_in = 0x10001000 + (4 << 2);
-	uint32_t vsp_out = vsp_in;
-	
-	vsp_out += sp_diff >= 0 ? sp_diff : 0;
-	
-	LOG("sp_in = 0x%08x, sp_out 0x%08x, sp_diff = 0x%08x", (uint32_t)sp_in, (uint32_t)sp_out, sp_diff);
-	LOG("vsp_in = 0x%08x, vsp_out 0x%08x", vsp_in, vsp_out);
+	if(0) LOG("asp_in = 0x%08x, asp_out 0x%08x, asp_diff = 0x%08x",
+		(uint32_t)l->asp[0], (uint32_t)l->asp[1], sp_diff);
 
+	uint32_t* stack = l->stack;
 
 	for(int i = 0; i < 16; i++)
 	{
-		LOG("[0x%02x] = 0x%08x, [0x%02x] = 0x%08x, [0x%02x] = 0x%08x, [0x%02x] = 0x%08x",
+		if(0) LOG("[0x%02x] = 0x%08x, [0x%02x] = 0x%08x, [0x%02x] = 0x%08x, [0x%02x] = 0x%08x",
 			i + 0, stack[i + 0], i + 1, stack[i + 1], i + 2, stack[i + 2], i + 3, stack[i + 3]);
 		i += 3;
 	}
 	
+	uint32_t* r = l->r;
+	
 	for(int i = 0; i < 4; i++)
 	{
-		LOG("r[%02x] = 0x%08x", i, r[i]);
+		if(0) LOG("r[%02x] = 0x%08x", i, r[i]);
 	}
 }
 
@@ -333,14 +382,9 @@ static void csx_test_arm_ldmda(csx_test_p t)
 {
 	csx_core_p core = t->csx->core;
 
-	uint32_t stack[16];
-	uint32_t r[4];
+	ldstm_t ldstm;
 
-	for(int i = 0; i < 16; i++)
-		stack[i] = _test_value(i);
-
-	uint32_t* sp_in = &stack[4];
-	uint32_t* sp_v = sp_in;
+	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
 	asm(
 		"ldmda %[stack]!, {r1, r2, r3, r4}\n\t"
@@ -348,36 +392,28 @@ static void csx_test_arm_ldmda(csx_test_p t)
 		"mov %[r2], r2\n\t"
 		"mov %[r3], r3\n\t"
 		"mov %[r4], r4\n\t"
-		: [stack] "+r" (sp_v)
-			, [r1] "=r" (r[0])
-			, [r2] "=r" (r[1])
-			, [r3] "=r" (r[2])
-			, [r4] "=r" (r[3]) ::
+		: [stack] "+r" (ldstm.asp[1])
+			, [r1] "=r" (ldstm.r[0])
+			, [r2] "=r" (ldstm.r[1])
+			, [r3] "=r" (ldstm.r[2])
+			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
 
-	uint32_t* sp_out = sp_v;
-
-	csx_test_arm_ldm_dump_stack(t, stack, sp_in, sp_out, r);
+	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
 	/* **** */
 	
 	t->start_pc = t->pc = 0x10000000;
+	SP = ldstm.esp[0];
 	
-	SP = 0x10001000 + (4 << 2);
-
-	for(int i = 0; i < 16; i++)
-		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
-
-
 	_cxx(t, _ldm_sp | _ldstm_da | _ldstm_reglist, sizeof(uint32_t));
 	
 	t->start_pc = t->pc = csx_test_run(t, 1);
-	assert(0x10001000 == SP);
-	assert(_test_value(1) == csx_reg_get(core, 1));
-	assert(_test_value(2) == csx_reg_get(core, 2));
-	assert(_test_value(3) == csx_reg_get(core, 3));
-	assert(_test_value(4) == csx_reg_get(core, 4));
+
+	ldstm.esp[1] = SP;
+
+	csx_test_arm_ldstm_assert_check(t, &ldstm, 1, 1);
 }
 
 const uint32_t _ldstm_db = _BV(24);
@@ -386,14 +422,9 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 {
 	csx_core_p core = t->csx->core;
 
-	uint32_t stack[16];
-	uint32_t r[4];
+	ldstm_t ldstm;
 
-	for(int i = 0; i < 16; i++)
-		stack[i] = _test_value(i);
-
-	uint32_t* sp_in = &stack[4];
-	uint32_t* sp_v = sp_in;
+	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
 	asm(
 		"ldmdb %[stack]!, {r1, r2, r3, r4}\n\t"
@@ -401,36 +432,28 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 		"mov %[r2], r2\n\t"
 		"mov %[r3], r3\n\t"
 		"mov %[r4], r4\n\t"
-		: [stack] "+r" (sp_v)
-			, [r1] "=r" (r[0])
-			, [r2] "=r" (r[1])
-			, [r3] "=r" (r[2])
-			, [r4] "=r" (r[3]) ::
+		: [stack] "+r" (ldstm.asp[1])
+			, [r1] "=r" (ldstm.r[0])
+			, [r2] "=r" (ldstm.r[1])
+			, [r3] "=r" (ldstm.r[2])
+			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
 
-	uint32_t* sp_out = sp_v;
-
-	csx_test_arm_ldm_dump_stack(t, stack, sp_in, sp_out, r);
+	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
 	/* **** */
 	
 	t->start_pc = t->pc = 0x10000000;
+	SP = ldstm.esp[0];
 	
-	SP = 0x10001000 + (4 << 2);
-
-	for(int i = 0; i < 16; i++)
-		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
-
-
 	_cxx(t, _ldm_sp | _ldstm_db | _ldstm_reglist, sizeof(uint32_t));
 	
 	t->start_pc = t->pc = csx_test_run(t, 1);
-	assert(0x10001000 == SP);
-	assert(_test_value(0) == csx_reg_get(core, 1));
-	assert(_test_value(1) == csx_reg_get(core, 2));
-	assert(_test_value(2) == csx_reg_get(core, 3));
-	assert(_test_value(3) == csx_reg_get(core, 4));
+
+	ldstm.esp[1] = SP;
+
+	csx_test_arm_ldstm_assert_check(t, &ldstm, 0, 1);
 }
 
 const uint32_t _ldstm_ia = _BV(23);
@@ -439,14 +462,9 @@ static void csx_test_arm_ldmia(csx_test_p t)
 {
 	csx_core_p core = t->csx->core;
 
-	uint32_t stack[16];
-	uint32_t r[4];
+	ldstm_t ldstm;
 
-	for(int i = 0; i < 16; i++)
-		stack[i] = _test_value(i);
-
-	uint32_t* sp_in = &stack[4];
-	uint32_t* sp_v = sp_in;
+	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
 	asm(
 		"ldmia %[stack]!, {r1, r2, r3, r4}\n\t"
@@ -454,36 +472,28 @@ static void csx_test_arm_ldmia(csx_test_p t)
 		"mov %[r2], r2\n\t"
 		"mov %[r3], r3\n\t"
 		"mov %[r4], r4\n\t"
-		: [stack] "+r" (sp_v)
-			, [r1] "=r" (r[0])
-			, [r2] "=r" (r[1])
-			, [r3] "=r" (r[2])
-			, [r4] "=r" (r[3]) ::
+		: [stack] "+r" (ldstm.asp[1])
+			, [r1] "=r" (ldstm.r[0])
+			, [r2] "=r" (ldstm.r[1])
+			, [r3] "=r" (ldstm.r[2])
+			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
 
-	uint32_t* sp_out = sp_v;
-
-	csx_test_arm_ldm_dump_stack(t, stack, sp_in, sp_out, r);
+	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
 	/* **** */
 	
 	t->start_pc = t->pc = 0x10000000;
+	SP = ldstm.esp[0];
 	
-	SP = 0x10001000 + (4 << 2);
-
-	for(int i = 0; i < 16; i++)
-		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
-
-
 	_cxx(t, _ldm_sp | _ldstm_ia | _ldstm_reglist, sizeof(uint32_t));
 	
 	t->start_pc = t->pc = csx_test_run(t, 1);
-//	assert(0x10001020 == csx_reg_get(core, rSP));
-//	assert(_test_value(4) == csx_reg_get(core, 1));
-//	assert(_test_value(5) == csx_reg_get(core, 2));
-//	assert(_test_value(6) == csx_reg_get(core, 3));
-//	assert(_test_value(7) == csx_reg_get(core, 4));
+
+	ldstm.esp[1] = SP;
+
+	csx_test_arm_ldstm_assert_check(t, &ldstm, 4, 1);
 }
 
 const uint32_t _ldstm_ib = _BV(24) | _BV(23);
@@ -492,14 +502,9 @@ static void csx_test_arm_ldmib(csx_test_p t)
 {
 	csx_core_p core = t->csx->core;
 
-	uint32_t stack[16];
-	uint32_t r[4];
+	ldstm_t ldstm;
 
-	for(int i = 0; i < 16; i++)
-		stack[i] = _test_value(i);
-
-	uint32_t* sp_in = &stack[4];
-	uint32_t* sp_v = sp_in;
+	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
 	asm(
 		"ldmib %[stack]!, {r1, r2, r3, r4}\n\t"
@@ -507,36 +512,28 @@ static void csx_test_arm_ldmib(csx_test_p t)
 		"mov %[r2], r2\n\t"
 		"mov %[r3], r3\n\t"
 		"mov %[r4], r4\n\t"
-		: [stack] "+r" (sp_v)
-			, [r1] "=r" (r[0])
-			, [r2] "=r" (r[1])
-			, [r3] "=r" (r[2])
-			, [r4] "=r" (r[3]) ::
+		: [stack] "+r" (ldstm.asp[1])
+			, [r1] "=r" (ldstm.r[0])
+			, [r2] "=r" (ldstm.r[1])
+			, [r3] "=r" (ldstm.r[2])
+			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
 
-	uint32_t* sp_out = sp_v;
-
-	csx_test_arm_ldm_dump_stack(t, stack, sp_in, sp_out, r);
+	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
 	/* **** */
-	
+
 	t->start_pc = t->pc = 0x10000000;
+	SP = ldstm.esp[0];
 	
-	SP = 0x10001000 + (4 << 2);
-
-	for(int i = 0; i < 16; i++)
-		csx_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
-
-
 	_cxx(t, _ldm_sp | _ldstm_ib | _ldstm_reglist, sizeof(uint32_t));
 	
 	t->start_pc = t->pc = csx_test_run(t, 1);
-	assert(0x10001020 == SP);
-	assert(_test_value(5) == csx_reg_get(core, 1));
-	assert(_test_value(6) == csx_reg_get(core, 2));
-	assert(_test_value(7) == csx_reg_get(core, 3));
-	assert(_test_value(8) == csx_reg_get(core, 4));
+
+	ldstm.esp[1] = SP;
+
+	csx_test_arm_ldstm_assert_check(t, &ldstm, 5, 1);
 }
 
 
