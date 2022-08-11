@@ -483,7 +483,7 @@ static void csx_core_thumb_ldst_rm_rn_rd(csx_core_p core)
 		break;
 		default:
 			LOG("bwh = 0x%01x", bwh);
-			csx_core_thumb_disasm(core, IP, IR);
+			csx_core_disasm_thumb(core, IP, IR);
 			LOG_ACTION(exit(1));
 			break;
 	}
