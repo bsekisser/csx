@@ -289,6 +289,7 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 	csx_core_decode_get(core, rRD, 2, 0, 1);
 	
 	uint32_t res = vR(D);
+	int wb = 1;
 	
 	switch(operation)
 	{
@@ -301,6 +302,23 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 			res &= ~vR(M);
 			CORE_TRACE("bics(%s, %s); /* 0x%08x & ~0x%08x(0x%08x) = 0x%08x */",
 				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), ~vR(M), res);
+			break;
+		case THUMB_DP_OP_CMP:
+			wb = 0;
+			res -= vR(M);
+			CORE_TRACE("cmps(%s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
+				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+			break;
+		case THUMB_DP_OP_LSL:
+			res <<= vR(M) & 0xff;
+			CORE_TRACE("muls(%s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
+				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+			break;
+		case THUMB_DP_OP_MUL:
+			if(res !=0)
+				res *= vR(M);
+			CORE_TRACE("muls(%s, %s); /* 0x%08x * 0x%08x = 0x%08x */",
+				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
 			break;
 		case THUMB_DP_OP_MVN:
 			res = ~vR(M);
@@ -319,8 +337,28 @@ static void csx_core_thumb_dp_rms_rdn(csx_core_p core)
 			break;
 	}
 
-	csx_reg_set(core, rR(D), res);
-	csx_core_flags_nz(core, res);
+	if(wb)
+		csx_reg_set(core, rR(D), res);
+
+	switch(operation) {
+		case THUMB_DP_OP_CMP:
+			csx_core_flags_nzcv_sub(core, res, rR(D), rR(M));
+			break;
+		case THUMB_DP_OP_LSL:
+			CPSR &= ~CSX_PSR_NZC;
+
+			CPSR |= BMOV(res, 31, CSX_PSR_BIT_N);
+			CPSR |= ((res == 0) ? CSX_PSR_Z : 0);
+
+			if(vR(M) < 32)
+				CPSR |= BMOV(vR(D), vR(M), CSX_PSR_BIT_C);
+			else
+				CPSR |= BMOV(vR(D), 0, CSX_PSR_BIT_C);
+			break;
+		default:
+			csx_core_flags_nz(core, res);
+			break;
+	}
 }
 
 static void csx_core_thumb_ldst_rd_i(csx_core_p core)

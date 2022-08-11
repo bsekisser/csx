@@ -57,7 +57,11 @@ enum {
 
 enum {
 	THUMB_DP_OP_AND,
+	THUMB_DP_OP_LSL = 0x02,
+//	THUMB_DP_OP_LSR = 0x03,
+	THUMB_DP_OP_CMP = 0x0a,
 	THUMB_DP_OP_ORR = 0x0c,
+	THUMB_DP_OP_MUL = 0x0d,
 	THUMB_DP_OP_BIC = 0x0e,
 	THUMB_DP_OP_MVN = 0x0f,
 };
