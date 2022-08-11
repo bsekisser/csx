@@ -42,8 +42,9 @@ enum {
 #define ARM_INST_BX					(_BV(24) | _BV(21) | _BV(4))
 #define ARM_INST_BX_MASK			(mlBF(27, 20) | mlBF(7, 4))
 #define ARM_INST_BIC				ARM_INST_DPI(BIC)
-#define ARM_INST_MCR				(mlBF(27, 25) |  _BV(4))
-#define ARM_INST_MCR_MASK			(mlBF(27, 24) | _BV(20) | _BV(4))
+#define ARM_INST_MCR_MRC			(mlBF(27, 25) |  _BV(4))
+#define ARM_INST_MRC				(ARM_INST_MCR_MRC | _BV(20))
+#define ARM_INST_MCR_MRC_MASK		(mlBF(27, 24) | _BV(20) | _BV(4))
 #define ARM_INST_MOV				ARM_INST_DPI(MOV)
 #define ARM_INST_MOV_MASK			ARM_INST_DPI_MASK
 #define ARM_INST_MRS				_BV(24)
