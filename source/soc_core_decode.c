@@ -119,7 +119,7 @@ static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 
 	if(0 == vR(S))
-		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
 	else
 		dpi->out.c = BEXT(dpi->out.v, 31);
 }
@@ -156,7 +156,7 @@ static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p 
 	if(asr_v)
 		dpi->out.c = BEXT(vR(M), asr_v - 1);
 	else
-		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
@@ -165,7 +165,7 @@ static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p 
 	if(vR(S))
 		dpi->out.c = BEXT(vR(M), 32 - vR(S));
 	else
-		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p dpi)
@@ -180,14 +180,14 @@ static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p 
 	if(lsr_v)
 		dpi->out.c = BEXT(vR(M), lsr_v - 1);
 	else
-		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)
 {
 	if(!dpi->bit.i && !dpi->bit.x4 && (0 == vR(S)))
 	{
-		dpi->out.v = BMOV(CPSR, CSX_PSR_BIT_C, 31) | (vR(M) >> 1);
+		dpi->out.v = BMOV(CPSR, SOC_PSR_BIT_C, 31) | (vR(M) >> 1);
 		dpi->out.c = vR(M) & 1;
 	}
 	else
@@ -208,7 +208,7 @@ static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p 
 			}
 		}
 		else
-			dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
+			dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
 	}
 }
 

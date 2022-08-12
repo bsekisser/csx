@@ -14,7 +14,7 @@
 			if(csx_trace_core(core)) \
 			{ \
 				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
-					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
+					(CPSR & SOC_PSR_T) ? 'T' : 'A', \
 					IP, IR, \
 					CCx.s, CCx.e ? '>' : 'X', \
 					## args); \
@@ -34,7 +34,7 @@
 			if(csx_trace_core(core)) \
 			{ \
 				printf("%c(0x%08x(0x%08x), %s(%c), " _f ")\n", \
-					(CPSR & CSX_PSR_T) ? 'T' : 'A', \
+					(CPSR & SOC_PSR_T) ? 'T' : 'A', \
 					IP, IR, \
 					CCx.s, CCx.e ? '>' : 'X', \
 					## args); \

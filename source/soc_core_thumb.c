@@ -345,15 +345,15 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 			soc_core_flags_nzcv_sub(core, res, rR(D), rR(M));
 			break;
 		case THUMB_DP_OP_LSL:
-			CPSR &= ~CSX_PSR_NZC;
+			CPSR &= ~SOC_PSR_NZC;
 
-			CPSR |= BMOV(res, 31, CSX_PSR_BIT_N);
-			CPSR |= ((res == 0) ? CSX_PSR_Z : 0);
+			CPSR |= BMOV(res, 31, SOC_PSR_BIT_N);
+			CPSR |= ((res == 0) ? SOC_PSR_Z : 0);
 
 			if(vR(M) < 32)
-				CPSR |= BMOV(vR(D), vR(M), CSX_PSR_BIT_C);
+				CPSR |= BMOV(vR(D), vR(M), SOC_PSR_BIT_C);
 			else
-				CPSR |= BMOV(vR(D), 0, CSX_PSR_BIT_C);
+				CPSR |= BMOV(vR(D), 0, SOC_PSR_BIT_C);
 			break;
 		default:
 			soc_core_flags_nz(core, res);
@@ -683,13 +683,13 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			ops = "asr";
 			if(shift)
 			{
-				BMAS(CPSR, CSX_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
+				BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
 				vR(D) = (((signed)vR(M)) >> shift);
 			}
 			else
 			{
 				int rm31_c = BEXT(vR(M), 31);
-				BMAS(CPSR, CSX_PSR_BIT_C, rm31_c);
+				BMAS(CPSR, SOC_PSR_BIT_C, rm31_c);
 				vR(D) = rm31_c ? ~0 : 0;
 			}
 			break;
@@ -697,7 +697,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			ops = "lsl";
 			if(shift)
 			{
-				BMAS(CPSR, CSX_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
+				BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
 				vR(D) = vR(M) << shift;
 			}
 			break;
@@ -707,7 +707,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 				vR(D) = vR(M) >> shift;
 			else
 				shift = 32;
-			BMAS(CPSR, CSX_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
+			BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);
@@ -717,8 +717,8 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	soc_core_flags_nz(core, vR(D));
 
 	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & CSX_PSR_N), !!(CPSR & CSX_PSR_Z),
-		!!(CPSR & CSX_PSR_C), !!(CPSR & CSX_PSR_V));
+		!!(CPSR & SOC_PSR_N), !!(CPSR & SOC_PSR_Z),
+		!!(CPSR & SOC_PSR_C), !!(CPSR & SOC_PSR_V));
 
 	CORE_TRACE("%ss(%s, %s, 0x%02x); /* %s(0x%08x, 0x%02x) = 0x%08x */",
 		ops, _arm_reg_name(rR(D)), _arm_reg_name(rR(M)), shift, ops, vR(M), shift, vR(D));

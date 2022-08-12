@@ -20,7 +20,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 	if(rPC == rR(D))
 	{
 		const int thumb = dpi->bit.s && core->spsr
-			&& BTST(*core->spsr, CSX_PSR_BIT_T);
+			&& BTST(*core->spsr, SOC_PSR_BIT_T);
 
 		if(thumb)
 			CORE_TRACE_THUMB;
@@ -64,7 +64,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 						break;
 					default:
 						soc_core_flags_nz(core, vR(D));
-						BMAS(CPSR, CSX_PSR_BIT_C, dpi->out.c);
+						BMAS(CPSR, SOC_PSR_BIT_C, dpi->out.c);
 						break;
 				}
 			}
@@ -685,7 +685,7 @@ static void arm_inst_msr(soc_core_p core)
 
 		if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
-		if(BTST(saved_psr, CSX_PSR_BIT_T) != BTST(new_psr, CSX_PSR_BIT_T))
+		if(BTST(saved_psr, SOC_PSR_BIT_T) != BTST(new_psr, SOC_PSR_BIT_T))
 			CORE_TRACE_THUMB;
 
 		if(CCx.e)

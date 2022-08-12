@@ -13,7 +13,7 @@ static uint32_t _soc_core_arm_shifter_operation_asr(soc_core_p core, uint32_t vi
 	if(vin)
 		*cout = BEXT(vin, asr_shift - 1);
 	else
-		*cout = BEXT(CPSR, CSX_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
 
 	return((signed)vin >> asr_shift);
 }
@@ -23,7 +23,7 @@ static uint32_t _soc_core_arm_shifter_operation_lsl(soc_core_p core, uint32_t vi
 	if(shift)
 		*cout = BEXT(vin, 32 - shift);
 	else
-		*cout = BEXT(CPSR, CSX_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
 
 	return(vin << shift);
 }
@@ -38,7 +38,7 @@ static uint32_t _soc_core_arm_shifter_operation_lsr(soc_core_p core, uint32_t vi
 	if(lsr_shift)
 		*cout = BEXT(vin, lsr_shift - 1);
 	else
-		*cout = BEXT(CPSR, CSX_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
 
 	return(vin >> lsr_shift);
 }

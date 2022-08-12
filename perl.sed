@@ -11,6 +11,7 @@ s/csx_mmu/soc_mmu/g
 s/csx_mmio/soc_mmio/g
 s/csx_msr/soc_core_msr/g
 s/csx_psr/soc_core_psr/g
+s/CSX_PSR/SOC_PSR/g
 s/csx_reg/soc_core_reg/g
 s/csx_tlb/soc_mmu_tlb/g
 s/csx_trace_inst/soc_core_trace_inst/g

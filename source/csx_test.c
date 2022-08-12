@@ -12,7 +12,7 @@ uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_
 	csx_p csx = t->csx;
 	soc_core_p core = csx->core;
 
-	if(0) LOG("start_pc = 0x%08x thumb = %u", start_pc, !!(CPSR & CSX_PSR_T));
+	if(0) LOG("start_pc = 0x%08x thumb = %u", start_pc, !!(CPSR & SOC_PSR_T));
 	
 	csx->state = CSX_STATE_RUN;
 	

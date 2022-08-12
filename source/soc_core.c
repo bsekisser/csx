@@ -1,6 +1,6 @@
 #include "csx.h"
 #include "soc_core.h"
-#include "soc_trace.h"
+#include "csx_trace.h"
 
 #include "soc_core_arm.h"
 
@@ -22,7 +22,7 @@ void soc_core_reset(soc_core_p core)
 
 	soc_core_reg_set_pcx(core, reset_pc);
 
-	soc_trace_psr(core, __FUNCTION__, CPSR);
+	soc_core_trace_psr(core, __FUNCTION__, CPSR);
 
 	soc_core_psr_mode_switch(core, CPSR);
 	

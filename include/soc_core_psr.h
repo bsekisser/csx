@@ -1,29 +1,29 @@
-#define CSX_PSR_BIT_N		31
-#define CSX_PSR_BIT_Z		30
-#define CSX_PSR_BIT_C		29
-#define CSX_PSR_BIT_V		28
+#define SOC_PSR_BIT_N		31
+#define SOC_PSR_BIT_Z		30
+#define SOC_PSR_BIT_C		29
+#define SOC_PSR_BIT_V		28
 
-#define CSX_PSR_BIT_Q		27
-#define CSX_PSR_BIT_J		24
-#define CSX_PSR_BIT_GE0		16
-#define CSX_PSR_BIT_E		9
-#define CSX_PSR_BIT_T		5
+#define SOC_PSR_BIT_Q		27
+#define SOC_PSR_BIT_J		24
+#define SOC_PSR_BIT_GE0		16
+#define SOC_PSR_BIT_E		9
+#define SOC_PSR_BIT_T		5
 
-#define CSX_PSR_N			_BV(CSX_PSR_BIT_N)
-#define CSX_PSR_Z			_BV(CSX_PSR_BIT_Z)
-#define CSX_PSR_C			_BV(CSX_PSR_BIT_C)
-#define CSX_PSR_V			_BV(CSX_PSR_BIT_V)
+#define SOC_PSR_N			_BV(SOC_PSR_BIT_N)
+#define SOC_PSR_Z			_BV(SOC_PSR_BIT_Z)
+#define SOC_PSR_C			_BV(SOC_PSR_BIT_C)
+#define SOC_PSR_V			_BV(SOC_PSR_BIT_V)
 
-#define CSX_PSR_NZ			(CSX_PSR_N | CSX_PSR_Z)
-#define CSX_PSR_NZC			(CSX_PSR_NZ | CSX_PSR_C)
-#define CSX_PSR_NZCV		(CSX_PSR_NZC | CSX_PSR_V)
+#define SOC_PSR_NZ			(SOC_PSR_N | SOC_PSR_Z)
+#define SOC_PSR_NZC			(SOC_PSR_NZ | SOC_PSR_C)
+#define SOC_PSR_NZCV		(SOC_PSR_NZC | SOC_PSR_V)
 
-#define CSX_PSR_Q			_BV(CSX_PSR_BIT_Q)
-#define CSX_PSR_E			_BV(CSX_PSR_BIT_E)
-#define CSX_PSR_GE_MASK		(_BM(4) << CSX_PSR_BIT_GE0)
-#define CSX_PSR_T			_BV(CSX_PSR_BIT_T)
+#define SOC_PSR_Q			_BV(SOC_PSR_BIT_Q)
+#define SOC_PSR_E			_BV(SOC_PSR_BIT_E)
+#define SOC_PSR_GE_MASK		(_BM(4) << SOC_PSR_BIT_GE0)
+#define SOC_PSR_T			_BV(SOC_PSR_BIT_T)
 
-#define CSX_PSR_MASK		(CSX_PSR_NZCV | CSX_PSR_Q | CSX_PSR_GE_MASK | CSX_PSR_E)
+#define SOC_PSR_MASK		(SOC_PSR_NZCV | SOC_PSR_Q | SOC_PSR_GE_MASK | SOC_PSR_E)
 
 /* **** */
 
