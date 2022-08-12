@@ -71,8 +71,8 @@ typedef struct soc_core_ldst_t {
 	}bit;
 }soc_core_ldst_t;
 
-typedef struct soc_dpi_t* soc_dpi_p;
-typedef struct soc_dpi_t {
+typedef struct soc_core_dpi_t* soc_core_dpi_p;
+typedef struct soc_core_dpi_t {
 	uint8_t		wb;
 	uint8_t		operation;
 	uint8_t		shift_op;
@@ -91,7 +91,7 @@ typedef struct soc_dpi_t {
 
 	const char*		mnemonic;
 	char			op_string[256];
-}soc_dpi_t;
+}soc_core_dpi_t;
 
 enum {
 	CSX_SHIFTER_OP_LSL,
@@ -104,5 +104,5 @@ enum {
 
 void soc_core_arm_decode_coproc(soc_core_p core, soc_coprocessor_p acp);
 void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls);
-void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_dpi_p dpi);
+void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi);
 const char* soc_core_arm_decode_shifter_op_string(uint8_t shopc);
