@@ -10,4 +10,4 @@ enum {
 	arm_v6,
 };
 
-void csx_core_arm_step(csx_core_p core);
+void soc_core_arm_step(soc_core_p core);

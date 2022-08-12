@@ -1,25 +1,25 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_dpll.h"
+#include "soc_mmio_dpll.h"
 
 #define _DPLL(_x)			(CSX_MMIO_DPLL_BASE + (_x))
 
 #define MMIO_LIST \
 	MMIO(0xfffe, 0xcf00, 0x0000, 0x2002, 32, MEM_RW, DPLL1_CTL_REG)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
 #define DPLL1_CTL_REG		_DPLL(0x000)
 
-static uint32_t csx_mmio_dpll_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_dpll_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_dpll_p dpll = data;
+	const soc_mmio_dpll_p dpll = data;
 	const csx_p csx = dpll->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint32_t value = 0;
 	
@@ -33,16 +33,16 @@ static uint32_t csx_mmio_dpll_read(void* data, uint32_t addr, uint8_t size)
 			break;
 	}
 	
-//	return(csx_data_read((uint8_t*)&value, size));
+//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-void csx_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+void soc_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_dpll_p dpll = data;
+	const soc_mmio_dpll_p dpll = data;
 	const csx_p csx = dpll->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	switch(addr)
 	{
@@ -68,28 +68,28 @@ void csx_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size
 	}
 }
 
-void csx_mmio_dpll_reset(void* data)
+void soc_mmio_dpll_reset(void* data)
 {
-	const csx_mmio_dpll_p dpll = data;
+	const soc_mmio_dpll_p dpll = data;
 
 	dpll->ctl_reg[0] = 0x00002002;	/* 1 */
 }
 
-static csx_mmio_peripheral_t dpll_peripheral = {
+static soc_mmio_peripheral_t dpll_peripheral = {
 	.base = CSX_MMIO_DPLL_BASE,
 
-	.reset = csx_mmio_dpll_reset,
+	.reset = soc_mmio_dpll_reset,
 
-	.read = csx_mmio_dpll_read,
-	.write = csx_mmio_dpll_write,
+	.read = soc_mmio_dpll_read,
+	.write = soc_mmio_dpll_write,
 };
 
 
-int csx_mmio_dpll_init(csx_p csx, csx_mmio_p mmio, csx_mmio_dpll_h h2dpll)
+int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 {
-	csx_mmio_dpll_p dpll;
+	soc_mmio_dpll_p dpll;
 	
-	ERR_NULL(dpll = malloc(sizeof(csx_mmio_dpll_t)));
+	ERR_NULL(dpll = malloc(sizeof(soc_mmio_dpll_t)));
 	if(!dpll)
 		return(-1);
 
@@ -98,7 +98,7 @@ int csx_mmio_dpll_init(csx_p csx, csx_mmio_p mmio, csx_mmio_dpll_h h2dpll)
 	
 	*h2dpll = dpll;
 	
-	csx_mmio_peripheral(mmio, &dpll_peripheral, dpll);
+	soc_mmio_peripheral(mmio, &dpll_peripheral, dpll);
 	
 	return(0);
 }

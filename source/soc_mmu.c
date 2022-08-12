@@ -1,7 +1,7 @@
 #include <assert.h>
 
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 
 /* **** */
 
@@ -19,19 +19,19 @@ typedef struct csx_data_t {
 		uint32_t	size;
 }csx_data_t;
 
-typedef struct csx_mmu_t* csx_mmu_p;
-typedef struct csx_mmu_t {
+typedef struct soc_mmu_t* soc_mmu_p;
+typedef struct soc_mmu_t {
 	csx_p			csx;
-	csx_tlb_t		tlb[256];
+	soc_mmu_tlb_t		tlb[256];
 	csx_data_t		loader;
 	csx_data_t		firmware;
 	uint8_t			sdram[CSX_SDRAM_SIZE];
 	uint8_t			frame_buffer[CSX_FRAMEBUFFER_SIZE];
-}csx_mmu_t;
+}soc_mmu_t;
 
 /* **** */
 
-uint32_t csx_data_read(uint8_t* src, uint8_t size)
+uint32_t soc_data_read(uint8_t* src, uint8_t size)
 {
 	uint32_t res = 0;
 
@@ -41,7 +41,7 @@ uint32_t csx_data_read(uint8_t* src, uint8_t size)
 	return(res);
 }
 
-void csx_data_write(uint8_t* dst, uint32_t value, uint8_t size)
+void soc_data_write(uint8_t* dst, uint32_t value, uint8_t size)
 {
 	for(int i = 0; i < size; i++)
 	{
@@ -58,7 +58,7 @@ void csx_data_write(uint8_t* dst, uint32_t value, uint8_t size)
  * xxxx hhhh | hhhh hhhh | hhhh oooo | oooo oooo	-- 64k entries
  */
 
-static void set_tlbe_urwx_rwx(csx_tlb_p t, int ur, int uw, int ux, int r, int w, int x)
+static void set_tlbe_urwx_rwx(soc_mmu_tlb_p t, int ur, int uw, int ux, int r, int w, int x)
 {
 	t->ur = ur;
 	t->uw = uw;
@@ -68,7 +68,7 @@ static void set_tlbe_urwx_rwx(csx_tlb_p t, int ur, int uw, int ux, int r, int w,
 	t->x = x;
 }
 
-static inline int csx_mmu__tlb_entry(csx_mmu_p mmu, uint32_t va, csx_tlb_h h2tlbe)
+static inline int soc_mmu__tlb_entry(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_h h2tlbe)
 {
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)mmu, va, (uint)h2tlbe);
 
@@ -77,7 +77,7 @@ static inline int csx_mmu__tlb_entry(csx_mmu_p mmu, uint32_t va, csx_tlb_h h2tlb
 
 	if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x", vp, vp_tlbe);
 
-	csx_tlb_p tlbe = &mmu->tlb[vp_tlbe];
+	soc_mmu_tlb_p tlbe = &mmu->tlb[vp_tlbe];
 
 	*h2tlbe = tlbe;
 
@@ -92,7 +92,7 @@ static inline int csx_mmu__tlb_entry(csx_mmu_p mmu, uint32_t va, csx_tlb_h h2tlb
 	return(1);
 }
 
-static int csx_mmu__tlb_fill(csx_mmu_p mmu, uint32_t va, csx_tlb_p tlbe)
+static int soc_mmu__tlb_fill(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_p tlbe)
 {
 	const size_t size = 1;
 	
@@ -117,14 +117,14 @@ static int csx_mmu__tlb_fill(csx_mmu_p mmu, uint32_t va, csx_tlb_p tlbe)
 	return(1);
 }
 
-static inline int csx_mmu__tlb_read(csx_mmu_p mmu, uint32_t va, void** data)
+static inline int soc_mmu__tlb_read(soc_mmu_p mmu, uint32_t va, void** data)
 {
-	csx_tlb_p tlbe = 0;
+	soc_mmu_tlb_p tlbe = 0;
 	
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)mmu, va, (uint)data);
 
-	if(!csx_mmu__tlb_entry(mmu, va, &tlbe))	{
-		if(!csx_mmu__tlb_fill(mmu, va, tlbe))
+	if(!soc_mmu__tlb_entry(mmu, va, &tlbe))	{
+		if(!soc_mmu__tlb_fill(mmu, va, tlbe))
 			return(0);
 	}
 
@@ -138,12 +138,12 @@ static inline int csx_mmu__tlb_read(csx_mmu_p mmu, uint32_t va, void** data)
 	return(1);
 }
 
-static inline int csx_mmu__tlb_write(csx_mmu_p mmu, uint32_t va, void** data)
+static inline int soc_mmu__tlb_write(soc_mmu_p mmu, uint32_t va, void** data)
 {
-	csx_tlb_p tlbe = 0;
+	soc_mmu_tlb_p tlbe = 0;
 	
-	if(!csx_mmu__tlb_entry(mmu, va, &tlbe)) {
-		if(!csx_mmu__tlb_fill(mmu, va, tlbe))
+	if(!soc_mmu__tlb_entry(mmu, va, &tlbe)) {
+		if(!soc_mmu__tlb_fill(mmu, va, tlbe))
 			return(0);
 	}
 
@@ -157,7 +157,7 @@ static inline int csx_mmu__tlb_write(csx_mmu_p mmu, uint32_t va, void** data)
 
 /* **** */
 
-int csx_mmu_read(csx_mmu_p mmu, uint32_t va, uint32_t* data, size_t size)
+int soc_mmu_read(soc_mmu_p mmu, uint32_t va, uint32_t* data, size_t size)
 {
 	int retval = 1;
 
@@ -179,10 +179,10 @@ int csx_mmu_read(csx_mmu_p mmu, uint32_t va, uint32_t* data, size_t size)
 	void* src = 0;
 
 retry_read:;
-	if(csx_mmu__tlb_read(mmu, va, &src)) {
+	if(soc_mmu__tlb_read(mmu, va, &src)) {
 		src += PAGE_OFFSET(va);
 		if(!(size & 0x80)) {
-			*data = csx_data_read(src, size);
+			*data = soc_data_read(src, size);
 			return(1);
 		} else {
 			LOG_ACTION(exit(-1));
@@ -192,7 +192,7 @@ retry_read:;
 	return(0);
 }
 
-int csx_mmu_write(csx_mmu_p mmu, uint32_t va, uint32_t data, size_t size)
+int soc_mmu_write(soc_mmu_p mmu, uint32_t va, uint32_t data, size_t size)
 {
 	int retval = 1;
 
@@ -211,10 +211,10 @@ int csx_mmu_write(csx_mmu_p mmu, uint32_t va, uint32_t data, size_t size)
 	void* dst = 0;
 
 retry_write:;
-	if(csx_mmu__tlb_write(mmu, va, &dst)) {
+	if(soc_mmu__tlb_write(mmu, va, &dst)) {
 		dst += PAGE_OFFSET(va);
 		if(!(size & 0x80)) {
-			csx_data_write(dst, data, size);
+			soc_data_write(dst, data, size);
 			return(1);
 		} else {
 			LOG_ACTION(exit(-1));
@@ -224,15 +224,15 @@ retry_write:;
 	return(0);
 }
 
-int csx_mmu_init(csx_p csx, csx_mmu_h h2mmu)
+int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 {
-	csx_mmu_p mmu;
+	soc_mmu_p mmu;
 	
-	ERR_NULL(mmu = malloc(sizeof(csx_mmu_t)));
+	ERR_NULL(mmu = malloc(sizeof(soc_mmu_t)));
 	if(!mmu)
 		return(-1);
 	
-	memset(mmu, 0, sizeof(csx_mmu_t));
+	memset(mmu, 0, sizeof(soc_mmu_t));
 	
 	mmu->csx = csx;
 	*h2mmu = mmu;

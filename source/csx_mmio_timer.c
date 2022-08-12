@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_timer.h"
+#include "soc_mmio_timer.h"
 
 #define _TIMER(_t, _x)		(CSX_MMIO_TIMER(_t) | (_x))
 
@@ -22,14 +22,14 @@
 	MMIO(0xfffe, 0xc704, 0x0000, 0x0000, 32, MEM_WRITE, MPU_LOAD_TIMER_3) \
 	MMIO(0xfffe, 0xc708, 0x0000, 0x0000, 32, MEM_R_TRACE_R, MPU_READ_TIMER_3)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-static uint32_t csx_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = data;
 	const csx_p csx = t->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
 	uint32_t value = 0;
@@ -46,16 +46,16 @@ static uint32_t csx_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
 			break;
 	}
 	
-//	return(csx_data_read((uint8_t*)&value, size));
+//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-static void csx_mmio_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = data;
 	const csx_p csx = t->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
 	
@@ -78,9 +78,9 @@ static void csx_mmio_timer_write(void* data, uint32_t addr, uint32_t value, uint
 	}
 }
 
-static void csx_mmio_timer_reset(void* data)
+static void soc_mmio_timer_reset(void* data)
 {
-	const csx_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = data;
 	
 	for(int i = 0; i < 3; i++)
 	{
@@ -89,38 +89,38 @@ static void csx_mmio_timer_reset(void* data)
 	}
 }
 
-static csx_mmio_peripheral_t timer_peripheral[3] = {
+static soc_mmio_peripheral_t timer_peripheral[3] = {
 	[0] = {
 		.base = CSX_MMIO_TIMER(0),
 
-		.reset = csx_mmio_timer_reset,
+		.reset = soc_mmio_timer_reset,
 
-		.read = csx_mmio_timer_read,
-		.write = csx_mmio_timer_write
+		.read = soc_mmio_timer_read,
+		.write = soc_mmio_timer_write
 	},
 	[1] = {
 		.base = CSX_MMIO_TIMER(1),
 
-//		.reset = csx_mmio_timer_reset,
+//		.reset = soc_mmio_timer_reset,
 
-		.read = csx_mmio_timer_read,
-		.write = csx_mmio_timer_write
+		.read = soc_mmio_timer_read,
+		.write = soc_mmio_timer_write
 	},
 	[2] = {
 		.base = CSX_MMIO_TIMER(2),
 
-//		.reset = csx_mmio_timer_reset,
+//		.reset = soc_mmio_timer_reset,
 
-		.read = csx_mmio_timer_read,
-		.write = csx_mmio_timer_write
+		.read = soc_mmio_timer_read,
+		.write = soc_mmio_timer_write
 	},
 };
 
-int csx_mmio_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_timer_h h2t)
+int soc_mmio_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_timer_h h2t)
 {
-	csx_mmio_timer_p t;
+	soc_mmio_timer_p t;
 	
-	ERR_NULL(t = malloc(sizeof(csx_mmio_timer_t)));
+	ERR_NULL(t = malloc(sizeof(soc_mmio_timer_t)));
 	if(!t)
 		return(-1);
 
@@ -130,7 +130,7 @@ int csx_mmio_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_timer_h h2t)
 	*h2t = t;
 
 	for(int i = 0; i < 3; i++)
-		csx_mmio_peripheral(mmio, &timer_peripheral[i], t);
+		soc_mmio_peripheral(mmio, &timer_peripheral[i], t);
 	
 	return(0);
 }

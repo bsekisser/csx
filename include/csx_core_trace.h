@@ -50,7 +50,7 @@
 #define CORE_TRACE_BRANCH_CC(_pc)
 #define CORE_TRACE_THUMB
 
-int csx_trace_core(csx_core_p csx);
+int csx_trace_core(soc_core_p csx);
 
-void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr);
-void csx_trace_psr_change(csx_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr);
+void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr);
+void soc_core_trace_psr_change(soc_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr);

@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_watchdog.h"
+#include "soc_mmio_watchdog.h"
 
 #define _WDT(_x)		(CSX_MMIO_WATCHDOG_BASE | (_x))
 
@@ -20,14 +20,14 @@
 	\
 	MMIO(0xfffe, 0xc808, 0x0000, 0x8000, 32, MEM_RW, MPU_WDT_TIMER_MODE)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-static uint32_t csx_mmio_watchdog_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_watchdog_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_watchdog_p wdt = data;
+	const soc_mmio_watchdog_p wdt = data;
 	const csx_p csx = wdt->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint32_t value = 0;
 	
@@ -44,12 +44,12 @@ static uint32_t csx_mmio_watchdog_read(void* data, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-static void csx_mmio_watchdog_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_watchdog_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_watchdog_p wdt = data;
+	const soc_mmio_watchdog_p wdt = data;
 	const csx_p csx = wdt->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	switch(addr)
 	{
@@ -65,9 +65,9 @@ static void csx_mmio_watchdog_write(void* data, uint32_t addr, uint32_t value, u
 	}
 }
 
-static void csx_mmio_watchdog_reset(void* data)
+static void soc_mmio_watchdog_reset(void* data)
 {
-	const csx_mmio_watchdog_p wdt = data;
+	const soc_mmio_watchdog_p wdt = data;
 
 	wdt->wwps = 0;
 	wdt->wspr = 0;
@@ -75,30 +75,30 @@ static void csx_mmio_watchdog_reset(void* data)
 	wdt->timer.mode = 0x00008000;
 }
 
-static csx_mmio_peripheral_t watchdog_peripheral[2] = {
+static soc_mmio_peripheral_t watchdog_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_WATCHDOG_BASE,
 
-		.reset = csx_mmio_watchdog_reset,
+		.reset = soc_mmio_watchdog_reset,
 
-		.read = csx_mmio_watchdog_read,
-		.write = csx_mmio_watchdog_write
+		.read = soc_mmio_watchdog_read,
+		.write = soc_mmio_watchdog_write
 	},
 	[1] = {
 		.base = CSX_MMIO_TIMER_WDT_BASE,
 
-//		.reset = csx_mmio_watchdog_reset,
+//		.reset = soc_mmio_watchdog_reset,
 
-		.read = csx_mmio_watchdog_read,
-		.write = csx_mmio_watchdog_write
+		.read = soc_mmio_watchdog_read,
+		.write = soc_mmio_watchdog_write
 	},
 };
 
-int csx_mmio_watchdog_init(csx_p csx, csx_mmio_p mmio, csx_mmio_watchdog_h h2wdt)
+int soc_mmio_watchdog_init(csx_p csx, soc_mmio_p mmio, soc_mmio_watchdog_h h2wdt)
 {
-	csx_mmio_watchdog_p wdt;
+	soc_mmio_watchdog_p wdt;
 	
-	ERR_NULL(wdt = malloc(sizeof(csx_mmio_watchdog_t)));
+	ERR_NULL(wdt = malloc(sizeof(soc_mmio_watchdog_t)));
 	if(!wdt)
 		return(-1);
 
@@ -107,8 +107,8 @@ int csx_mmio_watchdog_init(csx_p csx, csx_mmio_p mmio, csx_mmio_watchdog_h h2wdt
 	
 	*h2wdt = wdt;
 	
-	csx_mmio_peripheral(mmio, &watchdog_peripheral[0], wdt);
-	csx_mmio_peripheral(mmio, &watchdog_peripheral[1], wdt);
+	soc_mmio_peripheral(mmio, &watchdog_peripheral[0], wdt);
+	soc_mmio_peripheral(mmio, &watchdog_peripheral[1], wdt);
 	
 	return(0);
 }

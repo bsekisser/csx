@@ -1,11 +1,11 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 
 #include "capstone_assert_test.h"
 
 #include <capstone/capstone.h>
 
-static void _csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode, int thumb)
+static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode, int thumb)
 {
 	csh handle = 0;
 	cs_insn *insn = 0;
@@ -37,12 +37,12 @@ static void _csx_core_disasm(csx_core_p core, uint32_t address, uint32_t opcode,
 	cs_close(&handle);
 }
 
-void csx_core_disasm_arm(csx_core_p core, uint32_t address, uint32_t opcode)
+void soc_core_disasm_arm(soc_core_p core, uint32_t address, uint32_t opcode)
 {
-	_csx_core_disasm(core, address & ~3, opcode, 0);
+	_soc_core_disasm(core, address & ~3, opcode, 0);
 }
 
-void csx_core_disasm_thumb(csx_core_p core, uint32_t address, uint32_t opcode)
+void soc_core_disasm_thumb(soc_core_p core, uint32_t address, uint32_t opcode)
 {
-	_csx_core_disasm(core, address & ~1, opcode, 1);
+	_soc_core_disasm(core, address & ~1, opcode, 1);
 }

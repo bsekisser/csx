@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_ocp.h"
+#include "soc_mmio_ocp.h"
 
 #define _OCP(_x)				(CSX_MMIO_OCP_BASE + (_x))
 
@@ -19,14 +19,14 @@
 	MMIO(0xfffe, 0xcc58, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS2_CONFIG) \
 	MMIO(0xfffe, 0xcc5c, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS3_CONFIG)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-static uint32_t csx_mmio_ocp_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_ocp_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_ocp_p ocp = data;
+	const soc_mmio_ocp_p ocp = data;
 	const csx_p csx = ocp->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint32_t value = 0;
 	
@@ -43,16 +43,16 @@ static uint32_t csx_mmio_ocp_read(void* data, uint32_t addr, uint8_t size)
 			break;
 	}
 	
-//	return(csx_data_read((uint8_t*)&value, size));
+//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-static void csx_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_ocp_p ocp = data;
+	const soc_mmio_ocp_p ocp = data;
 	const csx_p csx = ocp->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	switch(addr & ~0xf)
 	{
@@ -96,9 +96,9 @@ static void csx_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_
 	}
 }
 
-static void csx_mmio_ocp_reset(void* data)
+static void soc_mmio_ocp_reset(void* data)
 {
-	const csx_mmio_ocp_p ocp = data;
+	const soc_mmio_ocp_p ocp = data;
 
 	for(int i = 0; i < 4; i++)
 	{
@@ -107,20 +107,20 @@ static void csx_mmio_ocp_reset(void* data)
 	}
 }
 
-static csx_mmio_peripheral_t ocp_peripheral = {
+static soc_mmio_peripheral_t ocp_peripheral = {
 	.base = CSX_MMIO_OCP_BASE,
 
-	.reset = csx_mmio_ocp_reset,
+	.reset = soc_mmio_ocp_reset,
 
-	.read = csx_mmio_ocp_read,
-	.write = csx_mmio_ocp_write,
+	.read = soc_mmio_ocp_read,
+	.write = soc_mmio_ocp_write,
 };
 
-int csx_mmio_ocp_init(csx_p csx, csx_mmio_p mmio, csx_mmio_ocp_h h2ocp)
+int soc_mmio_ocp_init(csx_p csx, soc_mmio_p mmio, soc_mmio_ocp_h h2ocp)
 {
-	csx_mmio_ocp_p ocp;
+	soc_mmio_ocp_p ocp;
 	
-	ERR_NULL(ocp = malloc(sizeof(csx_mmio_ocp_t)));
+	ERR_NULL(ocp = malloc(sizeof(soc_mmio_ocp_t)));
 	if(!ocp)
 		return(-1);
 
@@ -129,7 +129,7 @@ int csx_mmio_ocp_init(csx_p csx, csx_mmio_p mmio, csx_mmio_ocp_h h2ocp)
 	
 	*h2ocp = ocp;
 
-	csx_mmio_peripheral(mmio, &ocp_peripheral, ocp);
+	soc_mmio_peripheral(mmio, &ocp_peripheral, ocp);
 	
 	return(0);
 }

@@ -1,9 +1,9 @@
 typedef struct csx_mmu_t** csx_mmu_h;
 typedef struct csx_mmu_t* csx_mmu_p;
 
-typedef struct csx_tlb_t** csx_tlb_h;
-typedef struct csx_tlb_t* csx_tlb_p;
-typedef struct csx_tlb_t {
+typedef struct soc_mmu_tlb_t** soc_mmu_tlb_h;
+typedef struct soc_mmu_tlb_t* soc_mmu_tlb_p;
+typedef struct soc_mmu_tlb_t {
 	void*							data;
 	uint32_t						vp:20;
 	uint32_t						ur:1;
@@ -13,7 +13,7 @@ typedef struct csx_tlb_t {
 	uint32_t						w:1;
 	uint32_t						x:1;
 	uint32_t						i:1;
-}csx_tlb_t;
+}soc_mmu_tlb_t;
 
 /* **** */
 
@@ -27,8 +27,8 @@ typedef struct csx_tlb_t {
 
 /* **** */
 
-uint32_t csx_data_read(uint8_t* src, uint8_t size);
-void csx_data_write(uint8_t* dst, uint32_t value, uint8_t size);
+uint32_t soc_data_read(uint8_t* src, uint8_t size);
+void soc_data_write(uint8_t* dst, uint32_t value, uint8_t size);
 
 int csx_mmu_read(csx_mmu_p mmu, uint32_t va, uint32_t* data, size_t size);
 int csx_mmu_write(csx_mmu_p mmu, uint32_t va, uint32_t data, size_t size);

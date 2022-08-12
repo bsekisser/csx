@@ -1,7 +1,7 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 
-static const char* csx_trace_psr_mode_string[] = {
+static const char* soc_core_trace_psr_mode_string[] = {
 	[0x00] = "User",
 	[0x01] = "FIQ",
 	[0x02] = "IRQ",
@@ -11,10 +11,10 @@ static const char* csx_trace_psr_mode_string[] = {
 	[0x08 + 0x07] = "System",
 };
 
-int csx_trace_core(csx_core_p core)
+int csx_trace_core(soc_core_p core)
 {
 	const csx_p csx = core->csx;
-//	csx_core_p core = csx->core;
+//	soc_core_p core = csx->core;
 	
 	csx_trace_p trace = csx->trace.head;
 	
@@ -27,7 +27,7 @@ int csx_trace_core(csx_core_p core)
 	return(0);
 }
 
-void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr)
+void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 
@@ -50,15 +50,15 @@ void csx_trace_psr(csx_core_p core, const char* pfn, uint32_t psr)
 	const uint8_t mode = mlBFEXT(psr, 4, 0);
 	dst += snprintf(dst, end - dst, ":M[4:0] = 0x%01x", mode);
 	
-	const char* mode_string = csx_trace_psr_mode_string[mode & 0x0f];
+	const char* mode_string = soc_core_trace_psr_mode_string[mode & 0x0f];
 	if(!mode_string)
 		mode_string = "";
 
 	TRACE("%s (%s) : %s", tout, mode_string, pfn ? pfn : "");
 }
 
-void csx_trace_psr_change(csx_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr)
+void soc_core_trace_psr_change(soc_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr)
 {
-	csx_trace_psr(core, pfn, saved_psr);
-	csx_trace_psr(core, pfn, new_psr);
+	soc_core_trace_psr(core, pfn, saved_psr);
+	soc_core_trace_psr(core, pfn, new_psr);
 }

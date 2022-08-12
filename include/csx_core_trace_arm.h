@@ -1,2 +1,2 @@
-void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi);
-void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls);
+void soc_core_trace_inst_dpi(soc_core_p core, soc_dpi_p dpi);
+void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls);

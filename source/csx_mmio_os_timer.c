@@ -1,22 +1,22 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_os_timer.h"
+#include "soc_mmio_os_timer.h"
 
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x9000, 0x00ff, 0xffff, 32, MEM_RW, OS_TIMER_TICK_VAL) \
 	MMIO(0xfffb, 0x9008, 0x0000, 0x0008, 32, MEM_RW, OS_TIMER_CTRL)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-static uint32_t csx_mmio_os_timer_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_os_timer_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = data;
 	const csx_p csx = ost->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint32_t value = 0;
 	
@@ -33,12 +33,12 @@ static uint32_t csx_mmio_os_timer_read(void* data, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-static void csx_mmio_os_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_os_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = data;
 	const csx_p csx = ost->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	switch(addr)
 	{
@@ -55,29 +55,29 @@ static void csx_mmio_os_timer_write(void* data, uint32_t addr, uint32_t value, u
 	}
 }
 
-static void csx_mmio_os_timer_reset(void* data)
+static void soc_mmio_os_timer_reset(void* data)
 {
-	const csx_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = data;
 	
 	ost->base = 0;
 	ost->tick_val = 0;
 	ost->ctrl = 0;
 }
 
-static csx_mmio_peripheral_t os_timer_peripheral = {
+static soc_mmio_peripheral_t os_timer_peripheral = {
 	.base = CSX_MMIO_OS_TIMER_BASE,
 
-	.reset = csx_mmio_os_timer_reset,
+	.reset = soc_mmio_os_timer_reset,
 
-	.read = csx_mmio_os_timer_read,
-	.write = csx_mmio_os_timer_write
+	.read = soc_mmio_os_timer_read,
+	.write = soc_mmio_os_timer_write
 };
 
-int csx_mmio_os_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_os_timer_h h2ost)
+int soc_mmio_os_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_os_timer_h h2ost)
 {
-	csx_mmio_os_timer_p ost;
+	soc_mmio_os_timer_p ost;
 	
-	ERR_NULL(ost = malloc(sizeof(csx_mmio_os_timer_t)));
+	ERR_NULL(ost = malloc(sizeof(soc_mmio_os_timer_t)));
 	if(!ost)
 		return(-1);
 
@@ -86,7 +86,7 @@ int csx_mmio_os_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_os_timer_h h2ost
 
 	*h2ost = ost;
 	
-	csx_mmio_peripheral(mmio, &os_timer_peripheral, ost);
+	soc_mmio_peripheral(mmio, &os_timer_peripheral, ost);
 
 	return(0);
 }

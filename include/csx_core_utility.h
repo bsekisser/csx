@@ -58,12 +58,12 @@ static inline uint32_t _ror(uint32_t data, uint8_t shift)
 	return(l | r);
 }
 
-static inline uint32_t csx_core_read(csx_core_p core, uint32_t va, size_t size)
+static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 {
 	return(csx_soc_read(core->csx, va, size));
 }
 
-static inline void csx_core_write(csx_core_p core, uint32_t va, uint32_t data, size_t size)
+static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
 {
 	csx_soc_write(core->csx, va, data, size);
 }

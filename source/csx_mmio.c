@@ -1,18 +1,18 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_cfg.h"
-#include "csx_mmio_dpll.h"
-#include "csx_mmio_mpu.h"
-#include "csx_mmio_mpu_gpio.h"
-#include "csx_mmio_mpu_l1_ihr.h"
-#include "csx_mmio_ocp.h"
-#include "csx_mmio_gp_timer.h"
-#include "csx_mmio_os_timer.h"
-#include "csx_mmio_timer.h"
-#include "csx_mmio_watchdog.h"
+#include "soc_mmio_cfg.h"
+#include "soc_mmio_dpll.h"
+#include "soc_mmio_mpu.h"
+#include "soc_mmio_mpu_gpio.h"
+#include "soc_mmio_mpu_l1_ihr.h"
+#include "soc_mmio_ocp.h"
+#include "soc_mmio_gp_timer.h"
+#include "soc_mmio_os_timer.h"
+#include "soc_mmio_timer.h"
+#include "soc_mmio_watchdog.h"
 
 #include "page.h"
 #include "queue.h"
@@ -20,9 +20,9 @@
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-ea_trace_p csx_mmio_get_trace(ea_trace_p tl, uint32_t address)
+ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
 	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
 
@@ -43,38 +43,38 @@ ea_trace_p csx_mmio_get_trace(ea_trace_p tl, uint32_t address)
 
 typedef void (*void_fn_p)(void*);
 
-typedef struct csx_mmio_t* csx_mmio_p;
-typedef struct csx_mmio_t {
+typedef struct soc_mmio_t* soc_mmio_p;
+typedef struct soc_mmio_t {
 	csx_p					csx;
 
 	void*					data[0x400];
-	csx_mmio_read_fn		read[0x400];
-	csx_mmio_write_fn		write[0x400];
+	soc_mmio_read_fn		read[0x400];
+	soc_mmio_write_fn		write[0x400];
 	struct {
 		void*				data;
 		void				(*fn)(void*);
 	}reset[0x64];
 	
-	csx_mmio_cfg_p			cfg;
-	csx_mmio_dpll_p			dpll;
-	csx_mmio_mpu_p			mpu;
-	csx_mmio_mpu_gpio_p		mpu_gpio[4];
-	csx_mmio_mpu_l1_ihr_p	mpu_l1_ihr;
-	csx_mmio_ocp_p			ocp;
-	csx_mmio_gp_timer_p		gp_timer;
-	csx_mmio_os_timer_p		os_timer;
-	csx_mmio_timer_p		timer[3];
-	csx_mmio_watchdog_p		wdt;
+	soc_mmio_cfg_p			cfg;
+	soc_mmio_dpll_p			dpll;
+	soc_mmio_mpu_p			mpu;
+	soc_mmio_mpu_gpio_p		mpu_gpio[4];
+	soc_mmio_mpu_l1_ihr_p	mpu_l1_ihr;
+	soc_mmio_ocp_p			ocp;
+	soc_mmio_gp_timer_p		gp_timer;
+	soc_mmio_os_timer_p		os_timer;
+	soc_mmio_timer_p		timer[3];
+	soc_mmio_watchdog_p		wdt;
 
-//	csx_mmio_dsp_p			dsp;
+//	soc_mmio_dsp_p			dsp;
 
 	uint8_t					upld[256];
 	uint8_t					usb_clnt[256];
-}csx_mmio_t;
+}soc_mmio_t;
 
-ea_trace_p csx_mmio_trace(csx_mmio_p mmio, ea_trace_p tl, uint32_t address)
+ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
 {
-	ea_trace_p eat = csx_mmio_get_trace(tl, address);
+	ea_trace_p eat = soc_mmio_get_trace(tl, address);
 	const char *name = eat ? eat->name : "";
 
 	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
@@ -82,7 +82,7 @@ ea_trace_p csx_mmio_trace(csx_mmio_p mmio, ea_trace_p tl, uint32_t address)
 	return(eat);
 }
 
-void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t base_mask)
+void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t base_mask)
 {
 	LOG();
 
@@ -106,13 +106,13 @@ void csx_mmio_trace_reset(csx_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 		{
 			if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
 				(uint32_t)tle, module, offset, tle->name);
-			csx_data_write(&dst[offset], value, tle->size);
+			soc_data_write(&dst[offset], value, tle->size);
 		}
 	}while(tl[i].address);
 }
 
 
-uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
+uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
 	uint32_t module = vaddr & mlBF(31, 8);
 
@@ -120,62 +120,62 @@ uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	{
 //		case	CSX_MMIO_CFG_BASE + 0x000:
 //		case	CSX_MMIO_CFG_BASE + 0x100:
-//			return(csx_mmio_cfg_read(mmio->cfg, vaddr, size));
+//			return(soc_mmio_cfg_read(mmio->cfg, vaddr, size));
 //			break;
 //		case	CSX_MMIO_DPLL_BASE:
-//			return(csx_mmio_dpll_read(mmio->dpll, vaddr, size));
+//			return(soc_mmio_dpll_read(mmio->dpll, vaddr, size));
 //			break;
 //		case	CSX_MMIO_MPU_BASE:
-//			return(csx_mmio_mpu_read(mmio->mpu, vaddr, size));
+//			return(soc_mmio_mpu_read(mmio->mpu, vaddr, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO1_BASE:
-//			return(csx_mmio_mpu_gpio_read(mmio->mpu_gpio[0], vaddr, size));
+//			return(soc_mmio_mpu_gpio_read(mmio->mpu_gpio[0], vaddr, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO2_BASE:
-//			return(csx_mmio_mpu_gpio_read(mmio->mpu_gpio[1], vaddr, size));
+//			return(soc_mmio_mpu_gpio_read(mmio->mpu_gpio[1], vaddr, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO3_BASE:
-//			return(csx_mmio_mpu_gpio_read(mmio->mpu_gpio[2], vaddr, size));
+//			return(soc_mmio_mpu_gpio_read(mmio->mpu_gpio[2], vaddr, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO4_BASE:
-//			return(csx_mmio_mpu_gpio_read(mmio->mpu_gpio[3], vaddr, size));
+//			return(soc_mmio_mpu_gpio_read(mmio->mpu_gpio[3], vaddr, size));
 //			break;
 //		case	CSX_MMIO_OCP_BASE:
-//			return(csx_mmio_ocp_read(mmio->ocp, vaddr, size));
+//			return(soc_mmio_ocp_read(mmio->ocp, vaddr, size));
 //			break;
 //		case	CSX_MMIO_OS_TIMER_BASE:
-//			return(csx_mmio_os_timer_read(mmio->os_timer, vaddr, size));
+//			return(soc_mmio_os_timer_read(mmio->os_timer, vaddr, size));
 //			break;
 //		case	CSX_MMIO_TIMER(2):
-//			return(csx_mmio_timer_read(mmio->timer[(vaddr >> 8) & 0x03], vaddr, size));
+//			return(soc_mmio_timer_read(mmio->timer[(vaddr >> 8) & 0x03], vaddr, size));
 //			break;
 //		case	CSX_MMIO_WATCHDOG_BASE:
 //		case	CSX_MMIO_TIMER_WDT_BASE:
-//			return(csx_mmio_watchdog_read(mmio->wdt, vaddr, size));
+//			return(soc_mmio_watchdog_read(mmio->wdt, vaddr, size));
 //			break;
 		/* **** */
 	}
 
 	const uint16_t page = ((vaddr - CSX_MMIO_BASE) >> 8) & 0x3ff;
-	const csx_mmio_read_fn fn = mmio->read[page];
+	const soc_mmio_read_fn fn = mmio->read[page];
 	if(fn)
 		return(fn(mmio->data[page], vaddr, size));
 
-	ea_trace_p eat = csx_mmio_trace(mmio, trace_list, vaddr);
+	ea_trace_p eat = soc_mmio_trace(mmio, trace_list, vaddr);
 	if(eat)
 	{
 		uint8_t offset = vaddr & 0xff;
 		switch(module)
 		{
 //			case	CSX_MMIO_UPLD_BASE:
-//				return(csx_data_read(&mmio->upld[offset], size));
+//				return(soc_data_read(&mmio->upld[offset], size));
 //				break;
 		}
 		
 		switch(vaddr)
 		{
 			case	USB_CLNT_SYSCON1:
-				return(csx_data_read(&mmio->usb_clnt[offset], size));
+				return(soc_data_read(&mmio->usb_clnt[offset], size));
 				break;
 		}
 	}
@@ -185,7 +185,7 @@ uint32_t csx_mmio_read(csx_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	return(0);
 }
 
-void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
+void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
 	uint32_t module = vaddr & mlBF(31, 8);
 
@@ -193,61 +193,61 @@ void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 	{
 //		case	CSX_MMIO_CFG_BASE + 0x000:
 //		case	CSX_MMIO_CFG_BASE + 0x100:
-//			return(csx_mmio_cfg_write(mmio->cfg, vaddr, value, size));
+//			return(soc_mmio_cfg_write(mmio->cfg, vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_DPLL_BASE:
-//			return(csx_mmio_dpll_write(mmio->dpll, vaddr, value, size));
+//			return(soc_mmio_dpll_write(mmio->dpll, vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_MPU_BASE:
-//			return(csx_mmio_mpu_write(mmio->mpu, vaddr, value, size));
+//			return(soc_mmio_mpu_write(mmio->mpu, vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO1_BASE:
-//			return(csx_mmio_mpu_gpio_write(mmio->mpu_gpio[0], vaddr, value, size));
+//			return(soc_mmio_mpu_gpio_write(mmio->mpu_gpio[0], vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO2_BASE:
-//			return(csx_mmio_mpu_gpio_write(mmio->mpu_gpio[1], vaddr, value, size));
+//			return(soc_mmio_mpu_gpio_write(mmio->mpu_gpio[1], vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO3_BASE:
-//			return(csx_mmio_mpu_gpio_write(mmio->mpu_gpio[2], vaddr, value, size));
+//			return(soc_mmio_mpu_gpio_write(mmio->mpu_gpio[2], vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_MPU_GPIO4_BASE:
-//			return(csx_mmio_mpu_gpio_write(mmio->mpu_gpio[3], vaddr, value, size));
+//			return(soc_mmio_mpu_gpio_write(mmio->mpu_gpio[3], vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_OCP_BASE:
-//			return(csx_mmio_ocp_write(mmio->ocp, vaddr, value, size));
+//			return(soc_mmio_ocp_write(mmio->ocp, vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_OS_TIMER_BASE:
-//			return(csx_mmio_os_timer_write(mmio->os_timer, vaddr, value, size));
+//			return(soc_mmio_os_timer_write(mmio->os_timer, vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_TIMER(2):
-//			return(csx_mmio_timer_write(mmio->timer[(vaddr >> 8) & 0x03], vaddr, value, size));
+//			return(soc_mmio_timer_write(mmio->timer[(vaddr >> 8) & 0x03], vaddr, value, size));
 //			break;
 //		case	CSX_MMIO_WATCHDOG_BASE:
 //		case	CSX_MMIO_TIMER_WDT_BASE:
-//			return(csx_mmio_watchdog_write(mmio->wdt, vaddr, value, size));
+//			return(soc_mmio_watchdog_write(mmio->wdt, vaddr, value, size));
 //			break;
 	}
 
 	const uint16_t page = ((vaddr - CSX_MMIO_BASE) >> 8) & 0x3ff;
-	const csx_mmio_write_fn fn = mmio->write[page];
+	const soc_mmio_write_fn fn = mmio->write[page];
 	if(fn)
 		return(fn(mmio->data[page], vaddr, value, size));
 
-	ea_trace_p eat = csx_mmio_trace(mmio, trace_list, vaddr);
+	ea_trace_p eat = soc_mmio_trace(mmio, trace_list, vaddr);
 	if(eat)
 	{
 		uint8_t offset = vaddr & 0xff;
 		switch(module)
 		{
 //			case	CSX_MMIO_UPLD_BASE:
-//				return(csx_data_write(&mmio->upld[offset], value, size));
+//				return(soc_data_write(&mmio->upld[offset], value, size));
 //				break;
 		}
 		
 		switch(vaddr)
 		{
 			case	USB_CLNT_SYSCON1:
-				return(csx_data_write(&mmio->usb_clnt[offset], value, size));
+				return(soc_data_write(&mmio->usb_clnt[offset], value, size));
 				break;
 		}
 	}
@@ -257,24 +257,24 @@ void csx_mmio_write(csx_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 	return;
 }
 
-void csx_mmio_reset(csx_mmio_p mmio)
+void soc_mmio_reset(soc_mmio_p mmio)
 {
 	LOG();
-//	csx_mmio_cfg_reset(mmio->cfg);
-//	csx_mmio_dpll_reset(mmio->dpll);
-//	csx_mmio_mpu_reset(mmio->mpu);
-//	csx_mmio_mpu_gpio_reset(mmio->mpu_gpio[0]);
-//	csx_mmio_mpu_gpio_reset(mmio->mpu_gpio[1]);
-//	csx_mmio_mpu_gpio_reset(mmio->mpu_gpio[2]);
-//	csx_mmio_mpu_gpio_reset(mmio->mpu_gpio[3]);
-//	csx_mmio_ocp_reset(mmio->ocp);
-//	csx_mmio_os_timer_reset(mmio->os_timer);
-//	csx_mmio_timer_reset(mmio->timer[0]);
-//	csx_mmio_timer_reset(mmio->timer[1]);
-//	csx_mmio_timer_reset(mmio->timer[2]);
-//	csx_mmio_watchdog_reset(mmio->wdt);
+//	soc_mmio_cfg_reset(mmio->cfg);
+//	soc_mmio_dpll_reset(mmio->dpll);
+//	soc_mmio_mpu_reset(mmio->mpu);
+//	soc_mmio_mpu_gpio_reset(mmio->mpu_gpio[0]);
+//	soc_mmio_mpu_gpio_reset(mmio->mpu_gpio[1]);
+//	soc_mmio_mpu_gpio_reset(mmio->mpu_gpio[2]);
+//	soc_mmio_mpu_gpio_reset(mmio->mpu_gpio[3]);
+//	soc_mmio_ocp_reset(mmio->ocp);
+//	soc_mmio_os_timer_reset(mmio->os_timer);
+//	soc_mmio_timer_reset(mmio->timer[0]);
+//	soc_mmio_timer_reset(mmio->timer[1]);
+//	soc_mmio_timer_reset(mmio->timer[2]);
+//	soc_mmio_watchdog_reset(mmio->wdt);
 
-	csx_data_write(&mmio->upld[0x08], 0x00008000, sizeof(uint32_t));
+	soc_data_write(&mmio->upld[0x08], 0x00008000, sizeof(uint32_t));
 
 	for(int i = 0; i < 64; i++)
 	{
@@ -289,10 +289,10 @@ void csx_mmio_reset(csx_mmio_p mmio)
 	}
 }
 
-uint32_t csx_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl)
+uint32_t soc_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl)
 { return(0); }
 
-void csx_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
+void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
 {
 	for(int i = 0; i < 256; i++)
 		data[i] = 0;
@@ -310,15 +310,15 @@ void csx_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
 		if(value)
 		{
 			uint32_t addr = tle->address;
-			csx_data_write(&data[addr & 0xff], value, tle->size);
+			soc_data_write(&data[addr & 0xff], value, tle->size);
 		}
 	}
 }
 
-void csx_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl)
+void soc_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl)
 {}
 
-void csx_mmio_peripheral(csx_mmio_p mmio, csx_mmio_peripheral_p p, void* data)
+void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* data)
 {
 	const uint16_t page = ((p->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
 
@@ -343,14 +343,14 @@ void csx_mmio_peripheral(csx_mmio_p mmio, csx_mmio_peripheral_p p, void* data)
 		p->base, page, (uint32_t)data, (uint32_t)p->reset);
 }
 
-int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
+int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 {
 	LOG();
 	
 	int err;
-	csx_mmio_p mmio;
+	soc_mmio_p mmio;
 	
-	ERR_NULL(mmio = malloc(sizeof(csx_mmio_t)));
+	ERR_NULL(mmio = malloc(sizeof(soc_mmio_t)));
 	if(!mmio)
 		return(-1);
 
@@ -370,21 +370,21 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 		mmio->reset[i].fn = 0;
 	}
 
-	ERR(err = csx_mmio_cfg_init(csx, mmio, &mmio->cfg));
-	ERR(err = csx_mmio_dpll_init(csx, mmio, &mmio->dpll));
-	ERR(err = csx_mmio_mpu_init(csx, mmio, &mmio->mpu));
-	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[0]));
-//	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[1]));
-//	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[2]));
-//	ERR(err = csx_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[3]));
-	ERR(err = csx_mmio_mpu_l1_ihr_init(csx, mmio, &mmio->mpu_l1_ihr));
-	ERR(err = csx_mmio_ocp_init(csx, mmio, &mmio->ocp));
-	ERR(err = csx_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
-	ERR(err = csx_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
-	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[0]));
-//	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[1]));
-//	ERR(err = csx_mmio_timer_init(csx, mmio, &mmio->timer[2]));
-	ERR(err = csx_mmio_watchdog_init(csx, mmio, &mmio->wdt));
+	ERR(err = soc_mmio_cfg_init(csx, mmio, &mmio->cfg));
+	ERR(err = soc_mmio_dpll_init(csx, mmio, &mmio->dpll));
+	ERR(err = soc_mmio_mpu_init(csx, mmio, &mmio->mpu));
+	ERR(err = soc_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[0]));
+//	ERR(err = soc_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[1]));
+//	ERR(err = soc_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[2]));
+//	ERR(err = soc_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio[3]));
+	ERR(err = soc_mmio_mpu_l1_ihr_init(csx, mmio, &mmio->mpu_l1_ihr));
+	ERR(err = soc_mmio_ocp_init(csx, mmio, &mmio->ocp));
+	ERR(err = soc_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
+	ERR(err = soc_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
+	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer[0]));
+//	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer[1]));
+//	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer[2]));
+	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
 	return(err);
 }

@@ -1,5 +1,5 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 #include "csx_test.h"
 
 #include "csx_test_arm.h"
@@ -10,13 +10,13 @@
 uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
 {
 	csx_p csx = t->csx;
-	csx_core_p core = csx->core;
+	soc_core_p core = csx->core;
 
 	if(0) LOG("start_pc = 0x%08x thumb = %u", start_pc, !!(CPSR & CSX_PSR_T));
 	
 	csx->state = CSX_STATE_RUN;
 	
-	csx_reg_set_pcx(core, start_pc);
+	soc_core_reg_set_pcx(core, start_pc);
 	for(; count ; count--)
 	{
 		core->step(core);
@@ -49,12 +49,12 @@ int csx_soc_init(csx_p csx)
 	csx->trace.head = 0;
 	csx->trace.tail = 0;
 	
-	ERR(err = csx_core_init(csx, &csx->core));
-	ERR(err = csx_coprocessor_init(csx));
-	ERR(err = csx_mmu_init(csx, &csx->mmu));
-	ERR(err = csx_mmio_init(csx, &csx->mmio));
+	ERR(err = soc_core_init(csx, &csx->core));
+	ERR(err = soc_coprocessor_init(csx));
+	ERR(err = soc_mmu_init(csx, &csx->mmu));
+	ERR(err = soc_mmio_init(csx, &csx->mmio));
 	
-	csx_mmio_reset(csx->mmio);
+	soc_mmio_reset(csx->mmio);
 	
 	return(err);
 }

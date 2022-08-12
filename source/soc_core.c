@@ -1,10 +1,10 @@
 #include "csx.h"
-#include "csx_core.h"
-#include "csx_trace.h"
+#include "soc_core.h"
+#include "soc_trace.h"
 
-#include "csx_core_arm.h"
+#include "soc_core_arm.h"
 
-void csx_core_reset(csx_core_p core)
+void soc_core_reset(soc_core_p core)
 {
 	_TRACE_(core, ENTER);
 	
@@ -20,28 +20,28 @@ void csx_core_reset(csx_core_p core)
 
 	reset_pc = 0x10020000;
 
-	csx_reg_set_pcx(core, reset_pc);
+	soc_core_reg_set_pcx(core, reset_pc);
 
-	csx_trace_psr(core, __FUNCTION__, CPSR);
+	soc_trace_psr(core, __FUNCTION__, CPSR);
 
-	csx_psr_mode_switch(core, CPSR);
+	soc_core_psr_mode_switch(core, CPSR);
 	
 	_TRACE_(core, EXIT);
 }
 
-int csx_core_init(csx_p csx, csx_core_h h2core)
+int soc_core_init(csx_p csx, soc_core_h h2core)
 {
 	int err = 0;
 
-	csx_core_p core;
-	ERR_NULL(core = malloc(sizeof(csx_core_t)));
+	soc_core_p core;
+	ERR_NULL(core = malloc(sizeof(soc_core_t)));
 
 	_TRACE_(core, ENTER);
 
 	core->csx = csx;
 	*h2core = core;
 
-	csx_core_reset(core);
+	soc_core_reset(core);
 
 	_TRACE_(core, EXIT);
 	return(err);

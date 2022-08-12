@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_core.h"
-#include "csx_core_arm_decode.h"
-#include "csx_core_reg_trace.h"
+#include "soc_core.h"
+#include "soc_core_arm_decode.h"
+#include "soc_core_reg_trace.h"
 
-void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi)
+void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 
@@ -27,7 +27,7 @@ void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi)
 	{
 		dst += snprintf(dst, end - dst, ", %s", _arm_reg_name(rR(M)));
 
-		const char* sos = csx_core_arm_decode_shifter_op_string(dpi->shift_op);
+		const char* sos = soc_core_arm_decode_shifter_op_string(dpi->shift_op);
 
 		if(dpi->bit.x4)
 			dst += snprintf(dst, end - dst, ", %s(%s)", sos, _arm_reg_name(rR(S)));
@@ -40,7 +40,7 @@ void csx_trace_inst_dpi(csx_core_p core, csx_dpi_p dpi)
 	CORE_TRACE("%s) %s", tout, dpi->op_string);
 }
 
-void csx_trace_inst_ldst(csx_core_p core, csx_ldst_p ls)
+void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 {
 	char	tout[256], *dst = tout, *end = &tout[255];
 

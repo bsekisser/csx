@@ -34,15 +34,15 @@ extern const int _check_pedantic_pc;
 
 typedef struct csx_t* csx_p;
 
-#include "csx_core.h"
-#include "csx_core_coprocessor.h"
+#include "soc_core.h"
+#include "soc_core_coprocessor.h"
 #include "csx_mmio.h"
 #include "csx_mmu.h"
 #include "csx_state.h"
 
 typedef struct csx_t {
-	csx_core_p			core;
-	csx_coprocessor_p	cp;
+	soc_core_p			core;
+	soc_coprocessor_p	cp;
 	csx_mmu_p			mmu;
 	csx_mmio_p			mmio;
 	

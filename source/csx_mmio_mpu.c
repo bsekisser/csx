@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_mpu.h"
+#include "soc_mmio_mpu.h"
 
 #define _MPU(_x)			(CSX_MMIO_MPU_BASE + (_x))
 
@@ -14,19 +14,19 @@
 	MMIO(0xfffe, 0xce14, 0x0000, 0x0000, 32, MEM_RW, ARM_RSTCT2) \
 	MMIO(0xfffe, 0xce18, 0x0000, 0x0038, 32, MEM_RW, ARM_SYSST)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
 #define ARM_CKCTL			_MPU(0x000)
 #define ARM_IDLECT(_x)		_MPU(((_x) & 0x03) << 2)
 #define ARM_RSTCT2			_MPU(0x014)
 #define ARM_SYSST			_MPU(0x018)
 
-static uint32_t csx_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_mpu_p mpu = data;
+	const soc_mmio_mpu_p mpu = data;
 	const csx_p csx = mpu->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint8_t offset = addr & _BM(8);
 
@@ -52,16 +52,16 @@ static uint32_t csx_mmio_mpu_read(void* data, uint32_t addr, uint8_t size)
 			break;
 	}
 	
-//	return(csx_data_read((uint8_t*)&value, size));
+//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_mpu_p mpu = data;
+	const soc_mmio_mpu_p mpu = data;
 	const csx_p csx = mpu->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint8_t offset = addr & _BM(8);
 	
@@ -126,9 +126,9 @@ static void csx_mmio_mpu_write(void* data, uint32_t addr, uint32_t value, uint8_
 	}
 }
 
-static void csx_mmio_mpu_reset(void* data)
+static void soc_mmio_mpu_reset(void* data)
 {
-	const csx_mmio_mpu_p mpu = data;
+	const soc_mmio_mpu_p mpu = data;
 
 	mpu->arm_ckctl		= 0x00003000;
 	mpu->arm_idlect[0]	= 0x00000400;
@@ -137,20 +137,20 @@ static void csx_mmio_mpu_reset(void* data)
 	mpu->arm_sysst		= 0x00000038;
 }
 
-static csx_mmio_peripheral_t mpu_peripheral = {
+static soc_mmio_peripheral_t mpu_peripheral = {
 	.base = CSX_MMIO_MPU_BASE,
 
-	.reset = csx_mmio_mpu_reset,
+	.reset = soc_mmio_mpu_reset,
 
-	.read = csx_mmio_mpu_read,
-	.write = csx_mmio_mpu_write,
+	.read = soc_mmio_mpu_read,
+	.write = soc_mmio_mpu_write,
 };
 
-int csx_mmio_mpu_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_h h2mpu)
+int soc_mmio_mpu_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_h h2mpu)
 {
-	csx_mmio_mpu_p mpu;
+	soc_mmio_mpu_p mpu;
 	
-	ERR_NULL(mpu = malloc(sizeof(csx_mmio_mpu_t)));
+	ERR_NULL(mpu = malloc(sizeof(soc_mmio_mpu_t)));
 	if(!mpu)
 		return(-1);
 
@@ -159,7 +159,7 @@ int csx_mmio_mpu_init(csx_p csx, csx_mmio_p mmio, csx_mmio_mpu_h h2mpu)
 	
 	*h2mpu = mpu;
 	
-	csx_mmio_peripheral(mmio, &mpu_peripheral, mpu);
+	soc_mmio_peripheral(mmio, &mpu_peripheral, mpu);
 	
 	return(0);
 }

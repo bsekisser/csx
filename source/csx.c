@@ -1,5 +1,5 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 
 const int _check_pedantic_pc = 0;
 
@@ -11,12 +11,12 @@ int csx_soc_init(csx_p csx)
 	csx->trace.head = 0;
 	csx->trace.tail = 0;
 	
-	ERR(err = csx_core_init(csx, &csx->core));
-	ERR(err = csx_coprocessor_init(csx));
-	ERR(err = csx_mmu_init(csx, &csx->mmu));
-	ERR(err = csx_mmio_init(csx, &csx->mmio));
+	ERR(err = soc_core_init(csx, &csx->core));
+	ERR(err = soc_coprocessor_init(csx));
+	ERR(err = soc_mmu_init(csx, &csx->mmu));
+	ERR(err = soc_mmio_init(csx, &csx->mmio));
 	
-	csx_mmio_reset(csx->mmio);
+	soc_mmio_reset(csx->mmio);
 	
 	return(err);
 }
@@ -55,10 +55,10 @@ int csx_soc_main(void)
 
 	ERR(err = csx_soc_init(csx));
 
-//	csx_reg_set(csx, rPC, 0x2b5);
-//	csx_reg_set(csx->core, rPC, CSX_SDRAM_BASE);
+//	soc_core_reg_set(csx, rPC, 0x2b5);
+//	soc_core_reg_set(csx->core, rPC, CSX_SDRAM_BASE);
 	
-	csx_core_p core = csx->core;
+	soc_core_p core = csx->core;
 
 	if(!err)
 	{
@@ -92,20 +92,20 @@ uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
 {
 	uint32_t data = 0;
 	
-	if(csx_mmu_read(csx->mmu, va, &data, size))
+	if(soc_mmu_read(csx->mmu, va, &data, size))
 		;
 	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
-		data = csx_mmio_read(csx->mmio, va, size);
+		data = soc_mmio_read(csx->mmio, va, size);
 	
 	return(data);
 }
 
 void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 {
-	if(csx_mmu_write(csx->mmu, va, data, size))
+	if(soc_mmu_write(csx->mmu, va, data, size))
 		;
 	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
-		csx_mmio_write(csx->mmio, va, data, size);
+		soc_mmio_write(csx->mmio, va, data, size);
 }
 
 int main(int argc, char **argv)

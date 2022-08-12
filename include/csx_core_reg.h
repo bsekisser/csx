@@ -14,14 +14,14 @@ enum {
 
 /* **** */
 
-uint32_t csx_reg_pc_fetch_step_arm(csx_core_p core);
-uint32_t csx_reg_pc_fetch_step_thumb(csx_core_p core);
+uint32_t soc_core_reg_pc_fetch_step_arm(soc_core_p core);
+uint32_t soc_core_reg_pc_fetch_step_thumb(soc_core_p core);
 
-uint32_t csx_reg_get(csx_core_p core, csx_reg_t r);
+uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r);
 
-void csx_reg_set(csx_core_p core, csx_reg_t r, uint32_t v);
-void csx_reg_set_pcx(csx_core_p core, uint32_t new_pc);
+void soc_core_reg_set(soc_core_p core, soc_core_reg_t r, uint32_t v);
+void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc);
 
-uint32_t csx_reg_usr(csx_core_p core, csx_reg_t r, uint32_t* v);
+uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v);
 
-void csx_psr_mode_switch(csx_core_p core, uint32_t v);
+void soc_core_psr_mode_switch(soc_core_p core, uint32_t v);

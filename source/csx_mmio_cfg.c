@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_cfg.h"
+#include "soc_mmio_cfg.h"
 
 #define _CFG(_x)		(CSX_MMIO_CFG_BASE + (_x & _BM(12)))
 
@@ -41,7 +41,7 @@
 	MMIO(0xfffe, 0x1140, 0x0000, 0x007f, 32, MEM_RW, RESET_CTL) \
 	MMIO(0xfffe, 0x1160, 0x0000, 0x0000, 32, MEM_TRACE_RW, x0xfffe_0x1160)
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
 #define COMP_MODE_CTRL_0	_CFG(0x000c)
 #define FUNC_MUX_CTRL_3		_CFG(0x0010)
@@ -53,25 +53,25 @@
 #define RESET_CTL			_CFG(0x0140)
 #define esac_oxfffe1160		_CFG(0x0160)
 
-static uint32_t cfg_data_rw(csx_mmio_cfg_p cfg, uint32_t addr, uint32_t* value, uint32_t size)
+static uint32_t cfg_data_rw(soc_mmio_cfg_p cfg, uint32_t addr, uint32_t* value, uint32_t size)
 {
 	const uint32_t offset = addr - CSX_MMIO_CFG_BASE;
 	uint8_t* ptr = &cfg->data[offset & 0x1ff];
 	
 	if(value)
-		csx_data_write(ptr, *value, size);
+		soc_data_write(ptr, *value, size);
 	else
-		return(csx_data_read(ptr, size));
+		return(soc_data_read(ptr, size));
 	
 	return(0);
 }
 
-static uint32_t csx_mmio_cfg_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_cfg_read(void* data, uint32_t addr, uint8_t size)
 {
-	csx_mmio_cfg_p cfg = data;
+	soc_mmio_cfg_p cfg = data;
 	csx_p csx = cfg->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint32_t value = cfg_data_rw(cfg, addr, 0, size);
 	
@@ -97,16 +97,16 @@ static uint32_t csx_mmio_cfg_read(void* data, uint32_t addr, uint8_t size)
 			break;
 	}
 	
-//	return(csx_data_read((uint8_t*)&value, size));
+//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-static void csx_mmio_cfg_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_cfg_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	csx_mmio_cfg_p cfg = data;
+	soc_mmio_cfg_p cfg = data;
 	csx_p csx = cfg->csx;
 
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 	
 	switch(addr)
 	{
@@ -133,9 +133,9 @@ static void csx_mmio_cfg_write(void* data, uint32_t addr, uint32_t value, uint8_
 	cfg_data_rw(cfg, addr, &value, size);
 }
 
-static void csx_mmio_cfg_reset(void* data)
+static void soc_mmio_cfg_reset(void* data)
 {
-	csx_mmio_cfg_p cfg = data;
+	soc_mmio_cfg_p cfg = data;
 
 	for(int i = 0; i < 0x200; i++)
 		cfg->data[i] = 0;
@@ -152,31 +152,31 @@ static void csx_mmio_cfg_reset(void* data)
 	}while(trace_list[i].address);
 }
 
-static csx_mmio_peripheral_t cfg_peripheral[2] = {
+static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_CFG_BASE,
 
-		.reset = csx_mmio_cfg_reset,
+		.reset = soc_mmio_cfg_reset,
 		
-		.read = csx_mmio_cfg_read,
-		.write = csx_mmio_cfg_write,
+		.read = soc_mmio_cfg_read,
+		.write = soc_mmio_cfg_write,
 	},
 
 	[1] = {
 		.base = CSX_MMIO_CFG_BASE + 0x100,
 
-	//	.reset = csx_mmio_cfg_reset,
+	//	.reset = soc_mmio_cfg_reset,
 		
-		.read = csx_mmio_cfg_read,
-		.write = csx_mmio_cfg_write,
+		.read = soc_mmio_cfg_read,
+		.write = soc_mmio_cfg_write,
 	}
 };
 
-int csx_mmio_cfg_init(csx_p csx, csx_mmio_p mmio, csx_mmio_cfg_h h2cfg)
+int soc_mmio_cfg_init(csx_p csx, soc_mmio_p mmio, soc_mmio_cfg_h h2cfg)
 {
-	csx_mmio_cfg_p cfg;
+	soc_mmio_cfg_p cfg;
 	
-	ERR_NULL(cfg = malloc(sizeof(csx_mmio_cfg_t)));
+	ERR_NULL(cfg = malloc(sizeof(soc_mmio_cfg_t)));
 	if(!cfg)
 		return(-1);
 
@@ -185,8 +185,8 @@ int csx_mmio_cfg_init(csx_p csx, csx_mmio_p mmio, csx_mmio_cfg_h h2cfg)
 	
 	*h2cfg = cfg;
 	
-	csx_mmio_peripheral(mmio, &cfg_peripheral[0], (void*)cfg);
-	csx_mmio_peripheral(mmio, &cfg_peripheral[1], (void*)cfg);
+	soc_mmio_peripheral(mmio, &cfg_peripheral[0], (void*)cfg);
+	soc_mmio_peripheral(mmio, &cfg_peripheral[1], (void*)cfg);
 	
 	return(0);
 }

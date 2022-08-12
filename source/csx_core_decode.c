@@ -1,11 +1,11 @@
 #include "csx.h"
-#include "csx_core.h"
-#include "csx_core_arm_decode.h"
-#include "csx_core_utility.h"
+#include "soc_core.h"
+#include "soc_core_arm_decode.h"
+#include "soc_core_utility.h"
 
 /* **** */
 
-void csx_core_arm_decode_coproc(csx_core_p core, csx_coproc_data_p acp)
+void soc_core_arm_decode_coproc(soc_core_p core, soc_coprocessor_p acp)
 {
 	if(0xe == mlBFEXT(IR, 27, 24))
 	{
@@ -13,14 +13,14 @@ void csx_core_arm_decode_coproc(csx_core_p core, csx_coproc_data_p acp)
 		if(acp->bit.x4)
 		{
 			acp->bit.l = BEXT(IR, 20);
-			csx_core_arm_decode_rn_rd(core, 0, !acp->bit.l);
+			soc_core_arm_decode_rn_rd(core, 0, !acp->bit.l);
 		}
 		else
 		{
 			LOG_ACTION(core->csx->state |= CSX_STATE_HALT);
 		}
 
-		csx_core_arm_decode_rm(core, 0);
+		soc_core_arm_decode_rm(core, 0);
 		
 		acp->opcode1 = mlBFEXT(IR, 23, 21);
 		acp->cp_num = mlBFEXT(IR, 11, 8);
@@ -28,7 +28,7 @@ void csx_core_arm_decode_coproc(csx_core_p core, csx_coproc_data_p acp)
 	}
 }
 
-void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls)
+void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 {
 	ls->ldstx = mlBFEXT(IR, 27, 25);
 
@@ -38,7 +38,7 @@ void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls)
 	ls->bit.w = BEXT(IR, 21);
 	ls->bit.l = BEXT(IR, 20);
 
-	csx_core_arm_decode_rn(core, 1);
+	soc_core_arm_decode_rn(core, 1);
 
 	ls->flags.s = 0;
 	switch(ls->ldstx) /* decode size */
@@ -81,7 +81,7 @@ void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls)
 	}
 
 	if(!(ls->ldstx & 0x04))
-		csx_core_arm_decode_rd(core, 0);
+		soc_core_arm_decode_rd(core, 0);
 
 	ls->shift = 0;
 	ls->shift_imm = 0;
@@ -101,7 +101,7 @@ void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls)
 			if((0 != ls->shift) || (0 != ls->shift_imm))
 				LOG_ACTION(exit(1));
 			
-			csx_core_arm_decode_rm(core, 1);
+			soc_core_arm_decode_rm(core, 1);
 			break;
 		case	0x04:
 			vR(M) = mlBFEXT(IR, 15, 0);
@@ -111,7 +111,7 @@ void csx_core_arm_decode_ldst(csx_core_p core, csx_ldst_p ls)
 	if(0) LOG("ldstx = 0x%03x, rm = 0x%03x, rm_v = 0x%08x", ls->ldstx, rR(M), vR(M));
 }
 
-static void _csx_core_arm_decode_dpi(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
 	dpi->shift_op = CSX_SHIFTER_OP_ROR;
 
@@ -124,27 +124,27 @@ static void _csx_core_arm_decode_dpi(csx_core_p core, csx_dpi_p dpi)
 		dpi->out.c = BEXT(dpi->out.v, 31);
 }
 
-static void _csx_core_arm_decode_dpis(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
 {
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
 }
 
-static void _csx_core_arm_decode_dprs(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 {
 	dpi->bit.x7 = BEXT(IR, 7);
 	if(dpi->bit.x7)
 	{
 		TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
 
-		csx_core_disasm_arm(core, IP, IR);
+		soc_core_disasm_arm(core, IP, IR);
 		LOG_ACTION(exit(1));
 	}
 
 	_setup_rR_vR(S, mlBFEXT(IR, 11, 8),
-		csx_reg_get(core, rR(S)) & _BM(7));
+		soc_core_reg_get(core, rR(S)) & _BM(7));
 }
 
-static void _csx_core_arm_shifter_operation_asr(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p dpi)
 {
 	uint8_t asr_v = vR(S);
 
@@ -159,7 +159,7 @@ static void _csx_core_arm_shifter_operation_asr(csx_core_p core, csx_dpi_p dpi)
 		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
 }
 
-static void _csx_core_arm_shifter_operation_lsl(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
 {
 	dpi->out.v = vR(M) << vR(S);
 	if(vR(S))
@@ -168,7 +168,7 @@ static void _csx_core_arm_shifter_operation_lsl(csx_core_p core, csx_dpi_p dpi)
 		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
 }
 
-static void _csx_core_arm_shifter_operation_lsr(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p dpi)
 {
 	uint8_t lsr_v = vR(S);
 
@@ -183,7 +183,7 @@ static void _csx_core_arm_shifter_operation_lsr(csx_core_p core, csx_dpi_p dpi)
 		dpi->out.c = BEXT(CPSR, CSX_PSR_BIT_C);
 }
 
-static void _csx_core_arm_shifter_operation_ror(csx_core_p core, csx_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)
 {
 	if(!dpi->bit.i && !dpi->bit.x4 && (0 == vR(S)))
 	{
@@ -212,7 +212,7 @@ static void _csx_core_arm_shifter_operation_ror(csx_core_p core, csx_dpi_p dpi)
 	}
 }
 
-void csx_core_arm_decode_shifter_operand(csx_core_p core, csx_dpi_p dpi)
+void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 {
 	dpi->bit.i = BEXT(IR, 25);
 	dpi->operation = mlBFEXT(IR, 24, 21);
@@ -223,33 +223,33 @@ void csx_core_arm_decode_shifter_operand(csx_core_p core, csx_dpi_p dpi)
 	dpi->wb = 1;
 
 	if(dpi->bit.i)
-		_csx_core_arm_decode_dpi(core, dpi);
+		_soc_core_arm_decode_dpi(core, dpi);
 	else
 	{
 		dpi->bit.x4 = BEXT(IR, 4); /* rs? */
 		dpi->shift_op = mlBFEXT(IR, 6, 5);
 
 		if(dpi->bit.x4)
-			_csx_core_arm_decode_dprs(core, dpi);
+			_soc_core_arm_decode_dprs(core, dpi);
 		else
-			_csx_core_arm_decode_dpis(core, dpi);
+			_soc_core_arm_decode_dpis(core, dpi);
 
-		csx_core_arm_decode_rm(core, 1);
+		soc_core_arm_decode_rm(core, 1);
 	}
 
 	switch(dpi->shift_op)
 	{
 		case	CSX_SHIFTER_OP_ASR:
-			_csx_core_arm_shifter_operation_asr(core, dpi);
+			_soc_core_arm_shifter_operation_asr(core, dpi);
 			break;
 		case	CSX_SHIFTER_OP_LSL:
-			_csx_core_arm_shifter_operation_lsl(core, dpi);
+			_soc_core_arm_shifter_operation_lsl(core, dpi);
 			break;
 		case	CSX_SHIFTER_OP_LSR:
-			_csx_core_arm_shifter_operation_lsr(core, dpi);
+			_soc_core_arm_shifter_operation_lsr(core, dpi);
 			break;
 		case	CSX_SHIFTER_OP_ROR:
-			_csx_core_arm_shifter_operation_ror(core, dpi);
+			_soc_core_arm_shifter_operation_ror(core, dpi);
 			break;
 		default:
 			TRACE("**** i = %u, s = %u, x7 = %u, x4 = %u",
@@ -267,7 +267,7 @@ static const char* shifter_op_string[] = {
 	"LSL", "LSR", "ASR", "ROR"
 };
 
-const char* csx_core_arm_decode_shifter_op_string(const uint8_t shopc)
+const char* soc_core_arm_decode_shifter_op_string(const uint8_t shopc)
 {
 	return(shifter_op_string[shopc & 0x03]);
 }

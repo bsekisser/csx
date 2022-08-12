@@ -1,5 +1,5 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 
 /* **** */
 
@@ -32,7 +32,7 @@ static const char* inst_ccs[16] = {
 	"HI", "LS", "GE", "LT", "GT", "LE", "AL", "XX"
 };
 
-uint8_t csx_core_check_cc(csx_core_p core, uint8_t cc)
+uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 {
 	const uint32_t psr = CPSR;
 
@@ -100,7 +100,7 @@ uint8_t csx_core_check_cc(csx_core_p core, uint8_t cc)
 	return(!!res);
 }
 
-void csx_core_flags_nz(csx_core_p core, uint32_t rd_v)
+void soc_core_flags_nz(soc_core_p core, uint32_t rd_v)
 {
 	CPSR &= ~CSX_PSR_NZ;
 	
@@ -124,7 +124,7 @@ void csx_core_flags_nz(csx_core_p core, uint32_t rd_v)
  * 
  */
 
-static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
+static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
 	const uint32_t xvec = (s1_v ^ s2_v);
 	const uint32_t ovec = (s1_v ^ rd_v) & ~xvec;
@@ -143,21 +143,21 @@ static void _csx_core_flags_nzcv(csx_core_p core, uint32_t rd_v, uint32_t s1_v, 
 }
 
 #if 0
-static uint32_t _csx_core_flags_nzcv_add(csx_core_p core, uint32_t s1_v, uint32_t s2_v, int carry_in)
+static uint32_t _soc_core_flags_nzcv_add(soc_core_p core, uint32_t s1_v, uint32_t s2_v, int carry_in)
 {
 //	uint32_t res = s1_v + s2_v + carry_in;
-	_csx_core_flags_nzcv(core, res, s1_v, s2_v);
+	_soc_core_flags_nzcv(core, res, s1_v, s2_v);
 
 //	return(res);
 }
 #endif
 
-void csx_core_flags_nzcv_add(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
+void soc_core_flags_nzcv_add(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
-	_csx_core_flags_nzcv(core, rd_v, s1_v, s2_v);
+	_soc_core_flags_nzcv(core, rd_v, s1_v, s2_v);
 }
 
-void csx_core_flags_nzcv_sub(csx_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
+void soc_core_flags_nzcv_sub(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
-	_csx_core_flags_nzcv(core, rd_v, s1_v, ~s2_v + 1);
+	_soc_core_flags_nzcv(core, rd_v, s1_v, ~s2_v + 1);
 }

@@ -1,9 +1,9 @@
 #include "csx.h"
-#include "csx_mmio.h"
+#include "soc_mmio.h"
 
-#include "csx_mmio_omap.h"
+#include "soc_mmio_omap.h"
 
-#include "csx_mmio_gp_timer.h"
+#include "soc_mmio_gp_timer.h"
 
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x1c10, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TIOCP_CFG) \
@@ -52,14 +52,14 @@ const char unit_map[16] = { 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0 };
 #define GPTMR_TMAR			0x38
 #define GPTMR_TSICR			0x40
 
-#include "csx_mmio_trace.h"
+#include "soc_mmio_trace.h"
 
-static uint32_t csx_mmio_gp_timer_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_gp_timer_read(void* data, uint32_t addr, uint8_t size)
 {
-	const csx_mmio_gp_timer_p gpt = data;
+	const soc_mmio_gp_timer_p gpt = data;
 	const csx_p csx = gpt->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	uint16_t unit = unit_map[((addr - CSX_MMIO_GP_TIMER_BASE) >> 11) & 0xf];
 	uint8_t offset = addr & 0xff;
@@ -79,12 +79,12 @@ static uint32_t csx_mmio_gp_timer_read(void* data, uint32_t addr, uint8_t size)
 	return(value);
 }
 
-static void csx_mmio_gp_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_gp_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const csx_mmio_gp_timer_p gpt = data;
+	const soc_mmio_gp_timer_p gpt = data;
 	const csx_p csx = gpt->csx;
 	
-	csx_mmio_trace(csx->mmio, trace_list, addr);
+	soc_mmio_trace(csx->mmio, trace_list, addr);
 
 	
 	uint16_t unit = unit_map[((addr - CSX_MMIO_GP_TIMER_BASE) >> 11) & 0xf];
@@ -123,9 +123,9 @@ static void csx_mmio_gp_timer_write(void* data, uint32_t addr, uint32_t value, u
 	}
 }
 
-static void csx_mmio_gp_timer_reset(void* data)
+static void soc_mmio_gp_timer_reset(void* data)
 {
-	const csx_mmio_gp_timer_p gpt = data;
+	const soc_mmio_gp_timer_p gpt = data;
 
 	for(int i = 0; i < 7; i++)
 	{
@@ -135,71 +135,71 @@ static void csx_mmio_gp_timer_reset(void* data)
 	}
 }
 
-static csx_mmio_peripheral_t gp_timer_peripheral[7] = {
+static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	[0] = {
 		.base = CSX_MMIO_GP_TIMER(0),
 
-		.reset = csx_mmio_gp_timer_reset,
+		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[1] = {
 		.base = CSX_MMIO_GP_TIMER(1),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[2] = {
 		.base = CSX_MMIO_GP_TIMER(2),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[3] = {
 		.base = CSX_MMIO_GP_TIMER(3),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[4] = {
 		.base = CSX_MMIO_GP_TIMER(4),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[5] = {
 		.base = CSX_MMIO_GP_TIMER(5),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	},
 	[6] = {
 		.base = CSX_MMIO_GP_TIMER(6),
 
-//		.reset = csx_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = csx_mmio_gp_timer_read,
-		.write = csx_mmio_gp_timer_write
+		.read = soc_mmio_gp_timer_read,
+		.write = soc_mmio_gp_timer_write
 	}
 };
 
 
-int csx_mmio_gp_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_gp_timer_h h2gpt)
+int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt)
 {
-	csx_mmio_gp_timer_p gpt;
+	soc_mmio_gp_timer_p gpt;
 	
-	ERR_NULL(gpt = malloc(sizeof(csx_mmio_gp_timer_t)));
+	ERR_NULL(gpt = malloc(sizeof(soc_mmio_gp_timer_t)));
 	if(!gpt)
 		return(-1);
 
@@ -210,7 +210,7 @@ int csx_mmio_gp_timer_init(csx_p csx, csx_mmio_p mmio, csx_mmio_gp_timer_h h2gpt
 	
 	for(int i = 0; i < 7; i++)
 	{
-		csx_mmio_peripheral(mmio, &gp_timer_peripheral[i], gpt);
+		soc_mmio_peripheral(mmio, &gp_timer_peripheral[i], gpt);
 	}
 
 	return(0);

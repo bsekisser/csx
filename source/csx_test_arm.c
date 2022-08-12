@@ -1,5 +1,5 @@
 #include "csx.h"
-#include "csx_core.h"
+#include "soc_core.h"
 #include "csx_test.h"
 #include "csx_test_utility.h"
 
@@ -15,7 +15,7 @@ static void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 
 static void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 	
 	assert(n == BEXT(CPSR, CSX_PSR_BIT_N));
 	assert(z == BEXT(CPSR, CSX_PSR_BIT_Z));
@@ -129,11 +129,11 @@ static uint32_t csx_test_arm_sub_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 
 static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 	uint32_t res = 0;
 
-	csx_reg_set(core, 0, ir0);
-	csx_reg_set(core, 1, ir1);
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_adds_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
@@ -141,7 +141,7 @@ static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 	*psr = CPSR;
 
-	res = csx_reg_get(core, 0);
+	res = soc_core_reg_get(core, 0);
 	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
 	
 	TRACE_PSR(CPSR);
@@ -151,11 +151,11 @@ static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 	uint32_t res = 0;
 
-	csx_reg_set(core, 0, ir0);
-	csx_reg_set(core, 1, ir1);
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_subs_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
@@ -163,7 +163,7 @@ static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 	*psr = CPSR;
 
-	res = csx_reg_get(core, 0);
+	res = soc_core_reg_get(core, 0);
 	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
 	
 	TRACE_PSR(CPSR);
@@ -173,7 +173,7 @@ static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 static void csx_test_arm_add(csx_test_p t)
 {
-//	csx_core_p core = t->csx->core;
+//	soc_core_p core = t->csx->core;
 	t->start_pc = t->pc = 0x10000000;
 
 	uint32_t res, xres;
@@ -224,7 +224,7 @@ static void csx_test_arm_add(csx_test_p t)
 
 static void csx_test_arm_b(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 
 	uint32_t offset = eao(t, 3);
 	uint32_t new_pc = epc(t) + offset;
@@ -321,7 +321,7 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	}
 	
 	for(int i = 0; i < 4; i++) {
-		uint32_t rv = csx_reg_get(t->csx->core, rvs + i);
+		uint32_t rv = soc_core_reg_get(t->csx->core, rvs + i);
 		if(0) LOG("r[%02x] = 0x%08x", i, rv);
 		
 		assert(_test_value(tvs + i) == rv);
@@ -380,7 +380,7 @@ const uint32_t _ldstm_da = 0;
 
 static void csx_test_arm_ldmda(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 
 	ldstm_t ldstm;
 
@@ -420,7 +420,7 @@ const uint32_t _ldstm_db = _BV(24);
 
 static void csx_test_arm_ldmdb(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 
 	ldstm_t ldstm;
 
@@ -460,7 +460,7 @@ const uint32_t _ldstm_ia = _BV(23);
 
 static void csx_test_arm_ldmia(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 
 	ldstm_t ldstm;
 
@@ -500,7 +500,7 @@ const uint32_t _ldstm_ib = _BV(24) | _BV(23);
 
 static void csx_test_arm_ldmib(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 
 	ldstm_t ldstm;
 
@@ -548,22 +548,22 @@ static void csx_test_arm_ldstm(csx_test_p t)
 	
 static void csx_test_arm_mov(csx_test_p t)
 {
-	csx_core_p core = t->csx->core;
+	soc_core_p core = t->csx->core;
 	
 	t->start_pc = pc(t);
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0, 0));
 	t->start_pc = t->pc = csx_test_run(t, 1);
-	assert(0x00000000 == csx_reg_get(core, 0));
+	assert(0x00000000 == soc_core_reg_get(core, 0));
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 0));
 	t->start_pc = t->pc = csx_test_run(t, 1);
-	assert(0x00000040 == csx_reg_get(core, 0));
+	assert(0x00000040 == soc_core_reg_get(core, 0));
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 26));
 	t->start_pc = t->pc = csx_test_run(t, 1);
-//	assert(0x00001000 == csx_reg_get(core, 0));
-	assert(0x10000000 == csx_reg_get(core, 0));
+//	assert(0x00001000 == soc_core_reg_get(core, 0));
+	assert(0x10000000 == soc_core_reg_get(core, 0));
 }
 
 void csx_test_arm(csx_test_p t)

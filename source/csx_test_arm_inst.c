@@ -1,7 +1,7 @@
 #include "csx.h"
-#include "csx_core.h"
-#include "csx_core_arm_decode.h"
-#include "csx_core_arm_inst.h"
+#include "soc_core.h"
+#include "soc_core_arm_decode.h"
+#include "soc_core_arm_inst.h"
 #include "csx_test.h"
 #include "csx_test_arm.h"
 #include "csx_test_arm_inst.h"
@@ -31,7 +31,7 @@ static inline void _c_al(csx_test_p t, uint32_t value)
 
 /* arm instruction register utilities */
 
-static inline uint32_t _rd(csx_reg_t r)
+static inline uint32_t _rd(soc_core_reg_t r)
 {
 	uint32_t r_out = (r & 0x0f) << 12;
 
@@ -40,7 +40,7 @@ static inline uint32_t _rd(csx_reg_t r)
 	return(r_out);
 }
 
-static inline uint32_t _rm(csx_reg_t r)
+static inline uint32_t _rm(soc_core_reg_t r)
 {
 	uint32_t r_out = r & 0x0f;
 
@@ -49,7 +49,7 @@ static inline uint32_t _rm(csx_reg_t r)
 	return(r_out);
 }
 
-static inline uint32_t _rn(csx_reg_t r)
+static inline uint32_t _rn(soc_core_reg_t r)
 {
 	uint32_t r_out = (r & 0x0f) << 16;
 
@@ -105,8 +105,8 @@ static shifter_operand_t _arm_dpi_sop_r_s(uint8_t sop, uint8_t r, uint8_t shift)
 static void _arm_dp_op_s_rn_rd_sop(csx_test_p t,
 	uint32_t opcode,
 	uint8_t s,
-	csx_reg_t rn,
-	csx_reg_t rd,
+	soc_core_reg_t rn,
+	soc_core_reg_t rd,
 	shifter_operand_t shopt)
 {
 	BMAS(opcode, ARM_INST_BIT_S, s);
@@ -152,14 +152,14 @@ void arm_blx(csx_test_p t, uint32_t offset)
 	_bcc(t, COND_NV, offset, (offset >> 1) & 1);
 }
 
-void arm_bx(csx_test_p t, csx_reg_t rm)
+void arm_bx(csx_test_p t, soc_core_reg_t rm)
 {
 	uint32_t opcode = _BV(24) | _BV(21) | mlBF(19, 8) | _BV(4) | _rm(rm);
 
 	_c_al(t, opcode);
 }
 
-void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
+void arm_ldr_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset)
 {
 	int u = offset > 0;
 
@@ -178,12 +178,12 @@ void arm_ldr_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 	_c_al(t, opcode | ea);
 }
 
-void arm_adds_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
+void arm_adds_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 1, rn, rd, shopt);
 }
 
-void arm_mov_rd_sop(csx_test_p t, csx_reg_t rd, shifter_operand_t shopt)
+void arm_mov_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	uint32_t opcode = ARM_INST_MOV;
 	
@@ -195,7 +195,7 @@ void arm_mov_rd_sop(csx_test_p t, csx_reg_t rd, shifter_operand_t shopt)
 	_c_al(t, opcode);
 }
 
-void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
+void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset)
 {
 	int u = offset > 0;
 
@@ -214,7 +214,7 @@ void arm_str_rn_rd_i(csx_test_p t, csx_reg_t rn, csx_reg_t rd, int32_t offset)
 	_c_al(t, opcode | ea);
 }
 
-void arm_subs_rn_rd_sop(csx_test_p t, csx_reg_t rn, csx_reg_t rd, shifter_operand_t shopt)
+void arm_subs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(SUB), 1, rn, rd, shopt);
 }
