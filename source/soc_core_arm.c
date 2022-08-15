@@ -480,12 +480,35 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	if(CCx.e)
 	{
-		for(int i = 0; i <= 15; i++)
+		for(int i = 0; i < 15; i++)
 		{
 			if(BTST(vR(M), i))
 			{
 				CYCLE++;
 				_arm_inst_ldstm(core, &ls, i, user_mode_regs);
+			}
+		}
+
+		if(BTST(vR(M), 15) {
+			/* CP15_r1_Ubit == 0 */
+			const uint32_t ea = ls.ea & ~3;
+
+			uint32_t rxx_v = 0;
+
+			if(ls.bit.l)
+			{
+				rxx_v = soc_core_read(core->soc, ea, sizeof(uint32_t));
+				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
+				if(1) /* arm_version >= 5*/
+					soc_core_reg_set_pcx(core, rxx_v);
+				else
+					PC = rxx_v & ~3;
+			}
+			else
+			{
+				rxx_v = PC_ARM;
+				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
+				soc_core_write(core->soc, ea, rxx_v, sizeof(uint32_t));
 			}
 		}
 
@@ -775,7 +798,6 @@ void soc_core_arm_step(soc_core_p core)
 			}
 			break;
 		case 0x01: /* xxxx 001x xxxx xxxx */
-
 			if(_inst1_0_mitsr == (IR & _inst1_0_mitsr_mask))
 				;
 			else if((_inst1_0_undef != (IR & _inst1_0_mitsr_mask))
