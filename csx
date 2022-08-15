@@ -1,1 +1,1 @@
-/media/mghughes/git-local/mghughes/csx/build-arm-linux-gnueabihf/csx
+build-arm-linux-gnueabihf/csx
