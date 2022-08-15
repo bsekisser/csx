@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_timer.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_timer.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define _TIMER(_t, _x)		(CSX_MMIO_TIMER(_t) | (_x))
 
@@ -22,7 +32,9 @@
 	MMIO(0xfffe, 0xc704, 0x0000, 0x0000, 32, MEM_WRITE, MPU_LOAD_TIMER_3) \
 	MMIO(0xfffe, 0xc708, 0x0000, 0x0000, 32, MEM_R_TRACE_R, MPU_READ_TIMER_3)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 static uint32_t soc_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
 {

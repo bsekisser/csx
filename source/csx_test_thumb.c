@@ -1,11 +1,13 @@
-#include "csx.h"
-#include "soc_core.h"
-
-#include "csx_test.h"
-#include "csx_test_utility.h"
-
 #include "csx_test_thumb.h"
 #include "csx_test_thumb_inst.h"
+
+#include "csx_test_utility.h"
+
+/* **** */
+
+#include "log.h"
+
+/* **** */
 
 enum {
 	_ADD = 0,

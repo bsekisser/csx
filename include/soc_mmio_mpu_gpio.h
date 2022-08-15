@@ -1,5 +1,15 @@
+#pragma once
+
+/* **** */
+
 typedef struct soc_mmio_mpu_gpio_t** soc_mmio_mpu_gpio_h;
 typedef struct soc_mmio_mpu_gpio_t* soc_mmio_mpu_gpio_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
 
 typedef struct soc_mmio_mpu_gpio_t {
 	csx_p					csx;

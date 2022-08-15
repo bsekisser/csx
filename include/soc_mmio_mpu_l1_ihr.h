@@ -1,5 +1,16 @@
+#pragma once
+
+/* **** */
+
 typedef struct soc_mmio_mpu_l1_ihr_t** soc_mmio_mpu_l1_ihr_h;
 typedef struct soc_mmio_mpu_l1_ihr_t* soc_mmio_mpu_l1_ihr_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
 typedef struct soc_mmio_mpu_l1_ihr_t {
 	csx_p			csx;
 	soc_mmio_p		mmio;

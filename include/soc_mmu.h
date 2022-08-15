@@ -1,5 +1,14 @@
+#pragma once
+
+/* **** */
+
 typedef struct soc_mmu_t** soc_mmu_h;
 typedef struct soc_mmu_t* soc_mmu_p;
+
+/* **** */
+#include "csx.h"
+
+/* **** */
 
 typedef struct soc_mmu_tlb_t** soc_mmu_tlb_h;
 typedef struct soc_mmu_tlb_t* soc_mmu_tlb_p;

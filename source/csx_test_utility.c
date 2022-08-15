@@ -1,6 +1,6 @@
-#include "csx.h"
-#include "soc_core.h"
-#include "csx_test.h"
+#include "csx_test_utility.h"
+
+/* **** */
 
 uint32_t pc(csx_test_p t)
 {

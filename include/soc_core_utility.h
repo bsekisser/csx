@@ -1,5 +1,13 @@
 #pragma once
 
+/* **** */
+
+#include "csx.h"
+
+#include "soc.h"
+
+/* **** */
+
 #define CYCLE core->csx->cycle
 
 static inline int _check_sbo(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t *test, uint32_t *result)

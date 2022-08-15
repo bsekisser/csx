@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_cfg.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_cfg.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define _CFG(_x)		(CSX_MMIO_CFG_BASE + (_x & _BM(12)))
 
@@ -41,7 +51,9 @@
 	MMIO(0xfffe, 0x1140, 0x0000, 0x007f, 32, MEM_RW, RESET_CTL) \
 	MMIO(0xfffe, 0x1160, 0x0000, 0x0000, 32, MEM_TRACE_RW, x0xfffe_0x1160)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 #define COMP_MODE_CTRL_0	_CFG(0x000c)
 #define FUNC_MUX_CTRL_3		_CFG(0x0010)

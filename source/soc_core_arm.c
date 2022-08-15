@@ -1,17 +1,20 @@
-#include <assert.h>
-
-#include "csx.h"
-#include "soc_core.h"
-#include "soc_core_disasm.h"
-#include "soc_core_utility.h"
-
 #include "soc_core_arm.h"
 #include "soc_core_arm_decode.h"
 #include "soc_core_arm_inst.h"
 
+#include "soc_core_disasm.h"
+#include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
-
+#include "soc_core_trace.h"
 #include "soc_core_trace_arm.h"
+#include "soc_core_utility.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 {
@@ -20,7 +23,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 	if(rPC == rR(D))
 	{
 		const int thumb = dpi->bit.s && core->spsr
-			&& BTST(*core->spsr, SOC_PSR_BIT_T);
+			&& BTST(*core->spsr, SOC_CORE_PSR_BIT_T);
 
 		if(thumb)
 			CORE_TRACE_THUMB;
@@ -64,7 +67,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 						break;
 					default:
 						soc_core_flags_nz(core, vR(D));
-						BMAS(CPSR, SOC_PSR_BIT_C, dpi->out.c);
+						BMAS(CPSR, SOC_CORE_PSR_BIT_C, dpi->out.c);
 						break;
 				}
 			}
@@ -536,11 +539,11 @@ static void arm_inst_mrs(soc_core_p core)
 
 	const int tsbo = _check_sbo(IR, 19, 16, &test, &result);
 	if(tsbo)
-		TRACE("!! sbo(opcode = 0x%08x, 19, 16, =0x%08x, =0x%08x (%u))", test, result, tsbo);
+		LOG("!! sbo(opcode = 0x%08x, 19, 16, =0x%08x, =0x%08x (%u))", IR, test, result, tsbo);
 
 	const int tsbz = _check_sbz(IR, 11, 0, &test, &result);
 	if(tsbz)
-		TRACE("!! sbz(opcode = 0x%08x, 11, 0, =0x%08x, =0x%08x (%u))", test, result, tsbz);
+		LOG("!! sbz(opcode = 0x%08x, 11, 0, =0x%08x, =0x%08x (%u))", IR, test, result, tsbz);
 
 	if(tsbo || tsbz)
 		UNPREDICTABLE;
@@ -583,7 +586,7 @@ static void arm_inst_msr(soc_core_p core)
 
 	const int tsbo = _check_sbo(IR, 15, 12, &test, &result);
 	if(tsbo) {
-		TRACE("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", test, result, tsbo);
+		LOG("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", IR, test, result, tsbo);
 		UNPREDICTABLE;
 	}
 
@@ -610,7 +613,7 @@ static void arm_inst_msr(soc_core_p core)
 			const int tsbz = _check_sbz(IR, 11, 8, &test, &result);
 			if(tsbz)
 			{
-				TRACE("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", test, result, tsbz);
+				LOG("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", IR, test, result, tsbz);
 				UNPREDICTABLE;
 			}
 
@@ -624,7 +627,7 @@ static void arm_inst_msr(soc_core_p core)
 	}
 
 	const uint32_t unalloc_mask = soc_core_msr_unalloc_mask[arm_v5tej];
-	if(0) TRACE("unalloc_mask = 0x%08x", unalloc_mask);
+	if(0) LOG("unalloc_mask = 0x%08x", unalloc_mask);
 
 	if(operand & unalloc_mask)
 	{
@@ -641,10 +644,10 @@ static void arm_inst_msr(soc_core_p core)
 	const uint32_t user_mask = soc_core_msr_user_mask[arm_v5tej];
 	const uint32_t priv_mask = soc_core_msr_priv_mask[arm_v5tej];
 
-	if(0) TRACE("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
+	if(0) LOG("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
 		state_mask, user_mask, priv_mask);
 
-	if(0) TRACE("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
+	if(0) LOG("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
 
 	uint32_t saved_psr = 0, new_psr = 0;
 
@@ -668,7 +671,7 @@ static void arm_inst_msr(soc_core_p core)
 	}
 	else
 	{
-		if(csx_in_a_privaleged_mode(core))
+		if(soc_core_in_a_privaleged_mode(core))
 		{
 			if(operand & state_mask)
 			{
@@ -685,7 +688,7 @@ static void arm_inst_msr(soc_core_p core)
 
 		if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
-		if(BTST(saved_psr, SOC_PSR_BIT_T) != BTST(new_psr, SOC_PSR_BIT_T))
+		if(BTST(saved_psr, SOC_CORE_PSR_BIT_T) != BTST(new_psr, SOC_CORE_PSR_BIT_T))
 			CORE_TRACE_THUMB;
 
 		if(CCx.e)
@@ -800,7 +803,7 @@ void soc_core_arm_step(soc_core_p core)
 	}
 
 decode_fault:
-	CORE_TRACE(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
+	LOG(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
 		IR, opcode, dpi_opcode);
 	soc_core_disasm_arm(core, PC, IR);
 	UNIMPLIMENTED;

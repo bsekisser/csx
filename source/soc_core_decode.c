@@ -1,7 +1,15 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_decode.h"
+
 #include "soc_core_arm_decode.h"
+#include "soc_core_disasm.h"
+#include "soc_core_psr.h"
+#include "soc_core_shifter.h"
 #include "soc_core_utility.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
 
 /* **** */
 
@@ -113,13 +121,13 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 
 static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->shift_op = CSX_SHIFTER_OP_ROR;
+	dpi->shift_op = SOC_CORE_SHIFTER_OP_ROR;
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 
 	if(0 == vR(S))
-		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	else
 		dpi->out.c = BEXT(dpi->out.v, 31);
 }
@@ -134,7 +142,7 @@ static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 	dpi->bit.x7 = BEXT(IR, 7);
 	if(dpi->bit.x7)
 	{
-		TRACE("**** I = 0, x4 = 1, x7 = 1 ****");
+		LOG("**** I = 0, x4 = 1, x7 = 1 ****");
 
 		soc_core_disasm_arm(core, IP, IR);
 		LOG_ACTION(exit(1));
@@ -156,7 +164,7 @@ static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p 
 	if(asr_v)
 		dpi->out.c = BEXT(vR(M), asr_v - 1);
 	else
-		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
@@ -165,7 +173,7 @@ static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p 
 	if(vR(S))
 		dpi->out.c = BEXT(vR(M), 32 - vR(S));
 	else
-		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p dpi)
@@ -180,14 +188,14 @@ static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p 
 	if(lsr_v)
 		dpi->out.c = BEXT(vR(M), lsr_v - 1);
 	else
-		dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
+		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 }
 
 static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)
 {
 	if(!dpi->bit.i && !dpi->bit.x4 && (0 == vR(S)))
 	{
-		dpi->out.v = BMOV(CPSR, SOC_PSR_BIT_C, 31) | (vR(M) >> 1);
+		dpi->out.v = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31) | (vR(M) >> 1);
 		dpi->out.c = vR(M) & 1;
 	}
 	else
@@ -208,7 +216,7 @@ static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p 
 			}
 		}
 		else
-			dpi->out.c = BEXT(CPSR, SOC_PSR_BIT_C);
+			dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 }
 
@@ -239,26 +247,26 @@ void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 
 	switch(dpi->shift_op)
 	{
-		case	CSX_SHIFTER_OP_ASR:
+		case	SOC_CORE_SHIFTER_OP_ASR:
 			_soc_core_arm_shifter_operation_asr(core, dpi);
 			break;
-		case	CSX_SHIFTER_OP_LSL:
+		case	SOC_CORE_SHIFTER_OP_LSL:
 			_soc_core_arm_shifter_operation_lsl(core, dpi);
 			break;
-		case	CSX_SHIFTER_OP_LSR:
+		case	SOC_CORE_SHIFTER_OP_LSR:
 			_soc_core_arm_shifter_operation_lsr(core, dpi);
 			break;
-		case	CSX_SHIFTER_OP_ROR:
+		case	SOC_CORE_SHIFTER_OP_ROR:
 			_soc_core_arm_shifter_operation_ror(core, dpi);
 			break;
 		default:
-			TRACE("**** i = %u, s = %u, x7 = %u, x4 = %u",
+			LOG("**** i = %u, s = %u, x7 = %u, x4 = %u",
 				!!dpi->bit.i, !!dpi->bit.s, !!dpi->bit.x7, !!dpi->bit.x4);
 
-			TRACE("**** imm = 0x%02x, shift = 0x%02x",
+			LOG("**** imm = 0x%02x, shift = 0x%02x",
 				vR(M), vR(S));
 
-			exit(1);
+			LOG_ACTION(exit(1));
 			break;
 	}
 }

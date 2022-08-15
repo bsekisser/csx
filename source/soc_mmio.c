@@ -1,4 +1,3 @@
-#include "csx.h"
 #include "soc_mmio.h"
 
 #include "soc_mmio_omap.h"
@@ -14,13 +13,27 @@
 #include "soc_mmio_timer.h"
 #include "soc_mmio_watchdog.h"
 
-#include "page.h"
-#include "queue.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+//#include "page.h"
+//#include "queue.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {

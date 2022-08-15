@@ -1,5 +1,11 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_trace.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */ 
 
 static const char* soc_core_trace_psr_mode_string[] = {
 	[0x00] = "User",
@@ -10,22 +16,6 @@ static const char* soc_core_trace_psr_mode_string[] = {
 	[0x08 + 0x03] = "Undefined",
 	[0x08 + 0x07] = "System",
 };
-
-int csx_trace_core(soc_core_p core)
-{
-	const csx_p csx = core->csx;
-//	soc_core_p core = csx->core;
-	
-	csx_trace_p trace = csx->trace.head;
-	
-	if(!trace)
-		return(1);
-	
-	if(_in_bounds(PC, sizeof(uint32_t), trace->start, trace->stop))
-		return(1);
-	
-	return(0);
-}
 
 void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr)
 {
@@ -54,7 +44,7 @@ void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr)
 	if(!mode_string)
 		mode_string = "";
 
-	TRACE("%s (%s) : %s", tout, mode_string, pfn ? pfn : "");
+	LOG("%s (%s) : %s", tout, mode_string, pfn ? pfn : "");
 }
 
 void soc_core_trace_psr_change(soc_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr)

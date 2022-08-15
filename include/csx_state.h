@@ -1,6 +1,18 @@
 #pragma once
 
+/* **** */
+
+#include <stdint.h>
+
+/* **** */
+
 typedef uint32_t csx_state_t;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
 
 enum {
 	CSX_STATE_HALT_BIT,

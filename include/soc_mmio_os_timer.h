@@ -1,5 +1,16 @@
+#pragma once
+
+/* **** */
+
 typedef struct soc_mmio_os_timer_t** soc_mmio_os_timer_h;
 typedef struct soc_mmio_os_timer_t* soc_mmio_os_timer_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
 typedef struct soc_mmio_os_timer_t {
 	csx_p			csx;
 	soc_mmio_p		mmio;

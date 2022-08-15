@@ -1,9 +1,15 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_psr.h"
+
+#include "soc_core_trace.h"
 
 /* **** */
 
-#define		CPSR_(_ccf)	(CPSR & SOC_PSR_ ## _ccf)
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
+
+#define		CPSR_(_ccf)	(CPSR & SOC_CORE_PSR_ ## _ccf)
 
 /* **** */
 
@@ -42,46 +48,46 @@ uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 	switch(cc)
 	{
 		case INST_CC_EQ:
-			res = psr & SOC_PSR_Z;
+			res = psr & SOC_CORE_PSR_Z;
 			break;
 		case INST_CC_NE:
-			res = !(psr & SOC_PSR_Z);
+			res = !(psr & SOC_CORE_PSR_Z);
 			break;
 		case INST_CC_CSHS:
-			res = psr & SOC_PSR_C;
+			res = psr & SOC_CORE_PSR_C;
 			break;
 		case INST_CC_CCLO:
-			res = !(psr & SOC_PSR_C);
+			res = !(psr & SOC_CORE_PSR_C);
 			break;
 		case INST_CC_MI:
-			res = psr & SOC_PSR_N;
+			res = psr & SOC_CORE_PSR_N;
 			break;
 		case INST_CC_PL:
-			res = !(psr & SOC_PSR_N);
+			res = !(psr & SOC_CORE_PSR_N);
 			break;
 		case INST_CC_VS:
-			res = psr & SOC_PSR_V;
+			res = psr & SOC_CORE_PSR_V;
 			break;
 		case INST_CC_VC:
-			res = !(psr & SOC_PSR_V);
+			res = !(psr & SOC_CORE_PSR_V);
 			break;
 		case INST_CC_HI:
-			res = (psr & SOC_PSR_C) | (!(psr & SOC_PSR_Z));
+			res = (psr & SOC_CORE_PSR_C) | (!(psr & SOC_CORE_PSR_Z));
 			break;
 		case INST_CC_LS:
-			res = (!(psr & SOC_PSR_C)) | (psr & SOC_PSR_Z);
+			res = (!(psr & SOC_CORE_PSR_C)) | (psr & SOC_CORE_PSR_Z);
 			break;
 		case INST_CC_GE:
-			res = !!(psr & SOC_PSR_N) == !!(psr & SOC_PSR_V);
+			res = !!(psr & SOC_CORE_PSR_N) == !!(psr & SOC_CORE_PSR_V);
 			break;
 		case INST_CC_LT:
-			res = !!(psr & SOC_PSR_N) != !!(psr & SOC_PSR_V);
+			res = !!(psr & SOC_CORE_PSR_N) != !!(psr & SOC_CORE_PSR_V);
 			break;
 		case INST_CC_GT:
-			res = (!(psr & SOC_PSR_Z)) && (!!(psr & SOC_PSR_N) == !!(psr & SOC_PSR_V));
+			res = (!(psr & SOC_CORE_PSR_Z)) && (!!(psr & SOC_CORE_PSR_N) == !!(psr & SOC_CORE_PSR_V));
 			break;
 		case INST_CC_LE:
-			res = (psr & SOC_PSR_Z) && (!!(psr & SOC_PSR_N) != !!(psr & SOC_PSR_V));
+			res = (psr & SOC_CORE_PSR_Z) && (!!(psr & SOC_CORE_PSR_N) != !!(psr & SOC_CORE_PSR_V));
 			break;
 		case INST_CC_AL:
 			res = 1;
@@ -90,8 +96,8 @@ uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 			res = 0;
 			break;
 		default:
-			TRACE("opcode = 0x%08x, cc = %02x, cpsr = 0x%08x, cpsr_cc %02x",
-				opcode, cc, CPSR, BFEXT(CPSR, 31, 28));
+			CORE_TRACE("IR = 0x%08x, cc = %02x, cpsr = 0x%08x, cpsr_cc %02x",
+				IR, cc, CPSR, mlBFEXT(CPSR, 31, 28));
 			LOG_ACTION(core->csx->state |= CSX_STATE_HALT);
 			exit(1);
 			break;
@@ -102,14 +108,14 @@ uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 
 void soc_core_flags_nz(soc_core_p core, uint32_t rd_v)
 {
-	CPSR &= ~SOC_PSR_NZ;
+	CPSR &= ~SOC_CORE_PSR_NZ;
 	
-	CPSR |= BMOV(rd_v, 31, SOC_PSR_BIT_N);
-	CPSR |= ((rd_v == 0) ? SOC_PSR_Z : 0);
+	CPSR |= BMOV(rd_v, 31, SOC_CORE_PSR_BIT_N);
+	CPSR |= ((rd_v == 0) ? SOC_CORE_PSR_Z : 0);
 	
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & SOC_PSR_N), !!(CPSR & SOC_PSR_Z),
-		!!(CPSR & SOC_PSR_C), !!(CPSR & SOC_PSR_V));
+	if(1) LOG("N = %1u, Z = %1u, C = %1u, V = %1u",
+		!!(CPSR & SOC_CORE_PSR_N), !!(CPSR & SOC_CORE_PSR_Z),
+		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 }
 
 /*
@@ -129,17 +135,17 @@ static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	const uint32_t xvec = (s1_v ^ s2_v);
 	const uint32_t ovec = (s1_v ^ rd_v) & ~xvec;
 
-	CPSR &= ~SOC_PSR_NZCV;
+	CPSR &= ~SOC_CORE_PSR_NZCV;
 
-	CPSR |= BMOV(rd_v, 31, SOC_PSR_BIT_N);
-	CPSR |= ((rd_v == 0) ? SOC_PSR_Z : 0);
+	CPSR |= BMOV(rd_v, 31, SOC_CORE_PSR_BIT_N);
+	CPSR |= ((rd_v == 0) ? SOC_CORE_PSR_Z : 0);
 
-	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, SOC_PSR_BIT_C);
-	CPSR |= BMOV(ovec, 31, SOC_PSR_BIT_V);
+	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, SOC_CORE_PSR_BIT_C);
+	CPSR |= BMOV(ovec, 31, SOC_CORE_PSR_BIT_V);
 
-	if(1) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & SOC_PSR_N), !!(CPSR & SOC_PSR_Z),
-		!!(CPSR & SOC_PSR_C), !!(CPSR & SOC_PSR_V));
+	if(1) CORE_TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+		!!(CPSR & SOC_CORE_PSR_N), !!(CPSR & SOC_CORE_PSR_Z),
+		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 }
 
 #if 0

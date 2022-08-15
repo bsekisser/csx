@@ -1,7 +1,18 @@
-#include "csx.h"
-#include "soc_core.h"
-#include "soc_core_arm_decode.h"
+#include "soc_core_trace_arm.h"
+
+#include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
+#include "soc_core_shifter.h"
+#include "soc_core_trace.h"
+
+#include "csx_state.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
@@ -33,7 +44,7 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 			dst += snprintf(dst, end - dst, ", %s(%s)", sos, _arm_reg_name(rR(S)));
 		else if(vR(S))
 			dst += snprintf(dst, end - dst, ", %s(%u)", sos, vR(S));
-		else if(CSX_SHIFTER_OP_ROR == dpi->shift_op)
+		else if(SOC_CORE_SHIFTER_OP_ROR == dpi->shift_op)
 			dst += snprintf(dst, end - dst, ", RRX");
 	}
 	

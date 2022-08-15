@@ -1,3 +1,15 @@
+#pragma once
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
+#include "soc_core_reg.h"
+
+/* **** */
+
 static const char* _arm_creg_name(soc_core_reg_t r)
 {
 	const char* creg_names[16] = {

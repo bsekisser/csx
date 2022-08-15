@@ -1,9 +1,15 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_disasm.h"
+
+/* **** */
 
 #include "capstone_assert_test.h"
+#include "log.h"
+
+/* **** */
 
 #include <capstone/capstone.h>
+
+/* **** */
 
 static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode, int thumb)
 {

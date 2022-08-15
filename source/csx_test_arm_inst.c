@@ -1,10 +1,14 @@
-#include "csx.h"
-#include "soc_core.h"
-#include "soc_core_arm_decode.h"
-#include "soc_core_arm_inst.h"
-#include "csx_test.h"
-#include "csx_test_arm.h"
 #include "csx_test_arm_inst.h"
+#include "soc_core_arm_inst.h"
+
+#include "csx_test_utility.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 /* arm compiler utilities */
 
@@ -15,8 +19,6 @@
 
 static inline void _c_cc(csx_test_p t, uint cc, uint32_t value)
 {
-	csx_p csx = t->csx;
-
 	value |= ((cc & 0x0f) << 28);
 	
 	if(0) LOG("0x%08x: 0x%08x", t->pc, value);
@@ -122,7 +124,7 @@ static void _arm_dp_op_s_rn_rd_sop(csx_test_p t,
 
 shifter_operand_t arm_dpi_lsl_r_s(uint8_t r, uint8_t shift)
 {
-	return(_arm_dpi_sop_r_s(CSX_SHIFTER_OP_LSL, r, shift));
+	return(_arm_dpi_sop_r_s(SOC_CORE_SHIFTER_OP_LSL, r, shift));
 }
 
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)

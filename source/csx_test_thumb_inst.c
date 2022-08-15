@@ -1,12 +1,13 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "csx_test_thumb_inst.h"
+#include "csx_test_utility.h"
 
 #include "soc_core_thumb_inst.h"
 
-#include "csx_test.h"
-#include "csx_test_utility.h"
+/* **** */
 
-#include "csx_test_thumb_inst.h"
+#include "bitfield.h"
+
+/* **** */
 
 void thumb_add_sub_i3_rn_rd(csx_test_p t, uint8_t add_sub, uint8_t imm3, soc_core_reg_t rn, soc_core_reg_t rd)
 {

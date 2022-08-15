@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_gp_timer.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_gp_timer.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x1c10, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TIOCP_CFG) \
@@ -52,7 +62,9 @@ const char unit_map[16] = { 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0 };
 #define GPTMR_TMAR			0x38
 #define GPTMR_TSICR			0x40
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 static uint32_t soc_mmio_gp_timer_read(void* data, uint32_t addr, uint8_t size)
 {

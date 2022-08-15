@@ -1,5 +1,14 @@
+#pragma once
+
 typedef struct soc_mmio_dpll_t** soc_mmio_dpll_h;
 typedef struct soc_mmio_dpll_t* soc_mmio_dpll_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
 typedef struct soc_mmio_dpll_t {
 	csx_p			csx;
 	soc_mmio_p		mmio;

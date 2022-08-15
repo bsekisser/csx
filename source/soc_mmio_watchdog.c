@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_watchdog.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_watchdog.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define _WDT(_x)		(CSX_MMIO_WATCHDOG_BASE | (_x))
 
@@ -20,7 +30,9 @@
 	\
 	MMIO(0xfffe, 0xc808, 0x0000, 0x8000, 32, MEM_RW, MPU_WDT_TIMER_MODE)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 static uint32_t soc_mmio_watchdog_read(void* data, uint32_t addr, uint8_t size)
 {

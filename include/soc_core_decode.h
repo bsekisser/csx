@@ -1,5 +1,20 @@
 #pragma once
 
+/* **** */
+
+#include "soc_core.h"
+#include "soc_core_reg.h"
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
+#include "bitfield.h"
+
+/* **** */
+
 #define _setup_rR_vR(_rvx, _rr, _vr) \
 	({ \
 		rR(_rvx) = _rr; \

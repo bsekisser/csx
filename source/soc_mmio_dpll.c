@@ -1,16 +1,28 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_dpll.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_dpll.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define _DPLL(_x)			(CSX_MMIO_DPLL_BASE + (_x))
 
 #define MMIO_LIST \
 	MMIO(0xfffe, 0xcf00, 0x0000, 0x2002, 32, MEM_RW, DPLL1_CTL_REG)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 #define DPLL1_CTL_REG		_DPLL(0x000)
 

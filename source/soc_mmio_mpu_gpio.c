@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_mpu_gpio.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_mpu_gpio.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define MMIO_LIST \
 	MMIO_GPIO1_LIST \
@@ -27,7 +37,9 @@
 	MMIO(0xfffb, 0xbc30, 0x0000, 0x0000, 32, MEM_RW, GPIO4_DATAOUT) \
 	MMIO(0xfffb, 0xbc34, 0x0000, 0xffff, 32, MEM_RW, GPIO4_DIRECTION)
 	
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 static uint32_t soc_mmio_mpu_gpio_read(void* data, uint32_t addr, uint8_t size)
 {

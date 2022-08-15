@@ -1,6 +1,12 @@
-#include "csx.h"
-#include "soc_core.h"
-#include "soc_core_arm_decode.h"
+#include "soc_core_shifter.h"
+
+#include "soc_core_psr.h"
+
+/* **** */
+
+#include "bitfield.h"
+
+/* **** */
 
 static uint32_t _soc_core_arm_shifter_operation_asr(soc_core_p core, uint32_t vin, uint8_t shift, uint8_t* cout)
 {
@@ -13,7 +19,7 @@ static uint32_t _soc_core_arm_shifter_operation_asr(soc_core_p core, uint32_t vi
 	if(vin)
 		*cout = BEXT(vin, asr_shift - 1);
 	else
-		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	return((signed)vin >> asr_shift);
 }
@@ -23,7 +29,7 @@ static uint32_t _soc_core_arm_shifter_operation_lsl(soc_core_p core, uint32_t vi
 	if(shift)
 		*cout = BEXT(vin, 32 - shift);
 	else
-		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	return(vin << shift);
 }
@@ -38,7 +44,7 @@ static uint32_t _soc_core_arm_shifter_operation_lsr(soc_core_p core, uint32_t vi
 	if(lsr_shift)
 		*cout = BEXT(vin, lsr_shift - 1);
 	else
-		*cout = BEXT(CPSR, SOC_PSR_BIT_C);
+		*cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	return(vin >> lsr_shift);
 }
@@ -48,13 +54,13 @@ uint32_t soc_core_barrel_shifter(soc_core_p core, uint32_t vin, uint32_t shift, 
 {
 	switch(shopt)
 	{
-		case CSX_SHIFTER_OP_ASR:
+		case SOC_CORE_SHIFTER_OP_ASR:
 			return(_soc_core_arm_shifter_operation_asr(core, vin, shift, cout));
 			break;
-		case CSX_SHIFTER_OP_LSL:
+		case SOC_CORE_SHIFTER_OP_LSL:
 			return(_soc_core_arm_shifter_operation_lsl(core, vin, shift, cout));
 			break;
-		case CSX_SHIFTER_OP_LSR:
+		case SOC_CORE_SHIFTER_OP_LSR:
 			return(_soc_core_arm_shifter_operation_lsr(core, vin, shift, cout));
 			break;
 	}

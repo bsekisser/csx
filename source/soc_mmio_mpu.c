@@ -1,9 +1,19 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_mpu.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_mpu.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define _MPU(_x)			(CSX_MMIO_MPU_BASE + (_x))
 
@@ -14,7 +24,9 @@
 	MMIO(0xfffe, 0xce14, 0x0000, 0x0000, 32, MEM_RW, ARM_RSTCT2) \
 	MMIO(0xfffe, 0xce18, 0x0000, 0x0038, 32, MEM_RW, ARM_SYSST)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 #define ARM_CKCTL			_MPU(0x000)
 #define ARM_IDLECT(_x)		_MPU(((_x) & 0x03) << 2)

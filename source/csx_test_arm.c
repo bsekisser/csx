@@ -1,9 +1,21 @@
-#include "csx.h"
+#include "csx_test_arm.h"
+#include "csx_test_arm_inst.h"
+
+/* **** */
+
+#include "soc_core_psr.h"
 #include "soc_core.h"
+#include "soc.h"
 #include "csx_test.h"
 #include "csx_test_utility.h"
+#include "csx.h"
 
-#include "csx_test_arm_inst.h"
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 static void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 {
@@ -17,10 +29,10 @@ static void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 {
 	soc_core_p core = t->csx->core;
 	
-	assert(n == BEXT(CPSR, SOC_PSR_BIT_N));
-	assert(z == BEXT(CPSR, SOC_PSR_BIT_Z));
-	assert(c == BEXT(CPSR, SOC_PSR_BIT_C));
-	assert(v == BEXT(CPSR, SOC_PSR_BIT_V));
+	assert(n == BEXT(CPSR, SOC_CORE_PSR_BIT_N));
+	assert(z == BEXT(CPSR, SOC_CORE_PSR_BIT_Z));
+	assert(c == BEXT(CPSR, SOC_CORE_PSR_BIT_C));
+	assert(v == BEXT(CPSR, SOC_CORE_PSR_BIT_V));
 }
 
 static inline uint32_t epc(csx_test_p t)
@@ -45,8 +57,8 @@ static inline uint32_t eao(csx_test_p t, int32_t ieao)
 #define TRACE_PSR(psr) \
 	do { \
 		LOG("N = %1u, Z = %1u, C = %1u, V = %1u", \
-			!!(psr & SOC_PSR_N), !!(psr & SOC_PSR_Z), \
-			!!(psr & SOC_PSR_C), !!(psr & SOC_PSR_V)); \
+			!!(psr & SOC_CORE_PSR_N), !!(psr & SOC_CORE_PSR_Z), \
+			!!(psr & SOC_CORE_PSR_C), !!(psr & SOC_CORE_PSR_V)); \
 	}while(0);
 
 static void csx_test_arm_fn(csx_test_p t)
@@ -87,7 +99,7 @@ static void csx_test_arm_fn(csx_test_p t)
 			: [r0] "r" (r[0])
 			: "r0");
 
-		int blo = !(psr & SOC_PSR_C);
+		int blo = !(psr & SOC_CORE_PSR_C);
 
 		LOG("blo = %u", blo);
 
@@ -263,7 +275,7 @@ static void csx_test_arm_b(csx_test_p t)
 	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
 	assert(new_pc == PC);
 	assert(expect_lr == LR);
-	assert(CPSR & SOC_PSR_BIT_T);
+	assert(CPSR & SOC_CORE_PSR_BIT_T);
 
 	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
 
@@ -276,7 +288,7 @@ static void csx_test_arm_b(csx_test_p t)
 	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
 	assert(new_pc == PC);
 	assert(expect_lr == LR);
-	assert(CPSR & SOC_PSR_BIT_T);
+	assert(CPSR & SOC_CORE_PSR_BIT_T);
 
 	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
 }

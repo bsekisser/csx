@@ -1,7 +1,21 @@
-#include <assert.h>
+#include "soc_mmu.h"
 
-#include "csx.h"
-#include "soc_core.h"
+/* **** */
+
+#include "bounds.h"
+#include "err_test.h"
+#include "log.h"
+#include "page.h"
+
+/* **** */
+
+#include <errno.h>
+#include <fcntl.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* **** */
 

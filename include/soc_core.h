@@ -1,24 +1,31 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
+/* **** */
 
-#include "err_test.h"
-//#include "data.h"
+typedef struct soc_core_t** soc_core_h;
+typedef struct soc_core_t* soc_core_p;
+
+typedef struct soc_core_inst_t** soc_core_inst_h;
+typedef struct soc_core_inst_t* soc_core_inst_p;
+
+typedef void (*soc_core_step_fn)(soc_core_p csx);
+
+/* **** */
+
+#include "csx.h"
+
+#include "soc_core_reg.h"
+
+/* **** */
 
 #define UNPREDICTABLE \
-	TRACE("UNPREDICTABLE");
+	LOG("UNPREDICTABLE");
 
 #define UNIMPLIMENTED \
 	LOG_ACTION(exit(1));
 
 #define ILLEGAL_INSTRUCTION \
 	LOG_ACTION(exit(1));
-
-typedef struct csx_t* csx_p;
-
-typedef uint8_t soc_core_reg_t;
-typedef soc_core_reg_t* soc_core_reg_p;
 
 enum	{
 	rRD,
@@ -28,12 +35,7 @@ enum	{
 	rR_COUNT
 };
 
-typedef struct soc_core_t** soc_core_h;
-typedef struct soc_core_t* soc_core_p;
-
-typedef void (*soc_core_step_fn)(soc_core_p csx);
-
-typedef struct csx_inst_t {
+typedef struct soc_core_inst_t {
 	uint32_t					v[rR_COUNT];
 #define vR(_x)					vRX(rR##_x)
 #define vRX(_x)					SCIx->v[_x]
@@ -52,7 +54,7 @@ typedef struct csx_inst_t {
 		int						e:1;
 								}ccx;
 #define CCx	SCIx->ccx
-}csx_inst_t;
+}soc_core_inst_t;
 
 typedef struct soc_core_t {
 	uint32_t			reg[16];
@@ -68,33 +70,16 @@ typedef struct soc_core_t {
 	uint32_t			und_reg[4];
 
 #define SCIx			(&core->inst)
-	csx_inst_t			inst;
+	soc_core_inst_t		inst;
 
 	soc_core_step_fn	step;
 	csx_p				csx;
 
-	T(uint32_t			trace_flags);
+	uint				trace:1;
 }soc_core_t;
 
-#include "csx_state.h"
+/* **** */
 
-#include "soc_core_arm.h"
-#include "soc_core_reg.h"
-
-#include "soc_core_decode.h"
-#include "soc_core_psr.h"
-#include "soc_core_thumb.h"
-#include "soc_core_trace.h"
-
-static inline int csx_in_a_privaleged_mode(soc_core_p core)
-{
-//	UNPREDICTABLE;
-	if(0x00 != mlBFEXT(CPSR, 4, 0))
-		return(1);
-	else
-		return(0);
-}
-
-/* soc_core.c */
-
+int soc_core_in_a_privaleged_mode(soc_core_p core);
 int soc_core_init(csx_p csx, soc_core_h h2core);
+void soc_core_reset(soc_core_p core);

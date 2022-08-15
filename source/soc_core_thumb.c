@@ -1,13 +1,19 @@
-#include <assert.h>
-
-#include "csx.h"
-#include "soc_core.h"
-#include "soc_core_disasm.h"
-#include "soc_core_utility.h"
-
+#include "soc_core_thumb.h"
 #include "soc_core_thumb_inst.h"
 
+#include "soc_core_disasm.h"
+#include "soc_core_decode.h"
+#include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
+#include "soc_core_trace.h"
+#include "soc_core_utility.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
@@ -345,15 +351,15 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 			soc_core_flags_nzcv_sub(core, res, rR(D), rR(M));
 			break;
 		case THUMB_DP_OP_LSL:
-			CPSR &= ~SOC_PSR_NZC;
+			CPSR &= ~SOC_CORE_PSR_NZC;
 
-			CPSR |= BMOV(res, 31, SOC_PSR_BIT_N);
-			CPSR |= ((res == 0) ? SOC_PSR_Z : 0);
+			CPSR |= BMOV(res, 31, SOC_CORE_PSR_BIT_N);
+			CPSR |= ((res == 0) ? SOC_CORE_PSR_Z : 0);
 
 			if(vR(M) < 32)
-				CPSR |= BMOV(vR(D), vR(M), SOC_PSR_BIT_C);
+				CPSR |= BMOV(vR(D), vR(M), SOC_CORE_PSR_BIT_C);
 			else
-				CPSR |= BMOV(vR(D), 0, SOC_PSR_BIT_C);
+				CPSR |= BMOV(vR(D), 0, SOC_CORE_PSR_BIT_C);
 			break;
 		default:
 			soc_core_flags_nz(core, res);
@@ -683,13 +689,13 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			ops = "asr";
 			if(shift)
 			{
-				BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
+				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
 				vR(D) = (((signed)vR(M)) >> shift);
 			}
 			else
 			{
 				int rm31_c = BEXT(vR(M), 31);
-				BMAS(CPSR, SOC_PSR_BIT_C, rm31_c);
+				BMAS(CPSR, SOC_CORE_PSR_BIT_C, rm31_c);
 				vR(D) = rm31_c ? ~0 : 0;
 			}
 			break;
@@ -697,7 +703,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			ops = "lsl";
 			if(shift)
 			{
-				BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
+				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
 				vR(D) = vR(M) << shift;
 			}
 			break;
@@ -707,7 +713,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 				vR(D) = vR(M) >> shift;
 			else
 				shift = 32;
-			BMAS(CPSR, SOC_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
+			BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);
@@ -716,9 +722,9 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 
 	soc_core_flags_nz(core, vR(D));
 
-	if(0) TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & SOC_PSR_N), !!(CPSR & SOC_PSR_Z),
-		!!(CPSR & SOC_PSR_C), !!(CPSR & SOC_PSR_V));
+	if(0) LOG("N = %1u, Z = %1u, C = %1u, V = %1u",
+		!!(CPSR & SOC_CORE_PSR_N), !!(CPSR & SOC_CORE_PSR_Z),
+		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 
 	CORE_TRACE("%ss(%s, %s, 0x%02x); /* %s(0x%08x, 0x%02x) = 0x%08x */",
 		ops, _arm_reg_name(rR(D)), _arm_reg_name(rR(M)), shift, ops, vR(M), shift, vR(D));
@@ -849,7 +855,7 @@ void soc_core_thumb_step(soc_core_p core)
 				{
 					case	0xde00: /* undefined */
 					case	0xdf00: /* swi */
-//						TRACE("ir = 0x%04x, opcode = 0x%04x, lsb", IP, opcode);
+//						LOG("ir = 0x%04x, opcode = 0x%04x, lsb", IP, opcode);
 						break;
 					default:
 						return(soc_core_thumb_bcc(core));
@@ -860,13 +866,13 @@ void soc_core_thumb_step(soc_core_p core)
 					return(soc_core_thumb_bxx(core));
 				break;
 			default:
-//				TRACE("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
+//				LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
 				break;
 		/* **** */
 		}
 	}//while(lsb-- > 8);
 
-	TRACE("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
+	LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
 
 	soc_core_disasm_thumb(core, IP, IR);
 	LOG_ACTION(exit(1));

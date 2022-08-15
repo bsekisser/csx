@@ -1,5 +1,11 @@
 #pragma once
 
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
 enum {
 	arm_v4,
 	arm_v4t = 1,
@@ -9,5 +15,7 @@ enum {
 	arm_v5tej,
 	arm_v6,
 };
+
+/* **** */
 
 void soc_core_arm_step(soc_core_p core);

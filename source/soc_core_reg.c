@@ -1,6 +1,19 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_reg.h"
+
+#include "soc_core_arm.h"
+#include "soc_core_psr.h"
+#include "soc_core_thumb.h"
 #include "soc_core_utility.h"
+#include "soc_core.h"
+
+#include "csx.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
 
 enum {
 	PSR_MODE_USER = 0x10,
@@ -71,7 +84,7 @@ uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r)
 	uint32_t res = core->reg[r];
 
 	if(rPC == r) {
-		int thumb = BEXT(CPSR, SOC_PSR_BIT_T);
+		int thumb = BEXT(CPSR, SOC_CORE_PSR_BIT_T);
 		res &= (~3 >> thumb);
 		res += (4 >> thumb);
 	}
@@ -90,7 +103,7 @@ void soc_core_reg_set(soc_core_p core, soc_core_reg_t r, uint32_t v)
 void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 {
 	int thumb = new_pc & 1;
-	BMAS(CPSR, SOC_PSR_BIT_T, thumb);
+	BMAS(CPSR, SOC_CORE_PSR_BIT_T, thumb);
 	core->step = thumb ? soc_core_thumb_step : soc_core_arm_step;
 	new_pc &= (~3 >> thumb);
 

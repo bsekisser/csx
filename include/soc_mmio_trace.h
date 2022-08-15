@@ -1,3 +1,19 @@
+#pragma once
+
+/* **** */
+
+typedef struct ea_trace_t* ea_trace_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
+#include "soc_mmio.h"
+
+/* **** */
+
 enum {
 	MEM_READ_BIT = 0,
 	MEM_WRITE_BIT,
@@ -25,7 +41,6 @@ enum {
 	MMIO_LIST
 };
 
-typedef struct ea_trace_t* ea_trace_p;
 typedef struct ea_trace_t {
 	uint32_t	address;
 	uint32_t	reset_value;
@@ -39,11 +54,13 @@ typedef struct ea_trace_t {
 	{ ((_ahi ## ULL << 16) | _alo ## ULL), \
 		((_dhi ## ULL << 16) | _dlo ## ULL), \
 		((_size) >> 3), _access, #_name, },
-	
-static struct ea_trace_t trace_list[] = {
-	MMIO_LIST
-	MMIO(0, 0, 0, 0, 0, 0, 0)
-};
+
+#ifdef TRACE_LIST
+	static struct ea_trace_t trace_list[] = { \
+		MMIO_LIST \
+		MMIO(0, 0, 0, 0, 0, 0, 0) \
+	};
+#endif
 
 ea_trace_p soc_mmio_get_trace(ea_trace_p trace_list, uint32_t address);
 ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address);

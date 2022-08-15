@@ -1,3 +1,20 @@
+#pragma once
+
+/* **** */
+
+#include <stdint.h>
+
+/* **** */
+
+typedef uint8_t soc_core_reg_t;
+typedef uint8_t* soc_core_reg_p;
+
+/* **** */
+
+#include "csx.h"
+
+/* **** */
+
 enum {
 	rSP = 13,
 	rLR = 14,

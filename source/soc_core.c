@@ -1,13 +1,22 @@
-#include "csx.h"
 #include "soc_core.h"
-#include "csx_trace.h"
 
-#include "soc_core_arm.h"
+#include "soc_core_trace.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 void soc_core_reset(soc_core_p core)
 {
-	_TRACE_(core, ENTER);
-	
 	CPSR = 0x13;		/* Enter Supervisor mode */
 	BCLR(CPSR, 5);		/* Execute in ARM state */
 	BSET(CPSR, 6);		/* Disable fast interrupts */
@@ -25,8 +34,11 @@ void soc_core_reset(soc_core_p core)
 	soc_core_trace_psr(core, __FUNCTION__, CPSR);
 
 	soc_core_psr_mode_switch(core, CPSR);
-	
-	_TRACE_(core, EXIT);
+}
+
+int soc_core_in_a_privaleged_mode(soc_core_p core)
+{
+	return(0x00 != mlBFEXT(CPSR, 4, 0));
 }
 
 int soc_core_init(csx_p csx, soc_core_h h2core)
@@ -36,13 +48,10 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 	soc_core_p core;
 	ERR_NULL(core = malloc(sizeof(soc_core_t)));
 
-	_TRACE_(core, ENTER);
-
 	core->csx = csx;
 	*h2core = core;
 
 	soc_core_reset(core);
 
-	_TRACE_(core, EXIT);
 	return(err);
 }

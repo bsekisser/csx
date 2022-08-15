@@ -1,14 +1,26 @@
-#include "csx.h"
-#include "soc_mmio.h"
+#include "soc_mmio_mpu_l1_ihr.h"
 
 #include "soc_mmio_omap.h"
 
-#include "soc_mmio_mpu_l1_ihr.h"
+/* **** */
+
+#include "bitfield.h"
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 #define MMIO_LIST \
 	MMIO(0xfffe, 0xcb04, 0xffff, 0xffff, 32, MEM_RW, MPU_L1_MIR)
 
-#include "soc_mmio_trace.h"
+#define TRACE_LIST
+	#include "soc_mmio_trace.h"
+#undef TRACE_LIST
 
 static uint32_t soc_mmio_mpu_l1_ihr_read(void* data, uint32_t addr, uint8_t size)
 {

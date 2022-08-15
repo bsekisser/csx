@@ -1,5 +1,16 @@
-#include "csx.h"
-#include "soc_core.h"
+#include "soc_core_coprocessor.h"
+
+/* **** */
+
+#include "err_test.h"
+#include "log.h"
+
+/* **** */
+
+#include <errno.h>
+#include <string.h>
+
+/* **** */
 
 typedef struct soc_coprocessor_t {
 	csx_p csx;
