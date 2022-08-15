@@ -489,7 +489,7 @@ static void arm_inst_ldstm(soc_core_p core)
 			}
 		}
 
-		if(BTST(vR(M), 15) {
+		if(BTST(vR(M), 15)) {
 			/* CP15_r1_Ubit == 0 */
 			const uint32_t ea = ls.ea & ~3;
 
@@ -497,7 +497,7 @@ static void arm_inst_ldstm(soc_core_p core)
 
 			if(ls.bit.l)
 			{
-				rxx_v = soc_core_read(core->soc, ea, sizeof(uint32_t));
+				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
 				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
 				if(1) /* arm_version >= 5*/
 					soc_core_reg_set_pcx(core, rxx_v);
@@ -508,7 +508,7 @@ static void arm_inst_ldstm(soc_core_p core)
 			{
 				rxx_v = PC_ARM;
 				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
-				soc_core_write(core->soc, ea, rxx_v, sizeof(uint32_t));
+				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
 			}
 		}
 
