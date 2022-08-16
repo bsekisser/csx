@@ -26,73 +26,46 @@
 
 #define DPLL1_CTL_REG		_DPLL(0x000)
 
-static uint32_t soc_mmio_dpll_read(void* data, uint32_t addr, uint8_t size)
+void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_dpll_p dpll = data;
-	const csx_p csx = dpll->csx;
-
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint32_t value = 0;
-	
-	switch(addr)
-	{
-		case	DPLL1_CTL_REG:
-			value = dpll->ctl_reg[0];
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
-	}
-	
-//	return(soc_data_read((uint8_t*)&value, size));
-	return(value);
-}
-
-void soc_mmio_dpll_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
-{
-	const soc_mmio_dpll_p dpll = data;
+	const soc_mmio_dpll_p dpll = param;
 	const csx_p csx = dpll->csx;
 	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	switch(addr)
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case	DPLL1_CTL_REG:
+		switch(addr)
 		{
-			int pll_enable = BEXT(value, 4);
-			if(1)
+			case	DPLL1_CTL_REG:
 			{
-				LOG("LS_DISABLE: %01u, IAI: %01u, IOB: %01u, TEST: %01u",
-					BEXT(value, 15), BEXT(value, 14), BEXT(value, 13),
-					BEXT(value, 12));
-				LOG("PLL_MULT: %02u, PLL_DIV: %01u, PLL_ENABLE: %01u",
-					mlBFEXT(value, 11, 7), mlBFEXT(value, 6, 5), pll_enable);
-				LOG("BYPASS_DIV: %01u, BREAKLN: %01u, LOCK: %01u",
-					 mlBFEXT(value, 3, 2), BEXT(value, 1), BEXT(value, 0));
-			}
-//			dpll->ctl_reg[0] = value | 1;
-			dpll->ctl_reg[0] = value | pll_enable;
-		}	break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;	
+				int pll_enable = BEXT(value, 4);
+				if(1)
+				{
+					LOG("LS_DISABLE: %01u, IAI: %01u, IOB: %01u, TEST: %01u",
+						BEXT(value, 15), BEXT(value, 14), BEXT(value, 13),
+						BEXT(value, 12));
+					LOG("PLL_MULT: %02u, PLL_DIV: %01u, PLL_ENABLE: %01u",
+						mlBFEXT(value, 11, 7), mlBFEXT(value, 6, 5), pll_enable);
+					LOG("BYPASS_DIV: %01u, BREAKLN: %01u, LOCK: %01u",
+						 mlBFEXT(value, 3, 2), BEXT(value, 1), BEXT(value, 0));
+				}
+				value |= pll_enable;
+			}	break;
+		}
+
+		soc_data_write(data + (addr & 0xff), value, size);
+	} else {
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
-}
-
-void soc_mmio_dpll_reset(void* data)
-{
-	const soc_mmio_dpll_p dpll = data;
-
-	dpll->ctl_reg[0] = 0x00002002;	/* 1 */
 }
 
 static soc_mmio_peripheral_t dpll_peripheral = {
 	.base = CSX_MMIO_DPLL_BASE,
+	.trace_list = trace_list,
 
-	.reset = soc_mmio_dpll_reset,
+//	.reset = soc_mmio_dpll_reset,
 
-	.read = soc_mmio_dpll_read,
+//	.read = soc_mmio_dpll_read,
 	.write = soc_mmio_dpll_write,
 };
 

@@ -34,75 +34,24 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_watchdog_read(void* data, uint32_t addr, uint8_t size)
-{
-	const soc_mmio_watchdog_p wdt = data;
-	const csx_p csx = wdt->csx;
-	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint32_t value = 0;
-	
-	switch(addr)
-	{
-		case	WWPS:
-			value = wdt->wwps;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
-	}
-	
-	return(value);
-}
-
-static void soc_mmio_watchdog_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
-{
-	const soc_mmio_watchdog_p wdt = data;
-	const csx_p csx = wdt->csx;
-	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	switch(addr)
-	{
-		case	WSPR:
-			wdt->wspr = value;
-			break;
-		case	MPU_WDT_TIMER_MODE:
-			wdt->timer.mode = value;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;
-	}
-}
-
-static void soc_mmio_watchdog_reset(void* data)
-{
-	const soc_mmio_watchdog_p wdt = data;
-
-	wdt->wwps = 0;
-	wdt->wspr = 0;
-	
-	wdt->timer.mode = 0x00008000;
-}
-
 static soc_mmio_peripheral_t watchdog_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_WATCHDOG_BASE,
-
-		.reset = soc_mmio_watchdog_reset,
-
-		.read = soc_mmio_watchdog_read,
-		.write = soc_mmio_watchdog_write
-	},
-	[1] = {
-		.base = CSX_MMIO_TIMER_WDT_BASE,
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_watchdog_reset,
 
-		.read = soc_mmio_watchdog_read,
-		.write = soc_mmio_watchdog_write
+//		.read = soc_mmio_watchdog_read,
+//		.write = soc_mmio_watchdog_write
+	},
+	[1] = {
+		.base = CSX_MMIO_TIMER_WDT_BASE,
+		.trace_list = trace_list,
+
+//		.reset = soc_mmio_watchdog_reset,
+
+//		.read = soc_mmio_watchdog_read,
+//		.write = soc_mmio_watchdog_write
 	},
 };
 

@@ -65,122 +65,25 @@
 #define RESET_CTL			_CFG(0x0140)
 #define esac_oxfffe1160		_CFG(0x0160)
 
-static uint32_t cfg_data_rw(soc_mmio_cfg_p cfg, uint32_t addr, uint32_t* value, uint32_t size)
-{
-	const uint32_t offset = addr - CSX_MMIO_CFG_BASE;
-	uint8_t* ptr = &cfg->data[offset & 0x1ff];
-	
-	if(value)
-		soc_data_write(ptr, *value, size);
-	else
-		return(soc_data_read(ptr, size));
-	
-	return(0);
-}
-
-static uint32_t soc_mmio_cfg_read(void* data, uint32_t addr, uint8_t size)
-{
-	soc_mmio_cfg_p cfg = data;
-	csx_p csx = cfg->csx;
-
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint32_t value = cfg_data_rw(cfg, addr, 0, size);
-	
-	switch(addr)
-	{
-		case	esac_oxfffe1160:
-			break;
-	/* **** */ 
-		case	COMP_MODE_CTRL_0:
-		case	FUNC_MUX_CTRL_3...FUNC_MUX_CTRL_D:
-		case	FUNC_MUX_CTRL_E...FUNC_MUX_CTRL_12:
-		case	MOD_CONF_CTRL_0:
-		case	PU_PD_SEL_0...PU_PD_SEL_4:
-		case	PULL_DWN_CTRL_0...PULL_DWN_CTRL_3:
-		case	PULL_DWN_CTRL_4:
-		case	RESET_CTL:
-		case	USB_TRANSCEIVER_CTRL:
-		case	VOLTAGE_CTRL_0:
-			break;
-	/* **** */ 
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
-	}
-	
-//	return(soc_data_read((uint8_t*)&value, size));
-	return(value);
-}
-
-static void soc_mmio_cfg_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
-{
-	soc_mmio_cfg_p cfg = data;
-	csx_p csx = cfg->csx;
-
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-	
-	switch(addr)
-	{
-		case	esac_oxfffe1160:
-			break;
-	/* **** */
-		case	COMP_MODE_CTRL_0:
-		case	FUNC_MUX_CTRL_3...FUNC_MUX_CTRL_D:
-		case	FUNC_MUX_CTRL_E...FUNC_MUX_CTRL_12:
-		case	MOD_CONF_CTRL_0:
-		case	PU_PD_SEL_0...PU_PD_SEL_4:
-		case	PULL_DWN_CTRL_0...PULL_DWN_CTRL_3:
-		case	PULL_DWN_CTRL_4:
-		case	RESET_CTL:
-		case	USB_TRANSCEIVER_CTRL:
-		case	VOLTAGE_CTRL_0:
-			break;
-	/* **** */
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;
-	}
-
-	cfg_data_rw(cfg, addr, &value, size);
-}
-
-static void soc_mmio_cfg_reset(void* data)
-{
-	soc_mmio_cfg_p cfg = data;
-
-	for(int i = 0; i < 0x200; i++)
-		cfg->data[i] = 0;
-
-	int i = 0;
-	do {
-		ea_trace_p tle = &trace_list[i++];
-
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
-
-		uint32_t value = tle->reset_value;
-		if(value)
-			cfg_data_rw(cfg, tle->address, &value, tle->size);
-	}while(trace_list[i].address);
-}
-
 static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_CFG_BASE,
+		.trace_list = trace_list,
 
-		.reset = soc_mmio_cfg_reset,
+//		.reset = soc_mmio_cfg_reset,
 		
-		.read = soc_mmio_cfg_read,
-		.write = soc_mmio_cfg_write,
+//		.read = soc_mmio_cfg_read,
+//		.write = soc_mmio_cfg_write,
 	},
 
 	[1] = {
 		.base = CSX_MMIO_CFG_BASE + 0x100,
+		.trace_list = trace_list,
 
-	//	.reset = soc_mmio_cfg_reset,
+//		.reset = soc_mmio_cfg_reset,
 		
-		.read = soc_mmio_cfg_read,
-		.write = soc_mmio_cfg_write,
+//		.read = soc_mmio_cfg_read,
+//		.write = soc_mmio_cfg_write,
 	}
 };
 

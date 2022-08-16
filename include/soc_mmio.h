@@ -19,14 +19,14 @@ typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
 #define CSX_MMIO_STOP 0xfffeffff
 #define CSX_MMIO_SIZE (CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
 
-typedef uint32_t (*soc_mmio_read_fn)(void* data, uint32_t addr, uint8_t size);
-typedef void (*soc_mmio_write_fn)(void* data, uint32_t addr, uint32_t value, uint8_t size);
+typedef uint32_t (*soc_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
+typedef void (*soc_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
 
 typedef struct soc_mmio_peripheral_t {
 	uint32_t			base;
 	ea_trace_p			trace_list;
 
-	void				(*reset)(void*);
+	void				(*reset)(void*, void*);
 	
 	soc_mmio_read_fn	read;
 	soc_mmio_write_fn	write;

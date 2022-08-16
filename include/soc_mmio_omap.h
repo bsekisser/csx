@@ -4,6 +4,7 @@
 #define CSX_MMIO_MPU_GPIO4_BASE		0xfffbbc00
 #define CSX_MMIO_MPU_GPIO1_BASE		0xfffbe400
 #define CSX_MMIO_MPU_GPIO2_BASE		0xfffbec00
+#define CSX_MMIO_MPU_L2_IHR_BASE	0xfffe0000
 #define CSX_MMIO_CFG_BASE			0xfffe1000
 #define CSX_MMIO_WATCHDOG_BASE		0xfffeb000
 #define CSX_MMIO_TIMER_BASE			0xfffec500
@@ -13,4 +14,13 @@
 #define CSX_MMIO_MPU_BASE			0xfffece00
 #define CSX_MMIO_DPLL_BASE			0xfffecf00
 
-#define CSX_MMIO_TIMER(_x)			(CSX_MMIO_TIMER_BASE + (((_x) & 0x03) << 8))
+#if 0
+	#define CSX_MMIO_GP_TIMER(_t) \
+		(CSX_MMIO_GP_TIMER_BASE + ((_t) * 0x800)
+#else
+	#define CSX_MMIO_GP_TIMER(_t) \
+		(CSX_MMIO_GP_TIMER_BASE + (((_t) & 0x07) << 11))
+#endif
+
+#define CSX_MMIO_TIMER(_t) \
+	(CSX_MMIO_TIMER_BASE + (((_t) & 0x03) << 8))

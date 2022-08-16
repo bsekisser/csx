@@ -45,9 +45,11 @@ typedef struct soc_mmu_t {
 
 /* **** */
 
-uint32_t soc_data_read(uint8_t* src, uint8_t size)
+uint32_t soc_data_read(void* p2src, uint8_t size)
 {
 	uint32_t res = 0;
+
+	uint8_t* src = (uint8_t*)p2src;
 
 	for(int i = 0; i < size; i++)
 		res |= ((*src++) << (i << 3));
@@ -55,13 +57,12 @@ uint32_t soc_data_read(uint8_t* src, uint8_t size)
 	return(res);
 }
 
-void soc_data_write(uint8_t* dst, uint32_t value, uint8_t size)
+void soc_data_write(void* p2dst, uint32_t value, uint8_t size)
 {
+	uint8_t* dst = (uint8_t*)p2dst;
+	
 	for(int i = 0; i < size; i++)
-	{
-		*dst++ = value & 0xff;
-		value >>= 8;
-	}
+		*dst++ = value >> (i << 3) & 0xff;
 }
 
 /* **** */

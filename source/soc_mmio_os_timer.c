@@ -23,57 +23,56 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_os_timer_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, uint8_t size)
 {
-	const soc_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
+	uint32_t value = soc_data_read(data + (addr & 0xff), size);;
 
-	uint32_t value = 0;
-	
-	switch(addr)
+	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case	OS_TIMER_CTRL:
-			value = BCLR(ost->ctrl, 1);
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
+		switch(addr)
+		{
+			case	OS_TIMER_CTRL:
+				BCLR(value, 1);
+				break;
+		}
+	} else {
+		LOG("addr = 0x%08x, size = 0x%02x", addr, size);
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
 	}
-	
+
 	return(value);
 }
 
-static void soc_mmio_os_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	switch(addr)
+	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case	OS_TIMER_CTRL:
-			ost->ctrl = value;
-			break;
-		case	OS_TIMER_TICK_VAL:
-			ost->tick_val = value;
-			ost->base = csx->cycle;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;
+		switch(addr)
+		{
+			case	OS_TIMER_TICK_VAL:
+				ost->base = csx->cycle;
+				break;
+		}
+		
+		soc_data_write(data + (addr & 0xff), value, size);
+	} else {
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
 }
 
-static void soc_mmio_os_timer_reset(void* data)
+static void soc_mmio_os_timer_reset(void* param, void* data)
 {
-	const soc_mmio_os_timer_p ost = data;
+	const soc_mmio_os_timer_p ost = param;
 	
 	ost->base = 0;
-	ost->tick_val = 0;
-	ost->ctrl = 0;
 }
 
 static soc_mmio_peripheral_t os_timer_peripheral = {

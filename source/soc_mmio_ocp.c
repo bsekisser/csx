@@ -33,98 +33,60 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_ocp_read(void* data, uint32_t addr, uint8_t size)
+static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_ocp_p ocp = data;
-	const csx_p csx = ocp->csx;
-
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint32_t value = 0;
-	
-	switch(addr & ~0xf)
-	{
-		case EMIFS_ADV_CS_CONFIG(0):
-			value = ocp->emifs[addr & 0xc].adv_config;
-			break;
-		case EMIFS_CS_CONFIG(0):
-			value = ocp->emifs[addr & 0xc].config;
-			break;		
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
-	}
-	
-//	return(soc_data_read((uint8_t*)&value, size));
-	return(value);
-}
-
-static void soc_mmio_ocp_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
-{
-	const soc_mmio_ocp_p ocp = data;
+	const soc_mmio_ocp_p ocp = param;
 	const csx_p csx = ocp->csx;
 	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	switch(addr & ~0xf)
+	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case EMIFS_ADV_CS_CONFIG(0):
+		switch(addr & ~0xf)
 		{
-			LOG("BTMODE: %01u, ADVHOLD: %01u, OEHOLD: %01u, OESETUP: %01u",
-				BEXT(value, 9), BEXT(value, 8), mlBFEXT(value, 7, 4), mlBFEXT(value, 3, 0));
+			case EMIFS_ADV_CS_CONFIG(0):
+			{
+				LOG("BTMODE: %01u, ADVHOLD: %01u, OEHOLD: %01u, OESETUP: %01u",
+					BEXT(value, 9), BEXT(value, 8), mlBFEXT(value, 7, 4), mlBFEXT(value, 3, 0));
+			}	break;
+			case EMIFS_CS_CONFIG(0):
+			{
+				LOG("PGWSTEN: %01u, PGWST: %01u, BTWST: %01u, MAD: %01u, BW: %01u",
+					BEXT(value, 31), mlBFEXT(value, 30, 27),
+					mlBFEXT(value, 26, 23), BEXT(value, 22), BEXT(value, 20));
+				
+				int rdmode = mlBFEXT(value, 18, 16);
+				LOG("RDMODE: %01u, PGWST/WELEN: %01u, WRWST: %01u, RDWST: %01u",
+					rdmode, mlBFEXT(value, 15, 12), mlBFEXT(value, 11, 8), mlBFEXT(value, 7, 4));
+				
+				const char *rdmodesl[] = {
+					"0x000, Mode 0: Asyncronous read",
+					"0x001, Mode 1: Page mode ROM read - 4 words per page",
+					"0x010, Mode 2: Page mode ROM read - 8 words per page",
+					"0x011, Mode 3: Page mode ROM read - 16 words per page",
+					"0x100, Mode 4: Syncronous burst read mode",
+					"0x101, Mode 5: Syncronous burst read mode",
+					"0x110, Reserved for future expansion",
+					"0x111, Mode 7: Syncronous burst read mode"};
+				
+				LOG("%s", rdmodesl[rdmode & 0x07]);
+				
+				LOG("RT: %01u, FCLKDIV: %01u", BEXT(value, 2), mlBFEXT(value, 1, 0));
+			}	break;		
+		}
 
-			ocp->emifs[addr & 0xc].adv_config = value;
-		}	break;
-		case EMIFS_CS_CONFIG(0):
-		{
-			LOG("PGWSTEN: %01u, PGWST: %01u, BTWST: %01u, MAD: %01u, BW: %01u",
-				BEXT(value, 31), mlBFEXT(value, 30, 27),
-				mlBFEXT(value, 26, 23), BEXT(value, 22), BEXT(value, 20));
-			
-			int rdmode = mlBFEXT(value, 18, 16);
-			LOG("RDMODE: %01u, PGWST/WELEN: %01u, WRWST: %01u, RDWST: %01u",
-				rdmode, mlBFEXT(value, 15, 12), mlBFEXT(value, 11, 8), mlBFEXT(value, 7, 4));
-			
-			const char *rdmodesl[] = {
-				"0x000, Mode 0: Asyncronous read",
-				"0x001, Mode 1: Page mode ROM read - 4 words per page",
-				"0x010, Mode 2: Page mode ROM read - 8 words per page",
-				"0x011, Mode 3: Page mode ROM read - 16 words per page",
-				"0x100, Mode 4: Syncronous burst read mode",
-				"0x101, Mode 5: Syncronous burst read mode",
-				"0x110, Reserved for future expansion",
-				"0x111, Mode 7: Syncronous burst read mode"};
-			
-			LOG("%s", rdmodesl[rdmode & 0x07]);
-			
-			LOG("RT: %01u, FCLKDIV: %01u", BEXT(value, 2), mlBFEXT(value, 1, 0));
-			
-			ocp->emifs[addr & 0xc].config = value;
-		}	break;		
-		default:
-			LOG("addr = 0x%08x, cs = 0x%02x", addr, addr & 0xc);
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;	
-	}
-}
-
-static void soc_mmio_ocp_reset(void* data)
-{
-	const soc_mmio_ocp_p ocp = data;
-
-	for(int i = 0; i < 4; i++)
-	{
-		ocp->emifs[i].adv_config = 0x00000000;
-		ocp->emifs[i].config = 0x00000000;
+		soc_data_write(data + (addr & 0xff), value, size);
+	} else {
+		LOG("addr = 0x%08x, cs = 0x%02x", addr, addr & 0xc);
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
 }
 
 static soc_mmio_peripheral_t ocp_peripheral = {
 	.base = CSX_MMIO_OCP_BASE,
 
-	.reset = soc_mmio_ocp_reset,
+//	.reset = soc_mmio_ocp_reset,
 
-	.read = soc_mmio_ocp_read,
+//	.read = soc_mmio_ocp_read,
 	.write = soc_mmio_ocp_write,
 };
 

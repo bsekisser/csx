@@ -36,69 +36,67 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_timer_read(void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint8_t size)
 {
-	const soc_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = param;
 	const csx_p csx = t->csx;
 
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
 	uint32_t value = 0;
-	
-	switch(addr)
+
+	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case MPU_READ_TIMER(0):
-		case MPU_READ_TIMER(1):
-		case MPU_READ_TIMER(2):
-			value = csx->cycle - t->unit[timer].base;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
+		uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+
+		switch(addr)
+		{
+			case MPU_READ_TIMER(0):
+			case MPU_READ_TIMER(1):
+			case MPU_READ_TIMER(2):
+				value = csx->cycle - t->base[timer];
+				break;
+			default:
+				value = soc_data_read(data + (addr & 0xff), size);
+				break;
+		}
+	} else {
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
 	}
 	
-//	return(soc_data_read((uint8_t*)&value, size));
 	return(value);
 }
 
-static void soc_mmio_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = param;
 	const csx_p csx = t->csx;
 	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
-	
-	switch(addr)
+	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	if(eat)
 	{
-		case MPU_CNTL_TIMER(0):
-		case MPU_CNTL_TIMER(1):
-		case MPU_CNTL_TIMER(2):
-			t->unit[timer].cntl = value;
-			break;
-		case MPU_LOAD_TIMER(0):
-		case MPU_LOAD_TIMER(1):
-		case MPU_LOAD_TIMER(2):
-			t->unit[timer].base = csx->cycle;
-			t->unit[timer].value = value;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;
+		uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+		
+		switch(addr)
+		{
+			case MPU_LOAD_TIMER(0):
+			case MPU_LOAD_TIMER(1):
+			case MPU_LOAD_TIMER(2):
+				t->base[timer] = csx->cycle;
+				break;
+		}
+		
+		soc_data_write(data + (addr & 0xff), value, size);
+	} else {
+		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
 }
 
-static void soc_mmio_timer_reset(void* data)
+static void soc_mmio_timer_reset(void* param, void* data)
 {
-	const soc_mmio_timer_p t = data;
+	const soc_mmio_timer_p t = param;
 	
 	for(int i = 0; i < 3; i++)
-	{
-		t->unit[i].base = 0;
-		t->unit[i].value = 0;
-	}
+		t->base[i] = 0;
 }
 
 static soc_mmio_peripheral_t timer_peripheral[3] = {

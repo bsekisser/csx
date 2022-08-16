@@ -49,8 +49,6 @@
 
 const char unit_map[16] = { 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0 };
 
-#define CSX_MMIO_GP_TIMER(_t)	(CSX_MMIO_GP_TIMER_BASE + (((_t) & 7) << 11))
-
 #define GPTMR(_t, _o)			(CSX_MMIO_GP_TIMER(_t) + _o)
 
 #define GPTMR_TIOCP_CFG		0x10
@@ -66,143 +64,69 @@ const char unit_map[16] = { 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0 };
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_gp_timer_read(void* data, uint32_t addr, uint8_t size)
-{
-	const soc_mmio_gp_timer_p gpt = data;
-	const csx_p csx = gpt->csx;
-	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	uint16_t unit = unit_map[((addr - CSX_MMIO_GP_TIMER_BASE) >> 11) & 0xf];
-	uint8_t offset = addr & 0xff;
-
-	uint32_t value = 0;
-	
-	switch(offset)
-	{
-		case	GPTMR_TCLR:
-			value = gpt->timer[unit].ctrl;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
-			break;
-	}
-	
-	return(value);
-}
-
-static void soc_mmio_gp_timer_write(void* data, uint32_t addr, uint32_t value, uint8_t size)
-{
-	const soc_mmio_gp_timer_p gpt = data;
-	const csx_p csx = gpt->csx;
-	
-	soc_mmio_trace(csx->mmio, trace_list, addr);
-
-	
-	uint16_t unit = unit_map[((addr - CSX_MMIO_GP_TIMER_BASE) >> 11) & 0xf];
-	uint8_t offset = addr & 0xff;
-
-	switch(offset)
-	{
-		case	GPTMR_TCLR:
-		{	LOG("unit = %u", unit);
-			gpt->timer[unit].ctrl = value;
-		}	break;
-		case	GPTMR_TIER:
-			gpt->timer[unit].interrupt_enable = value;
-			break;
-		case	GPTMR_TIOCP_CFG:
-			gpt->timer[unit].ocp_cfg = value;
-			break;
-		case	GPTMR_TISR:
-			gpt->timer[unit].status = value;
-			break;
-		case	GPTMR_TLDR:
-			gpt->timer[unit].load = value;
-			break;
-		case	GPTMR_TMAR:
-			gpt->timer[unit].match = value;
-			break;
-		case	GPTMR_TSICR:
-			gpt->timer[unit].syncro_icr = value;
-			break;
-		case	GPTMR_TWER:
-			gpt->timer[unit].wakeup_enable = value;
-			break;
-		default:
-			LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-			break;
-	}
-}
-
-static void soc_mmio_gp_timer_reset(void* data)
-{
-	const soc_mmio_gp_timer_p gpt = data;
-
-	for(int i = 0; i < 7; i++)
-	{
-	//	gpt->timer[i].base = 0;
-	//	gpt->timer[i].tick_val = 0;
-		gpt->timer[i].ctrl = 0;
-	}
-}
-
 static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	[0] = {
 		.base = CSX_MMIO_GP_TIMER(0),
+		.trace_list = trace_list,
 
-		.reset = soc_mmio_gp_timer_reset,
+//		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[1] = {
 		.base = CSX_MMIO_GP_TIMER(1),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[2] = {
 		.base = CSX_MMIO_GP_TIMER(2),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[3] = {
 		.base = CSX_MMIO_GP_TIMER(3),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[4] = {
 		.base = CSX_MMIO_GP_TIMER(4),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[5] = {
 		.base = CSX_MMIO_GP_TIMER(5),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	},
 	[6] = {
 		.base = CSX_MMIO_GP_TIMER(6),
+		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
-		.read = soc_mmio_gp_timer_read,
-		.write = soc_mmio_gp_timer_write
+//		.read = soc_mmio_gp_timer_read,
+//		.write = soc_mmio_gp_timer_write
 	}
 };
 

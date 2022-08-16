@@ -37,9 +37,11 @@ enum {
 #define MMIO(_ahi, _alo, _dhi, _dlo, _size, _access, _name) \
 	_name = ((_ahi ## ULL << 16) + _alo ## ULL),
 
-enum {
-	MMIO_LIST
-};
+#ifdef TRACE_LIST
+	enum {
+		MMIO_LIST
+	};
+#endif
 
 typedef struct ea_trace_t {
 	uint32_t	address;
