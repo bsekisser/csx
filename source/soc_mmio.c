@@ -29,9 +29,7 @@
 /* **** */
 
 #define MMIO_LIST \
-	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1) \
-	MMIO(0xfffe, 0x0104, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x0104) \
-	MMIO(0xfffe, 0x0204, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x0204)
+	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1)
 
 #define TRACE_LIST
 	#include "soc_mmio_trace.h"
@@ -185,6 +183,8 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 	}
 
 	ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+	LOG("write -- 0x%08x", value);
+
 	if(eat)
 	{
 		switch(vaddr)
