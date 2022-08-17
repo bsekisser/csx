@@ -776,8 +776,6 @@ void soc_core_arm_step(soc_core_p core)
 		goto decode_fault;
 	}
 
-	uint dpi_opcode = 0;
-
 	switch(opcode)
 	{
 		case 0x00: /* xxxx 000x xxxx xxxx */
@@ -785,7 +783,6 @@ void soc_core_arm_step(soc_core_p core)
 				return(arm_inst_ldst(core));
 			else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
 				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
-					dpi_opcode = mlBFEXT(IR, 24, 21);
 					return(arm_inst_dpi(core));
 			}} else {
 				if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
@@ -820,13 +817,27 @@ void soc_core_arm_step(soc_core_p core)
 			if(ARM_INST_MCR_MRC == (IR & ARM_INST_MCR_MRC_MASK))
 				return(arm_inst_mcr_mrc(core));
 			break;
-		default:
-			break;
 	}
 
 decode_fault:
-	LOG(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
-		IR, opcode, dpi_opcode);
+	switch(opcode)
+	{
+		case 0x00:
+		case 0x01: {
+			const uint dpi_opcode = mlBFEXT(IR, 24, 21);
+			LOG(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
+				IR, opcode, dpi_opcode);
+			} break;
+		case 0x07: {
+			const uint opcode7 = mlBFEXT(IR, 27, 24);
+			LOG(">> ir = 0x%08x, opcode = 0x%02x, 0x%02x, 20: %01u, 4: %01u",
+				IR, opcode, opcode7, BEXT(IR, 20), BEXT(IR, 4));
+			} break;
+		default:
+			LOG(">> ir = 0x%08x, opcode = 0x%02x", IR, opcode);
+			break;
+	}
+	
 	soc_core_disasm_arm(core, PC, IR);
 	UNIMPLIMENTED;
 }
