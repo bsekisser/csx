@@ -2,6 +2,7 @@
 #include "soc_core_arm_decode.h"
 #include "soc_core_arm_inst.h"
 
+#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
@@ -531,28 +532,20 @@ static void arm_inst_ldstm(soc_core_p core)
 
 static void arm_inst_mcr_mrc(soc_core_p core)
 {
-	csx_p csx = core->csx;
-	soc_coprocessor_t acp;
-
-	soc_core_arm_decode_coproc(core, &acp);
+	soc_core_arm_decode_coproc(core);
 
 	CORE_TRACE("m%s(p(%u), %u, %s, %s, %s, %u)",
-		acp.bit.l ? "rc" : "cr", acp.cp_num, acp.opcode1,
+		MCRC_L ? "rc" : "cr", MCRC_CPx, MCRC_OP1,
 		_arm_reg_name(rR(D)),
 		_arm_creg_name(rR(N)), _arm_creg_name(rR(M)),
-		acp.opcode2);
+		MCRC_OP2);
 
 	if(CCx.e)
 	{
-		if(acp.bit.l)
-		{
-			soc_coprocessor_read(csx, &acp);
-			LOG_ACTION(exit(1));
-		}
+		if(MCRC_L)
+			soc_core_cp15_read(core);
 		else
-		{
-			soc_coprocessor_write(csx, &acp);
-		}
+			soc_core_cp15_write(core);
 	}
 }
 

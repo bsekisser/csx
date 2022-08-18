@@ -83,6 +83,12 @@ static void set_tlbe_urwx_rwx(soc_mmu_tlb_p t, int ur, int uw, int ux, int r, in
 	t->x = x;
 }
 
+void soc_mmu_tlb_invalidate(soc_mmu_p mmu)
+{
+	for(int i = 0; i < 256; i++)
+		memset(&mmu->tlb[i], 0, sizeof(soc_mmu_tlb_t));
+}
+
 static inline int soc_mmu__tlb_entry(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_h h2tlbe)
 {
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)mmu, va, (uint)h2tlbe);

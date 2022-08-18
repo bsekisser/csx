@@ -24,7 +24,7 @@ typedef struct csx_t** csx_h;
 /* **** */
 
 #include "soc_core.h"
-#include "soc_core_coprocessor.h"
+//#include "soc_core_coprocessor.h"
 #include "soc_mmu.h"
 #include "soc_mmio.h"
 #include "csx_state.h"
@@ -33,12 +33,15 @@ typedef struct csx_t** csx_h;
 
 typedef struct csx_t {
 	soc_core_p			core;
-	soc_coprocessor_p	cp;
+//	soc_coprocessor_p	cp;
 	soc_mmu_p			mmu;
 	soc_mmio_p			mmio;
 	
 	uint64_t			cycle;
 	csx_state_t			state;
+
+	uint32_t			cr[15];
+#define vCR(_x)			csx->cr[_x]
 
 	csh					cs_handle;
 }csx_t;

@@ -2,7 +2,6 @@
 
 /* **** */
 
-typedef struct soc_coprocessor_t* soc_coprocessor_p;
 typedef struct soc_core_dpi_t* soc_core_dpi_p;
 typedef struct soc_core_ldst_t* soc_core_ldst_p;
 
@@ -42,16 +41,13 @@ static inline void soc_core_arm_decode_rn_rd(soc_core_p core,
 
 /* **** */
 
-typedef struct soc_coprocessor_t {
-	uint8_t			opcode1;
-	uint8_t			opcode2;
-	uint8_t			cp_num;
-	
-	struct	{
-		uint8_t		l;
-		uint8_t		x4;
-	}bit;
-}soc_coprocessor_t;
+#define MCRC_CRm					mlBFEXT(IR, 3, 0)
+#define MCRC_CRn					mlBFEXT(IR, 19, 16)
+#define MCRC_CPx					mlBFEXT(IR, 11, 8)
+#define MCRC_L						BEXT(IR, 20)
+#define MCRC_OP1					mlBFEXT(IR, 23, 21)
+#define MCRC_OP2					mlBFEXT(IR, 7, 5)
+#define MCRC_Rd						mlBFEXT(IR, 15, 12)
 
 typedef struct soc_core_dpi_t {
 	uint8_t		wb;
@@ -106,7 +102,7 @@ typedef struct soc_core_ldst_t {
 
 /* **** */
 
-void soc_core_arm_decode_coproc(soc_core_p core, soc_coprocessor_p acp);
+void soc_core_arm_decode_coproc(soc_core_p core);
 void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls);
 void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi);
 const char* soc_core_arm_decode_shifter_op_string(uint8_t shopc);

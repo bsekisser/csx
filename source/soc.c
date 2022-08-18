@@ -1,5 +1,6 @@
 #include "soc.h"
 #include "soc_core.h"
+#include "soc_core_cp15.h"
 #include "csx.h"
 #include "csx_state.h"
 
@@ -26,7 +27,7 @@ int csx_soc_init(csx_p csx)
 	CYCLE = 0;
 	
 	ERR(err = soc_core_init(csx, &csx->core));
-	ERR(err = soc_coprocessor_init(csx));
+	ERR(err = soc_core_cp15_init(csx));
 	ERR(err = soc_mmu_init(csx, &csx->mmu));
 	ERR(err = soc_mmio_init(csx, &csx->mmio));
 	

@@ -13,27 +13,11 @@
 
 /* **** */
 
-void soc_core_arm_decode_coproc(soc_core_p core, soc_coprocessor_p acp)
+void soc_core_arm_decode_coproc(soc_core_p core)
 {
-	if(0xe == mlBFEXT(IR, 27, 24))
-	{
-		acp->bit.x4 = BEXT(IR, 4);
-		if(acp->bit.x4)
-		{
-			acp->bit.l = BEXT(IR, 20);
-			soc_core_arm_decode_rn_rd(core, 0, !acp->bit.l);
-		}
-		else
-		{
-			LOG_ACTION(core->csx->state |= CSX_STATE_HALT);
-		}
-
-		soc_core_arm_decode_rm(core, 0);
-		
-		acp->opcode1 = mlBFEXT(IR, 23, 21);
-		acp->cp_num = mlBFEXT(IR, 11, 8);
-		acp->opcode2 = mlBFEXT(IR, 7, 5);
-	}
+	rR(D) = MCRC_Rd;
+	rR(M) = MCRC_CRm;
+	rR(N) = MCRC_CRn;
 }
 
 void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)

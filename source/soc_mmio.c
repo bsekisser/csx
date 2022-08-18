@@ -29,7 +29,9 @@
 /* **** */
 
 #define MMIO_LIST \
-	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1)
+	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1) \
+	MMIO(0xfffe, 0x6010, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6010) \
+	MMIO(0xfffe, 0x6014, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6014)
 
 #define TRACE_LIST
 	#include "soc_mmio_trace.h"
@@ -151,6 +153,9 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	{
 		switch(vaddr)
 		{
+			case	x0xfffe_0x6014:
+				return(1);
+				break;
 			case	USB_CLNT_SYSCON1:
 			default:
 				return(soc_data_read(&data[offset], size));
