@@ -151,20 +151,20 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	if(eat)
 	{
+		uint32_t value = soc_data_read(&data[offset], size);
 		switch(vaddr)
 		{
 			case	x0xfffe_0x6014:
-				return(1);
-				break;
-			case	USB_CLNT_SYSCON1:
-			default:
-				return(soc_data_read(&data[offset], size));
+				value |= 1;
 				break;
 		}
+
+		return(value);
+	} else {
+		LOG("vaddr = 0x%08x, module = 0x%05x", vaddr, module);
+		LOG_ACTION(exit(1));
 	}
 
-	LOG("vaddr = 0x%08x, module = 0x%05x", vaddr, module);
-	LOG_ACTION(exit(1));
 	return(0);
 }
 
@@ -194,16 +194,13 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 	{
 		switch(vaddr)
 		{
-			case	USB_CLNT_SYSCON1:
-			default:
-				return(soc_data_write(&data[offset], value, size));
-				break;
 		}
+		
+		soc_data_write(&data[offset], value, size);
+	} else {
+		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, module);
+		LOG_ACTION(exit(1));
 	}
-
-	LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, module);
-	LOG_ACTION(exit(1));
-	return;
 }
 
 void soc_mmio_reset(soc_mmio_p mmio)
