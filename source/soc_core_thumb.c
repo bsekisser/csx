@@ -442,20 +442,20 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 			break;
 	}
 
-	vR(N) += imm8;
+	const uint32_t ea = vR(N) + imm8;
 
 	if(bit_l)
-		vR(D) = soc_core_read(core, vR(N), sizeof(uint32_t));
+		vR(D) = soc_core_read(core, ea, sizeof(uint32_t));
 	else
 		vR(D) = soc_core_reg_get(core, rR(D));
 
 	CORE_TRACE("%s(%s, %s[0x%03x]); /* [0x%08x](0x%08x) */",
-		bit_l ? "ldr" : "str", _arm_reg_name(rR(D)), _arm_reg_name(rR(N)), imm8, vR(N), vR(D));
+		bit_l ? "ldr" : "str", _arm_reg_name(rR(D)), _arm_reg_name(rR(N)), imm8, ea, vR(D));
 
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
 	else
-		soc_core_write(core, vR(N), vR(D), sizeof(uint32_t));
+		soc_core_write(core, ea, vR(D), sizeof(uint32_t));
 }
 
 static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)

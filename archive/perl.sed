@@ -16,3 +16,8 @@ s/csx_reg/soc_core_reg/g
 s/csx_tlb/soc_mmu_tlb/g
 s/csx_trace_inst/soc_core_trace_inst/g
 s/csx_trace_psr/soc_core_trace_psr/g
+
+s/CSX_CORE_ARM/SOC_CORE_ARM/g
+s/CSX_CORE_THUMB/SOC_CORE_THUMB/g
+
+perl -i -pe 's/old/new/g' *
