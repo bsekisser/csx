@@ -110,10 +110,10 @@ static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 
-	if(0 == vR(S))
-		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-	else
-		dpi->out.c = BEXT(dpi->out.v, 31);
+//	if(0 == vR(S))
+//		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+//	else
+//		dpi->out.c = BEXT(dpi->out.v, 31);
 }
 
 static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
