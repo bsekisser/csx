@@ -382,7 +382,7 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 	const char *ss = "";
 	uint8_t size = 0;
 
-	if(CSX_CORE_THUMB_LDST_BW_O_RN_RD == (IR & CSX_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
+	if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
 	{
 		if(bit_b)
 		{
@@ -786,67 +786,67 @@ void soc_core_thumb_step(soc_core_p core)
 		{
 		/* **** */
 			case	0x0000:
-				if(CSX_CORE_THUMB_SBI_IMM5_RM_RD == (IR & CSX_CORE_THUMB_SBI_IMM5_RM_RD_MASK))
+				if(SOC_CORE_THUMB_SBI_IMM5_RM_RD == (IR & SOC_CORE_THUMB_SBI_IMM5_RM_RD_MASK))
 					return(soc_core_thumb_sbi_imm5_rm_rd(core));
 				break;
 			case	0x1800:
-				if(CSX_CORE_THUMB_ADD_SUB_RN_RD == (IR & CSX_CORE_THUMB_ADD_SUB_RN_RD_MASK))
+				if(SOC_CORE_THUMB_ADD_SUB_RN_RD == (IR & SOC_CORE_THUMB_ADD_SUB_RN_RD_MASK))
 					return(soc_core_thumb_add_sub_rn_rd(core));
 				break;
 			case	0x2000:
-				if(CSX_CORE_THUMB_ASCM_RD_I8(0) == (IR & CSX_CORE_THUMB_ASCM_RD_I8_MASK))
+				if(SOC_CORE_THUMB_ASCM_RD_I8(0) == (IR & SOC_CORE_THUMB_ASCM_RD_I8_MASK))
 					return(soc_core_thumb_ascm_rd_i(core));
 				break;
 			case	0x4000:
-				if(CSX_CORE_THUMB_DP_RMS_RDN == (IR & CSX_CORE_THUMB_DP_RMS_RDN_MASK))
+				if(SOC_CORE_THUMB_DP_RMS_RDN == (IR & SOC_CORE_THUMB_DP_RMS_RDN_MASK))
 					return(soc_core_thumb_dp_rms_rdn(core));
 				break;
 			case	0x4400:
-				if(CSX_CORE_THUMB_SDP_RMS_RDN(0) == (IR & CSX_CORE_THUMB_SDP_RMS_RDN_MASK))
+				if(SOC_CORE_THUMB_SDP_RMS_RDN(0) == (IR & SOC_CORE_THUMB_SDP_RMS_RDN_MASK))
 					return(soc_core_thumb_sdp_rms_rdn(core));
 				break;
 			case	0x4700:
-				if(CSX_CORE_THUMB_BX == (IR & CSX_CORE_THUMB_BX_MASK))
+				if(SOC_CORE_THUMB_BX == (IR & SOC_CORE_THUMB_BX_MASK))
 					return(soc_core_thumb_bx(core));
 				break;
 			case	0x4800:
-				if(CSX_CORE_THUMB_LDST_PC_RD_I == (IR & CSX_CORE_THUMB_LDST_PC_RD_I_MASK))
+				if(SOC_CORE_THUMB_LDST_PC_RD_I == (IR & SOC_CORE_THUMB_LDST_PC_RD_I_MASK))
 					return(soc_core_thumb_ldst_rd_i(core));
 				break;
 			case	0x5000:
-				if(CSX_CORE_THUMB_LDST_RM_RN_RD == (IR & CSX_CORE_THUMB_LDST_RM_RN_RD_MASK))
+				if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
 					return(soc_core_thumb_ldst_rm_rn_rd(core));
 				break;
 			case	0x5600:
 			case	0x5e00:
 				break;
 			case	0x6000:
-				if(CSX_CORE_THUMB_LDST_BW_O_RN_RD == (IR & CSX_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
+				if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
 					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
 				break;
 			case	0x8000:
-				if(CSX_CORE_THUMB_LDST_H_O_RN_RD == (IR & CSX_CORE_THUMB_LDST_H_O_RN_RD_MASK))
+				if(SOC_CORE_THUMB_LDST_H_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_H_O_RN_RD_MASK))
 					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
 				break;
 			case	0x9000:
-				if(CSX_CORE_THUMB_LDST_SP_RD_I == (IR & CSX_CORE_THUMB_LDST_SP_RD_I_MASK))
+				if(SOC_CORE_THUMB_LDST_SP_RD_I == (IR & SOC_CORE_THUMB_LDST_SP_RD_I_MASK))
 					return(soc_core_thumb_ldst_rd_i(core));
 				break;
 			case	0xa000:
-				if(CSX_CORE_THUMB_ADD_RD_PCSP_I == (IR & CSX_CORE_THUMB_ADD_RD_PCSP_I_MASK))
+				if(SOC_CORE_THUMB_ADD_RD_PCSP_I == (IR & SOC_CORE_THUMB_ADD_RD_PCSP_I_MASK))
 					return(soc_core_thumb_add_rd_pcsp_i(core));
 				break;
 			case	0xb000:
-				if(CSX_CORE_THUMB_ADD_SUB_SP_I7 == (IR & CSX_CORE_THUMB_ADD_SUB_SP_I7_MASK))
+				if(SOC_CORE_THUMB_ADD_SUB_SP_I7 == (IR & SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK))
 					return(soc_core_thumb_add_sub_sp_i7(core));
 				break;
 			case	0xb400:
 			case	0xbc00:
-				if(CSX_CORE_THUMB_POP_PUSH(0) == (IR & CSX_CORE_THUMB_POP_PUSH_MASK))
+				if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
 					return(soc_core_thumb_pop_push(core));
 				break;
 			case	0xc000:
-				if(CSX_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & CSX_CORE_THUMB_LDSTM_RN_RXX_MASK))
+				if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
 					return(soc_core_thumb_ldstm_rn_rxx(core));
 				break;
 			case	0xd000:
