@@ -19,7 +19,7 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	CORE_TRACE_START();
 
 	_CORE_TRACE_("%s%s(",
-			dpi->mnemonic, dpi->bit.s ? "s" : "");
+			dpi->mnemonic, DPI_BIT(s20) ? "s" : "");
 
 	if(dpi->wb)
 		_CORE_TRACE_("%s", _arm_reg_name(rR(D)));
@@ -27,7 +27,7 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	if((rR(N) & 0x0f) == rR(N))
 		_CORE_TRACE_("%s%s", dpi->wb ? ", " : "", _arm_reg_name(rR(N)));
 
-	if(dpi->bit.i)
+	if(DPI_BIT(i25))
 	{
 		_CORE_TRACE_(", %u", vR(M));
 
@@ -38,13 +38,13 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	{
 		_CORE_TRACE_(", %s", _arm_reg_name(rR(M)));
 
-		const char* sos = soc_core_arm_decode_shifter_op_string(dpi->shift_op);
+		const char* sos = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
 
-		if(dpi->bit.x4)
+		if(DPI_BIT(x4))
 			_CORE_TRACE_(", %s(%s)", sos, _arm_reg_name(rR(S)));
 		else if(vR(S))
 			_CORE_TRACE_(", %s(%u)", sos, vR(S));
-		else if(SOC_CORE_SHIFTER_OP_ROR == dpi->shift_op)
+		else if(SOC_CORE_SHIFTER_OP_ROR == DPI_SHIFT_OP)
 			_CORE_TRACE_(", RRX");
 	}
 

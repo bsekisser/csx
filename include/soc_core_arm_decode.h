@@ -41,6 +41,17 @@ static inline void soc_core_arm_decode_rn_rd(soc_core_p core,
 
 /* **** */
 
+enum {
+	DPI_BIT_i25 = 25,
+	DPI_BIT_s20 = 20,
+	DPI_BIT_x4 = 4,
+	DPI_BIT_x7 = 7,
+};
+
+#define DPI_BIT(_x)					BEXT(IR, DPI_BIT_##_x)
+#define DPI_OPERATION				mlBFEXT(IR, 24, 21)
+#define DPI_SHIFT_OP				(DPI_BIT(i25) ? SOC_CORE_SHIFTER_OP_ROR : mlBFEXT(IR, 6, 5))
+
 #define MCRC_CRm					mlBFEXT(IR, 3, 0)
 #define MCRC_CRn					mlBFEXT(IR, 19, 16)
 #define MCRC_CPx					mlBFEXT(IR, 11, 8)
@@ -51,15 +62,6 @@ static inline void soc_core_arm_decode_rn_rd(soc_core_p core,
 
 typedef struct soc_core_dpi_t {
 	uint8_t		wb;
-	uint8_t		operation;
-	uint8_t		shift_op;
-
-	struct {
-		uint8_t		i;
-		uint8_t		s;
-		uint8_t		x7;
-		uint8_t		x4;
-	}bit;
 
 	struct {
 		uint8_t		c;

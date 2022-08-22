@@ -23,7 +23,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 
 	if(rPC == rR(D))
 	{
-		const int thumb = dpi->bit.s && core->spsr
+		const int thumb = DPI_BIT(s20) && core->spsr
 			&& BTST(*core->spsr, SOC_CORE_PSR_BIT_T);
 
 		if(thumb)
@@ -39,14 +39,14 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 
 		if(dpi->wb)
 		{
-//			if(!dpi->bit.s && (rPC == rR(D)))
+//			if(!DPI_BIT(s20) && (rPC == rR(D)))
 			if(rPC == rR(D))
 				soc_core_reg_set_pcx(core, vR(D));
 			else
 				soc_core_reg_set(core, rR(D), vR(D));
 		}
 
-		if(dpi->bit.s)
+		if(DPI_BIT(s20))
 		{
 			if(rPC == rR(D))
 			{
@@ -57,7 +57,7 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 			}
 			else
 			{
-				switch(dpi->operation)
+				switch(DPI_OPERATION)
 				{
 					case ARM_DPI_OPERATION_ADD:
 						soc_core_flags_nzcv_add(core, vR(D), vR(N), dpi->out.v);
@@ -145,7 +145,7 @@ static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
 
 	dpi->mnemonic = "mov";
 
-	if(!dpi->bit.i && (rR(D) == rR(M)))
+	if(!DPI_BIT(i25) && (rR(D) == rR(M)))
 		snprintf(dpi->op_string, 255, "/* nop */");
 	else
 		snprintf(dpi->op_string, 255, "/* 0x%08x */", vR(D));
@@ -287,11 +287,11 @@ static void arm_inst_dpi(soc_core_p core)
 
 	soc_core_arm_decode_shifter_operand(core, &dpi);
 
-	const int get_rn = (ARM_DPI_OPERATION_MOV != dpi.operation);
+	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
 
 	soc_core_arm_decode_rn_rd(core, get_rn, 0);
 
-	switch(dpi.operation)
+	switch(DPI_OPERATION)
 	{
 		case ARM_DPI_OPERATION_ADD:
 			_arm_inst_dpi_operation_add(core, &dpi);
@@ -306,7 +306,7 @@ static void arm_inst_dpi(soc_core_p core)
 			_arm_inst_dpi_operation_eor(core, &dpi);
 			break;
 		case ARM_DPI_OPERATION_CMP:
-			if(dpi.bit.s)
+			if(DPI_BIT(s20))
 				_arm_inst_dpi_operation_cmp(core, &dpi);
 			else
 				goto exit_fault;
@@ -332,7 +332,7 @@ static void arm_inst_dpi(soc_core_p core)
 	return;
 
 exit_fault:
-	LOG("operation = 0x%02x", dpi.operation);
+	LOG("operation = 0x%02x", DPI_OPERATION);
 	soc_core_disasm_arm(core, IP, IR);
 	UNIMPLIMENTED;
 }

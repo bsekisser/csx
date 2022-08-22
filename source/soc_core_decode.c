@@ -4,12 +4,12 @@
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
 #include "soc_core_shifter.h"
-#include "soc_core_utility.h"
 
 /* **** */
 
 #include "bitfield.h"
 #include "log.h"
+#include "shift_roll.h"
 
 /* **** */
 
@@ -105,15 +105,8 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 
 static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->shift_op = SOC_CORE_SHIFTER_OP_ROR;
-
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
-
-//	if(0 == vR(S))
-//		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-//	else
-//		dpi->out.c = BEXT(dpi->out.v, 31);
 }
 
 static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
@@ -123,8 +116,7 @@ static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
 
 static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->bit.x7 = BEXT(IR, 7);
-	if(dpi->bit.x7)
+	if(DPI_BIT(x7))
 	{
 		LOG("**** I = 0, x4 = 1, x7 = 1 ****");
 
@@ -132,18 +124,18 @@ static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 		LOG_ACTION(exit(1));
 	}
 
-	_setup_rR_vR(S, mlBFEXT(IR, 11, 8),
-		soc_core_reg_get(core, rR(S)) & _BM(7));
+	soc_core_decode_get(core, rRS, 11, 8, 1);
+	vR(S) &= _BM(7);
 }
 
 static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p dpi)
 {
 	uint8_t asr_v = vR(S);
 
-	if(!dpi->bit.x4 && !vR(S))
+	if(!DPI_BIT(x4) && !vR(S))
 		asr_v = 32;
 
-	dpi->out.v = ((signed)vR(M) >> asr_v);
+	dpi->out.v = _asr(vR(M), asr_v);
 
 	if(asr_v)
 		dpi->out.c = BEXT(vR(M), asr_v - 1);
@@ -153,7 +145,7 @@ static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p 
 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->out.v = vR(M) << vR(S);
+	dpi->out.v = _lsl(vR(M), vR(S));
 	if(vR(S))
 		dpi->out.c = BEXT(vR(M), 32 - vR(S));
 	else
@@ -164,10 +156,10 @@ static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p 
 {
 	uint8_t lsr_v = vR(S);
 
-	if(!dpi->bit.x4 && !lsr_v)
+	if(!DPI_BIT(x4) && !lsr_v)
 		lsr_v = 32;
 
-	dpi->out.v = vR(M) >> lsr_v;
+	dpi->out.v = _lsr(vR(M), lsr_v);
 
 	if(lsr_v)
 		dpi->out.c = BEXT(vR(M), lsr_v - 1);
@@ -177,7 +169,7 @@ static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p 
 
 static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)
 {
-	if(!dpi->bit.i && !dpi->bit.x4 && (0 == vR(S)))
+	if(!DPI_BIT(i25) && !DPI_BIT(x4) && (0 == vR(S)))
 	{
 		dpi->out.v = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31) | (vR(M) >> 1);
 		dpi->out.c = vR(M) & 1;
@@ -187,7 +179,7 @@ static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p 
 		dpi->out.v = _ror(vR(M), vR(S));
 		if(vR(S))
 		{
-			if(dpi->bit.i)
+			if(DPI_BIT(i25))
 			{
 				dpi->out.c = BEXT(dpi->out.v, 31);
 			}
@@ -206,22 +198,13 @@ static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p 
 
 void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->bit.i = BEXT(IR, 25);
-	dpi->operation = mlBFEXT(IR, 24, 21);
-	dpi->bit.s = BEXT(IR, 20);
-	dpi->bit.x7 = 0;
-	dpi->bit.x4 = 0;
-
 	dpi->wb = 1;
 
-	if(dpi->bit.i)
+	if(DPI_BIT(i25))
 		_soc_core_arm_decode_dpi(core, dpi);
 	else
 	{
-		dpi->bit.x4 = BEXT(IR, 4); /* rs? */
-		dpi->shift_op = mlBFEXT(IR, 6, 5);
-
-		if(dpi->bit.x4)
+		if(DPI_BIT(x4))
 			_soc_core_arm_decode_dprs(core, dpi);
 		else
 			_soc_core_arm_decode_dpis(core, dpi);
@@ -229,7 +212,7 @@ void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 		soc_core_arm_decode_rm(core, 1);
 	}
 
-	switch(dpi->shift_op)
+	switch(DPI_SHIFT_OP)
 	{
 		case	SOC_CORE_SHIFTER_OP_ASR:
 			_soc_core_arm_shifter_operation_asr(core, dpi);
@@ -245,7 +228,7 @@ void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 			break;
 		default:
 			LOG("**** i = %u, s = %u, x7 = %u, x4 = %u",
-				!!dpi->bit.i, !!dpi->bit.s, !!dpi->bit.x7, !!dpi->bit.x4);
+				!!DPI_BIT(i25), !!DPI_BIT(s20), !!DPI_BIT(x7), !!DPI_BIT(x4));
 
 			LOG("**** imm = 0x%02x, shift = 0x%02x",
 				vR(M), vR(S));
