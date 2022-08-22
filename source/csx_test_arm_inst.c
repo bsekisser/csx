@@ -130,7 +130,9 @@ shifter_operand_t arm_dpi_lsl_r_s(uint8_t r, uint8_t shift)
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 {
 	i &= _BM(7);
-	shift = (shift & _BM(12 - 8)) >> 1;
+
+	shift &= _BM(12 - 8);
+	shift >>= 1;
 	
 	shifter_operand_t out = _BV(15) | (shift << 8) | i;
 

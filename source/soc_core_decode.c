@@ -24,22 +24,12 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 {
 	ls->ldstx = mlBFEXT(IR, 27, 25);
 
-	ls->bit.p = BEXT(IR, 24);
-	ls->bit.u = BEXT(IR, 23);
-	ls->bit.bit22 = BEXT(IR, 22);
-	ls->bit.w = BEXT(IR, 21);
-	ls->bit.l = BEXT(IR, 20);
-
 	soc_core_arm_decode_rn(core, 1);
 
-	ls->flags.s = 0;
 	switch(ls->ldstx) /* decode size */
 	{
 		case	0x00:
-			ls->bit.s6 = BEXT(IR, 6);
-			ls->bit.h = BEXT(IR, 5);
-			ls->flags.s = ls->bit.l && ls->bit.s6;
-			switch(BMOV(ls->bit.l, 0, 2) | mlBFEXT(IR, 6, 5))
+			switch(BMOV(LDST_BIT(l20), 0, 2) | mlBFEXT(IR, 6, 5))
 			{
 				case 0x01:
 				case 0x05:
@@ -61,7 +51,7 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 			break;
 		case	0x02:
 		case	0x03:
-			ls->rw_size = ls->bit.b22 ? sizeof(uint8_t) : sizeof(uint32_t);
+			ls->rw_size = LDST_BIT(b22) ? sizeof(uint8_t) : sizeof(uint32_t);
 			break;
 		case	0x04:
 			ls->rw_size = sizeof(uint32_t);

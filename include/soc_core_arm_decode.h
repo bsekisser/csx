@@ -52,6 +52,22 @@ enum {
 #define DPI_OPERATION				mlBFEXT(IR, 24, 21)
 #define DPI_SHIFT_OP				(DPI_BIT(i25) ? SOC_CORE_SHIFTER_OP_ROR : mlBFEXT(IR, 6, 5))
 
+enum {
+	LDST_BIT_b22 = 22,
+	LDST_BIT_h5 = 5,
+	LDST_BIT_l20 = 20,
+	LDST_BIT_p24 = 24,
+	LDST_BIT_u23 = 23,
+	LDST_BIT_w21 = 21,
+	LDST_BIT_s6 = 6,
+	LDST_BIT_s22 = 22,
+};
+
+#define LDST_BIT(_x)				BEXT(IR, LDST_BIT_##_x)
+#define LDST_FLAG_SH				(0 == mlBFEXT(IR, 27, 25))
+#define LDST_FLAG_S					(LDST_FLAG_SH && LDST_BIT(l20) && LDST_BIT(s6))
+
+
 #define MCRC_CRm					mlBFEXT(IR, 3, 0)
 #define MCRC_CRn					mlBFEXT(IR, 19, 16)
 #define MCRC_CPx					mlBFEXT(IR, 11, 8)
@@ -81,25 +97,6 @@ typedef struct soc_core_ldst_t {
 
 	uint8_t		shift_imm;
 	uint8_t		shift;
-	
-	struct {
-		uint8_t		s;		/*	signed */
-	}flags;
-	
-	struct {
-		uint8_t		p;
-		uint8_t		u;
-		union {
-			uint8_t		bit22;
-			uint8_t		i22;
-			uint8_t		b22;
-			uint8_t		s22;
-		};
-		uint8_t		w;
-		uint8_t		l;
-		uint8_t		s6;
-		uint8_t		h;
-	}bit;
 }soc_core_ldst_t;
 
 /* **** */

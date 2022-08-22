@@ -60,13 +60,13 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 	/* ldr|str{cond}{b}{t} <rd>, <addressing_mode> */
 	/* ldr|str{cond}{h|sh|sb|d} <rd>, <addressing_mode> */
 
-	_CORE_TRACE_("%sr", ls->bit.l ? "ld" : "st");
+	_CORE_TRACE_("%sr", LDST_BIT(l20) ? "ld" : "st");
 
 	if(ls->ldstx & 1)
 	{
-		const int bit_t = !ls->bit.p && ls->bit.w;
+		const int bit_t = !LDST_BIT(p24) && LDST_BIT(w21);
 
-		_CORE_TRACE_("%s%s", ls->bit.b22 ? "b" : "", bit_t ? "t" : "");
+		_CORE_TRACE_("%s%s", LDST_BIT(b22) ? "b" : "", bit_t ? "t" : "");
 	}
 	else
 	{
@@ -89,7 +89,7 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 				break;
 		}
 
-		_CORE_TRACE_("%s%s", ls->flags.s ? "s" : "", rws);
+		_CORE_TRACE_("%s%s", LDST_FLAG_S ? "s" : "", rws);
 	}
 
 	_CORE_TRACE_("(%s, %s", _arm_reg_name(rR(D)), _arm_reg_name(rR(N)));
@@ -97,7 +97,7 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 	if((rR(M) & 0x0f) == rR(M))
 		_CORE_TRACE_("[%s]", _arm_reg_name(rR(M)));
 	else if(vR(M))
-		_CORE_TRACE_("[0x%04x]%s", vR(M), ls->bit.w ? "!" : "");
+		_CORE_TRACE_("[0x%04x]%s", vR(M), LDST_BIT(w21) ? "!" : "");
 	else
 		_CORE_TRACE_("[0]");
 

@@ -196,7 +196,7 @@ static void _arm_inst_ldstm(soc_core_p core,
 	/* CP15_r1_Ubit == 0 */
 	const uint32_t ea = ls->ea & ~3;
 
-	if(ls->bit.l)
+	if(LDST_BIT(l20))
 	{
 		rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
 
@@ -344,15 +344,15 @@ static void arm_inst_ldst(soc_core_p core)
 
 	ls.ea = vR(N);
 
-	if(ls.bit.p)
+	if(LDST_BIT(p24))
 	{
-		if(ls.bit.u)
+		if(LDST_BIT(u23))
 			ls.ea += vR(M);
 		else
 			ls.ea -= vR(M);
 	}
 
-	if(ls.bit.l)
+	if(LDST_BIT(l20))
 	{
 		vR(D) = soc_core_read(core, ls.ea, ls.rw_size);
 
@@ -363,7 +363,7 @@ static void arm_inst_ldst(soc_core_p core)
 			vR(D) = _ror(vR(D), ((ls.ea & 3) << 3));
 		}
 
-		if(ls.flags.s) /* sign extend ? */
+		if(LDST_FLAG_S) /* sign extend ? */
 			vR(D) = mlBFEXTs(vR(D), (8 << (ls.rw_size >> 1)), 0);
 	}
 	else
@@ -371,25 +371,25 @@ static void arm_inst_ldst(soc_core_p core)
 
 	soc_core_trace_inst_ldst(core, &ls);
 
-	if(ls.bit.l && (rPC == rR(D)))
+	if(LDST_BIT(l20) && (rPC == rR(D)))
 		CORE_TRACE_BRANCH(vR(D));
 
 	if(CCx.e)
 	{
-		if(!ls.bit.p)
+		if(!LDST_BIT(p24))
 		{
 			ls.ea = vR(N);
 
-			if(ls.bit.u)
+			if(LDST_BIT(u23))
 				ls.ea += vR(M);
 			else
 				ls.ea -= vR(M);
 		}
 
-		if(!ls.bit.p || ls.bit.w) /* base update? */
+		if(!LDST_BIT(p24) || LDST_BIT(w21)) /* base update? */
 			soc_core_reg_set(core, rR(N), ls.ea);
 
-		if(ls.bit.l)
+		if(LDST_BIT(l20))
 		{
 			if(rPC == rR(D))
 				soc_core_reg_set_pcx(core, vR(D));
@@ -417,25 +417,25 @@ static void arm_inst_ldstm(soc_core_p core)
 	uint32_t sp_out = sp_in;
 
 	/*
-	 * DA	!ls.bit.u && !ls.bit.p
-	 * DB	!ls.bit.u && ls.bit.p
-	 * IA	ls.bit.u && !ls.bit.p
-	 * IB	ls.bit.u && ls.bit.p
+	 * DA	!LDST_BIT(u23) && !LDST_BIT(p24)
+	 * DB	!LDST_BIT(u23) && LDST_BIT(p24)
+	 * IA	LDST_BIT(u23) && !LDST_BIT(p24)
+	 * IB	LDST_BIT(u23) && LDST_BIT(p24)
 	 *
 	 */
 
 	uint32_t start_address = 0;
 	uint32_t end_address = 0;
 
-	if(ls.bit.u) /* increment */
+	if(LDST_BIT(u23)) /* increment */
 	{
-		start_address = sp_in + (ls.bit.p << 2);
+		start_address = sp_in + (LDST_BIT(p24) << 2);
 		end_address = start_address + rcount;
 		sp_out += rcount;
 	}
 	else /* decrement */
 	{
-		end_address = sp_in + (!ls.bit.p << 2);
+		end_address = sp_in + (!LDST_BIT(p24) << 2);
 		start_address = end_address - rcount;
 		sp_out -= rcount;
 	}
@@ -446,9 +446,9 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	const char *opstr; (void)opstr;
 	if(0 && rSP == rR(N))
-		opstr = ls.bit.l ? "pop" : "push";
+		opstr = LDST_BIT(l20) ? "pop" : "push";
 	else
-		opstr = ls.bit.l ? "ldm" : "stm";
+		opstr = LDST_BIT(l20) ? "ldm" : "stm";
 
 	char reglist[17]; (void)reglist;
 	for(int i = 0; i <= 15; i++)
@@ -458,18 +458,18 @@ static void arm_inst_ldstm(soc_core_p core)
 	}
 	reglist[16] = 0;
 
-	const int load_spsr = ls.bit.s22 && ls.bit.l && BTST(vR(M), 15);
+	const int load_spsr = LDST_BIT(s22) && LDST_BIT(l20) && BTST(vR(M), 15);
 
-	const int user_mode_regs_load = ls.bit.s22 && ls.bit.l && !ls.bit.w && !BTST(vR(M), 15);
-	const int user_mode_regs_store = ls.bit.s22 && !ls.bit.l;
+	const int user_mode_regs_load = LDST_BIT(s22) && LDST_BIT(l20) && !LDST_BIT(w21) && !BTST(vR(M), 15);
+	const int user_mode_regs_store = LDST_BIT(s22) && !LDST_BIT(l20);
 
-	if(0) LOG("s = %01u, umrl = %01u, umrs = %01u", ls.bit.s22, user_mode_regs_load, user_mode_regs_store);
+	if(0) LOG("s = %01u, umrl = %01u, umrs = %01u", LDST_BIT(s22), user_mode_regs_load, user_mode_regs_store);
 
 	const int user_mode_regs = user_mode_regs_load || user_mode_regs_store;
 
 	CORE_TRACE("%s%c%c(r(%u)%s, {%s}%s%s) /* 0x%08x */" ,
-		opstr, ls.bit.u ? 'i' : 'd', ls.bit.p ? 'b' : 'a',
-		rR(N), ls.bit.w ? "!" : "", reglist,
+		opstr, LDST_BIT(u23) ? 'i' : 'd', LDST_BIT(p24) ? 'b' : 'a',
+		rR(N), LDST_BIT(w21) ? "!" : "", reglist,
 		user_mode_regs ? ", USER" : "",
 		load_spsr ? ", SPSR" : "", sp_in);
 
@@ -496,7 +496,7 @@ static void arm_inst_ldstm(soc_core_p core)
 
 			uint32_t rxx_v = 0;
 
-			if(ls.bit.l)
+			if(LDST_BIT(l20))
 			{
 				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
 				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
@@ -516,11 +516,11 @@ static void arm_inst_ldstm(soc_core_p core)
 		if(load_spsr && core->spsr)
 			soc_core_psr_mode_switch(core, *core->spsr);
 
-		if((ls.bit.w && (user_mode_regs || load_spsr))
+		if((LDST_BIT(w21) && (user_mode_regs || load_spsr))
 			|| (user_mode_regs && load_spsr))
 				LOG_ACTION(exit(1));
 
-		if(ls.bit.w)
+		if(LDST_BIT(w21))
 		{
 			if(0) LOG("ea = 0x%08x", ls.ea);
 
