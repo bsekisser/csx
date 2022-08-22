@@ -57,9 +57,9 @@ static soc_mmio_peripheral_t watchdog_peripheral[2] = {
 
 int soc_mmio_watchdog_init(csx_p csx, soc_mmio_p mmio, soc_mmio_watchdog_h h2wdt)
 {
-	soc_mmio_watchdog_p wdt;
+	soc_mmio_watchdog_p wdt = calloc(1, sizeof(soc_mmio_watchdog_t));
 	
-	ERR_NULL(wdt = malloc(sizeof(soc_mmio_watchdog_t)));
+	ERR_NULL(wdt);
 	if(!wdt)
 		return(-1);
 

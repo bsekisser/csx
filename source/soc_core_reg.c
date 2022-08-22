@@ -102,7 +102,7 @@ void soc_core_reg_set(soc_core_p core, soc_core_reg_t r, uint32_t v)
 
 void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 {
-	int thumb = new_pc & 1;
+	const int thumb = new_pc & 1;
 	BMAS(CPSR, SOC_CORE_PSR_BIT_T, thumb);
 	core->step = thumb ? soc_core_thumb_step : soc_core_arm_step;
 	new_pc &= (~3 >> thumb);
@@ -112,7 +112,7 @@ void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 
 uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v)
 {
-	soc_core_reg_t reg;
+	soc_core_reg_t reg = 0;
 	
 	const uint8_t mode = mlBFEXT(CPSR, 4, 0);
 	uint32_t* usr_regs = soc_core_psr_mode_regs(core, mode, &reg);
@@ -120,7 +120,7 @@ uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v)
 	uint32_t vout = 0;
 	if(reg && ((r & 0x0f) < 15) && r >= reg)
 	{
-		uint8_t umreg = r - reg;
+		const uint8_t umreg = r - reg;
 		vout = usr_regs[umreg];
 		if(v)
 			usr_regs[umreg] = *v;
@@ -150,7 +150,7 @@ void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 
 	if(dst) for(int i = sreg; i < 15; i++)
 	{
-		uint32_t tmp = *dst;
+		const uint32_t tmp = *dst;
 		*dst++ = *src;
 		*src++ = tmp;
 	}
@@ -161,7 +161,7 @@ void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 	
 	if(src) for(int i = sreg; i < 15; i++)
 	{
-		uint32_t tmp = *dst;
+		const uint32_t tmp = *dst;
 		*dst++ = *src;
 		*src++ = tmp;
 	}

@@ -89,9 +89,9 @@ static soc_mmio_peripheral_t cfg_peripheral[2] = {
 
 int soc_mmio_cfg_init(csx_p csx, soc_mmio_p mmio, soc_mmio_cfg_h h2cfg)
 {
-	soc_mmio_cfg_p cfg;
+	soc_mmio_cfg_p cfg = calloc(1, sizeof(soc_mmio_cfg_t));
 	
-	ERR_NULL(cfg = malloc(sizeof(soc_mmio_cfg_t)));
+	ERR_NULL(cfg);
 	if(!cfg)
 		return(-1);
 

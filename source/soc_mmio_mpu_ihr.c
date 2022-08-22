@@ -235,9 +235,9 @@ static soc_mmio_peripheral_t ihr_peripheral[] = {
 
 int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2ihr)
 {
-	soc_mmio_mpu_ihr_p ihr;
+	soc_mmio_mpu_ihr_p ihr = calloc(1, sizeof(soc_mmio_mpu_ihr_t));
 	
-	ERR_NULL(ihr = malloc(sizeof(soc_mmio_mpu_ihr_t)));
+	ERR_NULL(ihr);
 	if(!ihr)
 		return(-1);
 

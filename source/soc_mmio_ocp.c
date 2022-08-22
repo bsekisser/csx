@@ -38,7 +38,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 	const soc_mmio_ocp_p ocp = param;
 	const csx_p csx = ocp->csx;
 	
-	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
 		switch(addr & ~0xf)
@@ -54,7 +54,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 					BEXT(value, 31), mlBFEXT(value, 30, 27),
 					mlBFEXT(value, 26, 23), BEXT(value, 22), BEXT(value, 20));
 				
-				int rdmode = mlBFEXT(value, 18, 16);
+				const uint rdmode = mlBFEXT(value, 18, 16);
 				LOG("RDMODE: %01u, PGWST/WELEN: %01u, WRWST: %01u, RDWST: %01u",
 					rdmode, mlBFEXT(value, 15, 12), mlBFEXT(value, 11, 8), mlBFEXT(value, 7, 4));
 				
@@ -92,9 +92,9 @@ static soc_mmio_peripheral_t ocp_peripheral = {
 
 int soc_mmio_ocp_init(csx_p csx, soc_mmio_p mmio, soc_mmio_ocp_h h2ocp)
 {
-	soc_mmio_ocp_p ocp;
+	soc_mmio_ocp_p ocp = calloc(1, sizeof(soc_mmio_ocp_t));
 	
-	ERR_NULL(ocp = malloc(sizeof(soc_mmio_ocp_t)));
+	ERR_NULL(ocp);
 	if(!ocp)
 		return(-1);
 

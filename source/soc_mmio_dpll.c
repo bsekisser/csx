@@ -38,7 +38,7 @@ void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value,
 		{
 			case	DPLL1_CTL_REG:
 			{
-				int pll_enable = BEXT(value, 4);
+				const uint pll_enable = BEXT(value, 4);
 				if(1)
 				{
 					LOG("LS_DISABLE: %01u, IAI: %01u, IOB: %01u, TEST: %01u",
@@ -72,9 +72,9 @@ static soc_mmio_peripheral_t dpll_peripheral = {
 
 int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 {
-	soc_mmio_dpll_p dpll;
+	soc_mmio_dpll_p dpll = calloc(1, sizeof(soc_mmio_dpll_t));
 	
-	ERR_NULL(dpll = malloc(sizeof(soc_mmio_dpll_t)));
+	ERR_NULL(dpll);
 	if(!dpll)
 		return(-1);
 

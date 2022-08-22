@@ -30,7 +30,7 @@ static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, u
 	
 	uint32_t value = soc_data_read(data + (addr & 0xff), size);;
 
-	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
 		switch(addr)
@@ -52,7 +52,7 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
 	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 	
-	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
 		switch(addr)
@@ -86,9 +86,9 @@ static soc_mmio_peripheral_t os_timer_peripheral = {
 
 int soc_mmio_os_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_os_timer_h h2ost)
 {
-	soc_mmio_os_timer_p ost;
+	soc_mmio_os_timer_p ost = calloc(1, sizeof(soc_mmio_os_timer_t));
 	
-	ERR_NULL(ost = malloc(sizeof(soc_mmio_os_timer_t)));
+	ERR_NULL(ost);
 	if(!ost)
 		return(-1);
 

@@ -46,7 +46,7 @@ ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 
 	int i = 0;
 	do {
-		ea_trace_p tle = &tl[i++];
+		const ea_trace_p tle = &tl[i++];
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
@@ -91,7 +91,7 @@ typedef struct soc_mmio_t {
 
 ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
 {
-	ea_trace_p eat = soc_mmio_get_trace(tl, address);
+	const ea_trace_p eat = soc_mmio_get_trace(tl, address);
 	const char *name = eat ? eat->name : "";
 
 	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
@@ -108,13 +108,13 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 
 	int i = 0;
 	do {
-		ea_trace_p tle = &tl[i++];
+		const ea_trace_p tle = &tl[i++];
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
-		uint32_t value = tle->reset_value;
-		uint32_t module = tle->address & mlBF(31, 8);
-		uint32_t offset = tle->address & 0xff;
+		const uint32_t value = tle->reset_value;
+		const uint32_t module = tle->address & mlBF(31, 8);
+		const uint32_t offset = tle->address & 0xff;
 
 		if(base_mask && (base_mask != module))
 			continue;
@@ -148,7 +148,7 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 		tl = mp->trace_list;
 	}
 
-	ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	if(eat)
 	{
 		uint32_t value = soc_data_read(&data[offset], size);
@@ -187,7 +187,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 		tl = mp->trace_list;
 	}
 
-	ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	LOG("write -- 0x%08x", value);
 
 	if(eat)
@@ -209,7 +209,7 @@ void soc_mmio_reset(soc_mmio_p mmio)
 
 	for(int i = 0; i < 0x400; i++)
 	{
-		soc_mmio_peripheral_p mp = mmio->peripheral[i];
+		const soc_mmio_peripheral_p mp = mmio->peripheral[i];
 		
 		if(!mp || !mp->reset)
 			continue;
@@ -240,17 +240,17 @@ void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
 
 	for(int i = 0;; i++)
 	{
-		ea_trace_p tle = &tl[i];
+		const ea_trace_p tle = &tl[i];
 
 		if(!trace_list[i].address)
 			break;
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
-		uint32_t value = tle->reset_value;
+		const uint32_t value = tle->reset_value;
 		if(value)
 		{
-			uint32_t addr = tle->address;
+			const uint32_t addr = tle->address;
 			soc_data_write(&data[addr & 0xff], value, tle->size);
 		}
 	}
@@ -281,10 +281,10 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 {
 	LOG();
 
-	int err;
-	soc_mmio_p mmio;
+	int err = 0;
+	soc_mmio_p mmio = calloc(1, sizeof(soc_mmio_t));
 
-	ERR_NULL(mmio = malloc(sizeof(soc_mmio_t)));
+	ERR_NULL(mmio);
 	if(!mmio)
 		return(-1);
 

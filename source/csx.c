@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	}
 	
 	if(test)
-		return(csx_test_main());
+		return(csx_test_main(core_trace));
 	else
 		return(csx_soc_main(core_trace));
 }

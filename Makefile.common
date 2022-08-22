@@ -1,5 +1,7 @@
-CFLAGS = -g -Wall -Os $(INCLUDE)
+CFLAGS = -g -Wall
+#CFLAGS += -Os
 CFLAGS += -march=native
+CFLAGS += $(INCLUDE)
 #CFLAGS += -MD -MP
 #CFLAGS += -save-temps
 

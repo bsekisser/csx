@@ -133,9 +133,9 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 
 int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt)
 {
-	soc_mmio_gp_timer_p gpt;
+	soc_mmio_gp_timer_p gpt = calloc(1, sizeof(soc_mmio_gp_timer_t));
 	
-	ERR_NULL(gpt = malloc(sizeof(soc_mmio_gp_timer_t)));
+	ERR_NULL(gpt);
 	if(!gpt)
 		return(-1);
 

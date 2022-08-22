@@ -218,7 +218,7 @@ static void soc_core_thumb_bx(soc_core_p core)
 
 static void soc_core_thumb_bxx_b(soc_core_p core, int32_t eao)
 {
-	uint32_t new_pc = PC + eao;
+	const uint32_t new_pc = PC + eao;
 
 	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/", new_pc & ~1, PC, eao);
 
@@ -255,7 +255,7 @@ static void soc_core_thumb_bxx(soc_core_p core)
 {
 	for(int i = 0; i < 2; i++) {
 		int32_t eao = mlBFEXTs(IR, 10, 0);
-		uint8_t h = mlBFEXT(IR, 12, 11);
+		const uint8_t h = mlBFEXT(IR, 12, 11);
 
 		if(0) CORE_TRACE("H = 0x%02x, LR = 0x%08x, PC = 0x%08x, EAO = 0x%08x",
 			h, LR, PC, eao);
@@ -402,8 +402,8 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 
 	assert(size != 0);
 
-	uint16_t offset = imm5 << (size >> 1);
-	uint32_t ea = vR(N) + offset;
+	const uint16_t offset = imm5 << (size >> 1);
+	const uint32_t ea = vR(N) + offset;
 
 	if(bit_l)
 		vR(D) = soc_core_read(core, ea, size);
@@ -539,16 +539,16 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 	/* CP15_r1_Ubit == 0 */
 	assert(0 == (ea & 3));
 
-	char reglist[9];
+	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
 
 	for(int i = 0; i <= 7; i++)
 	{
-		int rxx = BEXT(rlist, i);
+		const uint rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
 
 		if(rxx)
 		{
-			uint32_t rxx_v;
+			uint32_t rxx_v = 0;
 			CYCLE++;
 
 			if(bit_l)
@@ -609,12 +609,12 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 	/* CP15_reg1_Abit == 0 && CP15_reg1_Ubit == 0 */
 	uint32_t ea = start_address & ~3;
 
-	uint32_t rxx_v;
-	char reglist[9];
+	uint32_t rxx_v = 0;
+	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
 
 	for(int i = 0; i <=7; i++)
 	{
-		int rxx = BEXT(rlist, i);
+		const uint rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
 
 		if(rxx)
@@ -775,8 +775,8 @@ void soc_core_thumb_step(soc_core_p core)
 
 	IR = soc_core_reg_pc_fetch_step_thumb(core);
 
-	uint8_t lsb;
-	uint32_t opcode;
+	uint8_t lsb = 0;
+	uint32_t opcode = 0;
 
 	for(lsb = 8; lsb <= 13; lsb++)
 	{

@@ -22,7 +22,7 @@
 
 int csx_soc_init(csx_p csx)
 {
-	int err;
+	int err = 0;
 
 	CYCLE = 0;
 	
@@ -37,17 +37,15 @@ int csx_soc_init(csx_p csx)
 int csx_soc_main(int core_trace)
 {
 	int err = 0;
-	csx_p csx = 0;
+	csx_p csx = calloc(1, sizeof(csx_t));
 
-	ERR_NULL(csx = malloc(sizeof(csx_t)));
+	ERR_NULL(csx);
 	if(!csx)
 		return(-1);
 	
-	memset(csx, 0, sizeof(csx_t));
-	
 	ERR(err = csx_soc_init(csx));
 
-	soc_core_p core = csx->core;
+	const soc_core_p core = csx->core;
 
 	core->trace = core_trace;
 

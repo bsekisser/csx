@@ -45,8 +45,8 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 {
 	int err = 0;
 
-	soc_core_p core;
-	ERR_NULL(core = malloc(sizeof(soc_core_t)));
+	soc_core_p core = calloc(1, sizeof(soc_core_t));
+	ERR_NULL(core);
 
 	core->csx = csx;
 	*h2core = core;

@@ -38,7 +38,7 @@ static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, uint32_t 
 	const soc_mmio_mpu_p mpu = param;
 	const csx_p csx = mpu->csx;
 
-	ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
 		switch(addr)
@@ -112,9 +112,9 @@ static soc_mmio_peripheral_t mpu_peripheral = {
 
 int soc_mmio_mpu_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_h h2mpu)
 {
-	soc_mmio_mpu_p mpu;
+	soc_mmio_mpu_p mpu = calloc(1, sizeof(soc_mmio_mpu_t));
 	
-	ERR_NULL(mpu = malloc(sizeof(soc_mmio_mpu_t)));
+	ERR_NULL(mpu);
 	if(!mpu)
 		return(-1);
 

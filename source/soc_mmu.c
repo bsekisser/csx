@@ -98,7 +98,7 @@ static inline int soc_mmu__tlb_entry(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_h h
 
 	if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x", vp, vp_tlbe);
 
-	soc_mmu_tlb_p tlbe = &mmu->tlb[vp_tlbe];
+	const soc_mmu_tlb_p tlbe = &mmu->tlb[vp_tlbe];
 
 	*h2tlbe = tlbe;
 
@@ -247,13 +247,11 @@ retry_write:;
 
 int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 {
-	soc_mmu_p mmu;
+	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
 	
-	ERR_NULL(mmu = malloc(sizeof(soc_mmu_t)));
+	ERR_NULL(mmu);
 	if(!mmu)
 		return(-1);
-	
-	memset(mmu, 0, sizeof(soc_mmu_t));
 	
 	mmu->csx = csx;
 	*h2mmu = mmu;

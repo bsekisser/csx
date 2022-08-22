@@ -48,7 +48,7 @@
 
 static uint soc_mmio_mpu_gpio_unit(uint32_t addr)
 {
-	uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
+	const uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
 
 	return(unit);
 }
@@ -95,9 +95,9 @@ static soc_mmio_peripheral_t mpu_gpio_peripheral[] = {
 
 int soc_mmio_mpu_gpio_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_gpio_h h2gpio)
 {
-	soc_mmio_mpu_gpio_p gpio;
+	soc_mmio_mpu_gpio_p gpio = calloc(1, sizeof(soc_mmio_mpu_gpio_t));
 	
-	ERR_NULL(gpio = malloc(sizeof(soc_mmio_mpu_gpio_t)));
+	ERR_NULL(gpio);
 	if(!gpio)
 		return(-1);
 
