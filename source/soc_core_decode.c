@@ -65,8 +65,7 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 	if(!(ls->ldstx & 0x04))
 		soc_core_arm_decode_rd(core, 0);
 
-	ls->shift = 0;
-	ls->shift_imm = 0;
+	_setup_rR_vR(S, 0, 0);
 	rR(M) = ~0;
 	switch(ls->ldstx) /* decode addressing mode registers / data */
 	{
@@ -77,10 +76,10 @@ void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls)
 			vR(M) = mlBFEXT(IR, 11, 0);
 			break;
 		case	0x03: /* scaled register offset */
-			ls->shift_imm = mlBFEXT(IR, 11, 7);
-			ls->shift = mlBFEXT(IR, 6, 5);
+			rR(S) = ~mlBFEXT(IR, 6, 5);
+			vR(S) = mlBFEXT(IR, 11, 7);
 			
-			if((0 != ls->shift) || (0 != ls->shift_imm))
+			if((0 != rR(S)) || (0 != vR(S)))
 				LOG_ACTION(exit(1));
 			
 			soc_core_arm_decode_rm(core, 1);

@@ -1,5 +1,5 @@
 CFLAGS = -g -Wall
-#CFLAGS += -Os
+CFLAGS += -Os
 CFLAGS += -march=native
 CFLAGS += $(INCLUDE)
 #CFLAGS += -MD -MP

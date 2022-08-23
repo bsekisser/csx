@@ -90,13 +90,11 @@ typedef struct soc_core_dpi_t {
 
 typedef struct soc_core_ldst_t {
 	uint32_t	ea;
-
+	uint32_t	index;
+	
 	uint8_t		ldstx;
 
 	uint8_t		rw_size;
-
-	uint8_t		shift_imm;
-	uint8_t		shift;
 }soc_core_ldst_t;
 
 /* **** */

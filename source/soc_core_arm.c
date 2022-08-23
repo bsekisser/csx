@@ -14,8 +14,11 @@
 
 #include "bitfield.h"
 #include "log.h"
+#include "shift_roll.h"
 
 /* **** */
+
+//#define _ldst_original
 
 static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 {
@@ -186,6 +189,72 @@ static void _arm_inst_dpi_operation_sub(soc_core_p core, soc_core_dpi_p dpi)
 		vR(N), dpi->out.v, vR(D));
 }
 
+#ifndef _ldst_original
+static void _arm_inst_ldst(soc_core_p core,
+	soc_core_ldst_p ls)
+{
+	ls->ea = vR(N);
+
+	if(LDST_BIT(p24))
+	{
+		if(LDST_BIT(u23))
+			ls->ea += ls->index;
+		else
+			ls->ea -= ls->index;
+	}
+	
+	if(LDST_BIT(l20))
+	{
+		vR(D) = soc_core_read(core, ls->ea, ls->rw_size);
+
+		/*	ARMv5, CP15_r1_Ubit == 0 */
+		if(ls->rw_size == sizeof(uint32_t))
+			vR(D) = _ror(vR(D), ((ls->ea & 3) << 3));
+
+		if(LDST_FLAG_S) /* sign extend ? */
+			vR(D) = mlBFEXTs(vR(D), (8 << (ls->rw_size >> 1)), 0);
+	}
+	
+	soc_core_trace_inst_ldst(core, ls);
+
+	/*	ARMv5, CP15_r1_Ubit == 0 */
+	if(LDST_BIT(l20) && (ls->rw_size == sizeof(uint32_t)))
+		assert(0 == (ls->ea & 3));
+
+	if(LDST_BIT(l20) && (rPC == rR(D)))
+		CORE_TRACE_BRANCH(vR(D));
+
+	if(CCx.e)
+	{
+		if(!LDST_BIT(p24))
+		{
+			if(LDST_BIT(u23))
+				ls->ea += ls->index;
+			else
+				ls->ea -= ls->index;
+		}
+
+		if(!LDST_BIT(p24) || LDST_BIT(w21)) /* base update? */
+			soc_core_reg_set(core, rR(N), ls->ea);
+
+		if(LDST_BIT(l20))
+		{
+			if(rPC == rR(D))
+				soc_core_reg_set_pcx(core, vR(D));
+			else
+				soc_core_reg_set(core, rR(D), vR(D));
+		}
+		else
+		{
+			if(ls->rw_size == sizeof(uint32_t))
+				ls->ea &= ~3;
+
+			soc_core_write(core, ls->ea, vR(D), ls->rw_size);
+		}
+	}
+}
+#endif
+
 static void _arm_inst_ldstm(soc_core_p core,
 	soc_core_ldst_p ls,
 	soc_core_reg_t i,
@@ -337,6 +406,7 @@ exit_fault:
 	UNIMPLIMENTED;
 }
 
+#ifdef _ldst_original
 static void arm_inst_ldst(soc_core_p core)
 {
 	soc_core_ldst_t ls;
@@ -358,10 +428,7 @@ static void arm_inst_ldst(soc_core_p core)
 
 		/*	ARMv5, CP15_r1_Ubit == 0 */
 		if(ls.rw_size == sizeof(uint32_t))
-		{
-			assert(0 == (ls.ea & 3));
 			vR(D) = _ror(vR(D), ((ls.ea & 3) << 3));
-		}
 
 		if(LDST_FLAG_S) /* sign extend ? */
 			vR(D) = mlBFEXTs(vR(D), (8 << (ls.rw_size >> 1)), 0);
@@ -370,6 +437,10 @@ static void arm_inst_ldst(soc_core_p core)
 		vR(D) = soc_core_reg_get(core, rR(D));
 
 	soc_core_trace_inst_ldst(core, &ls);
+
+		/*	ARMv5, CP15_r1_Ubit == 0 */
+	if(LDST_BIT(l20) && (ls.rw_size == sizeof(uint32_t)))
+		assert(0 == (ls.ea & 3));
 
 	if(LDST_BIT(l20) && (rPC == rR(D)))
 		CORE_TRACE_BRANCH(vR(D));
@@ -405,6 +476,68 @@ static void arm_inst_ldst(soc_core_p core)
 		}
 	}
 }
+#endif
+
+#ifndef _ldst_original
+static void arm_inst_ldst_irx(soc_core_p core, soc_core_ldst_p ls)
+{
+	ls->rw_size = LDST_BIT(b22) ? sizeof(uint8_t) : sizeof(uint32_t);
+
+	soc_core_arm_decode_rd(core, !LDST_BIT(l20));
+	soc_core_arm_decode_rn(core, 1);
+	
+	return(_arm_inst_ldst(core, ls));
+}
+
+static void arm_inst_ldst_ix(soc_core_p core)
+{
+	soc_core_ldst_t ls;
+
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 11, 0));
+	ls.index = vR(M);
+
+	return(arm_inst_ldst_irx(core, &ls));
+}
+
+static void arm_inst_ldst_rx(soc_core_p core)
+{
+	soc_core_ldst_t ls;
+	
+	_setup_rR_vR(S, ~mlBFEXT(IR, 6, 5), mlBFEXT(IR, 11, 7));
+	
+	soc_core_arm_decode_rm(core, 1);
+
+	uint32_t index = 0;
+	switch((signed)rR(S)) {
+		case ~0: /* lsl */
+			index = _lsl(vR(M), vR(S));
+			break;
+		case ~1: /* lsr */
+			if(vR(S))
+				index = _lsr(vR(M), vR(S));
+			else
+				index = 0;
+			break;
+		case ~2: /* asr */
+			if(vR(S))
+				index = _asr(vR(M), vR(S));
+			else
+				index = -1;
+			break;
+		case ~3: /* ror/rrx */
+			if(vR(S))
+				index = _ror(vR(M), vR(S));
+			else {
+				index = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31);
+				index |= _lsr(vR(M), 1);
+			}
+	}
+
+	ls.index = index;
+
+	return(arm_inst_ldst_irx(core, &ls));
+}
+#endif
 
 static void arm_inst_ldstm(soc_core_p core)
 {
@@ -773,7 +906,11 @@ void soc_core_arm_step(soc_core_p core)
 	{
 		case 0x00: /* xxxx 000x xxxx xxxx */
 			if(_inst0_0_i74 == (IR & _inst0_0_i74))
+#ifdef _ldst_original
 				return(arm_inst_ldst(core));
+#else
+				return(arm_inst_ldst_rx(core));
+#endif
 			else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
 				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
 					return(arm_inst_dpi(core));
@@ -796,7 +933,11 @@ void soc_core_arm_step(soc_core_p core)
 			break;
 		case 0x02: /* xxxx 010x xxxx xxxx */
 			if(ARM_INST_LDST_O11 == (IR & ARM_INST_LDST_O11_MASK))
+#ifdef _ldst_original
 				return(arm_inst_ldst(core));
+#else
+				return(arm_inst_ldst_ix(core));
+#endif
 			break;
 		case 0x04: /* xxxx 100x xxxx xxxx */
 			if(ARM_INST_LDSTM == (IR & ARM_INST_LDSTM_MASK))
