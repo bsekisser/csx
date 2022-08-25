@@ -103,6 +103,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 
 static soc_mmio_peripheral_t ocp_peripheral = {
 	.base = CSX_MMIO_OCP_BASE,
+	.trace_list = trace_list,
 
 //	.reset = soc_mmio_ocp_reset,
 
