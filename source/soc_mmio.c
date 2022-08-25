@@ -31,7 +31,12 @@
 #define MMIO_LIST \
 	MMIO(0xfffb, 0x4018, 0x0000, 0x0000, 16, MEM_RW, USB_CLNT_SYSCON1) \
 	MMIO(0xfffe, 0x6010, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6010) \
-	MMIO(0xfffe, 0x6014, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6014)
+	MMIO(0xfffe, 0x6014, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6014) \
+	MMIO(0xfffe, 0x6018, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6018) \
+	MMIO(0xfffe, 0x601c, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x601c) \
+	MMIO(0xfffe, 0x6020, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6020) \
+	MMIO(0xfffe, 0x6030, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6030) \
+	MMIO(0xfffe, 0x6034, 0x0000, 0x0000, 32, MEM_RW, x0xfffe_0x6034)
 
 #define TRACE_LIST
 	#include "soc_mmio_trace.h"
@@ -131,22 +136,18 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
-	const uint16_t module = ((vaddr - CSX_MMIO_BASE) >> 8) & 0x3ff;
+	const uint32_t mmio_data_offset = (vaddr - CSX_MMIO_BASE);
+	const uint16_t module = (mmio_data_offset >> 8) & 0x3ff;
 	const uint16_t offset = vaddr & 0xff;
 	
-	uint8_t* data = &mmio->data[module << 8];
+	uint8_t* data = &mmio->data[mmio_data_offset];
 	const void* param = mmio->param[module];
 	const soc_mmio_peripheral_p mp = mmio->peripheral[module];
 
-	ea_trace_p tl = trace_list;
+	ea_trace_p tl = mp ? mp->trace_list : trace_list;
 
-	if(mp)
-	{
-		if(mp->read)
-			return(mp->read((void*)param, data, vaddr, size));
-
-		tl = mp->trace_list;
-	}
+	if(mp && mp->read)
+		return(mp->read((void*)param, data, vaddr, size));
 
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	if(eat)
@@ -157,11 +158,15 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 			case	x0xfffe_0x6014:
 				value |= 1;
 				break;
+			case	x0xfffe_0x6018:
+				value |= 1;
+				break;
 		}
 
 		return(value);
 	} else {
-		LOG("vaddr = 0x%08x, module = 0x%05x", vaddr, module);
+		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
+			vaddr, module, (uint)mp, (uint)eat);
 		LOG_ACTION(exit(1));
 	}
 
@@ -170,22 +175,18 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 
 void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
-	const uint16_t module = ((vaddr - CSX_MMIO_BASE) >> 8) & 0x3ff;
+	const uint32_t mmio_data_offset = (vaddr - CSX_MMIO_BASE);
+	const uint16_t module = (mmio_data_offset >> 8) & 0x3ff;
 	const uint16_t offset = vaddr & 0xff;
 	
-	uint8_t* data = &mmio->data[module << 8];
+	uint8_t* data = &mmio->data[mmio_data_offset];
 	const void* param = mmio->param[module];
 	const soc_mmio_peripheral_p mp = mmio->peripheral[module];
 
-	ea_trace_p tl = trace_list;
+	ea_trace_p tl = mp ? mp->trace_list : trace_list;
 	
-	if(mp)
-	{
-		if(mp->write)
-			return(mp->write((void*)param, data, vaddr, value, size));
-		
-		tl = mp->trace_list;
-	}
+	if(mp && mp->write)
+		return(mp->write((void*)param, data, vaddr, value, size));
 
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	LOG("write -- 0x%08x", value);

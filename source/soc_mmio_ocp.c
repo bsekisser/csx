@@ -21,9 +21,11 @@
 #define EMIFS_ADV_CS_CONFIG(_x)		_OCP(0x50 + (((_x) & 3) << 2))
 
 #define MMIO_LIST \
+	MMIO(0xfffe, 0xcc00, 0x0000, 0x0000, 32, MEM_RW, OCP_TI_PRIO) \
 	MMIO(0xfffe, 0xcc14, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS1_CONFIG) \
 	MMIO(0xfffe, 0xcc18, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS2_CONFIG) \
 	MMIO(0xfffe, 0xcc1c, 0x0000, 0x0000, 32, MEM_RW, EMIFS_CS3_CONFIG) \
+	MMIO(0xfffe, 0xcc20, 0x0061, 0x8800, 32, MEM_RW, EMIFF_SDRAM_CONFIG) \
 	MMIO(0xfffe, 0xcc50, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS0_CONFIG) \
 	MMIO(0xfffe, 0xcc54, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS1_CONFIG) \
 	MMIO(0xfffe, 0xcc58, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS2_CONFIG) \
@@ -41,14 +43,32 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
-		switch(addr & ~0xf)
+		switch(addr)
 		{
+			case EMIFF_SDRAM_CONFIG:
+				LOG_START("SBZ: %01u", mlBFEXT(value, 31, 30));
+				_LOG_(" LG SDRAM: %01u", mlBFEXT(value, 29, 28));
+				_LOG_(" CLK: %01u", BEXT(value, 27));
+				_LOG_(" PWD: %01u", BEXT(value, 26));
+				_LOG_(" SDRAM FRQ: %01u", mlBFEXT(value, 25, 24));
+				_LOG_(" ARCV: x%05u", mlBFEXT(value, 23, 8));
+				_LOG_(" SDRAM Type: %01u", mlBFEXT(value, 7, 4));
+				_LOG_(" ARE: %01u", mlBFEXT(value, 3, 2));
+				_LOG_(" SBO: %01u", BEXT(value, 1));
+				LOG_END(" Slrf: %01u", BEXT(value, 0));
+				LOG_ACTION(exit(-1));
+				break;
 			case EMIFS_ADV_CS_CONFIG(0):
+			case EMIFS_ADV_CS_CONFIG(1):
+			case EMIFS_ADV_CS_CONFIG(2):
+			case EMIFS_ADV_CS_CONFIG(3):
 			{
 				LOG("BTMODE: %01u, ADVHOLD: %01u, OEHOLD: %01u, OESETUP: %01u",
 					BEXT(value, 9), BEXT(value, 8), mlBFEXT(value, 7, 4), mlBFEXT(value, 3, 0));
 			}	break;
 			case EMIFS_CS_CONFIG(0):
+			case EMIFS_CS_CONFIG(1):
+			case EMIFS_CS_CONFIG(2):
 			{
 				LOG("PGWSTEN: %01u, PGWST: %01u, BTWST: %01u, MAD: %01u, BW: %01u",
 					BEXT(value, 31), mlBFEXT(value, 30, 27),
