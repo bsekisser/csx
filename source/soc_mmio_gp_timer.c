@@ -82,68 +82,27 @@ MMIO_ENUM_LIST
 MMIO_TRACE_LIST
 
 static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
-	[0] = {
-		.base = CSX_MMIO_GP_TIMER(0),
-//		.trace_list = trace_list,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[1] = {
+	{
 		.base = CSX_MMIO_GP_TIMER(1),
-//		.trace_list = trace_list,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[2] = {
+//		.trace_list = trace_list_1,
+	}, {
 		.base = CSX_MMIO_GP_TIMER(2),
 		.trace_list = trace_list_2,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[3] = {
+	}, {
 		.base = CSX_MMIO_GP_TIMER(3),
 		.trace_list = trace_list_3,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[4] = {
+	}, {
 		.base = CSX_MMIO_GP_TIMER(4),
-//		.trace_list = trace_list,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[5] = {
+//		.trace_list = trace_list_4,
+	}, {
 		.base = CSX_MMIO_GP_TIMER(5),
 		.trace_list = trace_list_5,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
-	},
-	[6] = {
+	}, {
 		.base = CSX_MMIO_GP_TIMER(6),
-//		.trace_list = trace_list,
-
-//		.reset = soc_mmio_gp_timer_reset,
-
-//		.read = soc_mmio_gp_timer_read,
-//		.write = soc_mmio_gp_timer_write
+//		.trace_list = trace_list_6,
+	}, {
+		.base = CSX_MMIO_GP_TIMER(7),
+//		.trace_list = trace_list_7,
 	}
 };
 
@@ -161,9 +120,11 @@ int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt
 
 	*h2gpt = gpt;
 	
-	for(int i = 0; i < 7; i++)
+	for(int i = 1; i <= 7; i++)
 	{
-		soc_mmio_peripheral(mmio, &gp_timer_peripheral[i], gpt);
+		
+		LOG("i = %02u, va = 0x%08x", i, CSX_MMIO_GP_TIMER(i));
+		soc_mmio_peripheral(mmio, &gp_timer_peripheral[i - 1], gpt);
 	}
 
 	return(0);

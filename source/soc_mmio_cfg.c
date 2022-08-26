@@ -83,21 +83,11 @@ static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_CFG_BASE,
 		.trace_list = trace_list_0,
-
-//		.reset = soc_mmio_cfg_reset,
-		
-//		.read = soc_mmio_cfg_read,
-//		.write = soc_mmio_cfg_write,
 	},
 
 	[1] = {
 		.base = CSX_MMIO_CFG_BASE + 0x100,
 		.trace_list = trace_list_1,
-
-//		.reset = soc_mmio_cfg_reset,
-		
-//		.read = soc_mmio_cfg_read,
-//		.write = soc_mmio_cfg_write,
 	}
 };
 

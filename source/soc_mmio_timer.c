@@ -127,7 +127,7 @@ static void soc_mmio_timer_reset(void* param,
 }
 
 static soc_mmio_peripheral_t timer_peripheral[3] = {
-	[0] = {
+	{
 		.base = CSX_MMIO_TIMER(0),
 		.trace_list = trace_list_1,
 		
@@ -135,15 +135,13 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
 
 		.read = soc_mmio_timer_read,
 		.write = soc_mmio_timer_write
-	},
-	[1] = {
+	}, {
 		.base = CSX_MMIO_TIMER(1),
 		.trace_list = trace_list_2,
 
 		.read = soc_mmio_timer_read,
 		.write = soc_mmio_timer_write
-	},
-	[2] = {
+	}, {
 		.base = CSX_MMIO_TIMER(2),
 		.trace_list = trace_list_3,
 

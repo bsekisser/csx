@@ -72,8 +72,6 @@ static void soc_mmio_os_timer_reset(void* param, void* data, soc_mmio_peripheral
 {
 	const soc_mmio_os_timer_p ost = param;
 	
-//	soc_mmio_peripheral_reset(ost->mmio, mp);
-	
 	ost->base = 0;
 }
 

@@ -63,9 +63,6 @@ static soc_mmio_peripheral_t dpll_peripheral = {
 	.base = CSX_MMIO_DPLL_BASE,
 	.trace_list = trace_list,
 
-//	.reset = soc_mmio_dpll_reset,
-
-//	.read = soc_mmio_dpll_read,
 	.write = soc_mmio_dpll_write,
 };
 

@@ -19,10 +19,10 @@
 
 #if 0
 	#define CSX_MMIO_GP_TIMER(_t) \
-		(CSX_MMIO_GP_TIMER_BASE + ((_t) * 0x800)
+		(CSX_MMIO_GP_TIMER_BASE + ((((_t) - 1) & 0x07) * 0x800))
 #else
 	#define CSX_MMIO_GP_TIMER(_t) \
-		(CSX_MMIO_GP_TIMER_BASE + (((_t) & 0x07) << 11))
+		(CSX_MMIO_GP_TIMER_BASE + ((((_t) - 1) & 0x07) << 11))
 #endif
 
 #define CSX_MMIO_TIMER(_t) \

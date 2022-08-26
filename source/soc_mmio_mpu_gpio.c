@@ -68,38 +68,18 @@ static soc_mmio_peripheral_t mpu_gpio_peripheral[] = {
 	[0] = {
 		.base = CSX_MMIO_MPU_GPIO1_BASE,
 		.trace_list = trace_list_1,
-
-//		.reset = soc_mmio_mpu_gpio_reset,
-
-//		.read = soc_mmio_mpu_gpio_read,
-//		.write = soc_mmio_mpu_gpio_write,
 	},
 	[1] = {
 		.base = CSX_MMIO_MPU_GPIO2_BASE,
 		.trace_list = trace_list_2,
-
-//		.reset = soc_mmio_mpu_gpio_reset,
-
-//		.read = soc_mmio_mpu_gpio_read,
-//		.write = soc_mmio_mpu_gpio_write,
 	},
 	[2] = {
 		.base = CSX_MMIO_MPU_GPIO3_BASE,
 		.trace_list = trace_list_3,
-
-//		.reset = soc_mmio_mpu_gpio_reset,
-
-//		.read = soc_mmio_mpu_gpio_read,
-//		.write = soc_mmio_mpu_gpio_write,
 	},
 	[3] = {
 		.base = CSX_MMIO_MPU_GPIO4_BASE,
 		.trace_list = trace_list_4,
-
-//		.reset = soc_mmio_mpu_gpio_reset,
-
-//		.read = soc_mmio_mpu_gpio_read,
-//		.write = soc_mmio_mpu_gpio_write,
 	},
 };
 

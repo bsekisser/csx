@@ -42,6 +42,12 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
+#define _MODULE_DATA_OFFSET(_x) \
+	((_x) - CSX_MMIO_BASE)
+	
+#define _MODULE(_x) \
+	((_MODULE_DATA_OFFSET(_x) >> 8) & 0x3ff)
+
 typedef void (*void_fn_p)(void*);
 
 typedef struct soc_mmio_t* soc_mmio_p;
@@ -84,8 +90,8 @@ typedef struct __mpt_t {
 
 static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 {
-	p2mpt->mmio_data_offset = (va - CSX_MMIO_BASE);
-	p2mpt->module = (p2mpt->mmio_data_offset >> 8) & 0x3ff;
+	p2mpt->mmio_data_offset = _MODULE_DATA_OFFSET(va);
+	p2mpt->module = _MODULE(va);
 	p2mpt->offset = va & 0xff;
 	
 	p2mpt->data = &mmio->data[p2mpt->mmio_data_offset];
@@ -157,7 +163,7 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 
 void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* param)
 {
-	const uint16_t module = ((p->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
+	const uint16_t module = _MODULE(p->base);
 
 	mmio->param[module] = param;
 	mmio->peripheral[module] = p;

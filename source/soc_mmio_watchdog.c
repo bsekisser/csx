@@ -48,23 +48,12 @@ MMIO_ENUM_LIST
 MMIO_TRACE_LIST
 
 static soc_mmio_peripheral_t watchdog_peripheral[2] = {
-	[0] = {
+	{
 		.base = CSX_MMIO_WATCHDOG_BASE,
 		.trace_list = trace_list_watchdog,
-
-//		.reset = soc_mmio_watchdog_reset,
-
-//		.read = soc_mmio_watchdog_read,
-//		.write = soc_mmio_watchdog_write
-	},
-	[1] = {
+	}, {
 		.base = CSX_MMIO_TIMER_WDT_BASE,
 		.trace_list = trace_list_timer,
-
-//		.reset = soc_mmio_watchdog_reset,
-
-//		.read = soc_mmio_watchdog_read,
-//		.write = soc_mmio_watchdog_write
 	},
 };
 

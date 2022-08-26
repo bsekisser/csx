@@ -104,9 +104,6 @@ static soc_mmio_peripheral_t mpu_peripheral = {
 	.base = CSX_MMIO_MPU_BASE,
 	.trace_list = trace_list,
 
-//	.reset = soc_mmio_mpu_reset,
-
-//	.read = soc_mmio_mpu_read,
 	.write = soc_mmio_mpu_write,
 };
 
