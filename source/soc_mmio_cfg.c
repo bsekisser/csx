@@ -17,7 +17,8 @@
 
 #define _CFG(_x)		(CSX_MMIO_CFG_BASE + (_x & _BM(12)))
 
-#define MMIO_LIST \
+#define MMIO_LIST_0 \
+	MMIO_TRACE_LIST_HEAD(0) \
 	MMIO(0xfffe, 0x100c, 0x0000, 0x0000, 32, MEM_RW, COMP_MODE_CTRL_0) \
 	MMIO(0xfffe, 0x1010, 0x0000, 0x0000, 32, MEM_RW, FUNC_MUX_CTRL_3) \
 	MMIO(0xfffe, 0x1014, 0x0000, 0x0000, 32, MEM_RW, FUNC_MUX_CTRL_4) \
@@ -47,13 +48,26 @@
 	MMIO(0xfffe, 0x10bc, 0x0000, 0x0000, 32, MEM_RW, PU_PD_SEL_2) \
 	MMIO(0xfffe, 0x10c0, 0x0000, 0x0000, 32, MEM_RW, PU_PD_SEL_3) \
 	MMIO(0xfffe, 0x10c4, 0x0000, 0x0000, 32, MEM_RW, PU_PD_SEL_4) \
+	MMIO_TRACE_LIST_TAIL
+
+#define MMIO_LIST_1 \
+	MMIO_TRACE_LIST_HEAD(1) \
 	MMIO(0xfffe, 0x1110, 0x0000, 0x0000, 32, MEM_RW, MOD_CONF_CTRL_1) \
 	MMIO(0xfffe, 0x1140, 0x0000, 0x007f, 32, MEM_RW, RESET_CTL) \
-	MMIO(0xfffe, 0x1160, 0x0000, 0x0000, 32, MEM_TRACE_RW, x0xfffe_0x1160)
+	MMIO(0xfffe, 0x1160, 0x0000, 0x0000, 32, MEM_TRACE_RW, x0xfffe_0x1160) \
+	MMIO_TRACE_LIST_TAIL
 
-#define TRACE_LIST
-	#include "soc_mmio_trace.h"
-#undef TRACE_LIST
+#define MMIO_LIST \
+	MMIO_LIST_0 \
+	MMIO_LIST_1
+
+#include "soc_mmio_trace.h"
+
+#include "soc_mmio_ea_trace_enum.h"
+MMIO_ENUM_LIST
+
+#include "soc_mmio_ea_trace_list.h"
+MMIO_TRACE_LIST
 
 #define COMP_MODE_CTRL_0	_CFG(0x000c)
 #define FUNC_MUX_CTRL_3		_CFG(0x0010)
@@ -68,7 +82,7 @@
 static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	[0] = {
 		.base = CSX_MMIO_CFG_BASE,
-		.trace_list = trace_list,
+		.trace_list = trace_list_0,
 
 //		.reset = soc_mmio_cfg_reset,
 		
@@ -78,7 +92,7 @@ static soc_mmio_peripheral_t cfg_peripheral[2] = {
 
 	[1] = {
 		.base = CSX_MMIO_CFG_BASE + 0x100,
-		.trace_list = trace_list,
+		.trace_list = trace_list_1,
 
 //		.reset = soc_mmio_cfg_reset,
 		

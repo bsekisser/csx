@@ -68,15 +68,18 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
 	}
 }
 
-static void soc_mmio_os_timer_reset(void* param, void* data)
+static void soc_mmio_os_timer_reset(void* param, void* data, soc_mmio_peripheral_p mp)
 {
 	const soc_mmio_os_timer_p ost = param;
+	
+//	soc_mmio_peripheral_reset(ost->mmio, mp);
 	
 	ost->base = 0;
 }
 
 static soc_mmio_peripheral_t os_timer_peripheral = {
 	.base = CSX_MMIO_OS_TIMER_BASE,
+	.trace_list = trace_list,
 
 	.reset = soc_mmio_os_timer_reset,
 

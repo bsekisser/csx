@@ -42,28 +42,6 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
-{
-	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
-
-	if(!tl)
-		return(0);
-
-	int i = 0;
-	do {
-		const ea_trace_p tle = &tl[i++];
-
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
-
-		if(tle->address == address)
-			return(tle);
-		if(0 == tle->address)
-			return(0);
-	}while(tl[i].address);
-
-	return(0);
-}
-
 typedef void (*void_fn_p)(void*);
 
 typedef struct soc_mmio_t* soc_mmio_p;
@@ -94,22 +72,33 @@ typedef struct soc_mmio_t {
 //	soc_mmio_dsp_p			dsp;
 }soc_mmio_t;
 
-ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
+typedef struct __mpt_t* __mpt_p;
+typedef struct __mpt_t {
+	uint8_t* data;
+	uint16_t module;
+	uint32_t mmio_data_offset;
+	soc_mmio_peripheral_p mp;
+	void* param;
+	uint16_t offset;
+}__mpt_t;
+
+static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 {
-	const ea_trace_p eat = soc_mmio_get_trace(tl, address);
-	const char *name = eat ? eat->name : "";
-
-	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
-
-	return(eat);
+	p2mpt->mmio_data_offset = (va - CSX_MMIO_BASE);
+	p2mpt->module = (p2mpt->mmio_data_offset >> 8) & 0x3ff;
+	p2mpt->offset = va & 0xff;
+	
+	p2mpt->data = &mmio->data[p2mpt->mmio_data_offset];
+	p2mpt->param = mmio->param[p2mpt->module];
+	p2mpt->mp = mmio->peripheral[p2mpt->module];
 }
 
-void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t base_mask)
+ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
-	LOG();
+	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
 
-	for(int i = 0; i < 0xff; i++)
-		dst[i] = 0;
+	if(!tl)
+		return(0);
 
 	int i = 0;
 	do {
@@ -117,165 +106,13 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint8_t* dst, uint32_t
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
-		const uint32_t value = tle->reset_value;
-		const uint32_t module = tle->address & mlBF(31, 8);
-		const uint32_t offset = tle->address & 0xff;
-
-		if(base_mask && (base_mask != module))
-			continue;
-
-		if(value)
-		{
-			if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
-				(uint32_t)tle, module, offset, tle->name);
-			soc_data_write(&dst[offset], value, tle->size);
-		}
+		if(tle->address == address)
+			return(tle);
+		if(0 == tle->address)
+			return(0);
 	}while(tl[i].address);
-}
-
-
-uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
-{
-	const uint32_t mmio_data_offset = (vaddr - CSX_MMIO_BASE);
-	const uint16_t module = (mmio_data_offset >> 8) & 0x3ff;
-	const uint16_t offset = vaddr & 0xff;
-	
-	uint8_t* data = &mmio->data[mmio_data_offset];
-	const void* param = mmio->param[module];
-	const soc_mmio_peripheral_p mp = mmio->peripheral[module];
-
-	ea_trace_p tl = mp ? mp->trace_list : trace_list;
-
-	if(mp && mp->read)
-		return(mp->read((void*)param, data, vaddr, size));
-
-	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
-	if(eat)
-	{
-		uint32_t value = soc_data_read(&data[offset], size);
-		switch(vaddr)
-		{
-			case	x0xfffe_0x6014:
-				value |= 1;
-				break;
-			case	x0xfffe_0x6018:
-				value |= 1;
-				break;
-		}
-
-		return(value);
-	} else {
-		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
-			vaddr, module, (uint)mp, (uint)eat);
-		LOG_ACTION(exit(1));
-	}
 
 	return(0);
-}
-
-void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
-{
-	const uint32_t mmio_data_offset = (vaddr - CSX_MMIO_BASE);
-	const uint16_t module = (mmio_data_offset >> 8) & 0x3ff;
-	const uint16_t offset = vaddr & 0xff;
-	
-	uint8_t* data = &mmio->data[mmio_data_offset];
-	const void* param = mmio->param[module];
-	const soc_mmio_peripheral_p mp = mmio->peripheral[module];
-
-	ea_trace_p tl = mp ? mp->trace_list : trace_list;
-	
-	if(mp && mp->write)
-		return(mp->write((void*)param, data, vaddr, value, size));
-
-	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
-	LOG("write -- 0x%08x", value);
-
-	if(eat)
-	{
-		switch(vaddr)
-		{
-		}
-		
-		soc_data_write(&data[offset], value, size);
-	} else {
-		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, module);
-		LOG_ACTION(exit(1));
-	}
-}
-
-void soc_mmio_reset(soc_mmio_p mmio)
-{
-	LOG();
-
-	for(int i = 0; i < 0x400; i++)
-	{
-		const soc_mmio_peripheral_p mp = mmio->peripheral[i];
-		
-		if(!mp || !mp->reset)
-			continue;
-		
-		void (*fn)(void* param, void* data);
-		
-		fn = mp->reset;
-		if(fn) {
-			uint8_t* data = &mmio->data[i << 8];
-			void* param = &mmio->param[i];
-			if(0) LOG("reset->fn = 0x%08x, param = 0x%08x, data = 0x%08x", (uint32_t)fn, (uint)param, (uint32_t)data);
-			fn(param, data);
-		}
-	}
-}
-
-/*
-	uint32_t soc_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl)
-	{
-		return(soc_data_read(&data[addr & 0xff], data, size);
-	}
-*/
-
-void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
-{
-	for(int i = 0; i < 256; i++)
-		data[i] = 0;
-
-	for(int i = 0;; i++)
-	{
-		const ea_trace_p tle = &tl[i];
-
-		if(!trace_list[i].address)
-			break;
-
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
-
-		const uint32_t value = tle->reset_value;
-		if(value)
-		{
-			const uint32_t addr = tle->address;
-			soc_data_write(&data[addr & 0xff], value, tle->size);
-		}
-	}
-}
-
-/*	void soc_mmio_peripheral_write(
-		uint32_t addr,
-		uint32_t value,
-		void* data,
-		ea_trace_p tl)
-	{
-		soc_data_write(data[addr & 0xff], value, size);
-	}
-*/
-
-void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* param)
-{
-	const uint16_t module = ((p->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
-
-	mmio->param[module] = param;
-	mmio->peripheral[module] = p;
-
-	if(0) LOG("base = 0x%08x, module = 0x%05x, param = 0x%08x, reset = 0x%08x",
-		p->base, module, (uint32_t)param, (uint32_t)p->reset);
 }
 
 int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
@@ -316,4 +153,162 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
 	return(err);
+}
+
+void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* param)
+{
+	const uint16_t module = ((p->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
+
+	mmio->param[module] = param;
+	mmio->peripheral[module] = p;
+
+	if(1) LOG("base = 0x%08x, module = 0x%05x, param = 0x%08x, reset = 0x%08x",
+		p->base, module, (uint32_t)param, (uint32_t)p->reset);
+}
+
+void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
+{
+	for(int i = 0; i < 256; i++)
+		data[i] = 0;
+
+	for(int i = 0;; i++)
+	{
+		const ea_trace_p tle = &tl[i];
+
+		if(!trace_list[i].address)
+			break;
+
+		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+
+		const uint32_t value = tle->reset_value;
+		if(value)
+		{
+			const uint32_t addr = tle->address;
+			soc_data_write(&data[addr & 0xff], value, tle->size);
+		}
+	}
+}
+
+uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
+{
+	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
+	const soc_mmio_peripheral_p mp = mpt.mp;
+
+	ea_trace_p tl = mp ? mp->trace_list : trace_list;
+
+	if(mp && mp->read)
+		return(mp->read(mpt.param, mpt.data, vaddr, size));
+
+	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+	if(eat)
+	{
+		uint32_t value = soc_data_read(&mpt.data[mpt.offset], size);
+		switch(vaddr)
+		{
+			case	x0xfffe_0x6014:
+				value |= 1;
+				break;
+			case	x0xfffe_0x6018:
+				value |= 1;
+				break;
+		}
+
+		return(value);
+	} else {
+		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
+			vaddr, mpt.module, (uint)mpt.mp, (uint)eat);
+		LOG_ACTION(exit(1));
+	}
+
+	return(0);
+}
+
+void soc_mmio_reset(soc_mmio_p mmio)
+{
+	LOG();
+
+	for(int i = 0; i < 0x400; i++)
+	{
+		const soc_mmio_peripheral_p mp = mmio->peripheral[i];
+		
+		if(!mp)
+			continue;
+		
+		LOG("base = 0x%08x", mp->base);
+
+		if(mp->trace_list)
+			soc_mmio_trace_reset(mmio, mp->trace_list, i);
+
+		if(mp->reset) {
+			uint8_t* data = &mmio->data[i << 8];
+			void* param = &mmio->param[i];
+			if(0) LOG("reset->fn = 0x%08x, param = 0x%08x, data = 0x%08x",
+				(uint32_t)mp->reset, (uint)param, (uint32_t)data);
+			mp->reset(param, data, mp);
+		}
+	}
+}
+
+ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
+{
+	if(!tl) {
+		__mpt_t mpt; _soc_mmio_peripheral(mmio, address, &mpt);
+		tl = mpt.mp->trace_list;
+	}
+
+	const ea_trace_p eat = soc_mmio_get_trace(tl, address);
+	const char *name = eat ? eat->name : "";
+
+	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+
+	return(eat);
+}
+
+void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
+{
+	LOG();
+
+	int i = 0;
+	do {
+		const ea_trace_p tle = &tl[i++];
+
+		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+		
+		__mpt_t mpt; _soc_mmio_peripheral(mmio, tle->address, &mpt);
+
+		if(mpt.module != module) {
+			LOG("mpt->module = 0x%08x, module = 0x%08x", mpt.module, module);
+			continue;
+		}
+
+		if(1) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
+			(uint32_t)tle, mpt.module, mpt.offset, tle->name);
+		soc_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
+	}while(tl[i].address);
+}
+
+void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
+{
+	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
+	const soc_mmio_peripheral_p mp = mpt.mp;
+
+	ea_trace_p tl = mp ? mp->trace_list : trace_list;
+	
+	if(mp && mp->write)
+		return(mp->write(mpt.param, mpt.data, vaddr, value, size));
+
+	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+	LOG("write -- 0x%08x", value);
+
+	if(eat)
+	{
+		switch(vaddr)
+		{
+		}
+		
+		soc_data_write(&mpt.data[mpt.offset], value, size);
+	} else {
+		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
+		LOG_ACTION(exit(1));
+	}
 }

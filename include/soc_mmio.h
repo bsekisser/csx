@@ -26,7 +26,7 @@ typedef struct soc_mmio_peripheral_t {
 	uint32_t			base;
 	ea_trace_p			trace_list;
 
-	void				(*reset)(void*, void*);
+	void				(*reset)(void*, void*, soc_mmio_peripheral_p);
 	
 	soc_mmio_read_fn	read;
 	soc_mmio_write_fn	write;

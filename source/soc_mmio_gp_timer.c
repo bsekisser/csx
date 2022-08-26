@@ -15,7 +15,8 @@
 
 /* **** */
 
-#define MMIO_LIST \
+#define MMIO_GPTMR2_LIST \
+	MMIO_TRACE_LIST_HEAD(2) \
 	MMIO(0xfffb, 0x1c10, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TIOCP_CFG) \
 	MMIO(0xfffb, 0x1c18, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TISR) \
 	MMIO(0xfffb, 0x1c1c, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TIER) \
@@ -24,7 +25,10 @@
 	MMIO(0xfffb, 0x1c2c, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TLDR) \
 	MMIO(0xfffb, 0x1c38, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TMAR) \
 	MMIO(0xfffb, 0x1c40, 0x0000, 0x0000, 32, MEM_RW, GPTMR2_TSICR) \
-	\
+	MMIO_TRACE_LIST_TAIL
+
+#define MMIO_GPTMR3_LIST \
+	MMIO_TRACE_LIST_HEAD(3) \
 	MMIO(0xfffb, 0x2410, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TIOCP_CFG) \
 	MMIO(0xfffb, 0x2418, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TISR) \
 	MMIO(0xfffb, 0x241c, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TIER) \
@@ -33,7 +37,10 @@
 	MMIO(0xfffb, 0x242c, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TLDR) \
 	MMIO(0xfffb, 0x2438, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TMAR) \
 	MMIO(0xfffb, 0x2440, 0x0000, 0x0000, 32, MEM_RW, GPTMR3_TSICR) \
-	\
+	MMIO_TRACE_LIST_TAIL
+
+#define MMIO_GPTMR5_LIST \
+	MMIO_TRACE_LIST_HEAD(5) \
 	MMIO(0xfffb, 0x3410, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TIOCP_CFG) \
 	MMIO(0xfffb, 0x3418, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TISR) \
 	MMIO(0xfffb, 0x341c, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TIER) \
@@ -41,7 +48,13 @@
 	MMIO(0xfffb, 0x3424, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TCLR) \
 	MMIO(0xfffb, 0x342c, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TLDR) \
 	MMIO(0xfffb, 0x3438, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TMAR) \
-	MMIO(0xfffb, 0x3440, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TSICR)
+	MMIO(0xfffb, 0x3440, 0x0000, 0x0000, 32, MEM_RW, GPTMR5_TSICR) \
+	MMIO_TRACE_LIST_TAIL
+
+#define MMIO_LIST \
+	MMIO_GPTMR2_LIST \
+	MMIO_GPTMR3_LIST \
+	MMIO_GPTMR5_LIST
 
 /*	1	=	14	--	0001 0(1xx xxxx xxxx)
  *	2	=	1c	--	0001 1(1xx xxxx xxxx)
@@ -60,14 +73,18 @@ const char unit_map[16] = { 1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0, 7, 0, 0, 0 };
 #define GPTMR_TMAR			0x38
 #define GPTMR_TSICR			0x40
 
-#define TRACE_LIST
-	#include "soc_mmio_trace.h"
-#undef TRACE_LIST
+#include "soc_mmio_trace.h"
+
+#include "soc_mmio_ea_trace_enum.h"
+MMIO_ENUM_LIST
+
+#include "soc_mmio_ea_trace_list.h"
+MMIO_TRACE_LIST
 
 static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	[0] = {
 		.base = CSX_MMIO_GP_TIMER(0),
-		.trace_list = trace_list,
+//		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -76,7 +93,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[1] = {
 		.base = CSX_MMIO_GP_TIMER(1),
-		.trace_list = trace_list,
+//		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -85,7 +102,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[2] = {
 		.base = CSX_MMIO_GP_TIMER(2),
-		.trace_list = trace_list,
+		.trace_list = trace_list_2,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -94,7 +111,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[3] = {
 		.base = CSX_MMIO_GP_TIMER(3),
-		.trace_list = trace_list,
+		.trace_list = trace_list_3,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -103,7 +120,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[4] = {
 		.base = CSX_MMIO_GP_TIMER(4),
-		.trace_list = trace_list,
+//		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -112,7 +129,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[5] = {
 		.base = CSX_MMIO_GP_TIMER(5),
-		.trace_list = trace_list,
+		.trace_list = trace_list_5,
 
 //		.reset = soc_mmio_gp_timer_reset,
 
@@ -121,7 +138,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	},
 	[6] = {
 		.base = CSX_MMIO_GP_TIMER(6),
-		.trace_list = trace_list,
+//		.trace_list = trace_list,
 
 //		.reset = soc_mmio_gp_timer_reset,
 

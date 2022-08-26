@@ -32,7 +32,7 @@
 	MMIO(0xfffe, 0xcc5c, 0x0000, 0x0000, 32, MEM_RW, EMIFS_ADV_CS3_CONFIG)
 
 #define TRACE_LIST
-	#include "soc_mmio_trace.h"
+#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
 static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
@@ -40,7 +40,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 	const soc_mmio_ocp_p ocp = param;
 	const csx_p csx = ocp->csx;
 	
-	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
 	if(eat)
 	{
 		switch(addr)
@@ -105,9 +105,6 @@ static soc_mmio_peripheral_t ocp_peripheral = {
 	.base = CSX_MMIO_OCP_BASE,
 	.trace_list = trace_list,
 
-//	.reset = soc_mmio_ocp_reset,
-
-//	.read = soc_mmio_ocp_read,
 	.write = soc_mmio_ocp_write,
 };
 

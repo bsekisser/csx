@@ -16,6 +16,7 @@
 /* **** */
 
 #define MMIO_MPU_L1_IHR_LIST \
+	MMIO_TRACE_LIST_HEAD(1) \
 	MMIO(0xfffe, 0xcb00, 0x0000, 0x0000, 32, MEM_RW, MPU_L1_ITR) \
 	MMIO(0xfffe, 0xcb04, 0xffff, 0xffff, 32, MEM_RW, MPU_L1_MIR) \
 	MMIO(0xfffe, 0xcb18, 0x0000, 0x0000, 32, MEM_RW, MPU_L1_CONTROL) \
@@ -51,8 +52,10 @@
 	MMIO(0xfffe, 0xcb90, 0x0000, 0x0000, 32, MEM_RW, MPU_L1_ILR29) \
 	MMIO(0xfffe, 0xcb94, 0x0000, 0x0000, 32, MEM_RW, MPU_L1_ILR30) \
 	MMIO(0xfffe, 0xcb98, 0x0000, 0x0000, 32, MEM_RW, MPU_L1_ILR31) \
+	MMIO_TRACE_LIST_TAIL
 
 #define MMIO_MPU_L2_IHR_LIST \
+	MMIO_TRACE_LIST_HEAD(2) \
 	MMIO(0xfffe, 0x0000, 0x0000, 0x0000, 32, MEM_RW, MPU_L2_ITR) \
 	MMIO(0xfffe, 0x0004, 0xffff, 0xffff, 32, MEM_RW, MPU_L2_MIR) \
 	MMIO(0xfffe, 0x0018, 0x0000, 0x0000, 32, MEM_RW, MPU_L2_CONTROL) \
@@ -88,8 +91,10 @@
 	MMIO(0xfffe, 0x0090, 0x0000, 0x0000, 32, MEM_RW, MPU_L2_ILR29) \
 	MMIO(0xfffe, 0x0094, 0x0000, 0x0000, 32, MEM_RW, MPU_L2_ILR30) \
 	MMIO(0xfffe, 0x0098, 0x0000, 0x0000, 32, MEM_RW, MPU_L2_ILR31) \
+	MMIO_TRACE_LIST_TAIL
 
 #define MMIO_MPU_L3_IHR_LIST \
+	MMIO_TRACE_LIST_HEAD(3) \
 	MMIO(0xfffe, 0x0100, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_ITR) \
 	MMIO(0xfffe, 0x0104, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_MIR) \
 	MMIO(0xfffe, 0x011c, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_ILR0) \
@@ -124,8 +129,10 @@
 	MMIO(0xfffe, 0x0190, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_ILR29) \
 	MMIO(0xfffe, 0x0194, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_ILR30) \
 	MMIO(0xfffe, 0x0198, 0x0000, 0x0000, 32, MEM_RW, MPU_L3_ILR31) \
+	MMIO_TRACE_LIST_TAIL
 
 #define MMIO_MPU_L4_IHR_LIST \
+	MMIO_TRACE_LIST_HEAD(4) \
 	MMIO(0xfffe, 0x0200, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_ITR) \
 	MMIO(0xfffe, 0x0204, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_MIR) \
 	MMIO(0xfffe, 0x021c, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_ILR0) \
@@ -160,8 +167,10 @@
 	MMIO(0xfffe, 0x0290, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_ILR29) \
 	MMIO(0xfffe, 0x0294, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_ILR30) \
 	MMIO(0xfffe, 0x0298, 0x0000, 0x0000, 32, MEM_RW, MPU_L4_ILR31) \
+	MMIO_TRACE_LIST_TAIL
 
 #define MMIO_MPU_L5_IHR_LIST \
+	MMIO_TRACE_LIST_HEAD(5) \
 	MMIO(0xfffe, 0x0300, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ITR) \
 	MMIO(0xfffe, 0x0304, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_MIR) \
 	MMIO(0xfffe, 0x031c, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR0) \
@@ -195,8 +204,8 @@
 	MMIO(0xfffe, 0x038c, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR28) \
 	MMIO(0xfffe, 0x0390, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR29) \
 	MMIO(0xfffe, 0x0394, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR30) \
-	MMIO(0xfffe, 0x0398, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR31)
-
+	MMIO(0xfffe, 0x0398, 0x0000, 0x0000, 32, MEM_RW, MPU_L5_ILR31) \
+	MMIO_TRACE_LIST_TAIL
 
 #define MMIO_LIST \
 	MMIO_MPU_L1_IHR_LIST \
@@ -205,31 +214,30 @@
 	MMIO_MPU_L4_IHR_LIST \
 	MMIO_MPU_L5_IHR_LIST
 
-#define TRACE_LIST
-	#include "soc_mmio_trace.h"
-#undef TRACE_LIST
+#include "soc_mmio_trace.h"
+
+#include "soc_mmio_ea_trace_enum.h"
+MMIO_ENUM_LIST
+
+#include "soc_mmio_ea_trace_list.h"
+MMIO_TRACE_LIST
 
 static soc_mmio_peripheral_t ihr_peripheral[] = {
 	{
 		.base = CSX_MMIO_MPU_L1_IHR_BASE,
-		.trace_list = trace_list,
-
-	//	.reset = soc_mmio_mpu_ihr_reset,
-
-	//	.read = soc_mmio_mpu_ihr_read,
-	//	.write = soc_mmio_mpu_ihr_write
+		.trace_list = trace_list_1,
 	}, {
 		.base = CSX_MMIO_MPU_L2_IHR_BASE,
-		.trace_list = trace_list,
+		.trace_list = trace_list_2,
 	}, {
 		.base = CSX_MMIO_MPU_L3_IHR_BASE,
-		.trace_list = trace_list,
+		.trace_list = trace_list_3,
 	}, {
 		.base = CSX_MMIO_MPU_L4_IHR_BASE,
-		.trace_list = trace_list,
+		.trace_list = trace_list_4,
 	}, {
 		.base = CSX_MMIO_MPU_L5_IHR_BASE,
-		.trace_list = trace_list,
+		.trace_list = trace_list_5,
 	},
 };
 

@@ -44,6 +44,7 @@ int csx_soc_main(int core_trace)
 		return(-1);
 	
 	ERR(err = csx_soc_init(csx));
+	csx_soc_reset(csx);
 
 	const soc_core_p core = csx->core;
 
