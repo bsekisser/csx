@@ -12,6 +12,7 @@
 
 /* **** */
 
+const int _check_pedantic_mmio = 0;
 const int _check_pedantic_pc = 0;
 
 /* **** */

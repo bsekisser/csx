@@ -30,7 +30,7 @@ void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value,
 {
 	const soc_mmio_dpll_p dpll = param;
 	const csx_p csx = dpll->csx;
-	
+
 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
 	{
@@ -63,6 +63,9 @@ static soc_mmio_peripheral_t dpll_peripheral = {
 	.base = CSX_MMIO_DPLL_BASE,
 	.trace_list = trace_list,
 
+	.reset = 0,
+
+	.read = 0,
 	.write = soc_mmio_dpll_write,
 };
 
@@ -70,17 +73,17 @@ static soc_mmio_peripheral_t dpll_peripheral = {
 int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 {
 	soc_mmio_dpll_p dpll = calloc(1, sizeof(soc_mmio_dpll_t));
-	
+
 	ERR_NULL(dpll);
 	if(!dpll)
 		return(-1);
 
 	dpll->csx = csx;
 	dpll->mmio = mmio;
-	
+
 	*h2dpll = dpll;
-	
+
 	soc_mmio_peripheral(mmio, &dpll_peripheral, dpll);
-	
+
 	return(0);
 }

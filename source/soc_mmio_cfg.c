@@ -80,32 +80,40 @@ MMIO_TRACE_LIST
 #define esac_oxfffe1160		_CFG(0x0160)
 
 static soc_mmio_peripheral_t cfg_peripheral[2] = {
-	[0] = {
+	{
 		.base = CSX_MMIO_CFG_BASE,
 		.trace_list = trace_list_0,
-	},
 
-	[1] = {
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
+	}, {
 		.base = CSX_MMIO_CFG_BASE + 0x100,
 		.trace_list = trace_list_1,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}
 };
 
 int soc_mmio_cfg_init(csx_p csx, soc_mmio_p mmio, soc_mmio_cfg_h h2cfg)
 {
 	soc_mmio_cfg_p cfg = calloc(1, sizeof(soc_mmio_cfg_t));
-	
+
 	ERR_NULL(cfg);
 	if(!cfg)
 		return(-1);
 
 	cfg->csx = csx;
 	cfg->mmio = mmio;
-	
+
 	*h2cfg = cfg;
-	
+
 	soc_mmio_peripheral(mmio, &cfg_peripheral[0], (void*)cfg);
 	soc_mmio_peripheral(mmio, &cfg_peripheral[1], (void*)cfg);
-	
+
 	return(0);
 }

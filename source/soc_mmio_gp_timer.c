@@ -84,25 +84,57 @@ MMIO_TRACE_LIST
 static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	{
 		.base = CSX_MMIO_GP_TIMER(1),
-//		.trace_list = trace_list_1,
+		.trace_list = 0 /*trace_list_1*/,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(2),
 		.trace_list = trace_list_2,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(3),
 		.trace_list = trace_list_3,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(4),
-//		.trace_list = trace_list_4,
+		.trace_list = 0 /*trace_list_4*/,
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(5),
 		.trace_list = trace_list_5,
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(6),
-//		.trace_list = trace_list_6,
+		.trace_list = 0 /*trace_list_6*/,
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_GP_TIMER(7),
-//		.trace_list = trace_list_7,
+		.trace_list = 0 /*trace_list_7*/,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}
 };
 
@@ -110,7 +142,7 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt)
 {
 	soc_mmio_gp_timer_p gpt = calloc(1, sizeof(soc_mmio_gp_timer_t));
-	
+
 	ERR_NULL(gpt);
 	if(!gpt)
 		return(-1);
@@ -119,11 +151,11 @@ int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt
 	gpt->mmio = mmio;
 
 	*h2gpt = gpt;
-	
+
 	for(int i = 1; i <= 7; i++)
 	{
-		
-		LOG("i = %02u, va = 0x%08x", i, CSX_MMIO_GP_TIMER(i));
+
+		if(0) LOG("i = %02u, va = 0x%08x", i, CSX_MMIO_GP_TIMER(i));
 		soc_mmio_peripheral(mmio, &gp_timer_peripheral[i - 1], gpt);
 	}
 

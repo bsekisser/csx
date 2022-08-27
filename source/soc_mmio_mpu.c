@@ -104,23 +104,26 @@ static soc_mmio_peripheral_t mpu_peripheral = {
 	.base = CSX_MMIO_MPU_BASE,
 	.trace_list = trace_list,
 
+	.reset = 0,
+
+	.read = 0,
 	.write = soc_mmio_mpu_write,
 };
 
 int soc_mmio_mpu_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_h h2mpu)
 {
 	soc_mmio_mpu_p mpu = calloc(1, sizeof(soc_mmio_mpu_t));
-	
+
 	ERR_NULL(mpu);
 	if(!mpu)
 		return(-1);
 
 	mpu->csx = csx;
 	mpu->mmio = mmio;
-	
+
 	*h2mpu = mpu;
-	
+
 	soc_mmio_peripheral(mmio, &mpu_peripheral, mpu);
-	
+
 	return(0);
 }

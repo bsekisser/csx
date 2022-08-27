@@ -226,25 +226,50 @@ static soc_mmio_peripheral_t ihr_peripheral[] = {
 	{
 		.base = CSX_MMIO_MPU_L1_IHR_BASE,
 		.trace_list = trace_list_1,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_MPU_L2_IHR_BASE,
 		.trace_list = trace_list_2,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_MPU_L3_IHR_BASE,
 		.trace_list = trace_list_3,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_MPU_L4_IHR_BASE,
 		.trace_list = trace_list_4,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	}, {
 		.base = CSX_MMIO_MPU_L5_IHR_BASE,
 		.trace_list = trace_list_5,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	},
 };
 
 int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2ihr)
 {
 	soc_mmio_mpu_ihr_p ihr = calloc(1, sizeof(soc_mmio_mpu_ihr_t));
-	
+
 	ERR_NULL(ihr);
 	if(!ihr)
 		return(-1);
@@ -253,7 +278,7 @@ int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2ihr)
 	ihr->mmio = mmio;
 
 	*h2ihr = ihr;
-	
+
 	for(int i = 0; i < 5; i++)
 		soc_mmio_peripheral(mmio, &ihr_peripheral[i], ihr);
 

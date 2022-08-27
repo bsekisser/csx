@@ -48,6 +48,7 @@ typedef struct csx_t {
 
 /* **** */
 
+extern const int _check_pedantic_mmio;
 extern const int _check_pedantic_pc;
 
 /* **** */

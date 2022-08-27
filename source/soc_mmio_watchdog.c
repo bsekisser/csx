@@ -51,27 +51,38 @@ static soc_mmio_peripheral_t watchdog_peripheral[2] = {
 	{
 		.base = CSX_MMIO_WATCHDOG_BASE,
 		.trace_list = trace_list_watchdog,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
+
 	}, {
 		.base = CSX_MMIO_TIMER_WDT_BASE,
 		.trace_list = trace_list_timer,
+
+		.reset = 0,
+
+		.read = 0,
+		.write = 0,
 	},
 };
 
 int soc_mmio_watchdog_init(csx_p csx, soc_mmio_p mmio, soc_mmio_watchdog_h h2wdt)
 {
 	soc_mmio_watchdog_p wdt = calloc(1, sizeof(soc_mmio_watchdog_t));
-	
+
 	ERR_NULL(wdt);
 	if(!wdt)
 		return(-1);
 
 	wdt->csx = csx;
 	wdt->mmio = mmio;
-	
+
 	*h2wdt = wdt;
-	
+
 	soc_mmio_peripheral(mmio, &watchdog_peripheral[0], wdt);
 	soc_mmio_peripheral(mmio, &watchdog_peripheral[1], wdt);
-	
+
 	return(0);
 }

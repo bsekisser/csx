@@ -16,4 +16,4 @@ typedef struct soc_mmio_mpu_ihr_t {
 	soc_mmio_p		mmio;
 }soc_mmio_mpu_ihr_t;
 
-int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2mpu);
+int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2ihr);

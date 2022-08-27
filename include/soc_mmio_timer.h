@@ -15,7 +15,7 @@ typedef struct soc_mmio_timer_t {
 	csx_p					csx;
 	soc_mmio_p				mmio;
 	soc_mmio_peripheral_p	mp[3];
-	
+
 	uint64_t				base[3];
 }soc_mmio_timer_t;
 

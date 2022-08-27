@@ -81,7 +81,7 @@ static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
 	}
-	
+
 	return(value);
 }
 
@@ -89,7 +89,7 @@ static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_
 {
 	const soc_mmio_timer_p t = param;
 	const csx_p csx = t->csx;
-	
+
 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
 	if(eat)
 	{
@@ -103,7 +103,7 @@ static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_
 				t->base[timer] = csx->cycle;
 				break;
 		}
-		
+
 		soc_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
@@ -118,9 +118,10 @@ static void soc_mmio_timer_reset(void* param,
 
 	const uint16_t module = ((mp->base - CSX_MMIO_BASE) >> 8) & 0x3ff;
 	const uint8_t timer = ((mp->base - CSX_MMIO_TIMER_BASE) >> 8) & 3;
-	
-	LOG("module = %08x, timer = 0x%08x", module, timer + 1);
-	
+
+	if(0) LOG("param = 0x%08x, data = 0x%08x, module = %08x, timer = 0x%08x",
+		(uint)param, (uint)data, module, timer + 1);
+
 //	soc_mmio_trace_reset(t->mmio, mp->trace_list, module);
 
 	t->base[timer] = 0;
@@ -130,7 +131,7 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
 	{
 		.base = CSX_MMIO_TIMER(0),
 		.trace_list = trace_list_1,
-		
+
 		.reset = soc_mmio_timer_reset,
 
 		.read = soc_mmio_timer_read,
@@ -139,11 +140,15 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
 		.base = CSX_MMIO_TIMER(1),
 		.trace_list = trace_list_2,
 
+		.reset = 0,
+
 		.read = soc_mmio_timer_read,
 		.write = soc_mmio_timer_write
 	}, {
 		.base = CSX_MMIO_TIMER(2),
 		.trace_list = trace_list_3,
+
+		.reset = 0,
 
 		.read = soc_mmio_timer_read,
 		.write = soc_mmio_timer_write
@@ -153,20 +158,20 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
 int soc_mmio_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_timer_h h2t)
 {
 	soc_mmio_timer_p t = calloc(1, sizeof(soc_mmio_timer_t));
-	
+
 	ERR_NULL(t);
 	if(!t)
 		return(-1);
 
 	t->csx = csx;
 	t->mmio = mmio;
-	
+
 	*h2t = t;
 
 	for(int i = 0; i < 3; i++) {
 		t->mp[i] = &timer_peripheral[i];
 		soc_mmio_peripheral(mmio, t->mp[i], t);
 	}
-	
+
 	return(0);
 }
