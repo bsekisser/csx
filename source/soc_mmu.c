@@ -23,8 +23,8 @@
 #define RGNFileName "038201000610"
 //#include "../../garmin/rgn_files/038201000610.h"
 
-#define LOCAL_RGNFileName "_loader.bin"
-//#define LOCAL_RGNFileName "_firmware.bin"
+#define LOADER_FileName "_loader.bin"
+#define FIRMWARE_FileName "_firmware.bin"
 
 typedef struct csx_data_t* csx_data_p;
 typedef struct csx_data_t {
@@ -60,7 +60,7 @@ uint32_t soc_data_read(void* p2src, uint8_t size)
 void soc_data_write(void* p2dst, uint32_t value, uint8_t size)
 {
 	uint8_t* dst = (uint8_t*)p2dst;
-	
+
 	for(int i = 0; i < size; i++)
 		*dst++ = value >> (i << 3) & 0xff;
 }
@@ -116,10 +116,10 @@ static inline int soc_mmu__tlb_entry(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_h h
 static int soc_mmu__tlb_fill(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_p tlbe)
 {
 	const size_t size = 1;
-	
+
 	void* data = 0;
 	uint32_t vpo = va;
-	
+
 	if(_in_bounds(va, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP)) {
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->sdram;
@@ -128,7 +128,7 @@ static int soc_mmu__tlb_fill(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_p tlbe)
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->frame_buffer;
 		vpo -= CSX_FRAMEBUFFER_BASE;
-	} else 
+	} else
 		return(0);
 
 	tlbe->i = 1;
@@ -141,7 +141,7 @@ static int soc_mmu__tlb_fill(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_p tlbe)
 static inline int soc_mmu__tlb_read(soc_mmu_p mmu, uint32_t va, void** data)
 {
 	soc_mmu_tlb_p tlbe = 0;
-	
+
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)mmu, va, (uint)data);
 
 	if(!soc_mmu__tlb_entry(mmu, va, &tlbe))	{
@@ -162,7 +162,7 @@ static inline int soc_mmu__tlb_read(soc_mmu_p mmu, uint32_t va, void** data)
 static inline int soc_mmu__tlb_write(soc_mmu_p mmu, uint32_t va, void** data)
 {
 	soc_mmu_tlb_p tlbe = 0;
-	
+
 	if(!soc_mmu__tlb_entry(mmu, va, &tlbe)) {
 		if(!soc_mmu__tlb_fill(mmu, va, tlbe))
 			return(0);
@@ -209,7 +209,7 @@ retry_read:;
 			LOG_ACTION(exit(-1));
 		}
 	}
-	
+
 	return(0);
 }
 
@@ -241,44 +241,53 @@ retry_write:;
 			LOG_ACTION(exit(-1));
 		}
 	}
-	
+
 	return(0);
+}
+
+static void soc_mmu_init_rgn_file(soc_mmu_p mmu, csx_data_p cdp, const char* file_name)
+{
+	int fd;
+
+	char out[256];
+	snprintf(out, 254, "%s%s%s", LOCAL_RGNDIR, RGNFileName, file_name);
+
+	LOG("opening %s", out);
+
+	ERR(fd = open(out, O_RDONLY));
+
+	struct stat sb;
+	ERR(fstat(fd, &sb));
+
+	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	ERR_NULL(data);
+
+	cdp->base = 0x10020000;
+	cdp->data = data;
+	cdp->size = sb.st_size;
+
+	const uint32_t base = cdp->base - CSX_SDRAM_BASE;
+	memcpy(&mmu->sdram[base], cdp->data, cdp->size);
+
+	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
+		mmu->loader.base, (uint)cdp->data, cdp->size);
+
+	close(fd);
 }
 
 int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 {
 	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
-	
+
 	ERR_NULL(mmu);
 	if(!mmu)
 		return(-1);
-	
+
 	mmu->csx = csx;
 	*h2mmu = mmu;
-	
-	int fd;
 
-	LOG("opening " LOCAL_RGNDIR RGNFileName LOCAL_RGNFileName);
-
-	ERR(fd = open(LOCAL_RGNDIR RGNFileName LOCAL_RGNFileName, O_RDONLY));
-
-	struct stat sb;
-	ERR(fstat(fd, &sb));
-	
-	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	ERR_NULL(data);
-	
-	mmu->loader.base = 0x10020000;
-	mmu->loader.data = data;
-	mmu->loader.size = sb.st_size;
-
-	const uint32_t base = mmu->loader.base - CSX_SDRAM_BASE;
-	memcpy(&mmu->sdram[base], mmu->loader.data, mmu->loader.size);
-	
-	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		mmu->loader.base, (uint)mmu->loader.data, mmu->loader.size);
-	
-	close(fd);
+//	soc_mmu_init_rgn_file(mmu, &mmu->loader, LOADER_FileName);
+	soc_mmu_init_rgn_file(mmu, &mmu->firmware, FIRMWARE_FileName);
 
 	return(0);
 }
