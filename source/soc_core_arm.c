@@ -137,7 +137,11 @@ static void _arm_inst_dpi_operation_eor(soc_core_p core, soc_core_dpi_p dpi)
 
 static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
 {
-	if(rR(N))
+	if(!DPI_BIT(i25) && DPI_BIT(x7) && DPI_BIT(x4))
+	{
+		ILLEGAL_INSTRUCTION;
+	}
+	else if(rR(N))
 	{
 		LOG("!! rn(%u) -- sbz", rR(N));
 		ILLEGAL_INSTRUCTION;

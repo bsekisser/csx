@@ -61,52 +61,6 @@ static inline uint32_t eao(csx_test_p t, int32_t ieao)
 			!!(psr & SOC_CORE_PSR_C), !!(psr & SOC_CORE_PSR_V)); \
 	}while(0);
 
-static void csx_test_arm_fn(csx_test_p t)
-{
-	uint32_t r[6];
-
-	for(int i = 0; i < 6; i++)
-		r[i] = 0;
-
-	uint32_t psr;
-	
-	r[5] = 1;
-	r[5] <<= 29;
-	r[3] = r[5] + 0;
-	r[4] = 0xe59ff000;
-	r[0] = 0;
-	r[3] += 0x64;
-		
-	LOG("r0 = 0x%08x, r1 = 0x%08x, r2 = 0x%08x", r[0], r[1], r[2]);
-	LOG("r3 = 0x%08x, r4 = 0x%08x, r5 = 0x%08x", r[3], r[4], r[5]);
-
-	int count = 0x09;
-
-	do{
-		r[1] = r[0] + r[5];
-		r[2] = r[0] + r[3];
-		r[2] = r[2] - r[1];
-		r[2] -= 0x08;
-		r[2] |= r[4];
-		r[0] += 0x04;
-
-		LOG("r0 = 0x%08x, r1 = 0x%08x, r2 = 0x%08x", r[0], r[1], r[2]);
-		LOG("r3 = 0x%08x, r4 = 0x%08x, r5 = 0x%08x", r[3], r[4], r[5]);
-
-		asm("cmp %[r0], #0x1c\n\t"
-			"mrs %[psr], CPSR\n\t"
-			: [psr] "=r" (psr)
-			: [r0] "r" (r[0])
-			: "r0");
-
-		int blo = !(psr & SOC_CORE_PSR_C);
-
-		LOG("blo = %u", blo);
-
-		TRACE_PSR(psr);
-	}while(--count);
-}
-
 static uint32_t csx_test_arm_add_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	uint32_t res;
@@ -121,6 +75,19 @@ static uint32_t csx_test_arm_add_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 	
 	TRACE_PSR(*psr);
 	return(res);
+}
+
+static void csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	asm("cmps %[ir0], %[ir1]\n\t"
+		"mrs %[psr], CPSR\n\t"
+		: [psr] "=r" (*psr)
+		: [ir0] "r" (ir0), [ir1] "r" (ir1)
+		:);
+
+	LOG("psr = 0x%08x", *psr);
+	
+	TRACE_PSR(*psr);
 }
 
 static uint32_t csx_test_arm_sub_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -154,6 +121,28 @@ static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	*psr = CPSR;
 
 	res = soc_core_reg_get(core, 0);
+	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
+	
+	TRACE_PSR(CPSR);
+
+	return(res);
+}
+
+static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	soc_core_p core = t->csx->core;
+	uint32_t res = 0;
+
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 6, ir1);
+	
+	t->start_pc = t->pc = 0x10000000;
+	arm_cmps_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 3);
+
+	*psr = CPSR;
+
+//	res = soc_core_reg_get(core, 0);
 	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
 	
 	TRACE_PSR(CPSR);
@@ -291,6 +280,65 @@ static void csx_test_arm_b(csx_test_p t)
 	assert(CPSR & SOC_CORE_PSR_BIT_T);
 
 	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
+}
+
+static void csx_test_arm_cmp(csx_test_p t)
+{
+/* **** */
+
+	uint32_t r[7];
+
+	for(int i = 0; i < 7; i++)
+		r[i] = 0;
+
+	r[5] = 1;
+	r[5] <<= 29;
+	r[3] = r[5] + 0;
+	r[4] = 0xe59ff000;
+	r[0] = 0;
+	r[3] += 0x64;
+
+	r[6] = 0x1c;
+
+/* **** */
+
+	uint32_t xres = 0, res = 0;
+	uint32_t xpsr = 0, cpsr = 0;
+	
+	LOG("r0 = 0x%08x, r1 = 0x%08x, r2 = 0x%08x", r[0], r[1], r[2]);
+	LOG("r3 = 0x%08x, r4 = 0x%08x, r5 = 0x%08x", r[3], r[4], r[5]);
+
+	for(int count = 9; count; count--)
+	{
+		r[1] = r[0] + r[5];
+		r[2] = r[0] + r[3];
+		r[2] = r[2] - r[1];
+		r[2] -= 0x08;
+		r[2] |= r[4];
+		r[0] += 0x04;
+
+		LOG("r0 = 0x%08x, r1 = 0x%08x, r2 = 0x%08x", r[0], r[1], r[2]);
+		LOG("r3 = 0x%08x, r4 = 0x%08x, r5 = 0x%08x", r[3], r[4], r[5]);
+
+		xres = csx_test_arm_sub_asm(t, &xpsr, r[0], r[6]);
+//		TRACE_PSR(xpsr);
+
+		res = csx_test_arm_sub_inst(t, &cpsr, r[0], r[6]);
+//		TRACE_PSR(cpsr);
+		
+		assert(xres == res);
+		_assert_cpsr_xpsr(t, cpsr, xpsr);
+		
+/*		asm("cmp %[r0], #0x1c\n\t"
+			"mrs %[psr], CPSR\n\t"
+			: [psr] "=r" (psr)
+			: [r0] "r" (r[0])
+			: "r0");
+*/
+		int blo = !(cpsr & SOC_CORE_PSR_C);
+
+		LOG("blo = %u", blo);
+	};
 }
 
 static inline uint32_t _test_value(uint8_t i)
@@ -574,8 +622,11 @@ static void csx_test_arm_mov(csx_test_p t)
 
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 26));
 	t->start_pc = t->pc = csx_test_run(t, 1);
-//	assert(0x00001000 == soc_core_reg_get(core, 0));
-	assert(0x10000000 == soc_core_reg_get(core, 0));
+	assert(0x00001000 == soc_core_reg_get(core, 0));
+
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 28));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x00000400 == soc_core_reg_get(core, 0));
 }
 
 void csx_test_arm(csx_test_p t)
@@ -584,8 +635,7 @@ void csx_test_arm(csx_test_p t)
 
 	csx_test_arm_add(t);
 	csx_test_arm_b(t);
+	csx_test_arm_cmp(t);
 	csx_test_arm_ldstm(t);
 	csx_test_arm_mov(t);
-	
-	csx_test_arm_fn(t);
 }
