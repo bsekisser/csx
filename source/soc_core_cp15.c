@@ -56,6 +56,14 @@ void soc_core_cp15_write(soc_core_p core)
 //			if(BEXT(vR(D), 0))
 //				LOG_ACTION(exit(-1));
 			break;
+//		case cp15(0, 2, 0, 0):
+//			break;
+		case cp15(0, 3, 0, 0):
+			LOG_START("Domain access control\n\t");
+			for(int i = 15; i > 0; i--)
+				_LOG_("D%02u: %01u ", i, mlBFEXT(vR(D), (i << 1), ((i << 1) - 1)));
+			LOG_END();
+			break;
 		case cp15(0, 5, 0, 0):
 			LOG("Fault Status Register: %s", MCRC_OP2 ? "IFSR" : "DFSR");
 			LOG_START("SBZ: 0x%05x", mlBFEXT(vR(D), 31, 9));
