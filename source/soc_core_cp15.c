@@ -56,8 +56,15 @@ void soc_core_cp15_write(soc_core_p core)
 //			if(BEXT(vR(D), 0))
 //				LOG_ACTION(exit(-1));
 			break;
-//		case cp15(0, 2, 0, 0):
-//			break;
+		case cp15(0, 2, 0, 0):
+			LOG_START("Translation Table Base 0\n\t");
+			_LOG_("TTBR0: 0x%05x", mlBFEXT(vR(D), 31, 14));
+			_LOG_(" SBZ: 0x%03x", mlBFEXT(vR(D), 13, 5));
+			_LOG_(" RGN: %01u", mlBFEXT(vR(D), 4, 3));
+			_LOG_(" IMP: %01u", BEXT(vR(D), 2));
+			_LOG_(" %c", BEXT(vR(D), 1) ? 'S' : 's');
+			LOG_END(" %c", BEXT(vR(D), 0) ? 'C' : 'c');
+			break;
 		case cp15(0, 3, 0, 0):
 			LOG_START("Domain access control\n\t");
 			for(int i = 15; i > 0; i--)

@@ -72,7 +72,8 @@ static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint
 			case MPU_READ_TIMER(0):
 			case MPU_READ_TIMER(1):
 			case MPU_READ_TIMER(2):
-				value = csx->cycle - t->base[timer];
+				value = soc_data_read(data + (addr & 0xff), size);
+				value -= (csx->cycle - t->base[timer]);
 				break;
 			default:
 				value = soc_data_read(data + (addr & 0xff), size);
