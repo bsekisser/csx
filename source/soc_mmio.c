@@ -1,5 +1,6 @@
 #include "soc_mmio.h"
 
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 #include "soc_mmio_cfg.h"
@@ -11,6 +12,7 @@
 #include "soc_mmio_gp_timer.h"
 #include "soc_mmio_os_timer.h"
 #include "soc_mmio_timer.h"
+#include "soc_mmio_uart.h"
 #include "soc_mmio_watchdog.h"
 
 /* **** */
@@ -67,6 +69,7 @@ typedef struct soc_mmio_t {
 	soc_mmio_gp_timer_p		gp_timer;
 	soc_mmio_os_timer_p		os_timer;
 	soc_mmio_timer_p		timer;
+	soc_mmio_uart_p			uart;
 	soc_mmio_watchdog_p		wdt;
 
 //	soc_mmio_dsp_p			dsp;
@@ -155,6 +158,7 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 	ERR(err = soc_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = soc_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
 	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer));
+	ERR(err = soc_mmio_uart_init(csx, mmio, &mmio->uart));
 	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
 	return(err);
@@ -174,16 +178,18 @@ void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* param)
 		p->base, module, (uint32_t)param, (uint32_t)p->reset);
 }
 
-void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
+void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 {
-	for(int i = 0; i < 256; i++)
-		data[i] = 0;
+	__mpt_t mpt; _soc_mmio_peripheral(mmio, mp->base, &mpt);
 
+	for(int i = 0; i < 256; i++)
+		mpt.data[i] = 0;
+		
 	for(int i = 0;; i++)
 	{
-		const ea_trace_p tle = &tl[i];
+		const ea_trace_p tle = &mp->trace_list[i];
 
-		if(!trace_list[i].address)
+		if(!tle->address)
 			break;
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
@@ -192,9 +198,12 @@ void soc_mmio_peripheral_reset(uint8_t* data, ea_trace_p tl)
 		if(value)
 		{
 			const uint32_t addr = tle->address;
-			soc_data_write(&data[addr & 0xff], value, tle->size);
+			soc_data_write(&mpt.data[addr & 0xff], value, tle->size);
 		}
 	}
+	
+	if(mp->reset)
+		mp->reset(mpt.param, mpt.data, mp);
 }
 
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)

@@ -1,5 +1,6 @@
 #include "soc_mmio_mpu_gpio.h"
 
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */

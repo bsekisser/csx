@@ -1,3 +1,4 @@
+#define CSX_MMIO_UART2_BASE			0xfffb0800
 #define CSX_MMIO_GP_TIMER_BASE		0xfffb1400
 #define CSX_MMIO_OS_TIMER_BASE		0xfffb9000
 #define CSX_MMIO_MPU_GPIO3_BASE		0xfffbb400

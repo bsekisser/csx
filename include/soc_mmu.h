@@ -36,9 +36,6 @@ typedef struct soc_mmu_tlb_t {
 
 /* **** */
 
-uint32_t soc_data_read(void* src, uint8_t size);
-void soc_data_write(void* dst, uint32_t value, uint8_t size);
-
 void soc_mmu_tlb_invalidate(soc_mmu_p mmu);
 
 int soc_mmu_read(soc_mmu_p mmu, uint32_t va, uint32_t* data, size_t size);

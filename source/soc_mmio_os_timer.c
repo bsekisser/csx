@@ -1,5 +1,6 @@
 #include "soc_mmio_os_timer.h"
 
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */

@@ -2,6 +2,7 @@
 
 #include "soc_core_arm_decode.h"
 #include "soc_core_disasm.h"
+#include "soc_core_psr.h"
 
 /* **** */
 
@@ -21,11 +22,22 @@
 #define cp15(_op1, _n, _m, _op2) \
 	sli(sli(sli(sli(0, _op1, 4), _n, 4), _m, 4), _op2, 4)
 
-void soc_core_cp15_read(soc_core_p core)
+uint32_t soc_core_cp15_read(soc_core_p core)
 {
 	const csx_p csx = core->csx;
 
-	vR(D) = vCR(rR(N));
+	const uint opcode = cp15(MCRC_OP1, rR(N), rR(M), MCRC_OP2);
+
+	uint32_t data = vCR(rR(N));
+
+	switch(opcode) {
+		case cp15(0, 7, 10, 3):
+			LOG("Cache, Test and Clean");
+			data = (CPSR & SOC_CORE_PSR_NZCV) | SOC_CORE_PSR_Z;
+			break;
+	}
+	
+	return(data);
 }
 
 void soc_core_cp15_write(soc_core_p core)

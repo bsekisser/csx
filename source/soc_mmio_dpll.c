@@ -1,5 +1,6 @@
 #include "soc_mmio_dpll.h"
 
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */

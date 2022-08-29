@@ -27,6 +27,7 @@ typedef struct csx_t** csx_h;
 //#include "soc_core_coprocessor.h"
 #include "soc_mmu.h"
 #include "soc_mmio.h"
+#include "soc_nnd_flash.h"
 #include "csx_state.h"
 
 /* **** */
@@ -36,6 +37,7 @@ typedef struct csx_t {
 //	soc_coprocessor_p	cp;
 	soc_mmu_p			mmu;
 	soc_mmio_p			mmio;
+	soc_nnd_p			nnd;
 	
 	uint64_t			cycle;
 	csx_state_t			state;

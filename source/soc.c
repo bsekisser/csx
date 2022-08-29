@@ -81,7 +81,33 @@ uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
 	if(soc_mmu_read(csx->mmu, va, &data, size))
 		;
 	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
+	{
 		data = soc_mmio_read(csx->mmio, va, size);
+	}
+/* CSx FLASH ROM AREAS */
+	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff)) /* CS0 */
+	{
+		data = soc_nnd_flash_read(csx->nnd, va, size);
+//		_soc_mmu_log_csx(soc, va, 0, size);
+	}
+	else if(_in_bounds(va, size, 0x08000000, 0x0bffffff)) /* CS2 */
+	{
+		data = soc_nnd_flash_read(csx->nnd, va, size);
+//		_soc_mmu_log_csx(soc, va, 0, size);
+	}
+	else if(_in_bounds(va, size, 0x0c000000, 0x0cffffff)) /* CS3 */
+	{
+		data = soc_nnd_flash_read(csx->nnd, va, size);
+//		_soc_mmu_log_csx(soc, va, 0, size);
+	}
+	else if(_in_bounds(va, size, 0xffff0000, 0xffffffff)) /* ??? */
+	{
+		data = soc_nnd_flash_read(csx->nnd, va, size);
+//		_soc_mmu_log_mmio(soc, va, 0, size);
+	}
+	else {
+		LOG("addr = 0x%08x", va);
+	}
 	
 	return(data);
 }
@@ -97,5 +123,31 @@ void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 	if(soc_mmu_write(csx->mmu, va, data, size))
 		;
 	else if(_in_bounds(va, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
+	{
 		soc_mmio_write(csx->mmio, va, data, size);
+	}
+/* CSx FLASH ROM AREAS */
+	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff))
+	{
+		soc_nnd_flash_write(csx->nnd, va, data, size);
+//		_soc_mmu_log_csx(soc, va, &data, size);
+	}
+	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff))
+	{
+		soc_nnd_flash_write(csx->nnd, va, data, size);
+//		_soc_mmu_log_csx(soc, va, &data, size);
+	}
+	else if(_in_bounds(va, size, 0x08000000, 0x0bffffff))
+	{
+		soc_nnd_flash_write(csx->nnd, va, data, size);
+//		_soc_mmu_log_csx(soc, va, &data, size);
+	}
+	else if(_in_bounds(va, size, 0x0c000000, 0x0fffffff))
+	{
+		soc_nnd_flash_write(csx->nnd, va, data, size);
+//		_soc_mmu_log_mmio(soc, va, &data, size);
+	}
+	else {
+		LOG("addr = 0x%08x", va);
+	}
 }

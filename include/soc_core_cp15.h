@@ -8,6 +8,6 @@
 
 /* **** */
 
-void soc_core_cp15_read(soc_core_p core);
+uint32_t soc_core_cp15_read(soc_core_p core);
 void soc_core_cp15_write(soc_core_p core);
 int soc_core_cp15_init(csx_p core);
