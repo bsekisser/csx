@@ -178,7 +178,7 @@ static void soc_core_thumb_bcc(soc_core_p core)
 
 	const uint32_t new_pc = PC_THUMB + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = %u */", new_pc & ~1, PC_THUMB, imm8, CCx.e);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1, PC_THUMB, imm8, CCx.e);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 

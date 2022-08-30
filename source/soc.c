@@ -30,7 +30,8 @@ int csx_soc_init(csx_p csx)
 	ERR(err = soc_core_cp15_init(csx));
 	ERR(err = soc_mmu_init(csx, &csx->mmu));
 	ERR(err = soc_mmio_init(csx, &csx->mmio));
-	
+	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
+
 	return(err);
 }
 
@@ -90,6 +91,11 @@ uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
 		data = soc_nnd_flash_read(csx->nnd, va, size);
 //		_soc_mmu_log_csx(soc, va, 0, size);
 	}
+	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff)) /* CS1 */
+	{
+		data = soc_nnd_flash_read(csx->nnd, va, size);
+//		_soc_mmu_log_csx(soc, va, 0, size);
+	}
 	else if(_in_bounds(va, size, 0x08000000, 0x0bffffff)) /* CS2 */
 	{
 		data = soc_nnd_flash_read(csx->nnd, va, size);
@@ -127,22 +133,22 @@ void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 		soc_mmio_write(csx->mmio, va, data, size);
 	}
 /* CSx FLASH ROM AREAS */
-	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff))
+	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff)) /* CS0 */
 	{
 		soc_nnd_flash_write(csx->nnd, va, data, size);
 //		_soc_mmu_log_csx(soc, va, &data, size);
 	}
-	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff))
+	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff)) /* CS1 */
 	{
 		soc_nnd_flash_write(csx->nnd, va, data, size);
 //		_soc_mmu_log_csx(soc, va, &data, size);
 	}
-	else if(_in_bounds(va, size, 0x08000000, 0x0bffffff))
+	else if(_in_bounds(va, size, 0x08000000, 0x0bffffff)) /* CS2 */
 	{
 		soc_nnd_flash_write(csx->nnd, va, data, size);
 //		_soc_mmu_log_csx(soc, va, &data, size);
 	}
-	else if(_in_bounds(va, size, 0x0c000000, 0x0fffffff))
+	else if(_in_bounds(va, size, 0x0c000000, 0x0fffffff)) /* CS3 */
 	{
 		soc_nnd_flash_write(csx->nnd, va, data, size);
 //		_soc_mmu_log_mmio(soc, va, &data, size);
