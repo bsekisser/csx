@@ -83,16 +83,6 @@ void csx_test_thumb_b(csx_test_p t)
 	assert(0x10013c76 == pc(t));
 }
 
-static inline uint32_t _test_value(uint8_t i)
-{
-		uint32_t test_value = i | i << 16;
-
-		test_value |= test_value << 4;
-		test_value |= test_value << 8;
-
-		return(test_value);
-}
-
 void csx_test_thumb_ldstm(csx_test_p t)
 {
 	csx_p csx = t->csx;
