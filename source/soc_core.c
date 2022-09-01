@@ -27,7 +27,7 @@ void soc_core_reset(soc_core_p core)
 	const int high_vectors = 0;
 	uint32_t reset_pc = !high_vectors ? 0 : 0xffff0000;	/* if high vectors */
 
-	reset_pc = 0x10020000;
+	reset_pc = 0x14000000;
 
 	soc_core_reg_set_pcx(core, reset_pc);
 

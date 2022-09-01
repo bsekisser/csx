@@ -14,18 +14,22 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 #include "csx.h"
 
+#include "soc_core_arm.h"
 #include "soc_core_reg.h"
 
 /* **** */
+
+#define DataAbort() \
+	LOG_ACTION(exit(-1));
 
 #define UNPREDICTABLE \
 	LOG("UNPREDICTABLE");
 
 #define UNIMPLIMENTED \
-	LOG_ACTION(exit(1));
+	LOG_ACTION(exit(-1));
 
 #define ILLEGAL_INSTRUCTION \
-	LOG_ACTION(exit(1));
+	LOG_ACTION(exit(-1));
 
 enum	{
 	rRD,

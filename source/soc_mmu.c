@@ -39,6 +39,7 @@ typedef struct soc_mmu_t* soc_mmu_p;
 typedef struct soc_mmu_t {
 	csx_p			csx;
 	soc_mmu_tlb_t		tlb[256];
+	csx_data_p		cdp;
 	csx_data_t		loader;
 	csx_data_t		firmware;
 	uint8_t			sdram[CSX_SDRAM_SIZE];
@@ -100,10 +101,19 @@ static int soc_mmu__tlb_fill(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_p tlbe)
 	void* data = 0;
 	uint32_t vpo = va;
 
+	const csx_data_p cdp = mmu->cdp;
+	const uint32_t cdp_end = cdp->base + cdp->size;
+
 	if(_in_bounds(va, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP)) {
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->sdram;
 		vpo -= CSX_SDRAM_BASE;
+	} else if(_in_bounds(va, size, cdp->base, cdp_end)) {
+		set_tlbe_urwx_rwx(tlbe, 1, 0, 1, 1, 0, 1);
+		data = cdp->data;
+		vpo -= cdp->base;
+		LOG("data = 0x%08x, base = 0x%08x, vpo = 0x%08x, end = 0x%08x",
+			(uint)data, cdp->base, vpo, cdp_end);
 	} else if(_in_bounds(va, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP)) {
 		set_tlbe_urwx_rwx(tlbe, 1, 1, 1, 1, 1, 1);
 		data = mmu->frame_buffer;
@@ -242,15 +252,17 @@ static void soc_mmu_init_rgn_file(soc_mmu_p mmu, csx_data_p cdp, const char* fil
 	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	ERR_NULL(data);
 
-	cdp->base = 0x10020000;
+	mmu->cdp = cdp;
+//	cdp->base = 0x10020000; /* ? thoretical load address in sdram */
+	cdp->base = 0x14000000; /* ? safer as unknown load address */
 	cdp->data = data;
 	cdp->size = sb.st_size;
 
-	const uint32_t base = cdp->base - CSX_SDRAM_BASE;
-	memcpy(&mmu->sdram[base], cdp->data, cdp->size);
+//	const uint32_t base = cdp->base - CSX_SDRAM_BASE;
+//	memcpy(&mmu->sdram[base], cdp->data, cdp->size);
 
 	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		mmu->loader.base, (uint)cdp->data, cdp->size);
+		cdp->base, (uint)cdp->data, cdp->size);
 
 	close(fd);
 }

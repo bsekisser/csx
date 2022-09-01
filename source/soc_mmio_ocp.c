@@ -70,9 +70,9 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 				LOG("BTMODE: %01u, ADVHOLD: %01u, OEHOLD: %01u, OESETUP: %01u",
 					BEXT(value, 9), BEXT(value, 8), mlBFEXT(value, 7, 4), mlBFEXT(value, 3, 0));
 			}	break;
-			case EMIFS_CS_CONFIG(0):
 			case EMIFS_CS_CONFIG(1):
 			case EMIFS_CS_CONFIG(2):
+			case EMIFS_CS_CONFIG(3):
 			{
 				LOG("PGWSTEN: %01u, PGWST: %01u, BTWST: %01u, MAD: %01u, BW: %01u",
 					BEXT(value, 31), mlBFEXT(value, 30, 27),

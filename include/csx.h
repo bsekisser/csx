@@ -43,13 +43,14 @@ typedef struct csx_t {
 	csx_state_t			state;
 
 	uint32_t			cr[15];
-#define vCR(_x)			csx->cr[_x]
+#define vCR(_x)			core->csx->cr[_x]
 
 	csh					cs_handle;
 }csx_t;
 
 /* **** */
 
+extern const int _arm_version;
 extern const int _check_pedantic_mmio;
 extern const int _check_pedantic_pc;
 

@@ -1,6 +1,7 @@
 #include "soc_core_thumb.h"
 #include "soc_core_thumb_inst.h"
 
+#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
 #include "soc_core_psr.h"
@@ -231,7 +232,7 @@ static void soc_core_thumb_bxx_blx(
 {
 	uint32_t new_pc = (LR + eao);
 
-	if(1) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 
 	LR = PC | 1;
 
@@ -248,7 +249,7 @@ static void soc_core_thumb_bxx_blx(
 	else
 		PC = new_pc & ~1;
 
-	if(1) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 }
 
 static void soc_core_thumb_bxx(soc_core_p core)
@@ -606,7 +607,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		end_address -= 4;
 	}
 
-	/* CP15_reg1_Abit == 0 && CP15_reg1_Ubit == 0 */
+	if(CP15_reg1_AbitOrUbit && (0 != (start_address & ~3)))
+		DataAbort();
+
 	uint32_t ea = start_address & ~3;
 
 	uint32_t rxx_v = 0;
@@ -645,7 +648,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		if(bit_l)
 		{ /* pop */
 			rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-			if(1/*(_arm_version >= ARMv5)*/)
+			if(_arm_version >= arm_v5t)
 				soc_core_reg_set_pcx(core, rxx_v);
 			else
 				soc_core_reg_set(core, rPC, rxx_v);

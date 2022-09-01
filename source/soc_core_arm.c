@@ -430,8 +430,7 @@ static void arm_inst_ldst(soc_core_p core)
 	{
 		vR(D) = soc_core_read(core, ls.ea, ls.rw_size);
 
-		/*	ARMv5, CP15_r1_Ubit == 0 */
-		if(ls.rw_size == sizeof(uint32_t))
+		if(ARMv5_CP15_reg1_Ubit && (ls.rw_size == sizeof(uint32_t)))
 			vR(D) = _ror(vR(D), ((ls.ea & 3) << 3));
 
 		if(LDST_FLAG_S) /* sign extend ? */
@@ -444,7 +443,8 @@ static void arm_inst_ldst(soc_core_p core)
 
 		/*	ARMv5, CP15_r1_Ubit == 0 */
 	if(LDST_BIT(l20) && (ls.rw_size == sizeof(uint32_t)))
-		assert(0 == (ls.ea & 3));
+		if(ARMv5_CP15_reg1_Ubit)
+			assert(0 == (ls.ea & 3));
 
 	if(LDST_BIT(l20) && (rPC == rR(D)))
 		CORE_TRACE_BRANCH(vR(D));
@@ -466,7 +466,7 @@ static void arm_inst_ldst(soc_core_p core)
 
 		if(LDST_BIT(l20))
 		{
-			if(rPC == rR(D))
+			if((_arm_version >= arm_v5t) && (rPC == rR(D)))
 				soc_core_reg_set_pcx(core, vR(D));
 			else
 				soc_core_reg_set(core, rR(D), vR(D));
@@ -612,12 +612,15 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	ls.ea = start_address;
 
-	/* CP15_r1_Ubit == 0 */
-	assert(0 == (ls.ea & 3));
-//	ls.ea &= ~3;
-
 	if(CCx.e)
 	{
+		if(CP15_reg1_Ubit) {
+			if(ls.ea & 3)
+				DataAbort();
+		}
+		else
+			ls.ea &= ~3;
+
 		for(int i = 0; i < 15; i++)
 		{
 			if(BTST(vR(M), i))
@@ -628,8 +631,7 @@ static void arm_inst_ldstm(soc_core_p core)
 		}
 
 		if(BTST(vR(M), 15)) {
-			/* CP15_r1_Ubit == 0 */
-			const uint32_t ea = ls.ea & ~3;
+			const uint32_t ea = ls.ea;
 
 			uint32_t rxx_v = 0;
 
@@ -637,7 +639,7 @@ static void arm_inst_ldstm(soc_core_p core)
 			{
 				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
 				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, ea, rxx_v);
-				if(1) /* arm_version >= 5*/
+				if(_arm_version >= arm_v5t)
 					soc_core_reg_set_pcx(core, rxx_v);
 				else
 					PC = rxx_v & ~3;
