@@ -88,8 +88,17 @@ uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
 /* CSx FLASH ROM AREAS */
 	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff)) /* CS0 */
 	{
-		data = soc_nnd_flash_read(csx->nnd, va, size);
-//		_soc_mmu_log_csx(soc, va, 0, size);
+/*
+ * 0000 0000 - 0000 ffff -- Boot ROM
+ * 0001 0000 - 0003 ffff -- Reserved Boot ROM
+ * 0004 0000 - 01ff ffff -- Reserved
+ * 0200 0000 - 03ff ffff -- NOR Flash
+ * 
+ */
+		if(_in_bounds(va, size, 0x02000000, 0x03ffffff)) {
+			data = soc_nnd_flash_read(csx->nnd, va, size);
+//			_soc_mmu_log_csx(soc, va, 0, size);
+		}
 	}
 	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff)) /* CS1 */
 	{
@@ -135,8 +144,17 @@ void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 /* CSx FLASH ROM AREAS */
 	else if(_in_bounds(va, size, 0x00000000, 0x03ffffff)) /* CS0 */
 	{
-		soc_nnd_flash_write(csx->nnd, va, data, size);
-//		_soc_mmu_log_csx(soc, va, &data, size);
+/*
+ * 0000 0000 - 0000 ffff -- Boot ROM
+ * 0001 0000 - 0003 ffff -- Reserved Boot ROM
+ * 0004 0000 - 01ff ffff -- Reserved
+ * 0200 0000 - 03ff ffff -- NOR Flash
+ * 
+ */
+		if(_in_bounds(va, size, 0x02000000, 0x03ffffff)) {
+			soc_nnd_flash_write(csx->nnd, va, data, size);
+//			_soc_mmu_log_csx(soc, va, &data, size);
+		}
 	}
 	else if(_in_bounds(va, size, 0x04000000, 0x07ffffff)) /* CS1 */
 	{
