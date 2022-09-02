@@ -4,6 +4,7 @@
 
 /* **** */
 
+#include "bitfield.h"
 #include "bounds.h"
 #include "err_test.h"
 #include "log.h"
@@ -30,29 +31,31 @@
 
 typedef struct csx_data_t* csx_data_p;
 typedef struct csx_data_t {
-		uint32_t	base;
-		void*		data;
-		uint32_t	size;
+		uint32_t					base;
+		void*						data;
+		uint32_t					size;
 }csx_data_t;
 
-typedef struct soc_mmu_t* soc_mmu_p;
-typedef struct soc_mmu_t {
-	csx_p			csx;
-	soc_mmu_tlb_t		tlb[256];
-	csx_data_p		cdp;
-	csx_data_t		loader;
-	csx_data_t		firmware;
-	uint8_t			sdram[CSX_SDRAM_SIZE];
-	uint8_t			frame_buffer[CSX_FRAMEBUFFER_SIZE];
-}soc_mmu_t;
-
-/* **** */
-
 /*
- * xxxx xxxx | xxxx hhhh | hhhh oooo | oooo oooo	-- 256 entries ***
+ * xxxx xxxx | xxxx hhhh | hhhh oooo | oooo oooo	-- 256 entries
  * xxxx xxxx | hhhh hhhh | hhhh oooo | oooo oooo	-- 1024 entries
  * xxxx hhhh | hhhh hhhh | hhhh oooo | oooo oooo	-- 64k entries
  */
+
+#define TLB_BITS	12
+
+typedef struct soc_mmu_t* soc_mmu_p;
+typedef struct soc_mmu_t {
+	csx_p							csx;
+	soc_mmu_tlb_t					tlb[_BV(TLB_BITS)];
+	csx_data_p						cdp;
+	csx_data_t						loader;
+	csx_data_t						firmware;
+	uint8_t							sdram[CSX_SDRAM_SIZE];
+	uint8_t							frame_buffer[CSX_FRAMEBUFFER_SIZE];
+}soc_mmu_t;
+
+/* **** */
 
 static void set_tlbe_urwx_rwx(soc_mmu_tlb_p t, int ur, int uw, int ux, int r, int w, int x)
 {
@@ -66,7 +69,7 @@ static void set_tlbe_urwx_rwx(soc_mmu_tlb_p t, int ur, int uw, int ux, int r, in
 
 void soc_mmu_tlb_invalidate(soc_mmu_p mmu)
 {
-	for(int i = 0; i < 256; i++)
+	for(int i = 0; i < _BV(TLB_BITS); i++)
 		memset(&mmu->tlb[i], 0, sizeof(soc_mmu_tlb_t));
 }
 
@@ -75,7 +78,7 @@ static inline int soc_mmu__tlb_entry(soc_mmu_p mmu, uint32_t va, soc_mmu_tlb_h h
 	if(0) LOG("mmu = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)mmu, va, (uint)h2tlbe);
 
 	const uint vp = PAGE(va);
-	const uint vp_tlbe = vp & 0xff;
+	const uint vp_tlbe = vp & _BM(TLB_BITS);
 
 	if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x", vp, vp_tlbe);
 
@@ -278,8 +281,8 @@ int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 	mmu->csx = csx;
 	*h2mmu = mmu;
 
-//	soc_mmu_init_rgn_file(mmu, &mmu->loader, LOADER_FileName);
-	soc_mmu_init_rgn_file(mmu, &mmu->firmware, FIRMWARE_FileName);
+	soc_mmu_init_rgn_file(mmu, &mmu->loader, LOADER_FileName);
+//	soc_mmu_init_rgn_file(mmu, &mmu->firmware, FIRMWARE_FileName);
 
 	return(0);
 }
