@@ -2,6 +2,7 @@
 #include "csx_test_thumb_inst.h"
 
 #include "csx_test_utility.h"
+#include "soc.h"
 
 /* **** */
 
@@ -93,7 +94,7 @@ void csx_test_thumb_ldstm(csx_test_p t)
 	soc_core_reg_set(core, 0, 0x10001004);
 
 	for(int i = 0; i < 8; i++)
-		soc_mmu_write(t->csx->mmu, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
+		csx_soc_write(csx, 0x10001000 + (i << 2), _test_value(i), sizeof(uint32_t));
 
 	thumb_ldmia_rd_reglist(t, 0, 0xcc);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);

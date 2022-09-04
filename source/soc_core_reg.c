@@ -68,7 +68,7 @@ uint32_t soc_core_reg_pc_fetch_step_arm(soc_core_p core)
 	IP = PC & ~3;
 	PC += 4;
 	
-	return(soc_core_read(core, IP, sizeof(uint32_t)));
+	return(soc_core_ifetch(core, IP, sizeof(uint32_t)));
 }
 
 uint32_t soc_core_reg_pc_fetch_step_thumb(soc_core_p core)
@@ -76,7 +76,7 @@ uint32_t soc_core_reg_pc_fetch_step_thumb(soc_core_p core)
 	IP = PC & ~1;
 	PC += 2;
 	
-	return(soc_core_read(core, IP, sizeof(uint16_t)));
+	return(soc_core_ifetch(core, IP, sizeof(uint16_t)));
 }
 
 uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r)

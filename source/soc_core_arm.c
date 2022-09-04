@@ -545,6 +545,8 @@ static void arm_inst_ldst_rx(soc_core_p core)
 
 static void arm_inst_ldstm(soc_core_p core)
 {
+	const csx_p csx = core->csx;
+
 	soc_core_ldst_t ls;
 	soc_core_arm_decode_ldst(core, &ls);
 

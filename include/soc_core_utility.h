@@ -48,6 +48,11 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 	return(0 != rresult);
 }
 
+static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size)
+{
+	return(csx_soc_ifetch(core->csx, va, size));
+}
+
 static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 {
 	return(csx_soc_read(core->csx, va, size));

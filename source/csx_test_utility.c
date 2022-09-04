@@ -1,5 +1,7 @@
 #include "csx_test_utility.h"
 
+#include "soc.h"
+
 /* **** */
 
 #include "bitfield.h"
@@ -26,7 +28,7 @@ void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 
 void _cxx(csx_test_p t, uint32_t value, uint8_t size)
 {
-	soc_mmu_write(t->csx->mmu, pc(t), value, size);
+	csx_soc_write(t->csx, pc(t), value, size);
 	t->pc += size;
 }
 

@@ -274,7 +274,7 @@ static void soc_core_thumb_bxx(soc_core_p core)
 				LR = 2 + PC + eao;
 
 				IR <<= 16;
-				IR += soc_core_read(core, PC & ~1, sizeof(uint16_t));
+				IR += soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
 
 				if((0x7 != mlBFEXT(IR, 15, 13)) && !BEXT(IR, 11)) {
 					CORE_TRACE("/* xxx -- LR = 0x%08x + 0x%03x = 0x%08x */", PC, eao, LR);
@@ -583,6 +583,8 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 
 static void soc_core_thumb_pop_push(soc_core_p core)
 {
+	const csx_p csx = core->csx;
+
 //	struct {
 		const int bit_l = BEXT(IR, 11);
 		const int bit_r = BEXT(IR, 8);

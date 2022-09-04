@@ -65,8 +65,6 @@ void soc_core_cp15_write(soc_core_p core)
 			_LOG_(", %c", BEXT(vR(D), 2) ? 'C' : 'c');
 			_LOG_("%c", BEXT(vR(D), 1) ? 'A' : 'a');
 			LOG_END("%c", BEXT(vR(D), 0) ? 'M' : 'm');
-//			if(BEXT(vR(D), 0))
-//				LOG_ACTION(exit(-1));
 			break;
 		case cp15(0, 2, 0, 0):
 			LOG_START("Translation Table Base 0\n\t");
@@ -101,11 +99,11 @@ void soc_core_cp15_write(soc_core_p core)
 			break;
 		case cp15(0, 8, 5, 0):
 			LOG("Invalidate instruction TLB");
-			soc_mmu_tlb_invalidate(core->csx->mmu);
+			soc_tlb_invalidate_instruction(csx->tlb);
 			break;
 		case cp15(0, 8, 7, 0):
 			LOG("Invalidate TLB");
-			soc_mmu_tlb_invalidate(core->csx->mmu);
+			soc_tlb_invalidate_all(csx->tlb);
 			break;
 		default:
 			LOG("opcode = 0x%08x", opcode);
