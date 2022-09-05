@@ -13,6 +13,7 @@
 
 #include "bitfield.h"
 #include "log.h"
+#include "shift_roll.h"
 
 /* **** */
 
