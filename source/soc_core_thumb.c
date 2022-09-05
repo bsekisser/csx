@@ -609,8 +609,11 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		end_address -= 4;
 	}
 
-	if(CP15_reg1_AbitOrUbit && (0 != (start_address & ~3)))
+	if(CP15_reg1_AbitOrUbit && (0 != (start_address & 3))) {
+		LOG("start_address = 0x%08x, 0x%08x", start_address, start_address & 3);
+		soc_core_disasm_thumb(core, IP, IR);
 		DataAbort();
+	}
 
 	uint32_t ea = start_address & ~3;
 
@@ -688,6 +691,8 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	uint8_t shift = imm5;
 	const char *ops = "";
 
+	vR(D) = vR(M);
+
 	switch(operation)
 	{
 		case THUMB_SBI_OP_ASR:
@@ -695,7 +700,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			if(shift)
 			{
 				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
-				vR(D) = (((signed)vR(M)) >> shift);
+				vR(D) = _asr(vR(M), shift);
 			}
 			else
 			{
@@ -709,13 +714,13 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			if(shift)
 			{
 				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
-				vR(D) = vR(M) << shift;
+				vR(D) = _lsl(vR(M), shift);
 			}
 			break;
 		case THUMB_SBI_OP_LSR:
 			ops = "lsr";
 			if(shift)
-				vR(D) = vR(M) >> shift;
+				vR(D) = _lsr(vR(M), shift);
 			else
 				shift = 32;
 			BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));

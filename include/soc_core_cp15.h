@@ -17,6 +17,7 @@ enum {
 };
 
 #define CP15_reg1_bit(_x)				BEXT(vCR(1), _cp15_reg1_##_x)
+#define CP15_reg1_set(_x)			BSET(vCR(1), _cp15_reg1_##_x)
 
 #define CP15_reg1_Abit				CP15_reg1_bit(a)
 #define CP15_reg1_Mbit				CP15_reg1_bit(m)
