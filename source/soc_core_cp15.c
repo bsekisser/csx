@@ -49,22 +49,44 @@ void soc_core_cp15_write(soc_core_p core)
 	switch(opcode) {
 		case cp15(0, 1, 0, 0):
 			LOG("Control Register");
-			LOG_START("SBZ: 0x%05x", mlBFEXT(vR(D), 31, 19));
-			_LOG_(", SBO: %01u", BEXT(vR(D), 18));
-			_LOG_(", SBZ: %01u", BEXT(vR(D), 17));
-			_LOG_(", SBO: %01u", BEXT(vR(D), 16));
-			_LOG_(", L4: %01u", BEXT(vR(D), 15));
-			_LOG_(", %s", BEXT(vR(D), 14) ? "RR" : "rr");
-			_LOG_(", %c", BEXT(vR(D), 13) ? 'V' : 'v');
-			_LOG_("%c", BEXT(vR(D), 12) ? 'I' : 'I');
-			_LOG_(", SBZ: 0x%01x", mlBFEXT(vR(D), 11, 10));
-			_LOG_(", %c", BEXT(vR(D), 9) ? 'R' : 'r');
-			_LOG_("%c", BEXT(vR(D), 8) ? 'S' : 's');
-			_LOG_("%c", BEXT(vR(D), 7) ? 'B' : 'b');
-			_LOG_(", SBO: 0x%01x", mlBFEXT(vR(D), 6, 3));
-			_LOG_(", %c", BEXT(vR(D), 2) ? 'C' : 'c');
-			_LOG_("%c", BEXT(vR(D), 1) ? 'A' : 'a');
-			LOG_END("%c", BEXT(vR(D), 0) ? 'M' : 'm');
+			if(1) {
+				LOG_START("SBZ(0x%03x)", mlBFEXT(vR(D), 31, 27));
+				_LOG_(":%c2", BEXT(vR(D), 26) ? 'L' : 'l');
+				_LOG_(":%s", BEXT(vR(D), 25) ? "EE" : "ee");
+				_LOG_(":%s", BEXT(vR(D), 24) ? "VE" : "ve");
+				_LOG_(":%s", BEXT(vR(D), 23) ? "XP" : "xp");
+				_LOG_(":%c", BEXT(vR(D), 22) ? 'U' : 'u');
+				_LOG_(":%s", BEXT(vR(D), 23) ? "FI" : "fi");
+				_LOG_(":?(%01u)?", mlBFEXT(vR(D), 20, 19));
+			} else
+				LOG_START("SBZ(0x%03x)", mlBFEXT(vR(D), 31, 19));
+			_LOG_(":SBO(%01u)", BEXT(vR(D), 18));
+			_LOG_(":SBZ(%01u)", BEXT(vR(D), 17));
+			_LOG_(":SBO(%01u)", BEXT(vR(D), 16));
+			_LOG_(":%c4", BEXT(vR(D), 15) ? 'L' : 'l');
+			_LOG_(":%s", BEXT(vR(D), 14) ? "RR" : "rr");
+			_LOG_(":%c", BEXT(vR(D), 13) ? 'V' : 'v');
+			_LOG_(":%c", BEXT(vR(D), 12) ? 'I' : 'i');
+			if(1) {
+				_LOG_(":%c", BEXT(vR(D), 11) ? 'Z' : 'z');
+				_LOG_(":%c", BEXT(vR(D), 10) ? 'F' : 'f');
+			} else
+				_LOG_(":SBZ(%02u)", mlBFEXT(vR(D), 11, 10));
+			_LOG_(":%c", BEXT(vR(D), 9) ? 'R' : 'r');
+			_LOG_(":%c", BEXT(vR(D), 8) ? 'S' : 's');
+			_LOG_(":%c", BEXT(vR(D), 7) ? 'B' : 'b');
+			if(1) {
+				_LOG_(":%c", BEXT(vR(D), 6) ? 'L' : 'l');
+				_LOG_(":%c", BEXT(vR(D), 5) ? 'D' : 'd');
+				_LOG_(":%c", BEXT(vR(D), 4) ? 'P' : 'p');
+				_LOG_(":%c", BEXT(vR(D), 3) ? 'W' : 'w');
+			} else
+				_LOG_(":SBO(%01u)", mlBFEXT(vR(D), 6, 3));
+			_LOG_(":%c", BEXT(vR(D), 2) ? 'C' : 'c');
+			_LOG_(":%c", BEXT(vR(D), 1) ? 'A' : 'a');
+			LOG_END(":%c", BEXT(vR(D), 0) ? 'M' : 'm');
+			if(BEXT(vR(D), 0))
+				soc_tlb_invalidate_all(csx->tlb);
 			break;
 		case cp15(0, 2, 0, 0):
 			LOG_START("Translation Table Base 0\n\t");

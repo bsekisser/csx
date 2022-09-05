@@ -27,12 +27,7 @@
 
 #define CYCLE csx->cycle
 
-#define LOCAL_RGNDIR "../garmin/rgn_files/"
-#define RGNFileName "038201000610"
-//#include "../../garmin/rgn_files/038201000610.h"
-
-#define LOADER_FileName "_loader.bin"
-#define FIRMWARE_FileName "_firmware.bin"
+#include "garmin_rgn.h"
 
 /* **** */
 
@@ -132,7 +127,12 @@ static uint32_t _csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size)
 	{
 		data = soc_nnd_flash_read(csx->nnd, ppa, size);
 	}
-	else {
+/*	else if(src = _csx_soc_map_ppa(csx, ppa, size))
+	{
+		return(soc_data_read(src, size))
+	}
+*/	else
+	{
 		LOG("ppa = 0x%08x", ppa);
 	}
 	

@@ -25,3 +25,5 @@ enum {
 //#define ARMv5_CP15_reg1_Ubit		((_arm_version >= arm_v5t) && CP15_reg1_bit(u))
 #define ARMv5_CP15_reg1_Ubit		CP15_reg1_bit(u)
 #define CP15_reg1_AbitOrUbit		(CP15_reg1_bit(a) || CP15_reg1_bit(u))
+
+#define TTBR0						vCR(2)
