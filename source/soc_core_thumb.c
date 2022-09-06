@@ -319,7 +319,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 			break;
 		case THUMB_DP_OP_LSL:
 			res <<= vR(M) & 0xff;
-			CORE_TRACE("muls(%s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
+			CORE_TRACE("lsls(%s, %s); /* 0x%08x << 0x%08x = 0x%08x */",
 				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
 			break;
 		case THUMB_DP_OP_MUL:
@@ -345,28 +345,33 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 			break;
 	}
 
-	if(wb)
-		soc_core_reg_set(core, rR(D), res);
-
 	switch(operation) {
 		case THUMB_DP_OP_CMP:
 			soc_core_flags_nzcv_sub(core, res, rR(D), rR(M));
 			break;
 		case THUMB_DP_OP_LSL:
-			CPSR &= ~SOC_CORE_PSR_NZC;
+			soc_core_flags_nz(core, res);
+			if(vR(M)) {
+				CPSR &= ~SOC_CORE_PSR_C;
 
-			CPSR |= BMOV(res, 31, SOC_CORE_PSR_BIT_N);
-			CPSR |= ((res == 0) ? SOC_CORE_PSR_Z : 0);
-
-			if(vR(M) < 32)
-				CPSR |= BMOV(vR(D), vR(M), SOC_CORE_PSR_BIT_C);
-			else
-				CPSR |= BMOV(vR(D), 0, SOC_CORE_PSR_BIT_C);
+				if(vR(M) < 32)
+					CPSR |= BMOV(vR(D), 32 - vR(M), SOC_CORE_PSR_BIT_C);
+				else {
+//					res = 0;
+					if(32 == vR(M)) {
+						CPSR |= BMOV(vR(D), 0, SOC_CORE_PSR_BIT_C);
+					}
+				}
+			} else
+				wb = 0;
 			break;
 		default:
 			soc_core_flags_nz(core, res);
 			break;
 	}
+
+	if(wb)
+		soc_core_reg_set(core, rR(D), res);
 }
 
 static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
