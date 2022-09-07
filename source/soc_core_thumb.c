@@ -324,7 +324,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(S), res);
 			break;
 		case THUMB_DP_OP_MUL:
-			if(res !=0)
+//			if(res !=0)
 				res *= vR(M);
 			CORE_TRACE("muls(%s, %s); /* 0x%08x * 0x%08x = 0x%08x */",
 				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
