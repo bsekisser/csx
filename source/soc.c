@@ -133,12 +133,12 @@ uint32_t csx_soc_ifetch(csx_p csx, uint32_t va, size_t size)
 {
 	soc_tlbe_p tlbe = 0;
 
-retry_read:;
+//retry_read:;
 	void* src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
 	if(0) LOG("src = 0x%08x, va = 0x%08x, tlbe = 0x%08x", (uint)src, va, (uint)tlbe);
 	
-retry_read_src:;
 	if(src) {
+retry_read_src:;
 		return(soc_data_read(src + PAGE_OFFSET(va), size));
 	} else {
 		uint32_t ppa = va;
@@ -146,8 +146,10 @@ retry_read_src:;
 		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 		src = _csx_soc_map_ppa(csx, ppa, size);
 
-		if(tlb && src) {
-			soc_tlb_fill_instruction_tlbe(tlbe, va, src);
+		if(src) {
+			if(tlb) {
+				soc_tlb_fill_data_tlbe(tlbe, va, src);
+			}
 			goto retry_read_src;
 		} else
 			return(csx_soc_read_ppa(csx, ppa, size, 0));
@@ -224,19 +226,22 @@ uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
 {
 	soc_tlbe_p tlbe = 0;
 
-retry_read:;
+//retry_read:;
 	void* src = soc_tlb_read(csx->tlb, va, &tlbe);
+
+	if(src) {
 retry_read_src:;
-	if(src)
 		return(soc_data_read(src + PAGE_OFFSET(va), size));
-	else {
+	} else {
 		uint32_t ppa = va;
 		
 		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 		src = _csx_soc_map_ppa(csx, ppa, size);
 
-		if(tlb && src) {
-			soc_tlb_fill_data_tlbe(tlbe, va, src);
+		if(src) {
+			if(tlb) {
+				soc_tlb_fill_data_tlbe(tlbe, va, src);
+			}
 			goto retry_read_src;
 		} else
 			return(csx_soc_read_ppa(csx, ppa, size, 0));
@@ -310,19 +315,22 @@ void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 {
 	soc_tlbe_p tlbe = 0;
 
-retry_write:;
+//retry_write:;
 	void* dst = soc_tlb_write(csx->tlb, va, &tlbe);
+
+	if(dst) {
 retry_write_dst:;
-	if(dst)
 		return(soc_data_write(dst + PAGE_OFFSET(va), data, size));
-	else {
+	} else {
 		uint32_t ppa = va;
 		
 		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 		dst = _csx_soc_map_ppa(csx, ppa, size);
 
-		if(tlb && dst) {
-			soc_tlb_fill_data_tlbe(tlbe, va, dst);
+		if(dst) {
+			if(tlb) {
+				soc_tlb_fill_data_tlbe(tlbe, va, dst);
+			}
 			goto retry_write_dst;
 		} else
 			return(_csx_soc_write_ppa(csx, ppa, data, size));
