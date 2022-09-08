@@ -62,7 +62,7 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 
 	_CORE_TRACE_("%sr", LDST_BIT(l20) ? "ld" : "st");
 
-	if(ls->ldstx & 1)
+	if(LDSTX & 1)
 	{
 		const int bit_t = !LDST_BIT(p24) && LDST_BIT(w21);
 

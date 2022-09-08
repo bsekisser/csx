@@ -18,8 +18,6 @@
 
 /* **** */
 
-//#define _ldst_original
-
 static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 {
 	soc_core_trace_inst_dpi(core, dpi);
@@ -114,6 +112,8 @@ static void _arm_inst_dpi_operation_bic(soc_core_p core, soc_core_dpi_p dpi)
 
 static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
 {
+	assert(0 == rR(D)); /* sbz */
+
 	dpi->wb = 0;
 	vR(D) = vR(N) - dpi->out.v;
 
@@ -193,10 +193,13 @@ static void _arm_inst_dpi_operation_sub(soc_core_p core, soc_core_dpi_p dpi)
 		vR(N), dpi->out.v, vR(D));
 }
 
-#ifndef _ldst_original
 static void _arm_inst_ldst(soc_core_p core,
 	soc_core_ldst_p ls)
 {
+//	ls->ldstx = mlBFEXT(IR, 27, 25);
+	soc_core_arm_decode_rd(core, !LDST_BIT(l20));
+	soc_core_arm_decode_rn(core, 1);
+
 	ls->ea = vR(N);
 
 	if(LDST_BIT(p24))
@@ -206,7 +209,7 @@ static void _arm_inst_ldst(soc_core_p core,
 		else
 			ls->ea -= ls->index;
 	}
-	
+
 	if(LDST_BIT(l20))
 	{
 		vR(D) = soc_core_read(core, ls->ea, ls->rw_size);
@@ -218,7 +221,7 @@ static void _arm_inst_ldst(soc_core_p core,
 		if(LDST_FLAG_S) /* sign extend ? */
 			vR(D) = mlBFEXTs(vR(D), (8 << (ls->rw_size >> 1)), 0);
 	}
-	
+
 	soc_core_trace_inst_ldst(core, ls);
 
 	/*	ARMv5, CP15_r1_Ubit == 0 */
@@ -257,7 +260,43 @@ static void _arm_inst_ldst(soc_core_p core,
 		}
 	}
 }
-#endif
+
+static void _arm_inst_ldst_iro_sro(soc_core_p core,
+	soc_core_ldst_p ls)
+{
+	ls->rw_size = LDST_BIT(b22) ? sizeof(uint8_t) : sizeof(uint32_t);
+
+	return(_arm_inst_ldst(core, ls));
+}
+
+static void _arm_inst_ldst_sh(soc_core_p core,
+	soc_core_ldst_p ls)
+{
+	switch(BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5)) {
+		case 0x01:
+		case 0x05:
+			ls->rw_size = sizeof(uint16_t);
+			break;
+		case 0x02:
+		case 0x03:
+			ls->rw_size = sizeof(uint64_t);
+			break;
+		case 0x06:
+			ls->rw_size = sizeof(int8_t);
+			break;
+		case 0x07:
+			ls->rw_size = sizeof(int16_t);
+			break;
+		default:
+			soc_core_disasm_arm(core, PC, IR);
+			LOG_ACTION(exit(-1));
+			break;
+	}
+
+	ls->index = vR(M);
+
+	return(_arm_inst_ldst(core, ls));
+}
 
 static void _arm_inst_ldstm(soc_core_p core,
 	soc_core_ldst_p ls,
@@ -337,8 +376,8 @@ static void arm_inst_bx(soc_core_p core)
 	const uint32_t new_pc = vR(M);
 	const int thumb = new_pc & 1;
 
-	CORE_TRACE("b%sx(r(%u)) /* %c(0x%08x) */",
-		link ? "l" : "", rR(M), thumb ? 'T' : 'A', new_pc & ~1);
+	CORE_TRACE("b%sx(%s) /* %c(0x%08x) */",
+		link ? "l" : "", _arm_reg_name(rR(M)), thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -410,109 +449,45 @@ exit_fault:
 	UNIMPLIMENTED;
 }
 
-#ifdef _ldst_original
-static void arm_inst_ldst(soc_core_p core)
-{
-	soc_core_ldst_t ls;
-	soc_core_arm_decode_ldst(core, &ls);
-
-	ls.ea = vR(N);
-
-	if(LDST_BIT(p24))
-	{
-		if(LDST_BIT(u23))
-			ls.ea += vR(M);
-		else
-			ls.ea -= vR(M);
-	}
-
-	if(LDST_BIT(l20))
-	{
-		vR(D) = soc_core_read(core, ls.ea, ls.rw_size);
-
-		if(ARMv5_CP15_reg1_Ubit && (ls.rw_size == sizeof(uint32_t)))
-			vR(D) = _ror(vR(D), ((ls.ea & 3) << 3));
-
-		if(LDST_FLAG_S) /* sign extend ? */
-			vR(D) = mlBFEXTs(vR(D), (8 << (ls.rw_size >> 1)), 0);
-	}
-	else
-		vR(D) = soc_core_reg_get(core, rR(D));
-
-	soc_core_trace_inst_ldst(core, &ls);
-
-		/*	ARMv5, CP15_r1_Ubit == 0 */
-	if(LDST_BIT(l20) && (ls.rw_size == sizeof(uint32_t)))
-		if(ARMv5_CP15_reg1_Ubit)
-			assert(0 == (ls.ea & 3));
-
-	if(LDST_BIT(l20) && (rPC == rR(D)))
-		CORE_TRACE_BRANCH(vR(D));
-
-	if(CCx.e)
-	{
-		if(!LDST_BIT(p24))
-		{
-			ls.ea = vR(N);
-
-			if(LDST_BIT(u23))
-				ls.ea += vR(M);
-			else
-				ls.ea -= vR(M);
-		}
-
-		if(!LDST_BIT(p24) || LDST_BIT(w21)) /* base update? */
-			soc_core_reg_set(core, rR(N), ls.ea);
-
-		if(LDST_BIT(l20))
-		{
-			if((_arm_version >= arm_v5t) && (rPC == rR(D)))
-				soc_core_reg_set_pcx(core, vR(D));
-			else
-				soc_core_reg_set(core, rR(D), vR(D));
-		}
-		else
-		{
-			if(ls.rw_size == sizeof(uint32_t))
-				ls.ea &= ~3;
-
-			soc_core_write(core, ls.ea, vR(D), ls.rw_size);
-		}
-	}
-}
-#endif
-
-#ifndef _ldst_original
-static void arm_inst_ldst_irx(soc_core_p core, soc_core_ldst_p ls)
-{
-	ls->rw_size = LDST_BIT(b22) ? sizeof(uint8_t) : sizeof(uint32_t);
-
-	soc_core_arm_decode_rd(core, !LDST_BIT(l20));
-	soc_core_arm_decode_rn(core, 1);
-	
-	return(_arm_inst_ldst(core, ls));
-}
-
-static void arm_inst_ldst_ix(soc_core_p core)
+static void arm_inst_ldst_immediate_offset(soc_core_p core)
 {
 	soc_core_ldst_t ls;
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 11, 0));
 	ls.index = vR(M);
 
-	return(arm_inst_ldst_irx(core, &ls));
+	return(_arm_inst_ldst_iro_sro(core, &ls));
 }
 
-static void arm_inst_ldst_rx(soc_core_p core)
+static void arm_inst_ldst_immediate_offset_sh(soc_core_p core)
 {
 	soc_core_ldst_t ls;
-	
+
+	_setup_rR_vR(M, ~0, mlBFMOV(IR, 11, 8, 4) | mlBFEXT(IR, 3, 0));
+
+	return(_arm_inst_ldst_sh(core, &ls));
+}
+
+static void arm_inst_ldst_register_offset_sh(soc_core_p core)
+{
+	soc_core_ldst_t ls;
+
+	soc_core_arm_decode_rm(core, 1);
+
+	return(_arm_inst_ldst_sh(core, &ls));
+}
+
+static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
+{
+	soc_core_ldst_t ls; /* TODO: not tested/verified! */
+
 	_setup_rR_vR(S, ~mlBFEXT(IR, 6, 5), mlBFEXT(IR, 11, 7));
-	
+
 	soc_core_arm_decode_rm(core, 1);
 
 	uint32_t index = 0;
-	switch((signed)rR(S)) {
+
+	switch((int8_t)rR(S)) {
 		case ~0: /* lsl */
 			index = _lsl(vR(M), vR(S));
 			break;
@@ -535,20 +510,26 @@ static void arm_inst_ldst_rx(soc_core_p core)
 				index = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31);
 				index |= _lsr(vR(M), 1);
 			}
+		default:
+			soc_core_disasm_arm(core, PC, IR);
+			LOG_ACTION(exit(-1));
+			break;
 	}
 
 	ls.index = index;
 
-	return(arm_inst_ldst_irx(core, &ls));
+	return(_arm_inst_ldst_iro_sro(core, &ls));
 }
-#endif
 
 static void arm_inst_ldstm(soc_core_p core)
 {
 	const csx_p csx = core->csx;
 
 	soc_core_ldst_t ls;
-	soc_core_arm_decode_ldst(core, &ls);
+	ls.rw_size = sizeof(uint32_t);
+
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
+	soc_core_arm_decode_rn(core, 1);
 
 	const uint8_t rcount = (__builtin_popcount(vR(M)) << 2);
 
@@ -606,9 +587,9 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	const int user_mode_regs = user_mode_regs_load || user_mode_regs_store;
 
-	CORE_TRACE("%s%c%c(r(%u)%s, {%s}%s%s) /* 0x%08x */" ,
+	CORE_TRACE("%s%c%c(%s%s, {%s}%s%s) /* 0x%08x */" ,
 		opstr, LDST_BIT(u23) ? 'i' : 'd', LDST_BIT(p24) ? 'b' : 'a',
-		rR(N), LDST_BIT(w21) ? "!" : "", reglist,
+		_arm_reg_name(rR(N)), LDST_BIT(w21) ? "!" : "", reglist,
 		user_mode_regs ? ", USER" : "",
 		load_spsr ? ", SPSR" : "", sp_in);
 
@@ -901,6 +882,8 @@ const uint _inst1_0_undef = mlBF(25, 24);
 const uint _inst1_0_mitsr = _inst1_0_undef | _BV(21);
 const uint _inst1_0_mitsr_mask = mlBF(27, 23) | mlBF(21, 20);
 
+const uint _inst3_i4_mask = _BV(4);
+
 void soc_core_arm_step(soc_core_p core)
 {
 	IR = soc_core_reg_pc_fetch_step_arm(core);
@@ -918,16 +901,16 @@ void soc_core_arm_step(soc_core_p core)
 	switch(opcode)
 	{
 		case 0x00: /* xxxx 000x xxxx xxxx */
-			if(_inst0_0_i74 == (IR & _inst0_0_i74))
-#ifdef _ldst_original
-				return(arm_inst_ldst(core));
-#else
-				return(arm_inst_ldst_rx(core));
-#endif
-			else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
+			if(_inst0_0_i74 == (IR & _inst0_0_i74)) {
+				if(LDST_FLAG_SH_I)
+					return(arm_inst_ldst_immediate_offset_sh(core));
+				else
+					return(arm_inst_ldst_register_offset_sh(core));
+			} else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
 				if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
 					return(arm_inst_dpi(core));
-			}} else {
+				}
+			} else {
 				if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
 					return(arm_inst_bx(core));
 				if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
@@ -945,12 +928,11 @@ void soc_core_arm_step(soc_core_p core)
 					return(arm_inst_dpi(core));
 			break;
 		case 0x02: /* xxxx 010x xxxx xxxx */
-			if(ARM_INST_LDST_O11 == (IR & ARM_INST_LDST_O11_MASK))
-#ifdef _ldst_original
-				return(arm_inst_ldst(core));
-#else
-				return(arm_inst_ldst_ix(core));
-#endif
+			return(arm_inst_ldst_immediate_offset(core));
+			break;
+		case 0x03:
+			if(!(IR & _inst3_i4_mask))
+				return(arm_inst_ldst_scaled_register_offset(core));
 			break;
 		case 0x04: /* xxxx 100x xxxx xxxx */
 			if(ARM_INST_LDSTM == (IR & ARM_INST_LDSTM_MASK))
@@ -984,7 +966,7 @@ decode_fault:
 			LOG(">> ir = 0x%08x, opcode = 0x%02x", IR, opcode);
 			break;
 	}
-	
+
 	soc_core_disasm_arm(core, PC, IR);
 	UNIMPLIMENTED;
 }

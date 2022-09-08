@@ -55,6 +55,7 @@ enum {
 enum {
 	LDST_BIT_b22 = 22,
 	LDST_BIT_h5 = 5,
+	LDST_BIT_i22 = 22,
 	LDST_BIT_l20 = 20,
 	LDST_BIT_p24 = 24,
 	LDST_BIT_u23 = 23,
@@ -65,7 +66,9 @@ enum {
 
 #define LDST_BIT(_x)				BEXT(IR, LDST_BIT_##_x)
 #define LDST_FLAG_SH				(0 == mlBFEXT(IR, 27, 25))
+#define LDST_FLAG_SH_I				(LDST_FLAG_SH && LDST_BIT(i22))
 #define LDST_FLAG_S					(LDST_FLAG_SH && LDST_BIT(l20) && LDST_BIT(s6))
+#define LDSTX						mlBFEXT(IR, 27, 25)
 
 
 #define MCRC_CRm					mlBFEXT(IR, 3, 0)
@@ -91,8 +94,6 @@ typedef struct soc_core_dpi_t {
 typedef struct soc_core_ldst_t {
 	uint32_t	ea;
 	uint32_t	index;
-	
-	uint8_t		ldstx;
 
 	uint8_t		rw_size;
 }soc_core_ldst_t;
@@ -100,6 +101,5 @@ typedef struct soc_core_ldst_t {
 /* **** */
 
 void soc_core_arm_decode_coproc(soc_core_p core);
-void soc_core_arm_decode_ldst(soc_core_p core, soc_core_ldst_p ls);
 void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi);
 const char* soc_core_arm_decode_shifter_op_string(uint8_t shopc);
