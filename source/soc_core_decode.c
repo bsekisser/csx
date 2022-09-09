@@ -63,9 +63,12 @@ static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
 {
 	dpi->out.v = _lsl(vR(M), vR(S));
-	if(vR(S))
-		dpi->out.c = BEXT(vR(M), 32 - vR(S));
-	else
+	if(vR(S)) {
+		if(vR(S) < 32)
+			dpi->out.c = BEXT(vR(M), 32 - vR(S));
+		else
+			dpi->out.c = (32 == vR(S)) ? (vR(M) & 1) : 0;
+	} else
 		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 }
 

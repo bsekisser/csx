@@ -136,7 +136,7 @@ shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 	
 	shifter_operand_t out = _BV(15) | (shift << 8) | i;
 
-	LOG("i = 0x%08x, shift = 0x%08x, shifter_operand = 0x%08x", i, shift, out);
+	if(0) LOG("i = 0x%08x, shift = 0x%08x, shifter_operand = 0x%08x", i, shift, out);
 
 	return(out);
 }
@@ -189,9 +189,24 @@ void arm_adds_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 1, rn, rd, shopt);
 }
 
+void arm_ands_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(AND), 1, rn, rd, shopt);
+}
+
+void arm_bics_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(BIC), 1, rn, rd, shopt);
+}
+
 void arm_cmps_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(CMP), 1, rn, rd, shopt);
+}
+
+void arm_eors_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(EOR), 1, rn, rd, shopt);
 }
 
 void arm_mov_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)

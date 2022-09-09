@@ -13,6 +13,10 @@
 
 /* **** */
 
+#include "log.h"
+
+/* **** */
+
 const int _arm_version = arm_v5tej;
 
 const int _check_pedantic_mmio = 0;
@@ -26,6 +30,14 @@ void _preflight_tests(void)
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));
 	assert(0x08 == sizeof(uint64_t));
+
+	for(int i = 1; i < 32; i++) {
+		uint32_t check1 = (32 - i);
+		uint32_t check2 = (-i & 31);
+		if(0) LOG("((32 - i) == (-i & 31)) -- (0x%08x, 0x%08x)", 
+			check1, check2);
+		assert(check1 == check2);
+	}
 }
 
 

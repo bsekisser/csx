@@ -139,6 +139,9 @@ void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 	const uint8_t old_mode = mlBFEXT(core->cpsr, 4, 0);
 	const uint8_t new_mode = mlBFEXT(v, 4, 0);
 
+	if(old_mode == new_mode)
+		return;
+
 	uint32_t *src = 0, *dst = 0;
 	uint8_t sreg = 0;
 

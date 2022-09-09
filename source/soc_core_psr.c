@@ -148,16 +148,6 @@ static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, 
 		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 }
 
-#if 0
-static uint32_t _soc_core_flags_nzcv_add(soc_core_p core, uint32_t s1_v, uint32_t s2_v, int carry_in)
-{
-//	uint32_t res = s1_v + s2_v + carry_in;
-	_soc_core_flags_nzcv(core, res, s1_v, s2_v);
-
-//	return(res);
-}
-#endif
-
 void soc_core_flags_nzcv_add(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
 	_soc_core_flags_nzcv(core, rd_v, s1_v, s2_v);
@@ -165,5 +155,5 @@ void soc_core_flags_nzcv_add(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint
 
 void soc_core_flags_nzcv_sub(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
-	_soc_core_flags_nzcv(core, rd_v, s1_v, ~s2_v + 1);
+	_soc_core_flags_nzcv(core, rd_v, s1_v, ~s2_v);
 }

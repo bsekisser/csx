@@ -48,9 +48,6 @@ static uint32_t csx_test_arm_add_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
 
-	LOG("psr = 0x%08x, res = 0x%08x", *psr, res);
-	
-	TRACE_PSR(*psr);
 	return(res);
 }
 
@@ -64,14 +61,11 @@ static uint32_t csx_test_arm_add_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_adds_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
-	t->start_pc = t->pc = csx_test_run(t, 3);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 
 	*psr = CPSR;
 
 	res = soc_core_reg_get(core, 0);
-	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
-	
-	TRACE_PSR(CPSR);
 
 	return(res);
 }
@@ -93,9 +87,93 @@ static void csx_test_arm_add(csx_test_p t)
 	xres = csx_test_arm_add_asm(t, &xpsr, 12, 1);
 	res = csx_test_arm_add_inst(t, &cpsr, 12, 1);
 
-	assert(13 == res);
+	assert(xres == res);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
 	_assert_nzcv(t, 0, 0, 0, 0);
+
+	int jk_limit = 256;
+	for(int j = 0; j < jk_limit; j++) {
+		int jj = j << 24;
+		for(int k = 0; k < jk_limit; k++) {
+			int kk = k << 24;
+			xres = csx_test_arm_add_asm(t, &xpsr, jj, kk);
+			res = csx_test_arm_add_inst(t, &cpsr, jj, kk);
+
+			ASSERT_LOG(xres == res,
+				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
+				j, k, xres, res);
+
+			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
+				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
+					j, k, xpsr, cpsr);
+
+			_assert_cpsr_xpsr(t, cpsr, xpsr);
+		}
+	}
+}
+
+static uint32_t csx_test_arm_and_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	uint32_t res = 0;
+	
+	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+		"ands %[result], %[ir0], %[ir1]\n\t"
+		"mrs %[psr], CPSR\n\t"
+		: [psr] "=r" (*psr), [result] "=r" (res)
+		: [ir0] "r" (ir0), [ir1] "r" (ir1)
+		:);
+
+	return(res);
+}
+
+static uint32_t csx_test_arm_and_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	const soc_core_p core = t->csx->core;
+	uint32_t res = 0;
+
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
+	
+	t->start_pc = t->pc = 0x10000000;
+	arm_adds_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0)); /* << ensure predictable psr result */
+	arm_ands_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+
+	*psr = CPSR;
+
+	res = soc_core_reg_get(core, 2);
+
+	return(res);
+}
+
+static void csx_test_arm_and(csx_test_p t)
+{
+	t->start_pc = t->pc = 0x10000000;
+
+	uint32_t res = 0, xres = 0;
+	uint32_t xpsr = 0, cpsr = 0;
+	
+//	t->csx->core->trace = 1;
+	
+	int jk_limit = 16;
+	for(int j = 0; j < jk_limit; j++) {
+		int jj = _test_value(j);
+		for(int k = 0; k < jk_limit; k++) {
+			int kk = _test_value(k);
+			xres = csx_test_arm_and_asm(t, &xpsr, jj, kk);
+			res = csx_test_arm_and_inst(t, &cpsr, jj, kk);
+
+			ASSERT_LOG(xres == res,
+				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
+				j, k, xres, res);
+
+			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
+				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
+					j, k, xpsr, cpsr);
+
+			_assert_cpsr_xpsr(t, cpsr, xpsr);
+		}
+	}
 }
 
 static void csx_test_arm_b(csx_test_p t)
@@ -157,6 +235,72 @@ static void csx_test_arm_b(csx_test_p t)
 	if(0) LOG("start_pc = 0x%08x, pc(t) = 0x%08x, LR = 0x%08x", t->start_pc, pc(t), LR);
 }
 
+static uint32_t csx_test_arm_bic_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	uint32_t res = 0;
+	
+	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+		"bics %[result], %[ir0], %[ir1]\n\t"
+		"mrs %[psr], CPSR\n\t"
+		: [psr] "=r" (*psr), [result] "=r" (res)
+		: [ir0] "r" (ir0), [ir1] "r" (ir1)
+		:);
+
+	return(res);
+}
+
+static uint32_t csx_test_arm_bic_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	const soc_core_p core = t->csx->core;
+	uint32_t res = 0;
+
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
+	
+	t->start_pc = t->pc = 0x10000000;
+	arm_adds_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0)); /* << ensure predictable psr result */
+	arm_bics_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+
+	*psr = CPSR;
+
+	res = soc_core_reg_get(core, 2);
+
+	return(res);
+}
+
+static void csx_test_arm_bic(csx_test_p t)
+{
+	t->start_pc = t->pc = 0x10000000;
+
+	uint32_t res = 0, xres = 0;
+	uint32_t xpsr = 0, cpsr = 0;
+	
+//	t->csx->core->trace = 1;
+	
+	int jk_limit = 16;
+	for(int j = 0; j < jk_limit; j++) {
+		int jj = _test_value(j);
+		for(int k = 0; k < jk_limit; k++) {
+			int kk = _test_value(k);
+			xres = csx_test_arm_bic_asm(t, &xpsr, jj, kk);
+			res = csx_test_arm_bic_inst(t, &cpsr, jj, kk);
+
+			ASSERT_LOG(xres == res,
+				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
+				j, k, xres, res);
+
+			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
+				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
+					j, k, xpsr, cpsr);
+
+			_assert_cpsr_xpsr(t, cpsr, xpsr);
+		}
+	}
+
+//	t->csx->core->trace = 0;
+}
+
 static uint32_t csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	const uint32_t res = 0;
@@ -167,10 +311,6 @@ static uint32_t csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
 
-	LOG("psr = 0x%08x", *psr);
-	
-	TRACE_PSR(*psr);
-	
 	return(res);
 }
 
@@ -184,14 +324,9 @@ static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_cmps_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
-	t->start_pc = t->pc = csx_test_run(t, 3);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 
 	*psr = CPSR;
-
-//	res = soc_core_reg_get(core, 0);
-	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
-	
-	TRACE_PSR(CPSR);
 
 	return(res);
 }
@@ -253,6 +388,72 @@ static void csx_test_arm_cmp(csx_test_p t)
 
 		LOG("blo = %u", blo);
 	};
+}
+
+static uint32_t csx_test_arm_eor_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	uint32_t res = 0;
+	
+	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+		"eors %[result], %[ir0], %[ir1]\n\t"
+		"mrs %[psr], CPSR\n\t"
+		: [psr] "=r" (*psr), [result] "=r" (res)
+		: [ir0] "r" (ir0), [ir1] "r" (ir1)
+		:);
+
+	return(res);
+}
+
+static uint32_t csx_test_arm_eor_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	const soc_core_p core = t->csx->core;
+	uint32_t res = 0;
+
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
+	
+	t->start_pc = t->pc = 0x10000000;
+	arm_adds_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0)); /* << ensure predictable psr result */
+	arm_eors_rn_rd_sop(t, 0, 2, arm_dpi_lsl_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+
+	*psr = CPSR;
+
+	res = soc_core_reg_get(core, 2);
+
+	return(res);
+}
+
+static void csx_test_arm_eor(csx_test_p t)
+{
+	t->start_pc = t->pc = 0x10000000;
+
+	uint32_t res = 0, xres = 0;
+	uint32_t xpsr = 0, cpsr = 0;
+	
+//	t->csx->core->trace = 1;
+	
+	int jk_limit = 16;
+	for(int j = 0; j < jk_limit; j++) {
+		int jj = _test_value(j);
+		for(int k = 0; k < jk_limit; k++) {
+			int kk = _test_value(k);
+			xres = csx_test_arm_eor_asm(t, &xpsr, jj, kk);
+			res = csx_test_arm_eor_inst(t, &cpsr, jj, kk);
+
+			ASSERT_LOG(xres == res,
+				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
+				j, k, xres, res);
+
+			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
+				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
+					j, k, xpsr, cpsr);
+
+			_assert_cpsr_xpsr(t, cpsr, xpsr);
+		}
+	}
+
+//	t->csx->core->trace = 0;
 }
 
 typedef struct ldstm_t* ldstm_p;
@@ -543,9 +744,6 @@ static uint32_t csx_test_arm_sub_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
 
-	LOG("psr = 0x%08x, res = 0x%08x", *psr, res);
-	
-	TRACE_PSR(*psr);
 	return(res);
 }
 
@@ -559,14 +757,11 @@ static uint32_t csx_test_arm_sub_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_subs_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
-	t->start_pc = t->pc = csx_test_run(t, 3);
+	t->start_pc = t->pc = csx_test_run(t, 1);
 
 	*psr = CPSR;
 
 	res = soc_core_reg_get(core, 0);
-	LOG("psr = 0x%08x, res = 0x%08x", CPSR, res);
-	
-	TRACE_PSR(CPSR);
 
 	return(res);
 }
@@ -605,6 +800,26 @@ static void csx_test_arm_sub(csx_test_p t)
 	assert(1 == res);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
 	_assert_nzcv(t, 0, 0, 1, 0);
+
+	int jk_limit = 256;
+	for(int j = 0; j < jk_limit; j++) {
+		int jj = j < 24;
+		for(int k = 0; k < jk_limit; k++) {
+			int kk = k << 24;
+			xres = csx_test_arm_sub_asm(t, &xpsr, jj, kk);
+			res = csx_test_arm_sub_inst(t, &cpsr, jj, kk);
+
+			ASSERT_LOG(xres == res,
+				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x",
+				j, k, xres, res);
+
+			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
+				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
+					j, k, xpsr, cpsr);
+
+			_assert_cpsr_xpsr(t, cpsr, xpsr);
+		}
+	}
 }
 
 /* **** */
@@ -614,8 +829,11 @@ void csx_test_arm(csx_test_p t)
 	t->pc = t->start_pc;
 
 	csx_test_arm_add(t);
+	csx_test_arm_and(t);
 	csx_test_arm_b(t);
+	csx_test_arm_bic(t);
 	csx_test_arm_cmp(t);
+	csx_test_arm_eor(t);
 	csx_test_arm_ldstm(t);
 	csx_test_arm_mov(t);
 	csx_test_arm_sub(t);

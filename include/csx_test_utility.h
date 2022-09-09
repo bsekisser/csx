@@ -18,9 +18,17 @@ uint32_t pc(csx_test_p t);
 
 /* **** */
 
+#define ASSERT_LOG(_test, _f, ...) \
+	({ \
+		if(!(_test)) { \
+			LOG(#_test " : " _f, ## __VA_ARGS__); \
+			assert(_test); \
+		} \
+	})
+
 #define TRACE_PSR(psr) \
 	do { \
-		LOG("N = %1u, Z = %1u, C = %1u, V = %1u", \
+		LOG(#psr " -- N = %1u, Z = %1u, C = %1u, V = %1u -- 0x%08x", \
 			!!(psr & SOC_CORE_PSR_N), !!(psr & SOC_CORE_PSR_Z), \
-			!!(psr & SOC_CORE_PSR_C), !!(psr & SOC_CORE_PSR_V)); \
+			!!(psr & SOC_CORE_PSR_C), !!(psr & SOC_CORE_PSR_V), psr); \
 	}while(0);

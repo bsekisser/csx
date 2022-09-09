@@ -5,15 +5,21 @@
 /* **** */
 
 #include "bitfield.h"
+#include "log.h"
 
 /* **** */
 
 void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 {
-	cpsr &= mlBF(31, 28);
-	xpsr &= mlBF(31, 28);
+	uint test_cpsr = cpsr & SOC_CORE_PSR_NZCV;
+	uint test_xpsr = xpsr & SOC_CORE_PSR_NZCV;
 	
-	assert(cpsr == xpsr);
+	if(test_cpsr != test_xpsr) {
+		TRACE_PSR(cpsr);
+		TRACE_PSR(xpsr);
+	}
+
+	assert(test_cpsr == test_xpsr);
 }
 
 void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
