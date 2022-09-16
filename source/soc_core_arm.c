@@ -6,6 +6,7 @@
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
+#include "soc_core_shifter.h"
 #include "soc_core_trace.h"
 #include "soc_core_trace_arm.h"
 #include "soc_core_utility.h"
@@ -152,10 +153,21 @@ static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
 
 	dpi->mnemonic = "mov";
 
-	if(!DPI_BIT(i25) && (rR(D) == rR(M)))
-		snprintf(dpi->op_string, 255, "/* nop */");
-	else
-		snprintf(dpi->op_string, 255, "/* 0x%08x */", vR(D));
+	if(core->trace) {
+		if(!DPI_BIT(i25)) {
+			if(mlBFEXT(IR, 11, 4)) {
+			const char* shops = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
+			snprintf(dpi->op_string, 255,
+				"/* %s(0x%08x, %03u) = 0x%08x */",
+				shops, vR(M), vR(S), vR(D));
+			}
+			else if(rR(D) == rR(M))
+			{
+				snprintf(dpi->op_string, 255, "/* nop */");
+//				soc_core_disasm_arm(core, IP, IR);
+			}
+		}
+	}
 }
 
 static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
@@ -180,6 +192,16 @@ static void _arm_inst_dpi_operation_orr(soc_core_p core, soc_core_dpi_p dpi)
 	dpi->mnemonic = "orr";
 	snprintf(dpi->op_string, 255,
 		"/* 0x%08x | 0x%08x --> 0x%08x */",
+		vR(N), dpi->out.v, vR(D));
+}
+
+static void _arm_inst_dpi_operation_rsb(soc_core_p core, soc_core_dpi_p dpi)
+{
+	vR(D) = dpi->out.v - vR(N);
+
+	dpi->mnemonic = "rsb";
+	snprintf(dpi->op_string, 255,
+		"/* 0x%08x - 0x%08x --> 0x%08x */",
 		vR(N), dpi->out.v, vR(D));
 }
 
@@ -397,6 +419,8 @@ static void arm_inst_dpi(soc_core_p core)
 {
 	soc_core_dpi_t	dpi;
 
+	dpi.op_string[0] = 0;
+
 	soc_core_arm_decode_shifter_operand(core, &dpi);
 
 	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
@@ -431,6 +455,9 @@ static void arm_inst_dpi(soc_core_p core)
 			break;
 		case ARM_DPI_OPERATION_ORR:
 			_arm_inst_dpi_operation_orr(core, &dpi);
+			break;
+		case ARM_DPI_OPERATION_RSB:
+			_arm_inst_dpi_operation_rsb(core, &dpi);
 			break;
 		case ARM_DPI_OPERATION_SUB:
 			_arm_inst_dpi_operation_sub(core, &dpi);
@@ -967,6 +994,6 @@ decode_fault:
 			break;
 	}
 
-	soc_core_disasm_arm(core, PC, IR);
+	soc_core_disasm_arm(core, IP, IR);
 	UNIMPLIMENTED;
 }

@@ -424,6 +424,96 @@ static uint32_t csx_test_arm_eor_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	return(res);
 }
 
+static void csx_test_arm_dpi(csx_test_p t)
+{
+	const soc_core_p core = t->csx->core;
+
+	int trace = 0, savedTrace = 0;
+	t->start_pc = t->pc = 0x10000000;
+
+	if(trace) {
+		savedTrace = t->csx->core->trace;
+		t->csx->core->trace = 1;
+	}
+
+	arm_movs_rd_sop(t, 0, arm_dpi_ror_i_s(0, 0));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x00000000 == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 0, 1, 0);
+
+	arm_movs_rd_sop(t, 0, arm_dpi_ror_i_s(0x80, 0));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x00000080 == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 0, 0, 0);
+	
+	arm_movs_rd_sop(t, 0, arm_dpi_ror_i_s(0x80, 2));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x00000020 == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 0, 0, 0);
+
+	arm_movs_rd_sop(t, 1, arm_dpi_ror_i_s(0x80, 8));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x80000000 == soc_core_reg_get(core, 1));
+	_assert_nzc(t, 1, 0, 1);
+
+	arm_movs_rd_sop(t, 0, arm_dpi_asr_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0xffffffff == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 1, 0, 1);
+
+	arm_movs_rd_sop(t, 1, arm_dpi_ror_i_s(0x40, 8));
+	arm_movs_rd_sop(t, 0, arm_dpi_asr_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+	assert(0x00000000 == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 0, 1, 0);
+
+	arm_movs_rd_sop(t, 1, arm_dpi_ror_i_s(0x80, 8));
+	arm_movs_rd_sop(t, 0, arm_dpi_asr_r_s(1, 31));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+	assert(0xffffffff == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 1, 0, 0);
+
+	arm_movs_rd_sop(t, 1, arm_dpi_ror_i_s(0x80, 8));
+	arm_movs_rd_sop(t, 0, arm_dpi_asr_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+	assert(0xffffffff == soc_core_reg_get(core, 0));
+	_assert_nzc(t, 1, 0, 1);
+
+	arm_movs_rd_sop(t, 1, arm_dpi_ror_i_s(0x80, 8));
+	arm_movs_rd_sop(t, 1, arm_dpi_asr_r_s(1, 0));
+	arm_movs_rd_sop(t, 1, arm_dpi_lsl_r_s(1, 16));
+	arm_movs_rd_sop(t, 1, arm_dpi_lsr_r_s(1, 8));
+	t->start_pc = t->pc = csx_test_run(t, 4);
+	assert(0x00ffff00 == soc_core_reg_get(core, 1));
+	_assert_nzc(t, 0, 0, 0);
+
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(1, 16));
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(1, 30));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0x01, 0));
+	arm_add_rn_rd_sop(t, 0, 1, arm_dpi_lsl_r_s(0, 3));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+	assert(0x00000009 == soc_core_reg_get(core, 1));
+	
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0x01, 0));
+	arm_rsb_rn_rd_sop(t, 0, 1, arm_dpi_lsl_r_s(0, 3));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+	assert(0x00000007 == soc_core_reg_get(core, 1));
+	
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0x1f, 0));
+	arm_mov_rd_sop(t, 1, arm_dpi_ror_i_s(0x09, 0));
+	arm_sub_rn_rd_sop(t, 1, 1, arm_dpi_lsr_r_s(0, 4));
+	t->start_pc = t->pc = csx_test_run(t, 3);
+	assert(0x00000008 == soc_core_reg_get(core, 1));
+
+	arm_mov_rd_sop(t, 0, arm_dpi_lsl_r_s(0, 0));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+
+	if(trace)
+		t->csx->core->trace = savedTrace;
+}		
+
 static void csx_test_arm_eor(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
@@ -714,6 +804,12 @@ static void csx_test_arm_ldstm(csx_test_p t)
 static void csx_test_arm_mov(csx_test_p t)
 {
 	const soc_core_p core = t->csx->core;
+
+	int trace = 0, savedTrace = 0;
+	if(trace) {
+		savedTrace = t->csx->core->trace;
+		t->csx->core->trace = 1;
+	}
 	
 	t->start_pc = pc(t);
 
@@ -732,6 +828,17 @@ static void csx_test_arm_mov(csx_test_p t)
 	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(64, 28));
 	t->start_pc = t->pc = csx_test_run(t, 1);
 	assert(0x00000400 == soc_core_reg_get(core, 0));
+	
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0x3f, (0xe << 1))); /* listed in arm manual */
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x000003f0 == soc_core_reg_get(core, 0));
+	
+	arm_mov_rd_sop(t, 0, arm_dpi_ror_i_s(0xfc, (0xf << 1))); /* listed in arm manual */
+	t->start_pc = t->pc = csx_test_run(t, 1);
+	assert(0x000003f0 == soc_core_reg_get(core, 0));
+
+	if(trace)
+		t->csx->core->trace = savedTrace;
 }
 
 static uint32_t csx_test_arm_sub_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -837,4 +944,8 @@ void csx_test_arm(csx_test_p t)
 	csx_test_arm_ldstm(t);
 	csx_test_arm_mov(t);
 	csx_test_arm_sub(t);
+	
+	/* **** */
+	
+	csx_test_arm_dpi(t);
 }

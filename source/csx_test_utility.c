@@ -11,8 +11,13 @@
 
 void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 {
-	uint test_cpsr = cpsr & SOC_CORE_PSR_NZCV;
-	uint test_xpsr = xpsr & SOC_CORE_PSR_NZCV;
+	_assert_cpsr_xpsr_mask(t, cpsr, xpsr, SOC_CORE_PSR_NZCV);
+}
+
+void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
+{
+	uint test_cpsr = cpsr & mask;
+	uint test_xpsr = xpsr & mask;
 	
 	if(test_cpsr != test_xpsr) {
 		TRACE_PSR(cpsr);
@@ -22,14 +27,27 @@ void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 	assert(test_cpsr == test_xpsr);
 }
 
+void _assert_nzc(csx_test_p t, int n, int z, int c)
+{
+	soc_core_p core = t->csx->core;
+	
+	uint xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
+		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);
+		BSET_AS(xpsr, SOC_CORE_PSR_BIT_C, !!c);
+	
+	_assert_cpsr_xpsr_mask(t, CPSR, xpsr, SOC_CORE_PSR_NZC);
+}
+
 void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 {
 	soc_core_p core = t->csx->core;
 	
-	assert(n == BEXT(CPSR, SOC_CORE_PSR_BIT_N));
-	assert(z == BEXT(CPSR, SOC_CORE_PSR_BIT_Z));
-	assert(c == BEXT(CPSR, SOC_CORE_PSR_BIT_C));
-	assert(v == BEXT(CPSR, SOC_CORE_PSR_BIT_V));
+	uint xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
+		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);
+		BSET_AS(xpsr, SOC_CORE_PSR_BIT_C, !!c);
+		BSET_AS(xpsr, SOC_CORE_PSR_BIT_V, !!v);
+	
+	_assert_cpsr_xpsr(t, CPSR, xpsr);
 }
 
 void _cxx(csx_test_p t, uint32_t value, uint8_t size)

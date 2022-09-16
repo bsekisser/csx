@@ -29,6 +29,14 @@ static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
 static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
 {
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
+	
+	switch(DPI_SHIFT_OP) {
+		case	SOC_CORE_SHIFTER_OP_ASR:
+		case	SOC_CORE_SHIFTER_OP_LSR:
+			if(!vR(S))
+				vR(S) = 32;
+			break;
+	}
 }
 
 static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
@@ -47,44 +55,44 @@ static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 
 static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p dpi)
 {
-	uint8_t asr_v = vR(S);
+	int cout = 0;
 
-	if(!DPI_BIT(x4) && !vR(S))
-		asr_v = 32;
+	if(vR(S))
+		dpi->out.v = _asr_c(vR(M), vR(S), &cout);
+	else {
+		dpi->out.v = vR(M);
+		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	}
 
-	dpi->out.v = _asr(vR(M), asr_v);
-
-	if(asr_v)
-		dpi->out.c = BEXT(vR(M), asr_v - 1);
-	else
-		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	dpi->out.c = cout;
 }
 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
 {
-	dpi->out.v = _lsl(vR(M), vR(S));
-	if(vR(S)) {
-		if(vR(S) < 32)
-			dpi->out.c = BEXT(vR(M), 32 - vR(S));
-		else
-			dpi->out.c = (32 == vR(S)) ? (vR(M) & 1) : 0;
-	} else
-		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	uint cout = 0;
+	
+	if(vR(S))
+		dpi->out.v = _lsl_c(vR(M), vR(S), &cout);
+	else {
+		dpi->out.v = vR(M);
+		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	}
+
+	dpi->out.c = cout;
 }
 
 static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p dpi)
 {
-	uint8_t lsr_v = vR(S);
+	uint cout = 0;
 
-	if(!DPI_BIT(x4) && !lsr_v)
-		lsr_v = 32;
+	if(vR(S))
+		dpi->out.v = _lsr_c(vR(M), vR(S), &cout);
+	else {
+		dpi->out.v = vR(M);
+		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	}
 
-	dpi->out.v = _lsr(vR(M), lsr_v);
-
-	if(lsr_v)
-		dpi->out.c = BEXT(vR(M), lsr_v - 1);
-	else
-		dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	dpi->out.c = cout;
 }
 
 static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)

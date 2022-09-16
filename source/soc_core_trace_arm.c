@@ -29,26 +29,37 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 
 	if(DPI_BIT(i25))
 	{
-		_CORE_TRACE_(", %u", vR(M));
-
-		if(vR(S))
-			_CORE_TRACE_(", %u", vR(S));
+		if(vR(S)) {
+			_CORE_TRACE_(", ROR(%u, %u)", vR(M), vR(S));
+		} else
+			_CORE_TRACE_(", %u", vR(M));
 	}
 	else
 	{
-		_CORE_TRACE_(", %s", _arm_reg_name(rR(M)));
-
 		const char* sos = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
-
+		
 		if(DPI_BIT(x4))
-			_CORE_TRACE_(", %s(%s)", sos, _arm_reg_name(rR(S)));
-		else if(vR(S))
-			_CORE_TRACE_(", %s(%u)", sos, vR(S));
-		else if(SOC_CORE_SHIFTER_OP_ROR == DPI_SHIFT_OP)
-			_CORE_TRACE_(", RRX");
+			_CORE_TRACE_(", %s(%s, %s)", sos, _arm_reg_name(rR(M)), _arm_reg_name(rR(S)));
+		else {
+			switch(DPI_SHIFT_OP) {
+				case SOC_CORE_SHIFTER_OP_ROR:
+					if(!vR(S))
+						_CORE_TRACE_(", RRX(%s)", sos, _arm_reg_name(rR(M)));
+					break;
+				default:
+					if(!mlBFEXT(IR, 11, 4))
+						_CORE_TRACE_(", %s", _arm_reg_name(rR(M)));
+					else
+						_CORE_TRACE_(", %s(%s, %u)", sos, _arm_reg_name(rR(M)), vR(S));
+					break;
+			}
+		}
 	}
 
-	_CORE_TRACE_(") %s", dpi->op_string);
+	_CORE_TRACE_(")");
+
+	if(dpi->op_string[0])
+		_CORE_TRACE_(" %s", dpi->op_string);
 
 	CORE_TRACE_END();
 }

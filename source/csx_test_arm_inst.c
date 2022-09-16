@@ -97,42 +97,53 @@ static inline uint32_t _ldst_ipubwl(uint8_t i, uint8_t p, uint8_t u, uint8_t b, 
 
 static shifter_operand_t _arm_dpi_sop_r_s(uint8_t sop, uint8_t r, uint8_t shift)
 {
-	shift = (shift & _BM(15 - 7)) >> 1;
+	shift &= _BM(1 + (11 - 7));
+//	shift >>= 1;
 	
-	shifter_operand_t out = (shift << 7) | r;
+	shifter_operand_t out = (shift << 7) | ((sop & 3) << 5) | (r & 0x0f);
 	
 	return(out);
 }
 
-static void _arm_dp_op_s_rn_rd_sop(csx_test_p t,
+static uint32_t _arm_dp_op_s_rn_rd_sop(csx_test_p t,
 	uint32_t opcode,
 	uint8_t s,
 	soc_core_reg_t rn,
 	soc_core_reg_t rd,
 	shifter_operand_t shopt)
 {
-	BMAS(opcode, ARM_INST_BIT_S, s);
+	BMAS(opcode, ARM_INST_BIT_S, !!s);
 	
 	opcode |= _rn(rn) | _rd(rd);
 	
 	opcode |= BMOV(shopt, 15, 25);
-	opcode |= shopt & _BM(11);
+	opcode |= shopt & _BM(12);
 	
 	_c_al(t, opcode);
+	return(opcode);
 }
 
+shifter_operand_t arm_dpi_asr_r_s(uint8_t r, uint8_t shift)
+{
+	return(_arm_dpi_sop_r_s(SOC_CORE_SHIFTER_OP_ASR, r, shift));
+}
 
 shifter_operand_t arm_dpi_lsl_r_s(uint8_t r, uint8_t shift)
 {
 	return(_arm_dpi_sop_r_s(SOC_CORE_SHIFTER_OP_LSL, r, shift));
 }
 
+shifter_operand_t arm_dpi_lsr_r_s(uint8_t r, uint8_t shift)
+{
+	return(_arm_dpi_sop_r_s(SOC_CORE_SHIFTER_OP_LSR, r, shift));
+}
+
 shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 {
-	i &= _BM(7);
+	i &= _BM(1 + (7 - 0));
 
 	shift >>= 1;
-	shift &= _BM(12 - 8);
+	shift &= _BM(1 + (11 - 8));
 	
 	shifter_operand_t out = _BV(15) | (shift << 8) | i;
 
@@ -184,6 +195,11 @@ void arm_ldr_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t
 	_c_al(t, opcode | ea);
 }
 
+void arm_add_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 0, rn, rd, shopt);
+}
+
 void arm_adds_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 1, rn, rd, shopt);
@@ -211,14 +227,23 @@ void arm_eors_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 
 void arm_mov_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
 {
-	uint32_t opcode = ARM_INST_MOV;
-	
-	opcode |= _rd(rd);
+	uint32_t opcode = _arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(MOV), 0, 0, rd, shopt);
 
-	opcode |= BMOV(shopt, 15, 25);
-	opcode |= shopt & mlBF(11, 0);
-	
-	_c_al(t, opcode);
+	if(0)
+		soc_core_disasm_arm(t->csx->core, 0, opcode);
+}
+
+void arm_movs_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	uint32_t opcode = _arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(MOV), 1, 0, rd, shopt);
+
+	if(0)
+		soc_core_disasm_arm(t->csx->core, 0, opcode);
+}
+
+void arm_rsb_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(RSB), 0, rn, rd, shopt);
 }
 
 void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset)
@@ -238,6 +263,11 @@ void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t
 	if(0) LOG("opcode = 0x%08x, ea = 0x%08x", opcode, ea);
 
 	_c_al(t, opcode | ea);
+}
+
+void arm_sub_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(SUB), 0, rn, rd, shopt);
 }
 
 void arm_subs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
