@@ -469,8 +469,8 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 {
 //	struct {
-		const int bit_l = BEXT(IR, 11);
-		const uint8_t bwh = mlBFEXT(IR, 10, 9);
+		const int bit_l = BEXT(IR, 11) | (3 == mlBFEXT(IR, 10, 9));
+		const uint8_t bwh = mlBFEXT(IR, 11, 9);
 //	}bit;
 
 	soc_core_decode_get(core, rRM, 8, 6, 1);
@@ -483,16 +483,19 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	switch(bwh)
 	{
 		case 0x00:
+		case 0x04:
 			size = sizeof(uint32_t);
 		break;
 		case 0x01:
+		case 0x05:
 		case 0x07:
-			ss = "h";
+			ss = ((7 == bwh) ? "sh" : "h");
 			size = sizeof(uint16_t);
 		break;
 		case 0x02:
 		case 0x03:
-			ss = "b";
+		case 0x06:
+			ss = ((3 == bwh) ? "sb" : "b");
 			size = sizeof(uint8_t);
 		break;
 		default:
@@ -509,15 +512,13 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	else
 		vR(D) = soc_core_reg_get(core, rR(D));
 
-	if(bit_l) {
-		switch(bwh) {
-			case 0x03:
-				vR(D) = (int8_t)vR(D);
-				break;
-			case 0x07:
-				vR(D) = (int16_t)vR(D);
-				break;
-		}
+	switch(bwh) {
+		case 0x03:
+			vR(D) = (int8_t)vR(D);
+			break;
+		case 0x07:
+			vR(D) = (int16_t)vR(D);
+			break;
 	}
 
 	CORE_TRACE("%sr%s(%s, %s, %s); /* 0x%08x[0x%08x](0x%08x) = 0x%08x */",
@@ -833,10 +834,12 @@ void soc_core_thumb_step(soc_core_p core)
 			case	0x5000:
 				if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
 					return(soc_core_thumb_ldst_rm_rn_rd(core));
+				LOG_ACTION(goto fail_decode);
 				break;
-			case	0x5600:
-			case	0x5e00:
-				break;
+//			case	0x5600:
+//			case	0x5e00:
+//				LOG_ACTION(goto fail_decode);
+//				break;
 			case	0x6000:
 				if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
 					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
@@ -861,6 +864,10 @@ void soc_core_thumb_step(soc_core_p core)
 			case	0xbc00:
 				if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
 					return(soc_core_thumb_pop_push(core));
+				LOG_ACTION(goto fail_decode);
+				break;
+			case	0xbf00:
+				LOG_ACTION(goto fail_decode);
 				break;
 			case	0xc000:
 				if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
@@ -872,7 +879,7 @@ void soc_core_thumb_step(soc_core_p core)
 				{
 					case	0xde00: /* undefined */
 					case	0xdf00: /* swi */
-//						LOG("ir = 0x%04x, opcode = 0x%04x, lsb", IP, opcode);
+						LOG_ACTION(goto fail_decode);
 						break;
 					default:
 						return(soc_core_thumb_bcc(core));
@@ -882,13 +889,11 @@ void soc_core_thumb_step(soc_core_p core)
 			case	0xf000:
 					return(soc_core_thumb_bxx(core));
 				break;
-			default:
-//				LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
-				break;
 		/* **** */
 		}
 	}//while(lsb-- > 8);
 
+fail_decode:
 	LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
 
 	soc_core_disasm_thumb(core, IP, IR);
