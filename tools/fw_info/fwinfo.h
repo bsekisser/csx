@@ -1,3 +1,6 @@
+#include <stddef.h>
+#include <stdint.h>
+
 typedef struct fw_info_t* fw_info_p;
 typedef struct fw_info_t {
 	uint32_t base;
