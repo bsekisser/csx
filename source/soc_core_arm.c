@@ -918,12 +918,6 @@ void soc_core_arm_step(soc_core_p core)
 	const uint opcode = mlBFEXT(IR, 27, 25);
 
 	CCx.e = soc_core_arm_check_cc(core);
-	if(!CCx.e && (0x0f == mlBFEXT(IR, 31, 28)))
-	{
-		if(ARM_INST_B == (IR & ARM_INST_B_MASK))
-			return(arm_inst_b(core));
-		goto decode_fault;
-	}
 
 	switch(opcode)
 	{
