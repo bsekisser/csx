@@ -86,9 +86,6 @@ typedef struct soc_core_dpi_t {
 		uint8_t		c;
 		uint32_t	v;
 	}out;
-
-	const char*		mnemonic;
-	char			op_string[256];
 }soc_core_dpi_t;
 
 typedef struct soc_core_ldst_t {

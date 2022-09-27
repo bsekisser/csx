@@ -26,23 +26,14 @@ void soc_core_trace(soc_core_p core, const char* format, ...)
 	if(!core->trace)
 		return;
 
-	if(0) {
-		printf("%c(0x%08x(0x%08x), %s(%c), ",
-			(CPSR & SOC_CORE_PSR_T) ? 'T' : 'A',
-			IP, IR,
-			CCx.s, CCx.e ? '>' : 'X');
-	} else
-		soc_core_trace_start(core);
+	soc_core_trace_start(core);
 
 	va_list ap;
 	va_start(ap, format);
 	vprintf(format, ap);
 	va_end(ap);
 
-	if(0)
-		printf(")\n");
-	else
-		soc_core_trace_end(core);
+	soc_core_trace_end(core);
 }
 
 void soc_core_trace_end(soc_core_p core)

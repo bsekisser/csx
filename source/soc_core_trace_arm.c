@@ -1,5 +1,6 @@
 #include "soc_core_trace_arm.h"
 
+#include "soc_core_arm_inst.h"
 #include "soc_core_psr.h"
 #include "soc_core_reg_trace.h"
 #include "soc_core_shifter.h"
@@ -14,12 +15,22 @@
 
 /* **** */
 
+const char* dpi_op_string[2][16] = {
+	{ "and", "eor", "sub", "rsb", "add", "adc", "sbc", "rsc",
+	"tst", "teq", "cmp", "cmn", "orr", "mov", "bic", "mvn" },
+	{ "AND", "EOR", "SUB", "RSB", "ADD", "ADC", "SBC", "RSC",
+	"TST", "TEQ", "CMP", "CMN", "ORR", "MOV", "BIC", "MVN" },
+};
+
+
 void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 {
+	const char* sos = 0;
+	
 	CORE_TRACE_START();
 
 	_CORE_TRACE_("%s%s(",
-			dpi->mnemonic, DPI_BIT(s20) ? "s" : "");
+			dpi_op_string[0][DPI_OPERATION], DPI_BIT(s20) ? "s" : "");
 
 	if(dpi->wb)
 		_CORE_TRACE_("%s", _arm_reg_name(rR(D)));
@@ -36,7 +47,7 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	}
 	else
 	{
-		const char* sos = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
+		sos = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
 		
 		if(DPI_BIT(x4))
 			_CORE_TRACE_(", %s(%s, %s)", sos, _arm_reg_name(rR(M)), _arm_reg_name(rR(S)));
@@ -58,8 +69,60 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 
 	_CORE_TRACE_(")");
 
-	if(dpi->op_string[0])
-		_CORE_TRACE_(" %s", dpi->op_string);
+	if(!core->cracker || (rPC == rR_SRC(D))) {
+		switch(DPI_OPERATION) {
+			case ARM_DPI_OPERATION_ADD:
+				_CORE_TRACE_("/* 0x%08x + 0x%08x --> 0x%08x */",
+					vR(N), dpi->out.v, vR(D));
+				break;
+			case ARM_DPI_OPERATION_AND:
+				_CORE_TRACE_("/* 0x%08x & 0x%08x --> 0x%08x */",
+					vR(N), dpi->out.v, vR(D));
+				break;
+			case ARM_DPI_OPERATION_BIC:
+				_CORE_TRACE_("/* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
+					vR(N), dpi->out.v, ~dpi->out.v, vR(D));
+				break;
+			case ARM_DPI_OPERATION_CMP:
+				if(DPI_BIT(s20))
+					_CORE_TRACE_("/* 0x%08x - 0x%08x ??? 0x%08x */",
+						vR(N), dpi->out.v, vR(D));
+				else
+					LOG_ACTION(exit(-1));
+				break;
+			case ARM_DPI_OPERATION_EOR:
+				_CORE_TRACE_("/* 0x%08x ^ 0x%08x --> 0x%08x */",
+					vR(N), dpi->out.v, vR(D));
+				break;
+			case ARM_DPI_OPERATION_MOV:
+				if(!DPI_BIT(i25)) {
+					if(mlBFEXT(IR, 11, 4)) {
+						_CORE_TRACE_(" /* %s(0x%08x, %03u) = 0x%08x */",
+							sos, vR(M), vR(S), vR(D));
+					}
+					else if(rR(D) == rR(M))
+					{
+						_CORE_TRACE_(" /* nop */");
+					}
+				}
+				break;
+			case ARM_DPI_OPERATION_MVN:
+				_CORE_TRACE_(" /* 0x%08x */", vR(D));
+				break;
+			case ARM_DPI_OPERATION_ORR:
+				_CORE_TRACE_(" /* 0x%08x | 0x%08x --> 0x%08x */",
+					vR(N), dpi->out.v, vR(D));
+				break;
+			case ARM_DPI_OPERATION_RSB:
+				_CORE_TRACE_(" /* 0x%08x - 0x%08x --> 0x%08x */",
+					dpi->out.v, vR(N), vR(D));
+				break;
+			case ARM_DPI_OPERATION_SUB:
+				_CORE_TRACE_(" /* 0x%08x - 0x%08x --> 0x%08x */",
+					vR(N), dpi->out.v, vR(D));
+				break;
+		}
+	}
 
 	CORE_TRACE_END();
 }
@@ -112,7 +175,10 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 	else
 		_CORE_TRACE_("[0]");
 
-	_CORE_TRACE_(") /* 0x%08x: 0x%08x */", ls->ea, vR(D));
+	_CORE_TRACE_(")");
+
+	if(!core->cracker || (rPC == rR(N)))
+		_CORE_TRACE_(" /* 0x%08x: 0x%08x */", ls->ea, vR(D));
 
 	CORE_TRACE_END();
 }

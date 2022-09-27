@@ -60,3 +60,5 @@ enum {
 #define ARM_INST_MVN				ARM_INST_DPI(MVN)
 #define ARM_INST_MVN_MASK			ARM_INST_DPI_MASK
 #define ARM_INST_ORR				ARM_INST_DPI(ORR)
+
+#define ARM_IR_CC					mlBFEXT(IR, 31, 28)

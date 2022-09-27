@@ -75,40 +75,28 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 				}
 			}
 		}
+	} else if(core->cracker) {
+		if(dpi->wb && (rPC == rR(N))) {
+			rR_SRC(D) = rR(N);
+			soc_core_reg_set(core, rR(D), vR(D));
+		}
 	}
 }
 
 static void _arm_inst_dpi_operation_add(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) + dpi->out.v;
-
-	dpi->mnemonic = "add";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x + 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_and(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) & dpi->out.v;
-
-	dpi->mnemonic = "and";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x & 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_bic(soc_core_p core, soc_core_dpi_p dpi)
 {
 	const uint32_t nout_v = ~dpi->out.v;
 	vR(D) = vR(N) & nout_v;
-
-	dpi->mnemonic = "bic";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
-		vR(N), dpi->out.v, nout_v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
@@ -117,23 +105,11 @@ static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
 
 	dpi->wb = 0;
 	vR(D) = vR(N) - dpi->out.v;
-
-	dpi->mnemonic = "cmp";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x ??? 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_eor(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) ^ dpi->out.v;
-
-	dpi->mnemonic = "eor";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x ^ 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
@@ -150,24 +126,6 @@ static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
 
 	rR(N) = ~0;
 	vR(D) = dpi->out.v;
-
-	dpi->mnemonic = "mov";
-
-	if(core->trace) {
-		if(!DPI_BIT(i25)) {
-			if(mlBFEXT(IR, 11, 4)) {
-			const char* shops = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
-			snprintf(dpi->op_string, 255,
-				"/* %s(0x%08x, %03u) = 0x%08x */",
-				shops, vR(M), vR(S), vR(D));
-			}
-			else if(rR(D) == rR(M))
-			{
-				snprintf(dpi->op_string, 255, "/* nop */");
-//				soc_core_disasm_arm(core, IP, IR);
-			}
-		}
-	}
 }
 
 static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
@@ -180,39 +138,21 @@ static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
 
 	rR(N) = ~0;
 	vR(D) = ~dpi->out.v;
-
-	dpi->mnemonic = "mvn";
-	snprintf(dpi->op_string, 255, "/* 0x%08x */", vR(D));
 }
 
 static void _arm_inst_dpi_operation_orr(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) | dpi->out.v;
-
-	dpi->mnemonic = "orr";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x | 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_rsb(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = dpi->out.v - vR(N);
-
-	dpi->mnemonic = "rsb";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_sub(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) - dpi->out.v;
-
-	dpi->mnemonic = "sub";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_ldst(soc_core_p core,
@@ -372,8 +312,17 @@ static void arm_inst_b(soc_core_p core)
 		CCx.e = 1;
 	}
 
-	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) hl = %01u */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', offset, hl);
+	CORE_TRACE_START();
+	
+	_CORE_TRACE_("b%s%s(0x%08x)",
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1);
+
+	if(!core->cracker) {
+		_CORE_TRACE_(" /* %c(0x%08x) hl = %01u */",
+			new_pc & 1 ? 'T' : 'A', offset, hl);
+	}
+	
+	CORE_TRACE_END();
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -382,8 +331,13 @@ static void arm_inst_b(soc_core_p core)
 
 	if(CCx.e)
 	{
+
 		if(link)
 			LR = PC;
+
+		soc_core_reg_set_pcx(core, new_pc);
+	} else if(core->cracker && (INST_CC_AL == ARM_IR_CC)) {
+		/* TODO: link */
 
 		soc_core_reg_set_pcx(core, new_pc);
 	}
@@ -398,8 +352,14 @@ static void arm_inst_bx(soc_core_p core)
 	const uint32_t new_pc = vR(M);
 	const int thumb = new_pc & 1;
 
-	CORE_TRACE("b%sx(%s) /* %c(0x%08x) */",
-		link ? "l" : "", _arm_reg_name(rR(M)), thumb ? 'T' : 'A', new_pc & ~1);
+	CORE_TRACE_START();
+	
+	_CORE_TRACE_("b%sx(%s)", link ? "l" : "", _arm_reg_name(rR(M)));
+	
+	if(!core->cracker)
+		_CORE_TRACE_(" /* %c(0x%08x) */", thumb ? 'T' : 'A', new_pc & ~1);
+
+	CORE_TRACE_END();
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -412,14 +372,17 @@ static void arm_inst_bx(soc_core_p core)
 			LR = PC;
 
 		soc_core_reg_set_pcx(core, new_pc);
+	} else if(core->cracker) {
+		/* TODO: link */
+
+		if((INST_CC_AL == ARM_IR_CC) && (rPC == rR_SRC(M)))
+			soc_core_reg_set_pcx(core, new_pc);
 	}
 }
 
 static void arm_inst_dpi(soc_core_p core)
 {
 	soc_core_dpi_t	dpi;
-
-	dpi.op_string[0] = 0;
 
 	soc_core_arm_decode_shifter_operand(core, &dpi);
 
@@ -861,8 +824,9 @@ static void arm_inst_msr(soc_core_p core)
 		if(BTST(saved_psr, SOC_CORE_PSR_BIT_T) != BTST(new_psr, SOC_CORE_PSR_BIT_T))
 			CORE_TRACE_THUMB;
 
-		if(CCx.e)
+		if(CCx.e) {
 			soc_core_psr_mode_switch(core, new_psr);
+		}
 	}
 
 	uint8_t cpsrs[5];
@@ -874,30 +838,36 @@ static void arm_inst_msr(soc_core_p core)
 
 	const uint8_t cs = bit_r ? 'S' : 'C';
 
-	soc_core_trace_psr(core, 0, saved_psr);
+	if(CCx.e)
+		soc_core_trace_psr(core, 0, saved_psr);
+
+	CORE_TRACE_START();
 
 	if(bit_i)
 	{
-		CORE_TRACE("msr(%cPSR_%s, 0x%08x) /* 0x%08x & 0x%08x -> 0x%08x */",
-			cs, cpsrs, operand, operand, mask, operand & mask);
+		_CORE_TRACE_("msr(%cPSR_%s, 0x%08x)", cs, cpsrs, operand);
 	}
 	else
 	{
-		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x*/",
-			cs, cpsrs, _arm_reg_name(rR(M)), operand, mask, operand & mask);
+		_CORE_TRACE_("msr(%cPSR_%s, %s)",	cs, cpsrs, _arm_reg_name(rR(M)));
 	}
+
+	if(!core->cracker)
+		_CORE_TRACE_("; /* 0x%08x & 0x%08x -> 0x%08x */", operand, mask, operand & mask);
+
+	CORE_TRACE_END();
 
 	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
-	soc_core_trace_psr(core, 0, new_psr);
+	if(CCx.e)
+		soc_core_trace_psr(core, 0, new_psr);
 }
 
 /* **** */
 
 static uint8_t soc_core_arm_check_cc(soc_core_p core)
 {
-	const uint8_t cc = mlBFEXT(IR, 31, 28);
-	return(soc_core_check_cc(core, cc));
+	return(soc_core_check_cc(core, ARM_IR_CC));
 }
 
 const uint _inst0_0_i74 = _BV(7) | _BV(4);

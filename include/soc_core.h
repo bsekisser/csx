@@ -79,7 +79,11 @@ typedef struct soc_core_t {
 	soc_core_step_fn	step;
 	csx_p				csx;
 
+	uint				cracker:1;
 	uint				trace:1;
+
+	uint8_t				reg_src[16];
+#define rR_SRC(_x)		core->reg_src[rR(_x)]
 }soc_core_t;
 
 /* **** */

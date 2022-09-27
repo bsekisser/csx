@@ -1,0 +1,44 @@
+#include "csx_test_arm_inst.h"
+#include "soc_core_arm_inst.h"
+
+#include "csx_test_utility.h"
+
+#define VECTOR(_name) \
+	uint32_t* _name##_vector = t->pc; t->pc += 4;
+
+#define SET_VECTOR(_name) \
+	({ \
+		uint32_t* saved_pc = t->pc; \
+		\
+		t->pc = _name##_vector; \
+		arm_b(t, saved_pc); \
+		\
+		t->pc = saved_pc; \
+	})
+
+void arm_mov_rd_rn(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rn) {
+	arm_mov_rd_sop(t, rd, arm_dpi_lsl_r_s(rn, 0)); 
+}
+
+void soc_boot_rom_init(csx_p csx) {
+	csx_test_p t = calloc(1, sizeof(csx_test_t));
+	t->csx = csx;
+
+	t->pc = 0;
+	/* 0x00000000 */ VECTOR(reset);
+	/* 0x00000004 */ VECTOR(undefined_instruction);
+	/* 0x00000008 */ VECTOR(swi);
+	/* 0x0000000c */ VECTOR(prefetch_abort);
+	/* 0x00000010 */ VECTOR(data_abort);
+	/* 0x00000018 */ VECTOR(irq);
+	/* 0x0000001c */ VECTOR(fiq);
+
+	t->pc = PAGE_ALIGN(t->pc);
+	SET_VECTOR(reset);
+	
+	VECTOR(vm_step) {
+		arm_mov_rd_rn(t, rIP, rPC);
+		arm_add_rd_rn_sop(t, rPC, arm_dpi_ror_i_s(1, 0));
+		arm_ldrb_rd_rn(t, 0, rIP);
+	}
+}

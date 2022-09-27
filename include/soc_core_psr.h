@@ -38,6 +38,27 @@
 #define CPSR				core->cpsr
 #define SPSR				core->spsr
 
+/* **** */
+
+enum {
+	INST_CC_EQ = 0,
+	INST_CC_NE,
+	INST_CC_CSHS,
+	INST_CC_CCLO,
+	INST_CC_MI,
+	INST_CC_PL,
+	INST_CC_VS,
+	INST_CC_VC,
+	INST_CC_HI,
+	INST_CC_LS,
+	INST_CC_GE,
+	INST_CC_LT,
+	INST_CC_GT,
+	INST_CC_LE,
+	INST_CC_AL,
+	INST_CC_NV
+};
+
 /* function prototypes */
 
 uint8_t soc_core_check_cc(soc_core_p core, uint8_t cond);

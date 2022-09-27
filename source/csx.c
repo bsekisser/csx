@@ -53,13 +53,17 @@ int main(int argc, char **argv)
 	printf("%s:%s: name == %s\n", __FILE__, __FUNCTION__, name);
 
 	int core_trace = 0;
+	int cracker = 0;
 	int loader_firmware = 0;
 	int test = 0;
 
 	for(int i = 1; i < argc; i++) {
 		if(0 == strcmp(argv[i], "-core-trace"))
 			core_trace = 1;
-		else if(0 == strcmp(argv[i], "-firmware"))
+		else if(0 == strcmp(argv[i], "-cracker")) {
+			core_trace = 1;
+			cracker = 1;
+		} else if(0 == strcmp(argv[i], "-firmware"))
 			loader_firmware = 1;
 		else if(0 == strcmp(argv[i], "-test"))
 			test = 1;
@@ -68,5 +72,5 @@ int main(int argc, char **argv)
 	if(test)
 		return(csx_test_main(core_trace));
 	else
-		return(csx_soc_main(core_trace, loader_firmware));
+		return(csx_soc_main(core_trace, cracker, loader_firmware));
 }

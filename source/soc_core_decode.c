@@ -166,11 +166,12 @@ void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 	}
 }
 
-static const char* shifter_op_string[] = {
-	"LSL", "LSR", "ASR", "ROR"
+static const char* shifter_op_string[2][4] = {
+	{ "LSL", "LSR", "ASR", "ROR" },
+	{ "lsl", "lsr", "asr", "ror" }
 };
 
 const char* soc_core_arm_decode_shifter_op_string(const uint8_t shopc)
 {
-	return(shifter_op_string[shopc & 0x03]);
+	return(shifter_op_string[BEXT(shopc, 7)][shopc & 0x03]);
 }

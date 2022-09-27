@@ -32,9 +32,17 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 
 	vR(D) = vR(N) + imm8;
 
-//	LOG("rPC:rSP");
-	CORE_TRACE("add(%s, %s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
-				_arm_reg_name(rR(D)), pcsp ? "rSP" : "rPC", imm8, vR(N), imm8, vR(D));
+	CORE_TRACE_START();
+	
+	_CORE_TRACE_("add(%s, %s, 0x%03x);",
+		_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), imm8);
+	
+	if(!core->cracker) {
+		_CORE_TRACE_(" /* 0x%08x + 0x%03x = 0x%08x */", vR(N), imm8, vR(D));
+	} else
+		rR_SRC(D) = rR(N);
+
+	CORE_TRACE_END();
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -53,18 +61,28 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 
 	vR(D) = vR(N);
 
+	CORE_TRACE_START();
+
 	if(op2)
 	{
 		vR(D) -= vR(M);
 		if(bit_i)
 		{
-			CORE_TRACE("subs(%s, %s, 0x%01x); /* 0x%08x - 0x%01x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), vR(M), vR(N), vR(M), vR(D));
+			_CORE_TRACE_("subs(%s, %s, 0x%01x)", _arm_reg_name(rR(D)),
+				_arm_reg_name(rR(N)), vR(M));
+			
+			if(!core->cracker)
+				_CORE_TRACE_("; /* 0x%08x - 0x%01x = 0x%08x */",
+					vR(N), vR(M), vR(D));
 		}
 		else
 		{
-			CORE_TRACE("subs(%s, %s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), _arm_reg_name(rR(M)), vR(N), vR(M), vR(D));
+			_CORE_TRACE_("subs(%s, %s, %s)", _arm_reg_name(rR(D)),
+				_arm_reg_name(rR(N)), _arm_reg_name(rR(M)));
+
+			if(!core->cracker)
+				_CORE_TRACE_("; /* 0x%08x - 0x%08x = 0x%08x */",
+					vR(N), vR(M), vR(D));
 		}
 	}
 	else
@@ -72,15 +90,26 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		vR(D) += vR(M);
 		if(bit_i)
 		{
-			CORE_TRACE("adds(%s, %s, 0x%01x); /* 0x%08x + 0x%01x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), vR(M), vR(N), vR(M), vR(D));
+			_CORE_TRACE_("adds(%s, %s, 0x%01x)", _arm_reg_name(rR(D)),
+				_arm_reg_name(rR(N)), vR(M));
+
+			if(!core->cracker)
+				_CORE_TRACE_("; /* 0x%08x + 0x%01x = 0x%08x */",
+					vR(N), vR(M), vR(D));
+
 		}
 		else
 		{
-			CORE_TRACE("adds(%s, %s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), _arm_reg_name(rR(M)), vR(N), vR(M), vR(D));
+			_CORE_TRACE_("adds(%s, %s, %s)", _arm_reg_name(rR(D)),
+				_arm_reg_name(rR(N)), _arm_reg_name(rR(M)));
+			
+			if(!core->cracker)
+				_CORE_TRACE_("; /* 0x%08x + 0x%08x = 0x%08x */",
+					vR(N), vR(M), vR(D));
 		}
 	}
+
+	CORE_TRACE_END();
 
 	soc_core_reg_set(core, rR(D), vR(D));
 
