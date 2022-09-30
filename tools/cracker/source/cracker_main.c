@@ -122,21 +122,24 @@ void symbol_log(cracker_p cj, symbol_p cjs)
 		else if(BEXT(size, sizeof(uint8_t)))
 			data = _read(cj, cjs->pat, sizeof(uint8_t));
 
-		_LOG_("size: 0x%04x", size);
+		_LOG_(" size: 0x%04x", size);
 
 		if(BXCG(size, sizeof(uint32_t), 0)) {
-			_LOG_(" uint32_t%s", size ? " |" : "");
+			_LOG_(" (uint32_t (0x%08x))%s", data, size ? " |" : "");
 		}
 
 		if(BXCG(size, sizeof(uint16_t), 0)) {
-			_LOG_(" uint16_t%s", size ? " |" : "");
+			_LOG_(" (uint16_t (0x%04x))%s", (uint16_t)data, size ? " |" : "");
+//			_LOG_(" uint16_t%s", size ? " |" : "");
 		}
 			
 		if(BTST(size, sizeof(uint8_t))) {
-			_LOG_(" uint8_t");
+			_LOG_(" (uint8_t (0x%02x))", (uint8_t)data);
+//			_LOG_(" uint8_t");
 		}
 
-		LOG_END(": 0x%08x", data);
+		LOG_END();
+//		LOG_END(": 0x%08x", data);
 	}
 }
 
@@ -149,7 +152,7 @@ void cracker_data(cracker_p cj, uint32_t pat, size_t size)
 	symbol_p cjs = symbol_find_pat(cj, pat, &lhs, &rhs);
 
 	if(cjs) {
-		symbol_log(cj, cjs);
+//		symbol_log(cj, cjs);
 		assert(BTST(cjs->size, size));
 		assert(BTST(cjs->type, SYMBOL_DATA));
 	} else {
@@ -179,7 +182,7 @@ void cracker_text(cracker_p cj, uint32_t pat)
 	symbol_p cjs = symbol_find_pat(cj, pat, &lhs, &rhs);
 
 	if(cjs) {
-		symbol_log(cj, cjs);
+//		symbol_log(cj, cjs);
 		assert(BTST(cjs->size, sizeof(uint32_t)));
 		assert(BTST(cjs->type, SYMBOL_TEXT));
 	} else {
@@ -216,8 +219,20 @@ int main(void)
 	cjt.content_size = sb.st_size;
 	PC = cjt.content_base;
 	
+	cracker_text(cj, PC);
+	
 	for(;;) {
-		if(!cracker_step(cj))
+		if(!cracker_step(cj)) {
+			symbol_p cjs = symbol_find_pat(cj, PC, lhs, 0, rhs);
+
+			do {
+				if(cjs && BTST(cjs->type, SYMBOL_TEXT))
+					PC = cjs->pat;
+					break;
+				
+				
+			}while(rhs);
+			else
 			break;
 	};
 

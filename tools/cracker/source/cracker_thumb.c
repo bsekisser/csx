@@ -108,9 +108,11 @@ static int thumb_bl_blx(cracker_p cj)
 
 	switch(THUMB_BL_BLX_H) {
 		case 0x01:
-			CORE_TRACE("BLX(0x%08x)", new_pc & ~3);
+			new_pc &= ~3;
+			CORE_TRACE("BLX(0x%08x)", new_pc);
 			break;
 		case 0x03:
+			new_pc |= 1;
 			CORE_TRACE("BL(0x%08x)", new_pc & ~1);
 			break;
 		default:
@@ -119,6 +121,9 @@ static int thumb_bl_blx(cracker_p cj)
 //			LOG_ACTION(exit(-1));
 			break;
 	}
+
+	cracker_text(cj, lr | 1);
+	cracker_text(cj, new_pc);
 
 	return(1);
 }
@@ -146,8 +151,11 @@ static int thumb_ldst_rd_i(cracker_p cj)
 		reg_name[rR(D)], reg_name[rR(N)], offset);
 
 	if(rPC == rR(N)) {
-		vR(N) += offset;
-		uint32_t data = _read(cj, vR(N), sizeof(uint32_t));
+		uint ea = vR(N) + offset;
+
+		cracker_data(cj, ea, sizeof(uint32_t));
+
+		uint32_t data = _read(cj, ea, sizeof(uint32_t));
 
 		_CORE_TRACE_("); /* 0x%08x */", data);
 	}
