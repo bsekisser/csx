@@ -6,6 +6,27 @@
 
 /* **** */
 
+enum {
+	INST_CC_EQ = 0,
+	INST_CC_NE,
+	INST_CC_CSHS,
+	INST_CC_CCLO,
+	INST_CC_MI,
+	INST_CC_PL,
+	INST_CC_VS,
+	INST_CC_VC,
+	INST_CC_HI,
+	INST_CC_LS,
+	INST_CC_GE,
+	INST_CC_LT,
+	INST_CC_GT,
+	INST_CC_LE,
+	INST_CC_AL,
+	INST_CC_NV
+};
+
+/* **** */
+
 #define SOC_CORE_PSR_BIT_N		31
 #define SOC_CORE_PSR_BIT_Z		30
 #define SOC_CORE_PSR_BIT_C		29
