@@ -5,7 +5,7 @@
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
 #include "soc_core_psr.h"
-#include "soc_core_reg_trace.h"
+#include "soc_core_strings.h"
 #include "soc_core_trace.h"
 #include "soc_core_utility.h"
 
@@ -34,7 +34,7 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 
 //	LOG("rPC:rSP");
 	CORE_TRACE("add(%s, %s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
-				_arm_reg_name(rR(D)), pcsp ? "rSP" : "rPC", imm8, vR(N), imm8, vR(D));
+				rR_NAME(D), pcsp ? "rSP" : "rPC", imm8, vR(N), imm8, vR(D));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -59,12 +59,12 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		if(bit_i)
 		{
 			CORE_TRACE("subs(%s, %s, 0x%01x); /* 0x%08x - 0x%01x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), vR(M), vR(N), vR(M), vR(D));
+				rR_NAME(D), rR_NAME(N), vR(M), vR(N), vR(M), vR(D));
 		}
 		else
 		{
 			CORE_TRACE("subs(%s, %s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), _arm_reg_name(rR(M)), vR(N), vR(M), vR(D));
+				rR_NAME(D), rR_NAME(N), rR_NAME(M), vR(N), vR(M), vR(D));
 		}
 	}
 	else
@@ -73,12 +73,12 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		if(bit_i)
 		{
 			CORE_TRACE("adds(%s, %s, 0x%01x); /* 0x%08x + 0x%01x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), vR(M), vR(N), vR(M), vR(D));
+				rR_NAME(D), rR_NAME(N), vR(M), vR(N), vR(M), vR(D));
 		}
 		else
 		{
 			CORE_TRACE("adds(%s, %s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(N)), _arm_reg_name(rR(M)), vR(N), vR(M), vR(D));
+				rR_NAME(D), rR_NAME(N), rR_NAME(M), vR(N), vR(M), vR(D));
 		}
 	}
 
@@ -130,22 +130,22 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 		case THUMB_ASCM_OP_ADD:
 			res += imm8;
 			CORE_TRACE("adds(%s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
-				_arm_reg_name(rR(D)), imm8, vR(D), imm8, res);
+				rR_NAME(D), imm8, vR(D), imm8, res);
 			break;
 		case THUMB_ASCM_OP_CMP:
 			wb = 0;
 			res -= imm8;
 			CORE_TRACE("cmp(%s, 0x%03x); /* 0x%08x - 0x%03x = 0x%08x */",
-				_arm_reg_name(rR(D)), imm8, vR(D), imm8, res);
+				rR_NAME(D), imm8, vR(D), imm8, res);
 			break;
 		case THUMB_ASCM_OP_MOV:
 			res = imm8;
-			CORE_TRACE("movs(%s, 0x%03x);", _arm_reg_name(rR(D)), imm8);
+			CORE_TRACE("movs(%s, 0x%03x);", rR_NAME(D), imm8);
 			break;
 		case THUMB_ASCM_OP_SUB:
 			res -= imm8;
 			CORE_TRACE("subs(%s, 0x%03x); /* 0x%08x - 0x%03x = 0x%08x */",
-				_arm_reg_name(rR(D)), imm8, vR(D), imm8, res);
+				rR_NAME(D), imm8, vR(D), imm8, res);
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
@@ -204,7 +204,7 @@ static void soc_core_thumb_bx(soc_core_p core)
 	const int thumb = new_pc & 1;
 
 	CORE_TRACE("b%sx(%s); /* %c(0x%08x) */",
-		link ? "l" : "", _arm_reg_name(rR(M)),
+		link ? "l" : "", rR_NAME(M),
 		thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link) {
@@ -304,40 +304,40 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 		case THUMB_DP_OP_AND:
 			res &= vR(M);
 			CORE_TRACE("ands(%s, %s); /* 0x%08x & 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		case THUMB_DP_OP_BIC:
 			res &= ~vR(M);
 			CORE_TRACE("bics(%s, %s); /* 0x%08x & ~0x%08x(0x%08x) = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), ~vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), ~vR(M), res);
 			break;
 		case THUMB_DP_OP_CMP:
 			wb = 0;
 			res -= vR(M);
 			CORE_TRACE("cmps(%s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		case THUMB_DP_OP_LSL:
 			vR(S) = vR(M) & 0xff;
 			res <<= vR(S);
 			CORE_TRACE("lsls(%s, %s); /* 0x%08x << 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(S), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(S), res);
 			break;
 		case THUMB_DP_OP_MUL:
 //			if(res !=0)
 				res *= vR(M);
 			CORE_TRACE("muls(%s, %s); /* 0x%08x * 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		case THUMB_DP_OP_MVN:
 			res = ~vR(M);
 			CORE_TRACE("mvns(%s, %s); /* ~0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(M), res);
 			break;
 		case THUMB_DP_OP_ORR:
 			res |= vR(M);
 			CORE_TRACE("orrs(%s, %s); /* 0x%08x | 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
@@ -419,7 +419,7 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 		vR(D) = soc_core_reg_get(core, rR(D));
 
 	CORE_TRACE("%sr%s(%s, %s[0x%03x]); /* [(0x%08x + 0x%03x) = 0x%08x](0x%08x) */",
-		bit_l ? "ld" : "st", ss, _arm_reg_name(rR(D)), _arm_reg_name(rR(N)), offset, vR(N), offset, ea, vR(D));
+		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), offset, vR(N), offset, ea, vR(D));
 
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
@@ -458,7 +458,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 		vR(D) = soc_core_reg_get(core, rR(D));
 
 	CORE_TRACE("%s(%s, %s[0x%03x]); /* [0x%08x](0x%08x) */",
-		bit_l ? "ldr" : "str", _arm_reg_name(rR(D)), _arm_reg_name(rR(N)), imm8, ea, vR(D));
+		bit_l ? "ldr" : "str", rR_NAME(D), rR_NAME(N), imm8, ea, vR(D));
 
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
@@ -522,7 +522,7 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	}
 
 	CORE_TRACE("%sr%s(%s, %s, %s); /* 0x%08x[0x%08x](0x%08x) = 0x%08x */",
-		bit_l ? "ld" : "st", ss, _arm_reg_name(rR(D)), _arm_reg_name(rR(N)), _arm_reg_name(rR(M)), vR(N), vR(M), ea, vR(D));
+		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), rR_NAME(M), vR(N), vR(M), ea, vR(D));
 
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
@@ -585,7 +585,7 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 	reglist[8] = 0;
 
 	CORE_TRACE("%smia(%s%s, r{%s}); /* 0x%08x */",
-		bit_l ? "ld" : "st", _arm_reg_name(rR(N)),
+		bit_l ? "ld" : "st", rR_NAME(N),
 		wb ? "!" : "", reglist, vR(N));
 }
 
@@ -697,14 +697,13 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	soc_core_decode_get(core, rRD, 2, 0, 0);
 
 	uint8_t shift = imm5;
-	const char *ops = "";
+	const char *sops = shift_op_string[operation];
 
 	vR(D) = vR(M);
 
 	switch(operation)
 	{
 		case THUMB_SBI_OP_ASR:
-			ops = "asr";
 			if(shift)
 			{
 				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
@@ -718,7 +717,6 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			}
 			break;
 		case THUMB_SBI_OP_LSL:
-			ops = "lsl";
 			if(shift)
 			{
 				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
@@ -726,7 +724,6 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 			}
 			break;
 		case THUMB_SBI_OP_LSR:
-			ops = "lsr";
 			if(shift)
 				vR(D) = _lsr(vR(M), shift);
 			else
@@ -745,7 +742,8 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 
 	CORE_TRACE("%ss(%s, %s, 0x%02x); /* %s(0x%08x, 0x%02x) = 0x%08x */",
-		ops, _arm_reg_name(rR(D)), _arm_reg_name(rR(M)), shift, ops, vR(M), shift, vR(D));
+		sops, rR_NAME(D), rR_NAME(M), shift,
+		sops, vR(M), shift, vR(D));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -767,12 +765,12 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 		case THUMB_SDP_OP_ADD:
 			res += vR(M);
 			CORE_TRACE("add(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		case THUMB_SDP_OP_MOV:
 			res = vR(M);
 			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
-				_arm_reg_name(rR(D)), _arm_reg_name(rR(M)), res);
+				rR_NAME(D), rR_NAME(M), res);
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);

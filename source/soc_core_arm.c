@@ -5,8 +5,8 @@
 #include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
-#include "soc_core_reg_trace.h"
 #include "soc_core_shifter.h"
+#include "soc_core_strings.h"
 #include "soc_core_trace.h"
 #include "soc_core_trace_arm.h"
 #include "soc_core_utility.h"
@@ -81,34 +81,17 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 static void _arm_inst_dpi_operation_add(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) + dpi->out.v;
-
-	dpi->mnemonic = "add";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x + 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_and(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) & dpi->out.v;
-
-	dpi->mnemonic = "and";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x & 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_bic(soc_core_p core, soc_core_dpi_p dpi)
 {
 	const uint32_t nout_v = ~dpi->out.v;
 	vR(D) = vR(N) & nout_v;
-
-	dpi->mnemonic = "bic";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
-		vR(N), dpi->out.v, nout_v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
@@ -117,23 +100,11 @@ static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
 
 	dpi->wb = 0;
 	vR(D) = vR(N) - dpi->out.v;
-
-	dpi->mnemonic = "cmp";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x ??? 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_eor(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) ^ dpi->out.v;
-
-	dpi->mnemonic = "eor";
-
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x ^ 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
@@ -150,24 +121,6 @@ static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
 
 	rR(N) = ~0;
 	vR(D) = dpi->out.v;
-
-	dpi->mnemonic = "mov";
-
-	if(core->trace) {
-		if(!DPI_BIT(i25)) {
-			if(mlBFEXT(IR, 11, 4)) {
-			const char* shops = soc_core_arm_decode_shifter_op_string(DPI_SHIFT_OP);
-			snprintf(dpi->op_string, 255,
-				"/* %s(0x%08x, %03u) = 0x%08x */",
-				shops, vR(M), vR(S), vR(D));
-			}
-			else if(rR(D) == rR(M))
-			{
-				snprintf(dpi->op_string, 255, "/* nop */");
-//				soc_core_disasm_arm(core, IP, IR);
-			}
-		}
-	}
 }
 
 static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
@@ -180,39 +133,21 @@ static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
 
 	rR(N) = ~0;
 	vR(D) = ~dpi->out.v;
-
-	dpi->mnemonic = "mvn";
-	snprintf(dpi->op_string, 255, "/* 0x%08x */", vR(D));
 }
 
 static void _arm_inst_dpi_operation_orr(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) | dpi->out.v;
-
-	dpi->mnemonic = "orr";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x | 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_rsb(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = dpi->out.v - vR(N);
-
-	dpi->mnemonic = "rsb";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_dpi_operation_sub(soc_core_p core, soc_core_dpi_p dpi)
 {
 	vR(D) = vR(N) - dpi->out.v;
-
-	dpi->mnemonic = "sub";
-	snprintf(dpi->op_string, 255,
-		"/* 0x%08x - 0x%08x --> 0x%08x */",
-		vR(N), dpi->out.v, vR(D));
 }
 
 static void _arm_inst_ldst(soc_core_p core,
@@ -241,7 +176,7 @@ static void _arm_inst_ldst(soc_core_p core,
 			vR(D) = _ror(vR(D), ((ls->ea & 3) << 3));
 
 		if(LDST_FLAG_S) /* sign extend ? */
-			vR(D) = mlBFEXTs(vR(D), (8 << (ls->rw_size >> 1)), 0);
+			vR(D) = mlBFEXTs(vR(D), (ls->rw_size << 3), 0);
 	}
 
 	soc_core_trace_inst_ldst(core, ls);
@@ -399,7 +334,7 @@ static void arm_inst_bx(soc_core_p core)
 	const int thumb = new_pc & 1;
 
 	CORE_TRACE("b%sx(%s) /* %c(0x%08x) */",
-		link ? "l" : "", _arm_reg_name(rR(M)), thumb ? 'T' : 'A', new_pc & ~1);
+		link ? "l" : "", rR_NAME(M), thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -418,8 +353,6 @@ static void arm_inst_bx(soc_core_p core)
 static void arm_inst_dpi(soc_core_p core)
 {
 	soc_core_dpi_t	dpi;
-
-	dpi.op_string[0] = 0;
 
 	soc_core_arm_decode_shifter_operand(core, &dpi);
 
@@ -616,7 +549,7 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	CORE_TRACE("%s%c%c(%s%s, {%s}%s%s) /* 0x%08x */" ,
 		opstr, LDST_BIT(u23) ? 'i' : 'd', LDST_BIT(p24) ? 'b' : 'a',
-		_arm_reg_name(rR(N)), LDST_BIT(w21) ? "!" : "", reglist,
+		rR_NAME(N), LDST_BIT(w21) ? "!" : "", reglist,
 		user_mode_regs ? ", USER" : "",
 		load_spsr ? ", SPSR" : "", sp_in);
 
@@ -685,8 +618,8 @@ static void arm_inst_mcr_mrc(soc_core_p core)
 
 	CORE_TRACE("m%s(p(%u), %u, %s, %s, %s, %u)",
 		MCRC_L ? "rc" : "cr", MCRC_CPx, MCRC_OP1,
-		_arm_reg_name(rR(D)),
-		_arm_creg_name(rR(N)), _arm_creg_name(rR(M)),
+		rR_NAME(D),
+		creg_name[rR(N)], creg_name[rR(M)],
 		MCRC_OP2);
 
 	if(CCx.e)
@@ -733,7 +666,7 @@ static void arm_inst_mrs(soc_core_p core)
 		vR(D) = CPSR;
 	}
 
-	CORE_TRACE("mrs(%s, %s) /* 0x%08x */", _arm_reg_name(rR(D)), psrs, vR(D));
+	CORE_TRACE("mrs(%s, %s) /* 0x%08x */", rR_NAME(D), psrs, vR(D));
 
 	if(CCx.e)
 		soc_core_reg_set(core, rR(D), vR(D));
@@ -884,7 +817,7 @@ static void arm_inst_msr(soc_core_p core)
 	else
 	{
 		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x*/",
-			cs, cpsrs, _arm_reg_name(rR(M)), operand, mask, operand & mask);
+			cs, cpsrs, rR_NAME(M), operand, mask, operand & mask);
 	}
 
 	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);

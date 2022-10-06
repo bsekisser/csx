@@ -2,5 +2,5 @@
 *.log
 *.o
 archive/private/*
-*build*/*
+build*
 private/*
