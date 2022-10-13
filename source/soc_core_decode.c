@@ -20,13 +20,13 @@ void soc_core_arm_decode_coproc(soc_core_p core)
 	rR(N) = MCRC_CRn;
 }
 
-static void _soc_core_arm_decode_dpi(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_decode_dpi(soc_core_p core)
 {
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 }
 
-static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_decode_dpis(soc_core_p core)
 {
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
 	
@@ -39,7 +39,7 @@ static void _soc_core_arm_decode_dpis(soc_core_p core, soc_core_dpi_p dpi)
 	}
 }
 
-static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_decode_dprs(soc_core_p core)
 {
 	if(DPI_BIT(x7))
 	{
@@ -53,89 +53,87 @@ static void _soc_core_arm_decode_dprs(soc_core_p core, soc_core_dpi_p dpi)
 	vR(S) &= _BM(7);
 }
 
-static void _soc_core_arm_shifter_operation_asr(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_asr(soc_core_p core)
 {
 	int cout = 0;
 
 	if(vR(S))
-		dpi->out.v = _asr_c(vR(M), vR(S), &cout);
+		vR(SOP_V) = _asr_c(vR(M), vR(S), &cout);
 	else {
-		dpi->out.v = vR(M);
+		vR(SOP_V) = vR(M);
 		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 
-	dpi->out.c = cout;
+	vR(SOP_C) = cout;
 }
 
-static void _soc_core_arm_shifter_operation_lsl(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_lsl(soc_core_p core)
 {
 	uint cout = 0;
 	
 	if(vR(S))
-		dpi->out.v = _lsl_c(vR(M), vR(S), &cout);
+		vR(SOP_V) = _lsl_c(vR(M), vR(S), &cout);
 	else {
-		dpi->out.v = vR(M);
+		vR(SOP_V) = vR(M);
 		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 
-	dpi->out.c = cout;
+	vR(SOP_C) = cout;
 }
 
-static void _soc_core_arm_shifter_operation_lsr(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_lsr(soc_core_p core)
 {
 	uint cout = 0;
 
 	if(vR(S))
-		dpi->out.v = _lsr_c(vR(M), vR(S), &cout);
+		vR(SOP_V) = _lsr_c(vR(M), vR(S), &cout);
 	else {
-		dpi->out.v = vR(M);
+		vR(SOP_V) = vR(M);
 		cout = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 
-	dpi->out.c = cout;
+	vR(SOP_C) = cout;
 }
 
-static void _soc_core_arm_shifter_operation_ror(soc_core_p core, soc_core_dpi_p dpi)
+static void _soc_core_arm_shifter_operation_ror(soc_core_p core)
 {
 	if(!DPI_BIT(i25) && !DPI_BIT(x4) && (0 == vR(S)))
 	{
-		dpi->out.v = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31) | (vR(M) >> 1);
-		dpi->out.c = vR(M) & 1;
+		vR(SOP_V) = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31) | (vR(M) >> 1);
+		vR(SOP_C) = vR(M) & 1;
 	}
 	else
 	{
-		dpi->out.v = _ror(vR(M), vR(S));
+		vR(SOP_V) = _ror(vR(M), vR(S));
 		if(vR(S))
 		{
 			if(DPI_BIT(i25))
 			{
-				dpi->out.c = BEXT(dpi->out.v, 31);
+				vR(SOP_C) = BEXT(vR(SOP_V), 31);
 			}
 			else if(mlBFEXT(vR(S), 4, 0))
-				dpi->out.c = BEXT(vR(M), vR(S) - 1);
+				vR(SOP_C) = BEXT(vR(M), vR(S) - 1);
 			else
 			{
-				dpi->out.v = vR(M);
-				dpi->out.c = BEXT(vR(M), 31);
+				vR(SOP_V) = vR(M);
+				vR(SOP_C) = BEXT(vR(M), 31);
 			}
 		}
 		else
-			dpi->out.c = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+			vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 }
 
-void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
+void soc_core_arm_decode_shifter_operand(soc_core_p core)
 {
-	dpi->wb = 1;
-
 	if(DPI_BIT(i25))
-		_soc_core_arm_decode_dpi(core, dpi);
+		_soc_core_arm_decode_dpi(core);
 	else
 	{
 		if(DPI_BIT(x4))
-			_soc_core_arm_decode_dprs(core, dpi);
+			_soc_core_arm_decode_dprs(core);
 		else
-			_soc_core_arm_decode_dpis(core, dpi);
+			_soc_core_arm_decode_dpis(core);
 
 		soc_core_arm_decode_rm(core, 1);
 	}
@@ -143,16 +141,16 @@ void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi)
 	switch(DPI_SHIFT_OP)
 	{
 		case	SOC_CORE_SHIFTER_OP_ASR:
-			_soc_core_arm_shifter_operation_asr(core, dpi);
+			_soc_core_arm_shifter_operation_asr(core);
 			break;
 		case	SOC_CORE_SHIFTER_OP_LSL:
-			_soc_core_arm_shifter_operation_lsl(core, dpi);
+			_soc_core_arm_shifter_operation_lsl(core);
 			break;
 		case	SOC_CORE_SHIFTER_OP_LSR:
-			_soc_core_arm_shifter_operation_lsr(core, dpi);
+			_soc_core_arm_shifter_operation_lsr(core);
 			break;
 		case	SOC_CORE_SHIFTER_OP_ROR:
-			_soc_core_arm_shifter_operation_ror(core, dpi);
+			_soc_core_arm_shifter_operation_ror(core);
 			break;
 		default:
 			LOG("**** i = %u, s = %u, x7 = %u, x4 = %u",

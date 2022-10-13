@@ -19,9 +19,13 @@
 
 /* **** */
 
-static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
+#include "alu_box.h"
+
+/* **** */
+
+static void _arm_inst_dpi_final(soc_core_p core)
 {
-	soc_core_trace_inst_dpi(core, dpi);
+	soc_core_trace_inst_dpi(core);
 
 	if(rPC == rR(D))
 	{
@@ -39,115 +43,22 @@ static void _arm_inst_dpi_final(soc_core_p core, soc_core_dpi_p dpi)
 		if((rR(S) & 0x0f) == rR(S))
 			CYCLE++;
 
-		if(dpi->wb)
+		if(DPI_WB)
 		{
-//			if(!DPI_BIT(s20) && (rPC == rR(D)))
 			if(rPC == rR(D))
 				soc_core_reg_set_pcx(core, vR(D));
 			else
 				soc_core_reg_set(core, rR(D), vR(D));
 		}
 
-		if(DPI_BIT(s20))
+		if(DPI_BIT(s20) && (rPC == rR(D)))
 		{
-			if(rPC == rR(D))
-			{
-				if(core->spsr)
-					soc_core_psr_mode_switch(core, *core->spsr);
-				else
-					UNPREDICTABLE;
-			}
+			if(core->spsr)
+				soc_core_psr_mode_switch(core, *core->spsr);
 			else
-			{
-				switch(DPI_OPERATION)
-				{
-					case ARM_DPI_OPERATION_ADD:
-						soc_core_flags_nzcv_add(core, vR(D), vR(N), dpi->out.v);
-						break;
-					case ARM_DPI_OPERATION_CMP:
-					case ARM_DPI_OPERATION_SUB:
-						soc_core_flags_nzcv_sub(core, vR(D), vR(N), dpi->out.v);
-						break;
-					default:
-						soc_core_flags_nz(core, vR(D));
-						BMAS(CPSR, SOC_CORE_PSR_BIT_C, dpi->out.c);
-						break;
-				}
-			}
+				UNPREDICTABLE;
 		}
 	}
-}
-
-static void _arm_inst_dpi_operation_add(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = vR(N) + dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_and(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = vR(N) & dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_bic(soc_core_p core, soc_core_dpi_p dpi)
-{
-	const uint32_t nout_v = ~dpi->out.v;
-	vR(D) = vR(N) & nout_v;
-}
-
-static void _arm_inst_dpi_operation_cmp(soc_core_p core, soc_core_dpi_p dpi)
-{
-	assert(0 == rR(D)); /* sbz */
-
-	dpi->wb = 0;
-	vR(D) = vR(N) - dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_eor(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = vR(N) ^ dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_mov(soc_core_p core, soc_core_dpi_p dpi)
-{
-	if(!DPI_BIT(i25) && DPI_BIT(x7) && DPI_BIT(x4))
-	{
-		ILLEGAL_INSTRUCTION;
-	}
-	else if(rR(N))
-	{
-		LOG("!! rn(%u) -- sbz", rR(N));
-		ILLEGAL_INSTRUCTION;
-	}
-
-	rR(N) = ~0;
-	vR(D) = dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_mvn(soc_core_p core, soc_core_dpi_p dpi)
-{
-	if(rR(N))
-	{
-		LOG("!! rn(%u) -- sbz", rR(N));
-		ILLEGAL_INSTRUCTION;
-	}
-
-	rR(N) = ~0;
-	vR(D) = ~dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_orr(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = vR(N) | dpi->out.v;
-}
-
-static void _arm_inst_dpi_operation_rsb(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = dpi->out.v - vR(N);
-}
-
-static void _arm_inst_dpi_operation_sub(soc_core_p core, soc_core_dpi_p dpi)
-{
-	vR(D) = vR(N) - dpi->out.v;
 }
 
 static void _arm_inst_ldst(soc_core_p core,
@@ -350,57 +261,34 @@ static void arm_inst_bx(soc_core_p core)
 	}
 }
 
+typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
+
+alubox_fn _alubox_arm_dpi_fn[2][16] = {{
+		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
+		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
+		0,				0,				0,				0,
+		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
+	}, {
+		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
+		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
+		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
+		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
+}};
+
 static void arm_inst_dpi(soc_core_p core)
 {
-	soc_core_dpi_t	dpi;
-
-	soc_core_arm_decode_shifter_operand(core, &dpi);
+	soc_core_arm_decode_shifter_operand(core);
 
 	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
 
 	soc_core_arm_decode_rn_rd(core, get_rn, 0);
 
-	switch(DPI_OPERATION)
-	{
-		case ARM_DPI_OPERATION_ADD:
-			_arm_inst_dpi_operation_add(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_AND:
-			_arm_inst_dpi_operation_and(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_BIC:
-			_arm_inst_dpi_operation_bic(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_EOR:
-			_arm_inst_dpi_operation_eor(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_CMP:
-			if(DPI_BIT(s20))
-				_arm_inst_dpi_operation_cmp(core, &dpi);
-			else
-				goto exit_fault;
-			break;
-		case ARM_DPI_OPERATION_MOV:
-			_arm_inst_dpi_operation_mov(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_MVN:
-			_arm_inst_dpi_operation_mvn(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_ORR:
-			_arm_inst_dpi_operation_orr(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_RSB:
-			_arm_inst_dpi_operation_rsb(core, &dpi);
-			break;
-		case ARM_DPI_OPERATION_SUB:
-			_arm_inst_dpi_operation_sub(core, &dpi);
-			break;
-		default:
-			goto exit_fault;
-			break;
-	}
+	alubox_fn dpi_fn = _alubox_arm_dpi_fn[CCx.e && DPI_BIT(s20)][DPI_OPERATION];
+	assert(0 != dpi_fn);
+	
+	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
 
-	_arm_inst_dpi_final(core, &dpi);
+	_arm_inst_dpi_final(core);
 	return;
 
 exit_fault:

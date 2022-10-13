@@ -36,6 +36,8 @@ enum	{
 	rRN,
 	rRM,
 	rRS,
+	rRSOP_C,
+	rRSOP_V,
 	rR_COUNT
 };
 

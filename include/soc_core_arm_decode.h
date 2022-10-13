@@ -51,6 +51,7 @@ enum {
 #define DPI_BIT(_x)					BEXT(IR, DPI_BIT_##_x)
 #define DPI_OPERATION				mlBFEXT(IR, 24, 21)
 #define DPI_SHIFT_OP				(DPI_BIT(i25) ? SOC_CORE_SHIFTER_OP_ROR : mlBFEXT(IR, 6, 5))
+#define DPI_WB						(2 != mlBFEXT(IR, 24, 23))
 
 enum {
 	LDST_BIT_b22 = 22,
@@ -79,18 +80,6 @@ enum {
 #define MCRC_OP2					mlBFEXT(IR, 7, 5)
 #define MCRC_Rd						mlBFEXT(IR, 15, 12)
 
-typedef struct soc_core_dpi_t {
-	uint8_t		wb;
-
-	struct {
-		uint8_t		c;
-		uint32_t	v;
-	}out;
-
-//	const char*		mnemonic;
-//	char			op_string[256];
-}soc_core_dpi_t;
-
 typedef struct soc_core_ldst_t {
 	uint32_t	ea;
 	uint32_t	index;
@@ -101,5 +90,5 @@ typedef struct soc_core_ldst_t {
 /* **** */
 
 void soc_core_arm_decode_coproc(soc_core_p core);
-void soc_core_arm_decode_shifter_operand(soc_core_p core, soc_core_dpi_p dpi);
+void soc_core_arm_decode_shifter_operand(soc_core_p core);
 const char* soc_core_arm_decode_shifter_op_string(uint8_t shopc);

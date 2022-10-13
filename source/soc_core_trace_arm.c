@@ -15,7 +15,7 @@
 
 /* **** */
 
-void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
+void soc_core_trace_inst_dpi(soc_core_p core)
 {
 	if(!core->trace)
 		return;
@@ -25,11 +25,11 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 	_CORE_TRACE_("%s%s(",
 			arm_dpi_op_string[DPI_OPERATION], DPI_BIT(s20) ? "s" : "");
 
-	if(dpi->wb)
+	if(DPI_WB)
 		_CORE_TRACE_("%s", rR_NAME(D));
 
 	if((rR(N) & 0x0f) == rR(N))
-		_CORE_TRACE_("%s%s", dpi->wb ? ", " : "", rR_NAME(N));
+		_CORE_TRACE_("%s%s", DPI_WB ? ", " : "", rR_NAME(N));
 
 	if(DPI_BIT(i25))
 	{
@@ -66,23 +66,23 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 		case ARM_DPI_OPERATION_ADC:
 		case ARM_DPI_OPERATION_ADD:
 			_CORE_TRACE_("; /* 0x%08x + 0x%08x --> 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_AND:
 			_CORE_TRACE_("; /* 0x%08x & 0x%08x --> 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_BIC:
 			_CORE_TRACE_("; /* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
-				vR(N), dpi->out.v, ~dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), ~vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_CMP:
 			_CORE_TRACE_("; /* 0x%08x - 0x%08x ??? 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_EOR:
 			_CORE_TRACE_("; /* 0x%08x ^ 0x%08x --> 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_MOV:
 			if(!DPI_BIT(i25)) {
@@ -102,16 +102,16 @@ void soc_core_trace_inst_dpi(soc_core_p core, soc_core_dpi_p dpi)
 			break;
 		case ARM_DPI_OPERATION_ORR:
 			_CORE_TRACE_("; /* 0x%08x | 0x%08x --> 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_RSB:
 			_CORE_TRACE_("; /* 0x%08x - 0x%08x --> 0x%08x */",
-				dpi->out.v, vR(N), vR(D));
+				vR(SOP_V), vR(N), vR(D));
 			break;
 		case ARM_DPI_OPERATION_SBC:
 		case ARM_DPI_OPERATION_SUB:
 			_CORE_TRACE_("; /* 0x%08x - 0x%08x --> 0x%08x */",
-				vR(N), dpi->out.v, vR(D));
+				vR(N), vR(SOP_V), vR(D));
 			break;
 	}
 
