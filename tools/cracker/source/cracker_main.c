@@ -260,6 +260,8 @@ int main(void)
 
 	while(cjt.symbol) {
 		if(!cracker_step(cj)) {
+//			CORE_TRACE();
+			printf("\n");
 			cjt.symbol = 0;
 			symbol_p cjs = cj->symbol_qhead;
 			

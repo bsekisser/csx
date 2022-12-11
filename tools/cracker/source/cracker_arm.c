@@ -497,7 +497,8 @@ int arm_step(cracker_p cj)
 							break;
 						default:
 							CORE_TRACE("0x%08x", IR & _arm_inst0_1_mask);
-							LOG_ACTION(exit(-1));
+							return(0);
+//							LOG_ACTION(exit(-1));
 							break;
 					}
 				}break;
@@ -537,17 +538,19 @@ int arm_step(cracker_p cj)
 	switch(ir_27_25) {
 		case 0x00:
 		case 0x01:
-			_CORE_TRACE_("DPI_OP = 0x%02x (%s), IR[7] = %0u, IR[4] = %0u",
+			_CORE_TRACE_(", DPI_OP = 0x%02x (%s), IR[7] = %0u, IR[4] = %0u",
 				ARM_DPI_OP, dpi_op_string[ARM_DPI_OP], BEXT(IR, 7), BEXT(IR, 4));
 			break;
 		case 0x07:
-			_CORE_TRACE_("IR[27:24] = 0x%02x, IR[4] = %u", mlBFEXT(IR, 27, 24), BEXT(IR, 4));
+			_CORE_TRACE_(", IR[27:24] = 0x%02x, IR[4] = %u", mlBFEXT(IR, 27, 24), BEXT(IR, 4));
 			break;
 		default:
 			break;
 	}
 
 	CORE_TRACE_END();
+
+//	LOG_ACTION(exit(-1));
 
 	return(0);
 }
