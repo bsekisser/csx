@@ -19,6 +19,6 @@ typedef struct csx_test_t {
 
 /* **** */
 
-int csx_test_main(int core_trace);
+int csx_test_main(csx_h h2csx, int core_trace);
 uint32_t csx_test_run(csx_test_p t, uint32_t count);
 uint32_t csx_test_run_thumb(csx_test_p t, uint32_t count);

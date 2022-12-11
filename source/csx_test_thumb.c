@@ -1,4 +1,5 @@
 #include "csx_test_thumb.h"
+#include "csx_test_thumb_asm.h"
 #include "csx_test_thumb_inst.h"
 
 #include "csx_test_utility.h"
@@ -6,6 +7,7 @@
 
 /* **** */
 
+#include "bitfield.h"
 #include "log.h"
 
 /* **** */
@@ -14,6 +16,65 @@ enum {
 	_ADD = 0,
 	_SUB,
 };
+
+typedef uint32_t (*thumb_fn)(uint32_t* rd, const uint32_t rn, const uint32_t rm);
+
+uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t rm, uint32_t* xpsr) {
+	volatile uint32_t xres = fn(0, rn, 0);
+
+	asm("mrs %[xpsr], CPSR\n\t"
+		: [xpsr] "=r" (*xpsr)
+		::);
+
+	return(xres);
+}
+
+uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t rm, uint32_t* cpsr) {
+	soc_core_p core = t->csx->core;
+
+	soc_core_reg_set(core, 1, rn);
+
+	thumb_add_sub_i3_rn_rd(t, _ADD, rm, 1, 0);
+	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
+
+	*cpsr = CPSR;
+	return(soc_core_reg_get(core, 0));
+}
+
+void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
+	
+	uint32_t xpsr = 0, xres = 0;
+	uint32_t cpsr = 0, cres = 0;
+	
+	thumb_fn fn = 0;
+	
+	switch (rm) {
+		case 1:
+			fn = _test_thumb_adds_rn_1_asm;
+			break;
+		case 7:
+			fn = _test_thumb_adds_rn_7_asm;
+			break;
+		default:
+			LOG_ACTION(exit(-1));
+			break;
+	}
+	
+	xres = _test_thumb_asm(t, fn, rn, 0, &xpsr);
+	cres = _test_thumb_adds_rn_i_inst(t, rn, rm, &cpsr);
+
+//	TRACE_PSR(xpsr);
+//	TRACE_PSR(cpsr);
+	
+	assert(cres == xres);
+	_assert_cpsr_xpsr(t, cpsr, xpsr);
+}
+
+#define csx_test_thumb_adds_rn_1(_t, _rn) \
+	csx_test_thumb_adds_rn_i(_t, (_rn), 1)
+
+#define csx_test_thumb_adds_rn_7(_t, _rn) \
+	csx_test_thumb_adds_rn_i(_t, (_rn), 7)
 
 void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 {
@@ -34,6 +95,20 @@ void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	assert(soc_core_reg_get(core, 0) < soc_core_reg_get(core, 1));
 	assert(63 == soc_core_reg_get(core, 0));
+
+	csx_test_thumb_adds_rn_1(t, 0);
+	csx_test_thumb_adds_rn_1(t, 1);
+	csx_test_thumb_adds_rn_1(t, ~0);
+	csx_test_thumb_adds_rn_1(t, ~0 - 1);
+	csx_test_thumb_adds_rn_1(t, ~0UL >> 1);
+	csx_test_thumb_adds_rn_1(t, (~0UL >> 1) - 1);
+
+	csx_test_thumb_adds_rn_7(t, 0);
+	csx_test_thumb_adds_rn_7(t, 1);
+	csx_test_thumb_adds_rn_7(t, ~0);
+	csx_test_thumb_adds_rn_7(t, ~0 - 1);
+	csx_test_thumb_adds_rn_7(t, ~0UL >> 1);
+	csx_test_thumb_adds_rn_7(t, (~0UL >> 1) - 1);
 }
 
 void csx_test_thumb_b(csx_test_p t)
@@ -99,8 +174,8 @@ void csx_test_thumb_ldstm(csx_test_p t)
 	thumb_ldmia_rd_reglist(t, 0, 0xcc);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
-	for(int i = 0; i < 8; i++)
-		LOG("r[%02u] = 0x%08x", i, soc_core_reg_get(core, i));
+//	for(int i = 0; i < 8; i++)
+//		LOG("r[%02u] = 0x%08x", i, soc_core_reg_get(core, i));
 		
 	assert(0x10001014 == soc_core_reg_get(core, 0));
 	assert(_test_value(1) == soc_core_reg_get(core, 2));

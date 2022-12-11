@@ -11,6 +11,7 @@ SRC_DIR = source
 #OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)/$(TARGET_DIR)
 OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)
 
+INCLUDE += -I$(TOP_DIR)/../lib_dtime
 INCLUDE += -I$(TOP_DIR)/../include
 INCLUDE += -Iinclude
 

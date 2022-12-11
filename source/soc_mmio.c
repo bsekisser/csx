@@ -8,6 +8,7 @@
 #include "soc_mmio_mpu.h"
 #include "soc_mmio_mpu_gpio.h"
 #include "soc_mmio_mpu_ihr.h"
+#include "soc_mmio_mpu_mmc.h"
 #include "soc_mmio_ocp.h"
 #include "soc_mmio_gp_timer.h"
 #include "soc_mmio_os_timer.h"
@@ -65,6 +66,7 @@ typedef struct soc_mmio_t {
 	soc_mmio_mpu_p			mpu;
 	soc_mmio_mpu_gpio_p		mpu_gpio;
 	soc_mmio_mpu_ihr_p		mpu_ihr;
+	soc_mmio_mpu_mmc_p		mpu_mmc;
 	soc_mmio_ocp_p			ocp;
 	soc_mmio_gp_timer_p		gp_timer;
 	soc_mmio_os_timer_p		os_timer;
@@ -154,6 +156,7 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 	ERR(err = soc_mmio_mpu_init(csx, mmio, &mmio->mpu));
 	ERR(err = soc_mmio_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio));
 	ERR(err = soc_mmio_mpu_ihr_init(csx, mmio, &mmio->mpu_ihr));
+	ERR(err = soc_mmio_mpu_mmc_init(csx, mmio, &mmio->mpu_mmc));
 	ERR(err = soc_mmio_ocp_init(csx, mmio, &mmio->ocp));
 	ERR(err = soc_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = soc_mmio_os_timer_init(csx, mmio, &mmio->os_timer));

@@ -44,8 +44,13 @@ typedef struct csx_data_t* csx_data_p;
 #define CSX_SDRAM_SIZE			Mb(16)
 #define CSX_SDRAM_STOP			((CSX_SDRAM_BASE + CSX_SDRAM_SIZE) - 1)
 
-#define Kb(_x)						((_x) * 1024)
-#define Mb(_x)						(Kb(Kb(_x))) 
+#ifndef Kb
+	#define Kb(_x)						((_x) * 1024)
+#endif
+
+#ifndef Mb
+	#define Mb(_x)						(Kb(Kb(_x)))
+#endif
 
 /* **** */
 
@@ -64,9 +69,10 @@ typedef struct csx_t {
 	soc_tlb_p						tlb;
 	
 	uint64_t						cycle;
+	uint64_t						insns;
 	csx_state_t						state;
 
-	uint32_t						cr[15];
+	uint32_t						cr[16 * 16 * 7];
 #define vCR(_x)						csx->cr[_x]
 
 	csh								cs_handle;

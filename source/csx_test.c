@@ -31,10 +31,13 @@ uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_
 	soc_core_reg_set_pcx(core, start_pc);
 	for(; count ; count--)
 	{
+		csx->cycle++;
 		core->step(core);
 
 		if(PC >= end_pc)
 			break;
+
+		csx->insns++;
 	}
 
 	csx->state = CSX_STATE_HALT;
@@ -52,10 +55,13 @@ uint32_t csx_test_run_thumb(csx_test_p t, uint32_t count)
 	return(_csx_test_run(t, t->start_pc | 1, pc(t), count));
 }
 
-int csx_test_main(int core_trace)
+int csx_test_main(csx_h h2csx, int core_trace)
 {
 	csx_p csx = calloc(1, sizeof(csx_t));
 	ERR_NULL(csx);
+
+	if(h2csx)
+		*h2csx = csx;
 
 	csx_test_p t = calloc(1, sizeof(csx_test_t));
 	ERR_NULL(t);

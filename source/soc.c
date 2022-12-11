@@ -177,7 +177,7 @@ int csx_soc_init(csx_p csx)
 	return(err);
 }
 
-int csx_soc_main(int core_trace, int loader_firmware)
+int csx_soc_main(csx_h h2csx, int core_trace, int loader_firmware)
 {
 	int err = 0;
 	csx_p csx = calloc(1, sizeof(csx_t));
@@ -186,17 +186,20 @@ int csx_soc_main(int core_trace, int loader_firmware)
 	if(!csx)
 		return(-1);
 	
+	if(h2csx)
+		*h2csx = csx;
+	
+	if(loader_firmware)
+		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
+	else
+		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
+
 	ERR(err = csx_soc_init(csx));
 	csx_soc_reset(csx);
 
 	const soc_core_p core = csx->core;
 
 	core->trace = core_trace;
-
-	if(loader_firmware)
-		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
-	else
-		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 
 	if(!err)
 	{
@@ -206,7 +209,6 @@ int csx_soc_main(int core_trace, int loader_firmware)
 		for(int i = 0; i < limit; i++)
 		{
 			csx->cycle++;
-
 			core->step(core);
 
 			if((csx->state & CSX_STATE_HALT) || (0 == PC))
@@ -214,6 +216,8 @@ int csx_soc_main(int core_trace, int loader_firmware)
 				i = limit;
 				LOG_ACTION(break);
 			}
+
+			csx->insns++;
 		}
 	}
 

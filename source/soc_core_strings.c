@@ -22,5 +22,6 @@ const char* reg_name[16] = {
 };
 
 const char* shift_op_string[6] = {
-	"lsl", "lsr", "asr", "ror"
+//	"lsl", "lsr", "asr", "ror"
+	"LSL", "LSR", "ASR", "ROR"
 };

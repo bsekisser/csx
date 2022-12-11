@@ -95,6 +95,13 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 				{
 					_CORE_TRACE_("; /* nop */");
 				}
+			} else {
+				if(vR(S)) {
+					_CORE_TRACE_("; /* ROR(0x%08x, %03u) = 0x%08x */", 
+						vR(M), vR(S), vR(D));
+				} else {
+					_CORE_TRACE_("; /* 0x%08x */", vR(D));
+				}
 			}
 			break;
 		case ARM_DPI_OPERATION_MVN:

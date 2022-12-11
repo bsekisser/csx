@@ -21,6 +21,20 @@
 
 #include "alu_box.h"
 
+typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
+
+alubox_fn _alubox_arm_dpi_fn[2][16] = {{
+		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
+		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
+		0,				0,				0,				0,
+		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
+	}, {
+		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
+		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
+		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
+		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
+}};
+
 /* **** */
 
 static void _arm_inst_dpi_final(soc_core_p core)
@@ -58,6 +72,49 @@ static void _arm_inst_dpi_final(soc_core_p core)
 			else
 				UNPREDICTABLE;
 		}
+	}
+}
+
+static void _arm_inst_dp(soc_core_p core)
+{
+	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
+
+	soc_core_arm_decode_rn_rd(core, get_rn, 0);
+
+	alubox_fn dpi_fn = _alubox_arm_dpi_fn[CCx.e && DPI_BIT(s20)][DPI_OPERATION];
+	assert(0 != dpi_fn);
+	
+	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
+
+	_arm_inst_dpi_final(core);
+}
+
+unsigned long int _arm_ror_c(unsigned long int v,
+	unsigned long int shift,
+	unsigned long int* carry)
+{
+	uint32_t result = _ror(v, shift);
+	*carry = _lsr(v, 32 - shift);
+
+	return(result);
+}
+
+typedef unsigned long int (*sop_fn_t)(unsigned long int v,
+	unsigned long int shift,
+	unsigned long int* carry);
+
+static void _arm_inst_dp_shift_operand(soc_core_p core) {
+	sop_fn_t sop_fn_list[4] = {
+		_lsl_c, _lsr_c, (sop_fn_t)_asr_c, _arm_ror_c
+		};
+
+	if(vR(S)) {
+		unsigned long int carry_out;
+		vR(SOP_V) = sop_fn_list[DPI_SHIFT_OP](vR(M), vR(S), &carry_out);
+		vR(SOP_C) = carry_out;
+	} else {
+		vR(SOP_V) = vR(M);
+		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	}
 }
 
@@ -261,20 +318,7 @@ static void arm_inst_bx(soc_core_p core)
 	}
 }
 
-typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
-
-alubox_fn _alubox_arm_dpi_fn[2][16] = {{
-		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
-		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		0,				0,				0,				0,
-		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
-	}, {
-		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
-		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
-		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
-		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
-}};
-
+/*
 static void arm_inst_dpi(soc_core_p core)
 {
 	soc_core_arm_decode_shifter_operand(core);
@@ -295,6 +339,54 @@ exit_fault:
 	LOG("operation = 0x%02x", DPI_OPERATION);
 	soc_core_disasm_arm(core, IP, IR);
 	UNIMPLIMENTED;
+}
+*/
+
+static void arm_inst_dp_immediate(soc_core_p core)
+{
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
+	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
+
+	vR(SOP_V) = _ror(vR(M), vR(S));
+
+	if(vR(S))
+		vR(SOP_C) = BEXT(vR(SOP_V), 31);
+	else
+		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+
+//	_arm_inst_dp_shift_operand(core);
+	_arm_inst_dp(core);
+}
+
+static void arm_inst_dp_immediate_shift(soc_core_p core)
+{
+	soc_core_arm_decode_rm(core, 1);
+
+	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
+	
+	switch(DPI_SHIFT_OP) {
+		case	SOC_CORE_SHIFTER_OP_ASR:
+		case	SOC_CORE_SHIFTER_OP_LSR:
+			if(!vR(S))
+				vR(S) = 32;
+			break;
+	}
+
+	_arm_inst_dp_shift_operand(core);
+	_arm_inst_dp(core);
+}
+
+static void arm_inst_dp_register_shift(soc_core_p core)
+{
+	assert(0 == DPI_BIT(x7));
+	
+	soc_core_arm_decode_rm(core, 1);
+
+	soc_core_decode_get(core, rRS, 11, 8, 1);
+	vR(S) &= _BM(7);
+
+	_arm_inst_dp_shift_operand(core);
+	_arm_inst_dp(core);
 }
 
 static void arm_inst_ldst_immediate_offset(soc_core_p core)
@@ -752,9 +844,13 @@ void soc_core_arm_step(soc_core_p core)
 					else
 						return(arm_inst_ldst_register_offset_sh(core));
 				} else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
-					if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
-						return(arm_inst_dpi(core));
-					}
+					if(BEXT(IR, 4))
+						return(arm_inst_dp_register_shift(core));
+					else
+						return(arm_inst_dp_immediate_shift(core));
+//					if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
+//						return(arm_inst_dpi(core));
+//					}
 				} else {
 					if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
 						return(arm_inst_bx(core));
@@ -770,7 +866,8 @@ void soc_core_arm_step(soc_core_p core)
 					;
 				else if((_inst1_0_undef != (IR & _inst1_0_mitsr_mask))
 					&&(ARM_INST_DP == (IR & ARM_INST_DP_MASK)))
-						return(arm_inst_dpi(core));
+						return(arm_inst_dp_immediate(core));
+//						return(arm_inst_dpi(core));
 				break;
 			case 0x02: /* xxxx 010x xxxx xxxx */
 				return(arm_inst_ldst_immediate_offset(core));

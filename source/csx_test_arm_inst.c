@@ -195,6 +195,11 @@ void arm_ldr_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t
 	_c_al(t, opcode | ea);
 }
 
+void arm_adcs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADC), 1, rn, rd, shopt);
+}
+
 void arm_add_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(ADD), 0, rn, rd, shopt);
@@ -208,6 +213,16 @@ void arm_adds_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 void arm_ands_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(AND), 1, rn, rd, shopt);
+}
+
+void arm_asr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_mov_rd_sop(t, rd, arm_dpi_asr_r_s(rm, shift));
+}
+
+void arm_asrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_movs_rd_sop(t, rd, arm_dpi_asr_r_s(rm, shift));
 }
 
 void arm_bics_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
@@ -225,6 +240,26 @@ void arm_eors_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(EOR), 1, rn, rd, shopt);
 }
 
+void arm_lsl_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_mov_rd_sop(t, rd, arm_dpi_lsl_r_s(rm, shift));
+}
+
+void arm_lsls_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_movs_rd_sop(t, rd, arm_dpi_lsl_r_s(rm, shift));
+}
+
+void arm_lsr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_mov_rd_sop(t, rd, arm_dpi_lsr_r_s(rm, shift));
+}
+
+void arm_lsrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+{
+	arm_movs_rd_sop(t, rd, arm_dpi_lsr_r_s(rm, shift));
+}
+
 void arm_mov_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	uint32_t opcode = _arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(MOV), 0, 0, rd, shopt);
@@ -239,6 +274,11 @@ void arm_movs_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
 
 	if(0)
 		soc_core_disasm_arm(t->csx->core, 0, opcode);
+}
+
+void arm_ror_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, uint shift)
+{
+	arm_mov_rd_sop(t, rd, arm_dpi_ror_i_s(imm, shift));
 }
 
 void arm_rsb_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)

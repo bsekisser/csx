@@ -69,7 +69,7 @@ static void _soc_core_arm_shifter_operation_asr(soc_core_p core)
 
 static void _soc_core_arm_shifter_operation_lsl(soc_core_p core)
 {
-	uint cout = 0;
+	unsigned long int cout = 0;
 	
 	if(vR(S))
 		vR(SOP_V) = _lsl_c(vR(M), vR(S), &cout);
@@ -83,7 +83,7 @@ static void _soc_core_arm_shifter_operation_lsl(soc_core_p core)
 
 static void _soc_core_arm_shifter_operation_lsr(soc_core_p core)
 {
-	uint cout = 0;
+	unsigned long int cout = 0;
 
 	if(vR(S))
 		vR(SOP_V) = _lsr_c(vR(M), vR(S), &cout);

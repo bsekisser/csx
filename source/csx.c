@@ -13,6 +13,7 @@
 
 /* **** */
 
+#include "dtime.h"
 #include "log.h"
 
 /* **** */
@@ -64,9 +65,28 @@ int main(int argc, char **argv)
 		else if(0 == strcmp(argv[i], "-test"))
 			test = 1;
 	}
+
+//	dtime_calibrate(void);
+
+	csx_p csx = 0;
+
+	uint64_t dtime_start = get_dtime();
 	
 	if(test)
-		return(csx_test_main(core_trace));
+		csx_test_main(&csx, core_trace);
 	else
-		return(csx_soc_main(core_trace, loader_firmware));
+		csx_soc_main(&csx, core_trace, loader_firmware);
+	
+	uint64_t dtime_end = get_dtime();
+	uint64_t dtime_run = dtime_end - dtime_start;
+	
+	uint64_t dtime_cycle = dtime_run / csx->cycle;
+	uint64_t dtime_insn = dtime_run / csx->insns;
+	
+	LOG("cycles = 0x%016llx, insns = 0x%016llx",
+		csx->cycle, csx->insns);
+	LOG("dtime_start = 0x%016llx, dtime_end = 0x%016llx, dtime_run = 0x%016llx",
+		dtime_start, dtime_end, dtime_run);
+	LOG("dtime/cycle = 0x%016llx, dtime/insn = 0x%016llx",
+		dtime_cycle, dtime_insn);
 }
