@@ -20,8 +20,10 @@
 
 const int _arm_version = arm_v5tej;
 
-const int _check_pedantic_mmio = 0;
+const int _check_pedantic_core = 1;
+const int _check_pedantic_mmio = 1;
 const int _check_pedantic_pc = 0;
+const int _trace_pedantic_fflush = 1;
 
 /* **** */
 

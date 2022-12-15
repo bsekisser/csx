@@ -92,7 +92,7 @@ static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va, void** data)
 	tlbe->vp = PAGE(va);
 }
 
-static soc_tlbe_p _tlb_fill(soc_tlbe_p tlbe_table,
+__attribute__((unused)) static soc_tlbe_p _tlb_fill(soc_tlbe_p tlbe_table,
 	uint tlb_bits,
 	uint va,
 	void** data)
@@ -139,7 +139,7 @@ static void* _tlb_write(soc_tlbe_p tlbe_table,
 
 static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
 {
-	for(int i = 0; i < _BV(tlb_bits); i++)
+	for(uint i = 0; i < _BV(tlb_bits); i++)
 		memset(&tlbe_table[i], 0, sizeof(void*));
 }
 

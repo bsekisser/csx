@@ -88,7 +88,9 @@ typedef struct csx_t {
 /* **** */
 
 extern const int _arm_version;
+extern const int _check_pedantic_core;
 extern const int _check_pedantic_mmio;
 extern const int _check_pedantic_pc;
+extern const int _trace_pedantic_fflush;
 
 /* **** */

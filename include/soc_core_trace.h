@@ -28,10 +28,10 @@
 	#define _CORE_TRACE_(_f, ...)
 #endif
 
-#define CORE_TRACE_LINK(_lr)
-#define CORE_TRACE_BRANCH(_pc)
-#define CORE_TRACE_BRANCH_CC(_pc)
-#define CORE_TRACE_THUMB
+#define CORE_TRACE_LINK(_lr) ({})
+#define CORE_TRACE_BRANCH(_pc) ({})
+#define CORE_TRACE_BRANCH_CC(_pc) ({})
+#define CORE_TRACE_THUMB ({})
 
 void soc_core_trace(soc_core_p core, const char* format, ...);
 void soc_core_trace_end(soc_core_p core);

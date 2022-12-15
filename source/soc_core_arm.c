@@ -21,18 +21,16 @@
 
 #include "alu_box.h"
 
-typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
-
-alubox_fn _alubox_arm_dpi_fn[2][16] = {{
-		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
-		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		0,				0,				0,				0,
-		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
+static alubox_fn _alubox_arm_dpi_fn[2][16] = {{
+		_alubox_and,		_alubox_eor,		_alubox_sub,		_alubox_rsb,
+		_alubox_add,		_alubox_adc,		_alubox_sbc,		_alubox_rsc,
+		_alubox_null,		_alubox_null,		_alubox_null,		_alubox_null,
+		_alubox_orr,		_alubox_mov_arm,	_alubox_bic,		_alubox_mvn_arm,
 	}, {
-		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
-		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
-		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
-		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
+		_alubox_ands,		_alubox_eors,		_alubox_subs,		_alubox_rsbs,
+		_alubox_adds,		_alubox_adcs,		_alubox_sbcs,		_alubox_rscs,
+		_alubox_tsts,		_alubox_teqs,		_alubox_cmps_arm,	_alubox_cmns,
+		_alubox_orrs,		_alubox_movs_arm,	_alubox_bics,		_alubox_mvns_arm,
 }};
 
 /* **** */
@@ -106,6 +104,7 @@ typedef unsigned long int (*sop_fn_t)(unsigned long int v,
 static void _arm_inst_dp_shift_operand(soc_core_p core) {
 	sop_fn_t sop_fn_list[4] = {
 		_lsl_c, _lsr_c, (sop_fn_t)_asr_c, _arm_ror_c
+//		_lsl_c, _lsr_c, (sop_fn_t)_asr_c, _alubox_ror_c,
 		};
 
 	if(vR(S)) {
@@ -450,6 +449,7 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 				index = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31);
 				index |= _lsr(vR(M), 1);
 			}
+			break;
 		default:
 			soc_core_disasm_arm(core, PC, IR);
 			LOG_ACTION(exit(-1));
@@ -898,7 +898,7 @@ void soc_core_arm_step(soc_core_p core)
 		}
 	}
 
-decode_fault:
+//decode_fault:
 	switch(opcode)
 	{
 		case 0x00:

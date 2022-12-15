@@ -5,11 +5,15 @@
 uint32_t __attribute__((target("thumb")))
 	_test_thumb_adds_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 1);
+
+	(void)p2rd; (void)rm;
 }
 
 uint32_t __attribute__((target("thumb")))
-	_test_thumb_adds_rn_7_asm(uint32_t* rd, const uint32_t rn, const uint32_t rm) {
+	_test_thumb_adds_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 7);
+
+	(void)p2rd; (void)rm;
 }
 
 uint32_t __attribute__((target("thumb")))
@@ -33,11 +37,15 @@ uint32_t __attribute__((target("thumb")))
 	}
 
 	return(0);
+	
+	(void)rm;
 }
 
 uint32_t __attribute__((target("thumb")))
-	_test_thumb_adds_rn_rm_asm(uint32_t* rd, const uint32_t rn, const uint32_t rm) {
+	_test_thumb_adds_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + rm);
+
+	(void)p2rd;
 }
 
 /* **** */
@@ -64,16 +72,22 @@ uint32_t __attribute__((target("thumb")))
 /* **** */
 
 uint32_t __attribute__((target("thumb")))
-	_test_thumb_subs_rn_1_asm(uint32_t* rd, const uint32_t rn, const uint32_t rm) {
+	_test_thumb_subs_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 1);
+
+	(void)p2rd; (void)rm;
 }
 
 uint32_t __attribute__((target("thumb")))
-	_test_thumb_subs_rn_7_asm(uint32_t* rd, const uint32_t rn, const uint32_t rm) {
+	_test_thumb_subs_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 7);
+
+	(void)p2rd; (void)rm;
 }
 
 uint32_t __attribute__((target("thumb")))
-	_test_thumb_subs_rn_rm_asm(uint32_t* rd, const uint32_t rn, const uint32_t rm) {
+	_test_thumb_subs_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - rm);
+
+	(void)p2rd;
 }

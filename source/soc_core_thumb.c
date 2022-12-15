@@ -17,6 +17,11 @@
 
 /* **** */
 
+#include "alu_box.h"
+#define _alubox_
+
+/* **** */
+
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
 	const int pcsp = BEXT(IR, 11);
@@ -34,10 +39,17 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 
 //	LOG("rPC:rSP");
 	CORE_TRACE("add(%s, %s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
-				rR_NAME(D), pcsp ? "rSP" : "rPC", imm8, vR(N), imm8, vR(D));
+				rR_NAME(D), pcsp ? "rSP" : "rPC", imm8,
+				vR(N), imm8, vR(D));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
+
+#ifdef _alubox_
+static alubox_fn _adds_subs_fn[2] = { _alubox_adds, _alubox_subs };
+static const char* _adds_subs_ops[2] = { "adds", "subs" };
+static const char* _adds_subs_opas[2] = { "+", "-" };
+#endif
 
 static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 {
@@ -51,6 +63,26 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 	soc_core_decode_get(core, rRN, 5, 3, 1);
 	soc_core_decode_get(core, rRD, 2, 0, 0);
 
+//#if 0 /* okay */
+#ifdef _alubox_
+	assert(0 != _adds_subs_fn[op2]);
+	vR(D) = _adds_subs_fn[op2](core, vR(N), vR(M));
+	
+	if(bit_i)
+	{
+		CORE_TRACE("%s(%s, %s, 0x%01x); /* 0x%08x %s 0x%01x = 0x%08x */",
+			_adds_subs_ops[op2], rR_NAME(D), rR_NAME(N), vR(M),
+			vR(N), _adds_subs_opas[op2], vR(M), vR(D));
+	}
+	else
+	{
+		CORE_TRACE("%s(%s, %s, %s); /* 0x%08x %s 0x%08x = 0x%08x */",
+			_adds_subs_ops[op2], rR_NAME(D), rR_NAME(N), rR_NAME(M),
+			vR(N), _adds_subs_opas[op2], vR(M), vR(D));
+	}
+	
+	soc_core_reg_set(core, rR(D), vR(D));
+#else
 	vR(D) = vR(N);
 
 	if(op2)
@@ -88,7 +120,14 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		soc_core_flags_nzcv_sub(core, vR(D), vR(N), vR(M));
 	else
 		soc_core_flags_nzcv_add(core, vR(D), vR(N), vR(M));
+#endif
 }
+
+#ifdef _alubox_
+static alubox_fn _add_sub_fn[2] = { _alubox_add, _alubox_sub };
+static const char* _add_sub_ops[2] = { "add", "sub" };
+static const char* _add_sub_opas[2] = { "+", "-" };
+#endif
 
 static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
 {
@@ -96,6 +135,16 @@ static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
 	const uint16_t imm7 = mlBFMOV(IR, 6, 0, 2);
 
 	_setup_rR_vR(N, rSP, SP);
+
+//#if 0 /* okay */
+#ifdef _alubox_
+	assert(0 != _add_sub_fn[sub]);
+	vR(D) = _add_sub_fn[sub](core, vR(N), imm7);
+
+	CORE_TRACE("%s(rSP, 0x%04x); /* 0x%08x %s 0x%04x = 0x%08x */",
+		_add_sub_ops[sub], imm7,
+		vR(N), _add_sub_opas[sub], imm7, vR(D));
+#else
 	vR(D) = vR(N);
 
 	if(sub)
@@ -110,15 +159,50 @@ static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
 		CORE_TRACE("add(rSP, 0x%04x); /* 0x%08x + 0x%04x = 0x%08x */",
 			imm7, vR(N), imm7, vR(D));
 	}
+#endif
 
 	SP = vR(D);
 }
+
+#ifdef _alubox_
+static alubox_fn _ascm_fn[4] = { _alubox_movs, _alubox_cmps, _alubox_adds, _alubox_subs };
+static const char* _ascm_ops[4] = { "movs", "cmps", "adds", "subs" };
+static const char* _ascm_opas[4] = { "XXX", "-", "+", "-" };
+#endif
 
 static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 {
 	int wb = 1;
 
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
+
+//#if 0 /* okay */
+#ifdef _alubox_
+	soc_core_decode_get(core, rRN, 10, 8, 1);
+	_setup_rR_vR(D, rR(N), 0);
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
+
+	assert(0 != _ascm_fn[operation]);
+	vR(D) = _ascm_fn[operation](core, vR(N), vR(M));
+
+	switch(operation) {
+		case THUMB_ASCM_OP_CMP:
+			wb = 0;
+			__attribute__((fallthrough));
+		default:
+			CORE_TRACE("%s(%s, 0x%03x); /* 0x%08x %s 0x%03x = 0x%08x */",
+				_ascm_ops[operation], rR_NAME(D), vR(M),
+				vR(N), _ascm_opas[operation], vR(M), vR(D));
+			break;
+		case THUMB_ASCM_OP_MOV:
+			CORE_TRACE("movs(%s, 0x%03x);", rR_NAME(D), vR(M));
+			break;
+	}
+
+	if(wb)
+		soc_core_reg_set(core, rR(D), vR(D));
+
+#else
 	const uint8_t imm8 = mlBFEXT(IR, 7, 0);
 
 	soc_core_decode_get(core, rRD, 10, 8, 1);
@@ -169,6 +253,7 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 			soc_core_flags_nz(core, res);
 			break;
 	}
+#endif
 }
 
 static void soc_core_thumb_bcc(soc_core_p core)
@@ -180,7 +265,9 @@ static void soc_core_thumb_bcc(soc_core_p core)
 
 	const uint32_t new_pc = PC_THUMB + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1, PC_THUMB, imm8, CCx.e);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */",
+		new_pc & ~1,
+		PC_THUMB, imm8, CCx.e);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 
@@ -222,7 +309,9 @@ static void soc_core_thumb_bxx_b(soc_core_p core, int32_t eao)
 {
 	const uint32_t new_pc = PC + eao;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/", new_pc & ~1, PC, eao);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/",
+		new_pc & ~1,
+		PC, eao);
 
 	PC = new_pc;
 }
@@ -243,7 +332,8 @@ static void soc_core_thumb_bxx_blx(
 		new_pc &= ~3;
 
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%08x, LR = 0x%08x */",
-		blx ? "x" : "", new_pc & ~1, PC, eao, LR & ~1);
+		blx ? "x" : "", new_pc & ~1,
+		PC, eao, LR & ~1);
 
 	if(blx)
 		soc_core_reg_set_pcx(core, new_pc);
@@ -289,15 +379,83 @@ static void soc_core_thumb_bxx(soc_core_p core)
 	}
 }
 
-static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
+#ifdef _alubox_
+static alubox_fn _dp_fn[16] = {
+	_alubox_ands,			_alubox_eors,
+	_alubox_lsls_thumb_dp,	_alubox_lsrs_thumb_dp,
+	_alubox_asrs_thumb_dp,	_alubox_adcs,
+	_alubox_sbcs,			_alubox_rors_thumb_dp,
+	_alubox_tsts,			_alubox_rsbs,
+	_alubox_cmps,			_alubox_cmns,
+	_alubox_orrs,			_alubox_muls,
+	_alubox_bics,			_alubox_mvns
+};
+
+static const char* _dp_ops[16] = {
+	"ands", "eors", "lsls", "lsrs",
+	"asrs", "adcs", "sbcs", "rors",
+	"tsts", "rsbs", "cmps", "cmns",
+	"orrs", "muls", "bics", "mvns" };
+
+static const char* _dp_opas[16] = {
+	"&",	"^",	"<<",	">>",
+	"<<<",	"+",	"-",	">>|<<",
+	"&",	"-",	"-",	"+",
+	"|",	"*",	"&",	"-" };
+#endif
+
+//static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
+void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 {
+	int wb = 1;
+
 	const uint8_t operation = mlBFEXT(IR, 9, 6);
 
 	soc_core_decode_get(core, rRM, 5, 3, 1);
 	soc_core_decode_get(core, rRD, 2, 0, 1);
 
+//#if 0 /* not? okay */
+#ifdef _alubox_
+//	soc_core_decode_get(core, rRN, 2, 0, 1);
+	_setup_rR_vR(N, rR(D), vR(D));
+	
+	alubox_fn fn = _dp_fn[operation];
+	
+	assert(0 != fn);
+	vR(D) = fn(core, vR(N), vR(M));
+
+	switch(operation)
+	{
+		case THUMB_DP_OP_BIC:
+			CORE_TRACE("bic(%s, %s); /* 0x%08x & ~0x%08x(0x%08x) = 0x%08x */",
+				rR_NAME(D), rR_NAME(M),
+				vR(N), vR(M), ~vR(M), vR(D));
+//			CORE_TRACE("%s(%s, %s); /* 0x%08x %s ~0x%08x(0x%08x) = 0x%08x */",
+//				_dp_ops[operation], rR_NAME(D), rR_NAME(M),
+//				vR(N), _dp_opas[operation], vR(M), ~vR(M), vR(D));
+			break;
+		case THUMB_DP_OP_CMP:
+		case THUMB_DP_OP_CMN:
+		case THUMB_DP_OP_TST:
+			wb = 0;
+			__attribute__((fallthrough));
+		default:
+			CORE_TRACE("%s(%s, %s); /* 0x%08x %s 0x%08x = 0x%08x */",
+				_dp_ops[operation], rR_NAME(D), rR_NAME(M),
+				vR(N), _dp_opas[operation], vR(M), vR(D));
+			break;
+		case THUMB_DP_OP_MVN:
+			CORE_TRACE("%s(%s, %s); /* 0x%08x */",
+				rR_NAME(D), rR_NAME(M), vR(D));
+			break;
+	}
+
+	if(wb)
+		soc_core_reg_set(core, rR(D), vR(D));
+#else
+//	soc_core_decode_get(core, rRD, 2, 0, 1);
+
 	uint32_t res = vR(D);
-	int wb = 1;
 
 	switch(operation)
 	{
@@ -373,6 +531,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 
 	if(wb)
 		soc_core_reg_set(core, rR(D), res);
+#endif
 }
 
 static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
@@ -748,8 +907,16 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
+#ifdef _alubox_
+static alubox_fn _sdp_fn[4] = { _alubox_add, _alubox_cmps, _alubox_mov, _alubox_null };
+static const char* _sdp_ops[4] = { "add", "cmp", "mov", "XXX" };
+static const char* _sdp_opas[4] = { "+", "-", "XXX", "XXX" };
+#endif
+
 static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 {
+	int wb = 1; (void)wb;
+
 	const uint8_t operation = mlBFEXT(IR, 9, 8);
 
 	soc_core_decode_get(core, rRM, 6, 3, 1);
@@ -758,6 +925,37 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 		mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3),
 		soc_core_reg_get(core, rR(D)));
 
+#if 0 /* not? okay? */
+//#ifdef _alubox_
+	_setup_rR_vR(N, rR(D), vR(D));
+
+	alubox_fn fn = _sdp_fn[operation];
+
+	assert(0 != fn);
+	vR(D) = fn(core, vR(N), vR(M));
+
+	switch(operation)
+	{
+		case THUMB_SDP_OP_ADD:
+			CORE_TRACE("%s(%s, %s); /* 0x%08x %s 0x%08x = 0x%08x */",
+				_sdp_ops[operation], rR_NAME(D), rR_NAME(M),
+				vR(N), _sdp_opas[operation], vR(M), vR(D));
+			break;
+//		case THUMB_SDP_OP_CMP:
+		case THUMB_SDP_OP_MOV:
+			CORE_TRACE("%s(%s, %s); /* 0x%08x */",
+				rR_NAME(D), rR_NAME(M), vR(D));
+			break;
+		default:
+			LOG("operation = 0x%01x", operation);
+			soc_core_disasm_thumb(core, IP, IR);
+			LOG_ACTION(exit(1));
+			break;
+	}
+	
+	if(wb)
+		soc_core_reg_set(core, rR(D), vR(D));
+#else
 	uint32_t res = vR(D);
 
 	switch(operation)
@@ -780,9 +978,42 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 	}
 
 	soc_core_reg_set(core, rR(D), res);
+#endif
 }
 
 /* **** */
+
+typedef struct decode_table_t {
+	uint32_t opcode;
+	uint32_t mask;
+	void (*fn)(soc_core_p core);
+}decode_table_t;
+
+__attribute__((unused)) static decode_table_t _decode_table[] = {
+ /* 0x0000 */ { SOC_CORE_THUMB_SBI_IMM5_RM_RD, SOC_CORE_THUMB_SBI_IMM5_RM_RD_MASK, soc_core_thumb_sbi_imm5_rm_rd },
+ /* 0x1800 */ { SOC_CORE_THUMB_ADD_SUB_RN_RD, SOC_CORE_THUMB_ADD_SUB_RN_RD_MASK, soc_core_thumb_add_sub_rn_rd },
+ /* 0x2000 */ { SOC_CORE_THUMB_ASCM_RD_I8(0), SOC_CORE_THUMB_ASCM_RD_I8_MASK, soc_core_thumb_ascm_rd_i },
+ /* 0x4000 */ { SOC_CORE_THUMB_DP_RMS_RDN, SOC_CORE_THUMB_DP_RMS_RDN_MASK, soc_core_thumb_dp_rms_rdn },
+ /* 0x4400 */ { SOC_CORE_THUMB_SDP_RMS_RDN(0), SOC_CORE_THUMB_SDP_RMS_RDN_MASK, soc_core_thumb_sdp_rms_rdn },
+ /* 0x4700 */ { SOC_CORE_THUMB_BX, SOC_CORE_THUMB_BX_MASK, soc_core_thumb_bx },
+ /* 0x4800 */ { SOC_CORE_THUMB_LDST_PC_RD_I, SOC_CORE_THUMB_LDST_PC_RD_I_MASK, soc_core_thumb_ldst_rd_i },
+ /* 0x5000 */ { SOC_CORE_THUMB_LDST_RM_RN_RD, SOC_CORE_THUMB_LDST_RM_RN_RD_MASK, soc_core_thumb_ldst_rm_rn_rd },
+ /* else LOG_ACTION(goto fail_decode); */
+ /* 0x5600 LOG_ACTION(goto fail_decode); */
+ /* 0x5e00 LOG_ACTION(goto fail_decode); */
+ /* 0x6000 */ { SOC_CORE_THUMB_LDST_BW_O_RN_RD, SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK, soc_core_thumb_ldst_bwh_o_rn_rd },
+ /* 0x8000 */ { SOC_CORE_THUMB_LDST_H_O_RN_RD, SOC_CORE_THUMB_LDST_H_O_RN_RD_MASK, soc_core_thumb_ldst_bwh_o_rn_rd },
+ /* 0x9000 */ { SOC_CORE_THUMB_LDST_SP_RD_I, SOC_CORE_THUMB_LDST_SP_RD_I_MASK, soc_core_thumb_ldst_rd_i },
+ /* 0xa000 */ { SOC_CORE_THUMB_ADD_RD_PCSP_I, SOC_CORE_THUMB_ADD_RD_PCSP_I_MASK, soc_core_thumb_add_rd_pcsp_i },
+ /* 0xb000 */ { SOC_CORE_THUMB_ADD_SUB_SP_I7, SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK, soc_core_thumb_add_sub_sp_i7 },
+ /* 0xb400 */
+ /* 0xbc00 */ { SOC_CORE_THUMB_POP_PUSH(0), SOC_CORE_THUMB_POP_PUSH_MASK, soc_core_thumb_pop_push },
+ /* else LOG_ACTION(goto fail_decode); */
+ /* 0xbf00 LOG_ACTION(goto fail_decode); */
+ /* 0xc000 */ { SOC_CORE_THUMB_LDSTM_RN_RXX(0), SOC_CORE_THUMB_LDSTM_RN_RXX_MASK, soc_core_thumb_ldstm_rn_rxx },
+ /* 0xe000 */
+ /* 0xf000 return(soc_core_thumb_bxx(core)); */
+};
 
 void soc_core_thumb_step(soc_core_p core)
 {

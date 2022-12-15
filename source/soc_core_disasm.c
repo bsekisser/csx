@@ -25,9 +25,9 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 
 	int count = cs_disasm(handle, insn_data, size, address, 0, &insn);
 
-	if (count > 0) {
-		size_t j;
-		for (j = 0; j < count; j++) {
+	if(count > 0) {
+//		size_t j;
+		for(int j = 0; j < count; j++) {
 			const uint64_t insn_address = insn[j].address;
 			printf("0x%08llx:\t", insn_address);
 			for(int k = 0; k < size; k++)

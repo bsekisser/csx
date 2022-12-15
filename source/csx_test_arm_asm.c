@@ -15,14 +15,20 @@ enum {
 
 static THUMB uint _shift_operand_asr(uint rd, const uint rn, const sint rm, const uint rs) {
 	return(rm >> rs);
+
+	(void)rd; (void)rn;
 }
 
 static THUMB uint _shift_operand_lsl(uint rd, const uint rn, const uint rm, const uint rs) {
 	return(rm << rs);
+
+	(void)rd; (void)rn;
 }
 
 static THUMB uint _shift_operand_lsr(uint rd, const uint rn, const uint rm, const uint rs) {
 	return(rm >> rs);
+
+	(void)rd; (void)rn;
 }
 
 static THUMB uint _shift_operand_ror(uint rd, const uint rn, const uint rm, const uint rs) {
@@ -30,9 +36,17 @@ static THUMB uint _shift_operand_ror(uint rd, const uint rn, const uint rm, cons
 	const uint rhs = rm >> rs;
 
 	return(lhs | rhs);
+
+	(void)rd; (void)rn;
 }
 
-static THUMB uint _shift_operand(uint rd, const uint rn, const uint rm, const uint rs, const uint shift) {
+__attribute__((unused)) static THUMB uint _shift_operand(
+	uint rd,
+	const uint rn,
+	const uint rm,
+	const uint rs,
+	const uint shift)
+{
 	if(rs) {
 		switch(shift) {
 			case _asr:
@@ -55,6 +69,8 @@ static THUMB uint _shift_operand(uint rd, const uint rn, const uint rm, const ui
 #define ARM_ALU_OP_ACTION(_name, _action) \
 	THUMB uint arm_##_name(uint rd, const uint rn, const uint rm) { \
 		return(_action); \
+	\
+		(void)rd; (void)rn;\
 	} \
 	\
 	ARM_ALU_OP_SHIFT_ACTION(_name, _asr, _action) \

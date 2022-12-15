@@ -51,6 +51,9 @@ void soc_core_trace_end(soc_core_p core)
 		return;
 
 	printf(")\n");
+
+	if(_trace_pedantic_fflush)
+		fflush(stdout);
 }
 
 void soc_core_trace_out(soc_core_p core, const char* format, ...)
