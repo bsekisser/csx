@@ -2,44 +2,41 @@
 
 static uint32_t csx_test_arm_adcs_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-#if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
+	*psr = 0xdeadbeef;
+	uint32_t res = ir0 + ir1;
 	
+#if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 		"adcs %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
-
-	return(res);
-#else
-	return(0xdeadbeef);
 #endif
+	return(res);
 }
 
 static uint32_t csx_test_arm_adds_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-#if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
+	*psr = 0xdeadbeef;
+	uint32_t res = ir0 + ir1;
 	
+#if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
-
-	return(res);
-#else
-	return(0xdeadbeef);
 #endif
+	return(res);
 }
 
 static uint32_t csx_test_arm_ands_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
+	*psr = 0xdeadbeef;
+	uint32_t res = ir0 & ir1;
+
 #if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
-	
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 		"ands %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
@@ -55,20 +52,18 @@ static uint32_t csx_test_arm_ands_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 
 static uint32_t csx_test_arm_bics_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-#if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
+	*psr = 0xdeadbeef;
+	uint32_t res = ir0 & ~ir1;
 	
+#if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 		"bics %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
-
-	return(res);
-#else
-	return(0xdeadbeef);
 #endif
+	return(res);
 }
 
 static uint32_t csx_test_arm_cmp_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)

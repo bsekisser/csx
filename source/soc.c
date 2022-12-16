@@ -54,8 +54,10 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	cdp->data = data;
 	cdp->size = sb.st_size;
 
-	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		cdp->base, (uint)cdp->data, cdp->size);
+//	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
+//		cdp->base, (uint)cdp->data, cdp->size);
+	LOG("base = 0x%08x, data = 0x%p, size = 0x%0zu",
+		cdp->base, cdp->data, cdp->size);
 
 	close(fd);
 }
@@ -65,8 +67,10 @@ static void* _csx_soc_map_ppa(csx_p csx, uint32_t ppa, size_t size)
 	void* data = 0;
 	uint32_t ppo = ppa;
 	
-	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, ppo = 0x%08x",
-		(uint)csx, ppa, size, ppo);
+//	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, ppo = 0x%08x",
+//		(uint)csx, ppa, size, ppo);
+	if(0) LOG("csx = 0x%p, ppa = 0x%08x, size = 0x%0zu, ppo = 0x%08x",
+		csx, ppa, size, ppo);
 
 	const csx_data_p cdp = csx->cdp;
 	const uint32_t cdp_end = cdp->base + cdp->size;
@@ -83,8 +87,10 @@ static void* _csx_soc_map_ppa(csx_p csx, uint32_t ppa, size_t size)
 	} else
 		return(0);
 
-	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, data = 0x%08x, ppo = 0x%08x",
-		(uint)csx, ppa, size, (uint)data, ppo);
+//	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, data = 0x%08x, ppo = 0x%08x",
+//		(uint)csx, ppa, size, (uint)data, ppo);
+	if(0) LOG("csx = 0x%p, ppa = 0x%08x, size = 0x%0zu, data = 0x%p, ppo = 0x%08x",
+		csx, ppa, size, data, ppo);
 
 	return(data + (ppo & PAGE_MASK));
 }
@@ -135,7 +141,8 @@ uint32_t csx_soc_ifetch(csx_p csx, uint32_t va, size_t size)
 
 //retry_read:;
 	void* src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
-	if(0) LOG("src = 0x%08x, va = 0x%08x, tlbe = 0x%08x", (uint)src, va, (uint)tlbe);
+//	if(0) LOG("src = 0x%08x, va = 0x%08x, tlbe = 0x%08x", (uint)src, va, (uint)tlbe);
+	if(0) LOG("src = 0x%p, va = 0x%08x, tlbe = 0x%p", src, va, tlbe);
 	
 	if(src) {
 retry_read_src:;
@@ -221,7 +228,7 @@ int csx_soc_main(csx_h h2csx, int core_trace, int loader_firmware)
 		}
 	}
 
-	LOG("CYCLE = 0x%016llx, IP = 0x%08x", csx->cycle, IP);
+	LOG("CYCLE = 0x%0"PRIx64", IP = 0x%08x", csx->cycle, IP);
 
 	return(err);
 }

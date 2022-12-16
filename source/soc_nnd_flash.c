@@ -37,14 +37,14 @@ enum {
 	ALE = 0x04,
 };
 
-const uint8_t soc_nnd_flash_part_id[] = {
+static uint8_t soc_nnd_flash_part_id[4] = {
 	0x79,	/* 1Gb/128MB */
 	0x76,	/* 512Mb/64MB */
 	0x75,	/* 256Mb/32MB */
 	0x73,	/* 128Mb/16MB */
 };
 
-const uint8_t soc_nnd_flash_manufacturer_code[] = {
+static uint8_t soc_nnd_flash_manufacturer_code[3] = {
 	0xec,	/* samsung */
 	0x98,	/* toshiba */
 	0x04,	/* fujitsu */
@@ -53,8 +53,7 @@ const uint8_t soc_nnd_flash_manufacturer_code[] = {
 #define CSx_LSB 24
 #define OFFSET_MSB (CSx_LSB - 1)
 
-
-const uint8_t soc_nnd_flash_id[2] = {
+static uint8_t soc_nnd_flash_id[2] = {
 	soc_nnd_flash_part_id[0],
 	soc_nnd_flash_manufacturer_code[0],
 };
@@ -76,7 +75,8 @@ static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 	const uint cs = addr >> CSx_LSB;
 	const soc_nnd_unit_p unit = &nnd->unit[cs];
 
-	LOG("nnd = 0x%08x, addr = 0x%08x, cs = 0x%02x, unit = 0x%08x", (uint)nnd, addr, cs, (uint)unit);
+//	LOG("nnd = 0x%08x, addr = 0x%08x, cs = 0x%02x, unit = 0x%08x", (uint)nnd, addr, cs, (uint)unit);
+	LOG("nnd = 0x%p, addr = 0x%08x, cs = 0x%02x, unit = 0x%p", nnd, addr, cs, unit);
 
 	assert(cs < 16);
 
@@ -128,7 +128,6 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, uint size)
 				addr, value, size, unit->cl);
 			break;
 	}
-
 
 	return(value);
 }
