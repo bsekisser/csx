@@ -1,25 +1,35 @@
 #include <stdint.h>
 
+//#ifndef _AddWithCarry
+//	#define _AddWithCarry(psr, ir0, ir1, carry_in) ((ir0) + (ir1) + (carry_in))
+//#endif
+
+//#ifndef _PSR_NZ
+//	#define _PSR_NZ(psr, result) *psr = 0xdeadbeef
+//#endif
+
 static uint32_t csx_test_arm_adcs_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	*psr = 0xdeadbeef;
-	uint32_t res = ir0 + ir1;
+	uint8_t carry = 0;
+	
+	_AddWithCarry(psr, ir0, ir1, carry, &carry);
+	uint32_t res = _AddWithCarry(psr, ir0, ir1, carry, &carry);
 	
 #if defined(__arm__) && !defined(__aarch64__)
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"adcs %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+			"adcs %[result], %[ir0], %[ir1]\n\t"
+			"mrs %[psr], CPSR\n\t"
+			: [psr] "=r" (*psr), [result] "=r" (res)
+			: [ir0] "r" (ir0), [ir1] "r" (ir1)
+			:);
 #endif
+
 	return(res);
 }
 
 static uint32_t csx_test_arm_adds_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	*psr = 0xdeadbeef;
-	uint32_t res = ir0 + ir1;
+	uint32_t res = _AddWithCarry(psr, ir0, ir1, 0, 0);
 	
 #if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t"
@@ -33,8 +43,8 @@ static uint32_t csx_test_arm_adds_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 
 static uint32_t csx_test_arm_ands_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	*psr = 0xdeadbeef;
 	uint32_t res = ir0 & ir1;
+	_PSR_NZ(psr, res);
 
 #if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
@@ -43,17 +53,15 @@ static uint32_t csx_test_arm_ands_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
+#endif
 
 	return(res);
-#else
-	return(0xdeadbeef);
-#endif
 }
 
 static uint32_t csx_test_arm_bics_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	*psr = 0xdeadbeef;
 	uint32_t res = ir0 & ~ir1;
+	_PSR_NZ(psr, res);
 	
 #if defined(__arm__) && !defined(__aarch64__)
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
@@ -63,14 +71,15 @@ static uint32_t csx_test_arm_bics_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
 #endif
+
 	return(res);
 }
 
 static uint32_t csx_test_arm_cmp_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-#if defined(__arm__) && !defined(__aarch64__)
-	const uint32_t res = 0;
+	const uint32_t res = _AddWithCarry(psr, ir0, -ir1, 0, 0);
 
+#if defined(__arm__) && !defined(__aarch64__)
 	asm("cmp %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr)
@@ -78,27 +87,26 @@ static uint32_t csx_test_arm_cmp_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 		:);
 
 	return(res);
-#else
-	return(0xdeadbeef);
 #endif
+
+	return(0);
 }
 
 static uint32_t csx_test_arm_eors_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
+	uint32_t res = ir0 ^ ir1;
+	_PSR_NZ(psr, res);
+
 #if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
-	
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 		"eors %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
+#endif
 
 	return(res);
-#else
-	return(0xdeadbeef);
-#endif
 }
 
 static void csx_test_arm_ldmda_asm(uint32_t* asp, uint32_t* r)
@@ -188,17 +196,15 @@ static void csx_test_arm_ldmib_asm(uint32_t* asp, uint32_t* r)
 
 static uint32_t csx_test_arm_subs_asm(uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-#if defined(__arm__) && !defined(__aarch64__)
-	uint32_t res = 0;
+	uint32_t res = _AddWithCarry(psr, ir0, -ir1, 0, 0);
 	
+#if defined(__arm__) && !defined(__aarch64__)
 	asm("subs %[result], %[ir0], %[ir1]\n\t"
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		:);
+#endif
 
 	return(res);
-#else
-	return(0xdeadbeef);
-#endif
 }

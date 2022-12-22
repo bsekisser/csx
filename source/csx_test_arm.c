@@ -1,5 +1,4 @@
 #include "csx_test_arm.h"
-#include "csx_test_arm_asm32.h"
 #include "csx_test_arm_inst.h"
 
 /* **** */
@@ -8,13 +7,58 @@
 #include "soc_core.h"
 #include "soc.h"
 #include "csx_test.h"
-#include "csx_test_utility.h"
+//#include "csx_test_utility.h"
 #include "csx.h"
 
 /* **** */
 
 #include "bitfield.h"
 #include "log.h"
+
+/* **** */
+
+#include "csx_test_utility.h"
+
+extern void _PSR_NZ(uint32_t* psr, uint32_t result)
+{
+//	*psr &= ~SOC_CORE_PSR_NZ;
+
+	BSET_AS(*psr, SOC_CORE_PSR_BIT_N, 0 > (int32_t)result);
+//	*psr |= BMOV(result, 31, SOC_CORE_PSR_BIT_N);
+
+	BSET_AS(*psr, SOC_CORE_PSR_BIT_Z, 0 == result);
+//	*psr |= ((result == 0) ? SOC_CORE_PSR_Z : 0);
+}
+
+extern uint32_t _AddWithCarry(uint32_t* psr, uint32_t ir0, uint32_t ir1, uint8_t carry_in, uint8_t* carry_out)
+{
+	/*
+	 * 	as per listed arm-v8 implimentation
+	 * 
+	 */
+
+	int64_t unsigned_sum = ir0 + ir1 + carry_in;
+	int64_t signed_sum = ((int32_t)ir0) + ((int32_t)ir1) + carry_in;
+
+	uint32_t result = (uint32_t)unsigned_sum;
+
+	*psr &= ~SOC_CORE_PSR_NZCV;
+
+	_PSR_NZ(psr, result);
+	
+	if(carry_out)
+		*carry_out = (result == unsigned_sum);
+
+	BSET_AS(*psr, SOC_CORE_PSR_BIT_C, result == unsigned_sum);
+	BSET_AS(*psr, SOC_CORE_PSR_BIT_V, ((int32_t)result) == signed_sum);
+	
+	TRACE_PSR(*psr);
+	
+	return(result);
+}
+
+#define __aarch64__
+#include "csx_test_arm_asm32.h"
 
 /* **** */
 
@@ -53,8 +97,14 @@ static uint32_t csx_test_arm_adcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 	
 	t->start_pc = t->pc = 0x10000000;
 	arm_adds_rn_rd_sop(t, 1, 0, arm_dpi_lsl_r_s(2, 0));
+	t->start_pc = t->pc = csx_test_run(t, 1);
+
+	TRACE_PSR(CPSR);
+	
 	arm_adcs_rn_rd_sop(t, 1, 0, arm_dpi_lsl_r_s(2, 0));
-	t->start_pc = t->pc = csx_test_run(t, 2);
+	t->start_pc = t->pc = csx_test_run(t, 1);
+
+	TRACE_PSR(CPSR);
 
 	*psr = CPSR;
 

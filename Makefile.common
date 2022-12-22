@@ -1,8 +1,8 @@
 CFLAGS = -g -Wall -Wextra
 #CFLAGS = -g -std=gnu11
-#CFLAGS += -Os
-CFLAGS += -O1
-#CFLAGS += -march=native
+CFLAGS += -Os
+#CFLAGS += -O1
+CFLAGS += -march=native
 #CFLAGS += -march=armv7
 CFLAGS += $(INCLUDE)
 #CFLAGS += -MD -MP

@@ -37,14 +37,14 @@ enum {
 	ALE = 0x04,
 };
 
-static uint8_t soc_nnd_flash_part_id[4] = {
+static const uint8_t soc_nnd_flash_part_id[4] = {
 	0x79,	/* 1Gb/128MB */
 	0x76,	/* 512Mb/64MB */
 	0x75,	/* 256Mb/32MB */
 	0x73,	/* 128Mb/16MB */
 };
 
-static uint8_t soc_nnd_flash_manufacturer_code[3] = {
+static const uint8_t soc_nnd_flash_manufacturer_code[3] = {
 	0xec,	/* samsung */
 	0x98,	/* toshiba */
 	0x04,	/* fujitsu */
@@ -53,7 +53,7 @@ static uint8_t soc_nnd_flash_manufacturer_code[3] = {
 #define CSx_LSB 24
 #define OFFSET_MSB (CSx_LSB - 1)
 
-static uint8_t soc_nnd_flash_id[2] = {
+static const uint8_t soc_nnd_flash_id[2] = {
 	soc_nnd_flash_part_id[0],
 	soc_nnd_flash_manufacturer_code[0],
 };
