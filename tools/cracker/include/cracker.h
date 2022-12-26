@@ -37,6 +37,7 @@ typedef struct symbol_t* symbol_p;
 typedef struct symbol_t {
 	qelem_t qelem;
 
+//	uint32_t end_pat;
 	uint flags;
 	uint pass;
 	uint32_t pat;

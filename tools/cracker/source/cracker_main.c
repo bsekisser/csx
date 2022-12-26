@@ -50,8 +50,10 @@ uint32_t _read(cracker_p cj, uint32_t pat, uint8_t size)
 
 	if((pat >= cj->content.base) && ((pat + size) <= cj->content.end))
 		src = cj->content.data + (pat - cj->content.base);
-	else
+	else {
+		return(0xdeadbeef);
 		LOG_ACTION(exit(-1));
+	}
 
 	for(int i = 0; i < size; i++)
 		res |= ((*src++) << (i << 3));
@@ -120,6 +122,9 @@ symbol_p symbol_next(symbol_h lhs, symbol_p cjs, symbol_h rhs)
 void symbol_log(cracker_p cj, symbol_p cjs)
 {
 	LOG_START("0x%08x:", cjs->pat);
+
+	_LOG_(" refs: 0x%04x", cjs->refs);
+
 	if(BTST(cjs->type, SYMBOL_TEXT))
 		LOG_END(" TEXT ENTRY");
 	else {
@@ -221,6 +226,20 @@ symbol_p cracker_text(cracker_p cj, uint32_t pat)
 		BSET(cjs->type, SYMBOL_TEXT);
 		
 		symbol_enqueue(sqh, lhs, cjs, rhs);
+
+		if(cj->symbol && (cj->symbol->pat <= pat)) {
+			if(IP >= pat) {
+				cjs->pass++;
+			}
+		}
+	}
+
+	if(0) if(cjs) {
+		if(cj->symbol->pat <= pat) {
+			if(PC >= pat) {
+				cjs->pass++;
+			}
+		}
 	}
 
 	return(cjs);
@@ -260,6 +279,16 @@ int main(void)
 
 	while(cjt.symbol) {
 		if(!cracker_step(cj)) {
+			for(int i = 0; i < 16; i++) {
+				cj->reg[i] = 0;
+				cj->reg_src[i] = 0;
+			}
+
+			for(int i = 0; i < REG_COUNT; i++) {
+				cj->rr[i] = 0;
+				cj->vr[i] = 0;
+			}
+
 //			CORE_TRACE();
 			printf("\n");
 			cjt.symbol = 0;
