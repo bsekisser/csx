@@ -829,15 +829,18 @@ void soc_core_thumb_step(soc_core_p core)
 				if(SOC_CORE_THUMB_LDST_PC_RD_I == (IR & SOC_CORE_THUMB_LDST_PC_RD_I_MASK))
 					return(soc_core_thumb_ldst_rd_i(core));
 				break;
-			case	0x5000:
+			case	0x5000: /* 0101 000 -- str rd, [rn, rm] */
+			case	0x5200: /* 0101 001 -- strh rd, [rn, rm] */
+			case	0x5400: /* 0101 010 -- strb rd, [rn, rm] */
+			case	0x5600: /* 0101 011 -- ldrsb rd, [rn, rm] */
+			case	0x5800: /* 0101 100 -- ldr rd, [rn, rm] */
+			case	0x5a00: /* 0101 101 -- ldrh rd, [rn, rm] */
+			case	0x5c00: /* 0101 110 -- ldrb rd, [rn, rm] */
+			case	0x5e00: /* 0101 111 -- ldrsh rd, [rn, rm] */
 				if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
 					return(soc_core_thumb_ldst_rm_rn_rd(core));
 				LOG_ACTION(goto fail_decode);
 				break;
-//			case	0x5600:
-//			case	0x5e00:
-//				LOG_ACTION(goto fail_decode);
-//				break;
 			case	0x6000:
 				if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
 					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
@@ -864,6 +867,10 @@ void soc_core_thumb_step(soc_core_p core)
 					return(soc_core_thumb_pop_push(core));
 				LOG_ACTION(goto fail_decode);
 				break;
+			case	0xb200:
+			case	0xb600:
+			case	0xba00:
+			case	0xbe00:
 			case	0xbf00:
 				LOG_ACTION(goto fail_decode);
 				break;
@@ -872,19 +879,18 @@ void soc_core_thumb_step(soc_core_p core)
 					return(soc_core_thumb_ldstm_rn_rxx(core));
 				break;
 			case	0xd000:
-				opcode = IR & mlBF(15, 8);
-				switch(opcode)
-				{
-					case	0xde00: /* undefined */
-					case	0xdf00: /* swi */
-						LOG_ACTION(goto fail_decode);
-						break;
-					default:
-						return(soc_core_thumb_bcc(core));
-						break;
-				} break;
-			case	0xe000:
-			case	0xf000:
+				return(soc_core_thumb_bcc(core));
+				break;
+			case	0xde00: /* undefined */
+			case	0xdf00: /* swi */
+				LOG_ACTION(goto fail_decode);
+				break;
+			case	0xe800: /* blx suffix / undefined instruction */
+				if(IR & 1)
+					LOG_ACTION(goto fail_decode);
+			case	0xe000: /* unconditional branch */
+			case	0xf000: /* bl/blx prefix */
+			case	0xf800: /* bl suffix */
 					return(soc_core_thumb_bxx(core));
 				break;
 		/* **** */
