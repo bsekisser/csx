@@ -47,7 +47,7 @@ soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 	const uint32_t l1pta = l1ttb | va_ti;
 	LOG("TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x", TTBR0, l1ttb, va_ti, l1pta);
 
-	const uint32_t l1ptd = csx_soc_read_ppa(csx, l1pta, sizeof(uint32_t), 1);
+	const uint32_t l1ptd = csx_soc_read_ppa(csx, l1pta, sizeof(uint32_t), 0);
 	LOG("l1ptd = 0x%08x, [1:0] = %01u", l1ptd, l1ptd & 3);
 
 	static soc_mmu_ptd_t ptd;
@@ -145,3 +145,72 @@ int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 	return(0);
 }
 
+uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
+{
+	uint32_t ppa = va;
+	void* src = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
+
+		if(src)
+			return(soc_data_read(src + PAGE_OFFSET(va), size));
+
+		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+	}
+
+	const uint32_t data = csx_soc_read_ppa(csx, ppa, size, &src);
+
+	if(tlb && src)
+		soc_tlb_fill_instruction_tlbe(tlbe, va, src);
+
+	return(data);
+}
+
+uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
+{
+	uint32_t ppa = va;
+	void* src = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		src = soc_tlb_read(csx->tlb, va, &tlbe);
+
+		if(src)
+			return(soc_data_read(src + PAGE_OFFSET(va), size));
+
+		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+	}
+
+	const uint32_t data = csx_soc_read_ppa(csx, ppa, size, &src);
+
+	if(tlb && src)
+		soc_tlb_fill_data_tlbe_read(tlbe, va, src);
+
+	return(data);
+}
+
+void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
+{
+	uint32_t ppa = va;
+	void* dst = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		dst = soc_tlb_write(csx->tlb, va, &tlbe);
+
+		if(dst)
+			return(soc_data_write(dst + PAGE_OFFSET(va), data, size));
+
+		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+	}
+
+	csx_soc_write_ppa(csx, ppa, data, size, &dst);
+
+	if(tlb && dst)
+		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
+}

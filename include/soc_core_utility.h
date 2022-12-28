@@ -50,15 +50,18 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 
 static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size)
 {
-	return(csx_soc_ifetch(core->csx, va, size));
+//	return(csx_soc_ifetch(core->csx, va, size));
+	return(csx_mmu_ifetch(core->csx, va, size));
 }
 
 static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 {
-	return(csx_soc_read(core->csx, va, size));
+//	return(csx_soc_read(core->csx, va, size));
+	return(csx_mmu_read(core->csx, va, size));
 }
 
 static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
 {
-	csx_soc_write(core->csx, va, data, size);
+//	csx_soc_write(core->csx, va, data, size);
+	csx_mmu_write(core->csx, va, data, size);
 }

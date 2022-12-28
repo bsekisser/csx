@@ -60,106 +60,31 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	close(fd);
 }
 
-static void* _csx_soc_map_ppa(csx_p csx, uint32_t ppa, size_t size)
+static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* data_src, uint32_t base)
 {
-	void* data = 0;
-	uint32_t ppo = ppa;
+	uint32_t ppo = ppa - base;
 	
-	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, ppo = 0x%08x",
-		(uint)csx, ppa, size, ppo);
-
-	const csx_data_p cdp = csx->cdp;
-	const uint32_t cdp_end = cdp->base + cdp->size;
+	void* dspao = data_src + (ppo & PAGE_MASK);
 	
-	if(_in_bounds(ppa, size, CSX_SDRAM_BASE, CSX_SDRAM_STOP)) {
-		data = csx->sdram;
-		ppo -= CSX_SDRAM_BASE;
-	} else if(_in_bounds(ppa, size, cdp->base, cdp_end)) {
-		data = cdp->data;
-		ppo -= cdp->base;
-	} else if(_in_bounds(ppa, size, CSX_FRAMEBUFFER_BASE, CSX_FRAMEBUFFER_STOP)) {
-		data = csx->frame_buffer;
-		ppo -= CSX_FRAMEBUFFER_BASE;
-	} else
-		return(0);
-
-	if(0) LOG("csx = 0x%08x, ppa = 0x%08x, size = 0x%02x, data = 0x%08x, ppo = 0x%08x",
-		(uint)csx, ppa, size, (uint)data, ppo);
-
-	return(data + (ppo & PAGE_MASK));
+	if(src)
+		*src = dspao;
+	
+	return(soc_data_read(dspao + PAGE_OFFSET(ppa), size));
 }
 
-
-static void _csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size)
+static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
 {
-	if(_in_bounds(ppa, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
-	{
-		soc_mmio_write(csx->mmio, ppa, data, size);
-	}
-/* CSx FLASH ROM AREAS */
-	else if(_in_bounds(ppa, size, 0x00000000, 0x03ffffff)) /* CS0 */
-	{
-/*
- * 0000 0000 - 0000 ffff -- Boot ROM
- * 0001 0000 - 0003 ffff -- Reserved Boot ROM
- * 0004 0000 - 01ff ffff -- Reserved
- * 0200 0000 - 03ff ffff -- NOR Flash
- * 
- */
-		if(_in_bounds(ppa, size, 0x02000000, 0x03ffffff)) {
-			soc_nnd_flash_write(csx->nnd, ppa, data, size);
-		}
-	}
-	else if(_in_bounds(ppa, size, 0x04000000, 0x07ffffff)) /* CS1 */
-	{
-		soc_nnd_flash_write(csx->nnd, ppa, data, size);
-	}
-	else if(_in_bounds(ppa, size, 0x08000000, 0x0bffffff)) /* CS2 */
-	{
-		soc_nnd_flash_write(csx->nnd, ppa, data, size);
-	}
-	else if(_in_bounds(ppa, size, 0x0c000000, 0x0fffffff)) /* CS3 */
-	{
-		soc_nnd_flash_write(csx->nnd, ppa, data, size);
-	}
-	else {
-		LOG("ppa = 0x%08x", ppa);
-	}
+	uint32_t ppo = ppa - base;
+	
+	void* ddpao = data_dst + (ppo & PAGE_MASK);
+	
+	if(dst)
+		*dst = ddpao;
+	
+	return(soc_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
 }
 
 /* **** */
-
-uint32_t csx_soc_ifetch(csx_p csx, uint32_t va, size_t size)
-{
-	soc_tlbe_p tlbe = 0;
-
-//retry_read:;
-	void* src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
-	if(0) LOG("src = 0x%08x, va = 0x%08x, tlbe = 0x%08x", (uint)src, va, (uint)tlbe);
-	
-	if(src) {
-retry_read_src:;
-		return(soc_data_read(src + PAGE_OFFSET(va), size));
-	} else {
-		uint32_t ppa = va;
-		
-		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-		src = _csx_soc_map_ppa(csx, ppa, size);
-
-		if(src) {
-			if(tlb) {
-				soc_tlb_fill_data_tlbe(tlbe, va, src);
-			}
-			goto retry_read_src;
-		} else
-			return(csx_soc_read_ppa(csx, ppa, size, 0));
-	}
-	
-	LOG("va = 0x%08x", va);
-
-	return(0);
-}
-
 
 int csx_soc_init(csx_p csx)
 {
@@ -226,86 +151,77 @@ int csx_soc_main(csx_h h2csx, int core_trace, int loader_firmware)
 	return(err);
 }
 
-uint32_t csx_soc_read(csx_p csx, uint32_t va, size_t size)
+uint32_t csx_soc_read(csx_p csx, uint32_t ppa, size_t size)
 {
-	soc_tlbe_p tlbe = 0;
-
-//retry_read:;
-	void* src = soc_tlb_read(csx->tlb, va, &tlbe);
-
-	if(src) {
-retry_read_src:;
-		return(soc_data_read(src + PAGE_OFFSET(va), size));
-	} else {
-		uint32_t ppa = va;
-		
-		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-		src = _csx_soc_map_ppa(csx, ppa, size);
-
-		if(src) {
-			if(tlb) {
-				soc_tlb_fill_data_tlbe(tlbe, va, src);
-			}
-			goto retry_read_src;
-		} else
-			return(csx_soc_read_ppa(csx, ppa, size, 0));
-	}
-	
-	LOG("va = 0x%08x", va);
-	
-	return(0);
+	return(csx_soc_read_ppa(csx, ppa, size, 0));
 }
 
-uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, int mmu)
+uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 {
-	uint32_t data = 0;
+	if(src)
+		*src = 0;
 
-	if(_in_bounds(ppa, size, CSX_MMIO_BASE, CSX_MMIO_STOP))
-	{
-		data = soc_mmio_read(csx->mmio, ppa, size);
-	}
-/* CSx FLASH ROM AREAS */
-	else if(_in_bounds(ppa, size, 0x00000000, 0x03ffffff)) /* CS0 */
-	{
-/*
- * 0000 0000 - 0000 ffff -- Boot ROM
- * 0001 0000 - 0003 ffff -- Reserved Boot ROM
- * 0004 0000 - 01ff ffff -- Reserved
- * 0200 0000 - 03ff ffff -- NOR Flash
- * 
- */
-		if(_in_bounds(ppa, size, 0x02000000, 0x03ffffff)) {
-			data = soc_nnd_flash_read(csx->nnd, ppa, size);
-		}
-	}
-	else if(_in_bounds(ppa, size, 0x04000000, 0x07ffffff)) /* CS1 */
-	{
-		data = soc_nnd_flash_read(csx->nnd, ppa, size);
-	}
-	else if(_in_bounds(ppa, size, 0x08000000, 0x0bffffff)) /* CS2 */
-	{
-		data = soc_nnd_flash_read(csx->nnd, ppa, size);
-	}
-	else if(_in_bounds(ppa, size, 0x0c000000, 0x0cffffff)) /* CS3 */
-	{
-		data = soc_nnd_flash_read(csx->nnd, ppa, size);
-	}
-	else if(_in_bounds(ppa, size, 0xffff0000, 0xffffffff)) /* ??? */
-	{
-		data = soc_nnd_flash_read(csx->nnd, ppa, size);
-	}
-	else if(mmu) /* fallback for mmu */
-	{
-		void* src = _csx_soc_map_ppa(csx, ppa, size);
-		if(src)
-			data = soc_data_read(src, size);
-	}
-	else
-	{
-		LOG("ppa = 0x%08x", ppa);
+	switch(ppa) {
+		/* EMIFS */
+//		case 0x00000000 ... 0x03ffffff: /* CS0 -- 64M */
+		case 0x00000000 ... 0x0000ffff: /* CS0 -- 64K -- Boot ROM */
+		case 0x00010000 ... 0x0003ffff: /* CS0 -- 192K -- Reserved Boot ROM */
+		case 0x00040000 ... 0x001fffff: /* CS0 -- reserved */
+		case 0x00200000 ... 0x00203fff: /* CS0 -- reserved */
+		case 0x00204000 ... 0x0020ffff: /* CS0 -- reserved */
+		case 0x00210000 ... 0x0021000f: /* CS0 -- reserved */
+		case 0x00210010 ... 0x0021002f: /* CS0 -- reserved */
+		case 0x00210030 ... 0x01ffffff: /* CS0 -- reserved */
+			break;
+		case 0x02000000 ... 0x03ffffff: /* CS0 -- 32M */
+		case 0x04000000 ... 0x07ffffff: /* CS1 -- 64M */
+		case 0x08000000 ... 0x0bffffff: /* CS2 -- 64M */
+		case 0x0c000000 ... 0x0fffffff: /* CS3 -- 64M */
+			return(soc_nnd_flash_read(csx->nnd, ppa, size));
+			break;
+		/* EMIFF */
+		case 0x10000000 ... 0x13ffffff: /* SDRAM -- 64M -- external */
+			return(_csx_soc_read_ppa(ppa, size, src, csx->sdram, CSX_SDRAM_BASE));
+			break;
+		case 0x14000000 ... 0x1fffffff: /* reserved */
+			break;
+		/* L3 OCP T1 */
+		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
+			return(_csx_soc_read_ppa(ppa, size, src, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
+			break;
+		case 0x2003e800 ... 0x2007cfff: /* reserved */
+		case 0x2007d000 ... 0x2007d3ff: /* reserved */
+		case 0x2007d400 ... 0x2007d7ff: /* reserved */
+		case 0x2007d800 ... 0x2007dfff: /* Camera I/F -- reserved */
+		/* L3 OCP T2 */
+		case 0x30000000 ... 0x30000fff: /* reserved */
+		case 0x30001000 ... 0x30001fff: /* reserved */
+		case 0x30002000 ... 0x300021ff: /* reserved */
+		case 0x30002200 ... 0x3007d7ff: /* reserved */
+		case 0x3007d800 ... 0x3007dfff: /* Camera I/F -- reserved */
+		case 0x3007e000 ... 0x30ffffff: /* reserved */
+		case 0x31000000 ... 0x34ffffff: /* reserved */
+		case 0x35000000 ... 0x7fffffff: /* reserved */
+		/* DSP MPUI */
+		case 0xe0000000 ... 0xe101ffff: /* MPUI memory & peripheral */
+		case 0xe1020000 ... 0xefffffff: /* reserved */
+		/* TIPB Peripheral and Control Registers */
+		case 0xf0000000 ... 0xfffaffff: /* reserved */
+			break;
+		case 0xfffb0000 ... 0xfffeffff: /* OMAP 5912 peripherals */
+			return(soc_mmio_read(csx->mmio, ppa, size));
+			break;
+		case 0xffff0000 ... 0xffffffff: /* reserved */
+			break;
 	}
 	
-	return(data);
+	const csx_data_p cdp = csx->cdp;
+	const uint32_t cdp_end = cdp->base + cdp->size;
+
+	if(_in_bounds(ppa, size, cdp->base, cdp_end))
+			return(_csx_soc_read_ppa(ppa, size, src, cdp->data, cdp->base));
+
+	return(0);
 }
 
 void csx_soc_reset(csx_p csx)
@@ -315,30 +231,73 @@ void csx_soc_reset(csx_p csx)
 	soc_tlb_reset(csx->tlb);
 }
 
-void csx_soc_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
+void csx_soc_write(csx_p csx, uint32_t ppa, uint32_t data, size_t size)
 {
-	soc_tlbe_p tlbe = 0;
+	return(csx_soc_write_ppa(csx, ppa, data, size, 0));
+}
 
-//retry_write:;
-	void* dst = soc_tlb_write(csx->tlb, va, &tlbe);
+void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void** dst)
+{
+	if(dst)
+		*dst = 0;
 
-	if(dst) {
-retry_write_dst:;
-		return(soc_data_write(dst + PAGE_OFFSET(va), data, size));
-	} else {
-		uint32_t ppa = va;
-		
-		const int tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-		dst = _csx_soc_map_ppa(csx, ppa, size);
-
-		if(dst) {
-			if(tlb) {
-				soc_tlb_fill_data_tlbe(tlbe, va, dst);
-			}
-			goto retry_write_dst;
-		} else
-			return(_csx_soc_write_ppa(csx, ppa, data, size));
+	switch(ppa) {
+		/* EMIFS */
+//		case 0x00000000 ... 0x03ffffff: /* CS0 -- 64M */
+		case 0x00000000 ... 0x0000ffff: /* CS0 -- 64K -- Boot ROM */
+		case 0x00010000 ... 0x0003ffff: /* CS0 -- 192K -- Reserved Boot ROM */
+		case 0x00040000 ... 0x001fffff: /* CS0 -- reserved */
+		case 0x00200000 ... 0x00203fff: /* CS0 -- reserved */
+		case 0x00204000 ... 0x0020ffff: /* CS0 -- reserved */
+		case 0x00210000 ... 0x0021000f: /* CS0 -- reserved */
+		case 0x00210010 ... 0x0021002f: /* CS0 -- reserved */
+		case 0x00210030 ... 0x01ffffff: /* CS0 -- reserved */
+			break;
+		case 0x02000000 ... 0x03ffffff: /* CS0 -- 32M */
+		case 0x04000000 ... 0x07ffffff: /* CS1 -- 64M */
+		case 0x08000000 ... 0x0bffffff: /* CS2 -- 64M */
+		case 0x0c000000 ... 0x0fffffff: /* CS3 -- 64M */
+			return(soc_nnd_flash_write(csx->nnd, ppa, data, size));
+			break;
+		/* EMIFF */
+		case 0x10000000 ... 0x13ffffff: /* SDRAM -- 64M -- external */
+			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->sdram, CSX_SDRAM_BASE));
+			break;
+		case 0x14000000 ... 0x1fffffff: /* reserved */
+			break;
+		/* L3 OCP T1 */
+		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
+			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
+			break;
+		case 0x2003e800 ... 0x2007cfff: /* reserved */
+		case 0x2007d000 ... 0x2007d3ff: /* reserved */
+		case 0x2007d400 ... 0x2007d7ff: /* reserved */
+		case 0x2007d800 ... 0x2007dfff: /* Camera I/F -- reserved */
+		/* L3 OCP T2 */
+		case 0x30000000 ... 0x30000fff: /* reserved */
+		case 0x30001000 ... 0x30001fff: /* reserved */
+		case 0x30002000 ... 0x300021ff: /* reserved */
+		case 0x30002200 ... 0x3007d7ff: /* reserved */
+		case 0x3007d800 ... 0x3007dfff: /* Camera I/F -- reserved */
+		case 0x3007e000 ... 0x30ffffff: /* reserved */
+		case 0x31000000 ... 0x34ffffff: /* reserved */
+		case 0x35000000 ... 0x7fffffff: /* reserved */
+		/* DSP MPUI */
+		case 0xe0000000 ... 0xe101ffff: /* MPUI memory & peripheral */
+		case 0xe1020000 ... 0xefffffff: /* reserved */
+		/* TIPB Peripheral and Control Registers */
+		case 0xf0000000 ... 0xfffaffff: /* reserved */
+			break;
+		case 0xfffb0000 ... 0xfffeffff: /* OMAP 5912 peripherals */
+			return(soc_mmio_write(csx->mmio, ppa, data, size));
+			break;
+		case 0xffff0000 ... 0xffffffff: /* reserved */
+			break;
 	}
 	
-	LOG("va = 0x%08x", va);
+	const csx_data_p cdp = csx->cdp;
+	const uint32_t cdp_end = cdp->base + cdp->size;
+
+	assert(!_in_bounds(ppa, size, cdp->base, cdp_end));
+//			return(_csx_soc_write_ppa(ppa, size, dst, cdp->data, cdp->base));
 }

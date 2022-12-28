@@ -24,10 +24,13 @@
  */
 
 typedef struct soc_tlbe_t {
-	void*							data;
+	void*							src;
+	void*							dst;
 	uint32_t						vp:20;
+#if 0
 	uint32_t						u_rwx:3;
 	uint32_t						rwx:3;
+#endif
 	uint32_t						i:1;
 }soc_tlbe_t;
 
@@ -81,28 +84,54 @@ static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 	return(tlbe);
 }
 
-static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va, void** data)
-{
-	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)data);
+static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va) {
+	if(!tlbe->i) {
+		tlbe->src = 0;
+		tlbe->dst = 0;
+		
+#if 0
+		tlbe->u_rwx = 0;
+		tlbe->rwx = 0;
+#endif
+	}
 
-	tlbe->data = data;
 	tlbe->i = 1;
-	tlbe->rwx = RWX;
-	tlbe->u_rwx = RWX;
 	tlbe->vp = PAGE(va);
 }
 
-static soc_tlbe_p _tlb_fill(soc_tlbe_p tlbe_table,
-	uint tlb_bits,
-	uint va,
-	void** data)
+static void _tlb_fill_tlbe_read(soc_tlbe_p tlbe, uint32_t va, void** src)
 {
-	soc_tlbe_p tlbe = 0;
-	
-	_tlb_entry(tlbe_table, tlb_bits, va, &tlbe);
-	_tlb_fill_tlbe(tlbe, va, data);
+	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)src);
 
-	return(tlbe);
+	_tlb_fill_tlbe(tlbe, va);
+
+	tlbe->src = src;
+
+#if 0
+	tlbe->u_rwx |= Rwx;
+	tlbe->rwx |= Rwx;
+#endif
+}
+
+static void _tlb_fill_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
+{
+	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)dst);
+
+	_tlb_fill_tlbe(tlbe, va);
+
+	tlbe->dst = dst;
+
+#if 0
+	tlbe->u_rwx |= rWx;
+	tlbe->rwx |= rWx;
+#endif
+}
+
+static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
+{
+	for(uint i = 0; i < _BV(tlb_bits); i++)
+		memset(&tlbe_table[i], 0, sizeof(soc_tlbe_t));
+//		tlbe_table[i].i = 0;
 }
 
 static void* _tlb_read(soc_tlbe_p tlbe_table,
@@ -114,11 +143,12 @@ static void* _tlb_read(soc_tlbe_p tlbe_table,
 
 	if(!tlbe)
 		return(0);
-
+#if 0
 	if(!(tlbe->rwx & Rwx))
 		return(0);
+#endif
 
-	return(tlbe->data);
+	return(tlbe->src);
 }
 
 static void* _tlb_write(soc_tlbe_p tlbe_table,
@@ -131,25 +161,44 @@ static void* _tlb_write(soc_tlbe_p tlbe_table,
 	if(!tlbe)
 		return(0);
 
+#if 0
 	if(!(tlbe->rwx & rWx))
 		return(0);
+#endif
 
-	return(tlbe->data);
+	return(tlbe->dst);
 }
 
-static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
-{
-	for(uint i = 0; i < _BV(tlb_bits); i++)
-		memset(&tlbe_table[i], 0, sizeof(soc_tlbe_t));
-}
-
+#if 0
 static void set_tlbe_urwx_rwx(soc_tlbe_p t, int u_rwx, int rwx)
 {
 	t->u_rwx = u_rwx;
 	t->rwx = rwx;
 }
+#endif
 
 /* **** */
+
+void soc_tlb_fill_data_tlbe_read(soc_tlbe_p tlbe, uint32_t va, void** src)
+{
+	_tlb_fill_tlbe_read(tlbe, va, src);
+}	
+
+void soc_tlb_fill_data_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
+{
+	_tlb_fill_tlbe_write(tlbe, va, dst);
+}	
+
+
+void soc_tlb_fill_instruction_tlbe(soc_tlbe_p tlbe, uint32_t va, void** src)
+{
+	_tlb_fill_tlbe_read(tlbe, va, src);
+
+#if 0
+	t->u_rwx |= rwX;
+	t->rwx |= rwX;
+#endif
+}
 
 void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
@@ -160,10 +209,12 @@ void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 	if(!tlbe)
 		return(0);
 
+#if 0
 	if(!(tlbe->rwx & RwX))
 		return(0);
-
-	return(tlbe->data);
+#else
+	return(tlbe->src);
+#endif
 }
 
 int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
@@ -186,19 +237,6 @@ int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
 	return(0);
 }
 
-void soc_tlb_fill_data_tlbe(soc_tlbe_p tlbe, uint32_t va, void** data)
-{
-	_tlb_fill_tlbe(tlbe, va, data);
-	set_tlbe_urwx_rwx(tlbe, RWx, RWx);
-}	
-
-
-void soc_tlb_fill_instruction_tlbe(soc_tlbe_p tlbe, uint32_t va, void** data)
-{
-	_tlb_fill_tlbe(tlbe, va, data);
-	set_tlbe_urwx_rwx(tlbe, RwX, RwX);
-}
-
 void soc_tlb_invalidate_all(soc_tlb_p tlb)
 {
 	soc_tlb_invalidate_data(tlb);
@@ -212,7 +250,7 @@ void soc_tlb_invalidate_data(soc_tlb_p tlb)
 
 void soc_tlb_invalidate_instruction(soc_tlb_p tlb)
 {
-	_tlb_invalidate_all(tlb->itlb, dTLB_BITS);
+	_tlb_invalidate_all(tlb->itlb, iTLB_BITS);
 }
 
 void* soc_tlb_read(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
