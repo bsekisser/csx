@@ -1,6 +1,8 @@
 #include "csx_test_arm_inst.h"
 #include "soc_core_arm_inst.h"
 
+#include "soc_core_disasm.h"
+
 #include "csx_test_utility.h"
 
 /* **** */

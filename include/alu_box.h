@@ -18,6 +18,8 @@
 
 STATIC uint32_t _alubox_adc(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn + rm + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_adcs(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -31,6 +33,8 @@ STATIC uint32_t _alubox_adcs(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_add(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn + rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_adds(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -44,6 +48,8 @@ STATIC uint32_t _alubox_adds(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_and(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn & rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_ands(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -59,6 +65,8 @@ STATIC uint32_t _alubox_ands(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_bic(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn & ~rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_bics(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -74,6 +82,8 @@ STATIC uint32_t _alubox_bics(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_eor(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn ^ rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_eors(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -93,6 +103,8 @@ STATIC uint32_t _alubox_mov(soc_core_p core, uint32_t rn, uint32_t rm) {
 	rR(N) = ~0;
 
 	return(rm);
+
+	UNUSED(rn);
 }
 
 STATIC uint32_t _alubox_movs(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -126,6 +138,8 @@ STATIC uint32_t _alubox_mvn(soc_core_p core, uint32_t rn, uint32_t rm) {
 	rR(N) = ~0;
 
 	return(~rm);
+
+	UNUSED(rn);
 }
 
 STATIC uint32_t _alubox_mvns(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -141,6 +155,8 @@ STATIC uint32_t _alubox_mvns(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_orr(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn | rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_orrs(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -156,6 +172,8 @@ STATIC uint32_t _alubox_orrs(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_rsb(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rm - rn);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_rsbs(soc_core_p core, uint32_t rn, uint32_t rm) {
@@ -195,6 +213,8 @@ STATIC uint32_t _alubox_sbcs(soc_core_p core, uint32_t rn, uint32_t rm) {
 
 STATIC uint32_t _alubox_sub(soc_core_p core, uint32_t rn, uint32_t rm) {
 	return(rn - rm);
+
+	UNUSED(core);
 }
 
 STATIC uint32_t _alubox_subs(soc_core_p core, uint32_t rn, uint32_t rm) {

@@ -36,6 +36,10 @@ typedef struct csx_data_t* csx_data_p;
 
 /* **** */
 
+#include "unused.h"
+
+/* **** */
+
 #define CSX_FRAMEBUFFER_BASE	0x20000000
 #define CSX_FRAMEBUFFER_STOP	0x2003e7ff
 #define CSX_FRAMEBUFFER_SIZE	(CSX_FRAMEBUFFER_STOP - CSX_FRAMEBUFFER_BASE)

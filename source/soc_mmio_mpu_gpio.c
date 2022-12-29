@@ -61,7 +61,7 @@ MMIO_ENUM_LIST
 #include "soc_mmio_ea_trace_list.h"
 MMIO_TRACE_LIST
 
-static uint soc_mmio_mpu_gpio_unit(uint32_t addr)
+UNUSED_FN static uint soc_mmio_mpu_gpio_unit(uint32_t addr)
 {
 	const uint32_t unit = (((addr >> 13) & 2) | ((addr >> 11) & 1)) ^ 3;
 

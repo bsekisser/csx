@@ -127,6 +127,8 @@ static void soc_mmio_timer_reset(void* param,
 //	soc_mmio_trace_reset(t->mmio, mp->trace_list, module);
 
 	t->base[timer] = 0;
+
+	UNUSED(data, mp);
 }
 
 static soc_mmio_peripheral_t timer_peripheral[3] = {

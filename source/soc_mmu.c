@@ -101,9 +101,9 @@ int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* ppa)
 	static int count = 1;
 	const csx_p csx = mmu->csx;
 	
-	if(!CP15_reg1_Mbit || (-1 == TTBR0)) {
+	if(!CP15_reg1_Mbit || (-1UL == TTBR0)) {
 		*ppa = va;
-		return(-1 == TTBR0);
+		return(-1UL == TTBR0);
 	}
 
 	const soc_mmu_ptd_t l1ptd = _get_l1ptd(mmu, va);

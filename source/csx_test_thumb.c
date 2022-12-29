@@ -27,6 +27,8 @@ uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t rm, ui
 		::);
 
 	return(xres);
+
+	UNUSED(t, rm);
 }
 
 uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t rm, uint32_t* cpsr) {
@@ -186,7 +188,7 @@ void csx_test_thumb_ldstm(csx_test_p t)
 
 void csx_test_pop_push(csx_test_p t)
 {
-
+	UNUSED(t);
 }
 
 void csx_test_thumb(csx_test_p t)

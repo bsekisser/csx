@@ -93,6 +93,8 @@ void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr)
 		_LOG_(" : %s", pfn);
 
 	LOG_END();
+
+	UNUSED(core);
 }
 
 void soc_core_trace_psr_change(soc_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr)

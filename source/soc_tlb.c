@@ -139,8 +139,8 @@ static void* _tlb_write(soc_tlbe_p tlbe_table,
 
 static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
 {
-	for(int i = 0; i < _BV(tlb_bits); i++)
-		memset(&tlbe_table[i], 0, sizeof(void*));
+	for(uint i = 0; i < _BV(tlb_bits); i++)
+		memset(&tlbe_table[i], 0, sizeof(soc_tlbe_t));
 }
 
 static void set_tlbe_urwx_rwx(soc_tlbe_p t, int u_rwx, int rwx)

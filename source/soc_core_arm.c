@@ -450,6 +450,7 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 				index = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31);
 				index |= _lsr(vR(M), 1);
 			}
+			break;
 		default:
 			soc_core_disasm_arm(core, PC, IR);
 			LOG_ACTION(exit(-1));

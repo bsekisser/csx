@@ -90,6 +90,8 @@ int soc_nnd_flash_init(csx_p csx, soc_nnd_h h2nnd)
 	soc_nnd_p nnd = calloc(1, sizeof(soc_nnd_t));
 	ERR_NULL(nnd);
 
+	nnd->csx = csx;
+
 	/* **** */
 
 	/* **** */
@@ -146,6 +148,8 @@ static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, uint32_t
 	}
 
 	LOG("value = 0x%08x, size = 0x%08x, cl = 0x%08x", value, size, unit->cl);
+
+	UNUSED(nnd);
 }
 
 void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, uint32_t value, uint size)

@@ -888,6 +888,7 @@ void soc_core_thumb_step(soc_core_p core)
 			case	0xe800: /* blx suffix / undefined instruction */
 				if(IR & 1)
 					LOG_ACTION(goto fail_decode);
+				__attribute__((fallthrough));
 			case	0xe000: /* unconditional branch */
 			case	0xf000: /* bl/blx prefix */
 			case	0xf800: /* bl suffix */

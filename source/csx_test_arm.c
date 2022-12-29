@@ -34,6 +34,8 @@ static inline uint32_t eao(csx_test_p t, int32_t ieao)
 	if(0) LOG("ea = 0x%08x", ea);
 	
 	return(ea);
+
+	UNUSED(t);
 }
 
 /* **** */
@@ -51,6 +53,8 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_adcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -130,6 +134,8 @@ static uint32_t csx_test_arm_adds_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_adds_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -207,6 +213,8 @@ static uint32_t csx_test_arm_ands_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_ands_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -334,6 +342,8 @@ static uint32_t csx_test_arm_bics_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_bics_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -401,6 +411,8 @@ static uint32_t csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -493,6 +505,8 @@ static uint32_t csx_test_arm_eors_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_eors_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -730,6 +744,8 @@ static void csx_test_arm_ldm_dump_stack(
 	{
 		if(0) LOG("r[%02x] = 0x%08x", i, r[i]);
 	}
+
+	UNUSED(t);
 }
 
 const uint32_t _stm_sp = (0xe << 28) | _BV(27) | _BV(21) | (rSP << 16);
@@ -961,6 +977,8 @@ static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		:);
 
 	return(res);
+
+	UNUSED(t);
 }
 
 static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
@@ -999,7 +1017,7 @@ static void csx_test_arm_subs(csx_test_p t)
 	xres = csx_test_arm_subs_asm(t, &xpsr, 12, 13);
 	res = csx_test_arm_subs_inst(t, &cpsr, 12, 13);
 
-	assert(-1 == res);
+	assert(-1UL == res);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
 	_assert_nzcv(t, 1, 0, 0, 0);
 	

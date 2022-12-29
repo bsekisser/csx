@@ -23,7 +23,7 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 
 	const uint8_t *insn_data = (uint8_t*)&opcode;
 
-	int count = cs_disasm(handle, insn_data, size, address, 0, &insn);
+	size_t count = cs_disasm(handle, insn_data, size, address, 0, &insn);
 
 	if (count > 0) {
 		size_t j;
@@ -41,6 +41,8 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 		printf("0x%08x:(0x%02x): Failed to disassemble given code!\n", address, size);
 
 	cs_close(&handle);
+
+	UNUSED(core);
 }
 
 void soc_core_disasm_arm(soc_core_p core, uint32_t address, uint32_t opcode)

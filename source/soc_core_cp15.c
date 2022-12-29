@@ -142,4 +142,6 @@ int soc_core_cp15_init(csx_p csx)
 	int err = 0;
 
 	return(err);
+
+	UNUSED(csx);
 }

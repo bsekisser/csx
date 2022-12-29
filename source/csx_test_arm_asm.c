@@ -1,3 +1,5 @@
+#include "unused.h"
+
 #ifndef uint
 	typedef long int sint;
 	typedef unsigned long int uint;
@@ -15,14 +17,20 @@ enum {
 
 static THUMB uint _shift_operand_asr(uint rd, const uint rn, const sint rm, const uint rs) {
 	return(rm >> rs);
+
+	UNUSED(rd, rn);
 }
 
 static THUMB uint _shift_operand_lsl(uint rd, const uint rn, const uint rm, const uint rs) {
 	return(rm << rs);
+
+	UNUSED(rd, rn);
 }
 
 static THUMB uint _shift_operand_lsr(uint rd, const uint rn, const uint rm, const uint rs) {
 	return(rm >> rs);
+
+	UNUSED(rd, rn);
 }
 
 static THUMB uint _shift_operand_ror(uint rd, const uint rn, const uint rm, const uint rs) {
@@ -30,9 +38,15 @@ static THUMB uint _shift_operand_ror(uint rd, const uint rn, const uint rm, cons
 	const uint rhs = rm >> rs;
 
 	return(lhs | rhs);
+
+	UNUSED(rd, rn);
 }
 
-static THUMB uint _shift_operand(uint rd, const uint rn, const uint rm, const uint rs, const uint shift) {
+UNUSED_FN static THUMB uint _shift_operand(
+	uint rd,
+	const uint rn, const uint rm, const uint rs,
+	const uint shift)
+{
 	if(rs) {
 		switch(shift) {
 			case _asr:
@@ -54,7 +68,9 @@ static THUMB uint _shift_operand(uint rd, const uint rn, const uint rm, const ui
 	
 #define ARM_ALU_OP_ACTION(_name, _action) \
 	THUMB uint arm_##_name(uint rd, const uint rn, const uint rm) { \
-		return(_action); \
+		rd = _action; \
+		\
+		return(rd); \
 	} \
 	\
 	ARM_ALU_OP_SHIFT_ACTION(_name, _asr, _action) \
@@ -68,13 +84,19 @@ static THUMB uint _shift_operand(uint rd, const uint rn, const uint rm, const ui
 #define ARM_ALU_OP_SHIFT_ACTION(_name, _shift, _action) \
 	THUMB uint arm_##_name##_shift(uint rd, const uint rn, const uint _rm_v, const uint rs) { \
 		const uint rm = _shift_operand##_shift(rd, rn, _rm_v, rs); \
-		return(_action); \
+		\
+		rd = _action; \
+		\
+		return(rd); \
 	}
 
 #define ARM_ALU_SHIFT_OP_ACTION(_name, _action) \
 	THUMB uint arm_##_name##_shift(uint rd, const uint rn, const uint _rm_v, const uint rs, const uint shift) { \
 		const uint rm = _shift_operand(rd, rn, _rm_v, rs, shift); \
-		return(_action); \
+		\
+		rd = _action; \
+		\
+		return(rd); \
 	}
 
 #define ARM_ALU_SHIFT_OP(_name, _action) \
@@ -91,7 +113,7 @@ ARM_ALU_OP_RM(bic, &, ~rm)
 //ARM_ALU_SHIFT_OP_RM(bic, &, ~rm)
 ARM_ALU_OP(eor, ^)
 //ARM_ALU_SHIFT_OP(eor, ^)
-ARM_ALU_OP_ACTION(mov, rm)
+ARM_ALU_OP_ACTION(mov, rm; (void)rn)
 ARM_ALU_OP_ACTION(nand, ~(rm & rn))
 ARM_ALU_OP_ACTION(norr, ~(rm | rn))
 ARM_ALU_OP(orr, |)

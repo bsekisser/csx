@@ -25,6 +25,8 @@ void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
 	}
 
 	assert(test_cpsr == test_xpsr);
+
+	UNUSED(t);
 }
 
 void _assert_nzc(csx_test_p t, int n, int z, int c)

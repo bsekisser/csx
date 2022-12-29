@@ -37,7 +37,7 @@ MMIO_TRACE_LIST
 
 /* **** */
 
-static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_t addr, uint8_t size)
+UNUSED_FN static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_t addr, uint8_t size)
 {
 	const soc_mmio_mpu_mmc_p mmc = param;
 	const csx_p csx = mmc->csx;
@@ -58,7 +58,7 @@ static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_t addr, ui
 	return(value);
 }
 
-static void soc_mmio_mpu_mmc_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+UNUSED_FN static void soc_mmio_mpu_mmc_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
 	const soc_mmio_mpu_mmc_p mmc = param;
 	const csx_p csx = mmc->csx;
