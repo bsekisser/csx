@@ -51,7 +51,7 @@ soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 	LOG("l1ptd = 0x%08x, [1:0] = %01u", l1ptd, l1ptd & 3);
 
 	static soc_mmu_ptd_t ptd;
-	
+
 	ptd.domain = mlBFEXT(l1ptd, 8, 5);
 	ptd.type = l1ptd & 3;
 
@@ -95,55 +95,6 @@ soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 }
 
 /* **** */
-
-int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* ppa)
-{
-	static int count = 1;
-	const csx_p csx = mmu->csx;
-	
-	if(!CP15_reg1_Mbit || (-1UL == TTBR0)) {
-		*ppa = va;
-		return(-1UL == TTBR0);
-	}
-
-	const soc_mmu_ptd_t l1ptd = _get_l1ptd(mmu, va);
-
-	switch(l1ptd.type) {
-		case 2: {
-			const uint32_t va_si = mlBFEXT(va, 19, 0);
-			*ppa = l1ptd.base | va_si;
-			LOG("l1_sba = 0x%08x, va_si = 0x%08x, ppa = 0x%08x",
-				l1ptd.base, va_si, *ppa);
-			return(1);
-		} break;
-		default:
-			LOG_ACTION(exit(-1));
-	}
-	
-	count--;
-	if(0 >= count)
-		LOG_ACTION(exit(-1));
-
-	return(0);
-}
-
-int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
-{
-	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
-
-	ERR_NULL(mmu);
-	if(!mmu)
-		return(-1);
-
-	mmu->csx = csx;
-	
-	TTBR0 = -1;
-	CP15_reg1_set(m);
-	
-	*h2mmu = mmu;
-
-	return(0);
-}
 
 uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 {
@@ -213,4 +164,53 @@ void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 
 	if(tlb && dst)
 		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
+}
+
+int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
+{
+	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
+
+	ERR_NULL(mmu);
+	if(!mmu)
+		return(-1);
+
+	mmu->csx = csx;
+
+	TTBR0 = -1;
+	CP15_reg1_set(m);
+
+	*h2mmu = mmu;
+
+	return(0);
+}
+
+int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* ppa)
+{
+	static int count = 1;
+	const csx_p csx = mmu->csx;
+
+	if(!CP15_reg1_Mbit || (-1UL == TTBR0)) {
+		*ppa = va;
+		return(-1UL == TTBR0);
+	}
+
+	const soc_mmu_ptd_t l1ptd = _get_l1ptd(mmu, va);
+
+	switch(l1ptd.type) {
+		case 2: {
+			const uint32_t va_si = mlBFEXT(va, 19, 0);
+			*ppa = l1ptd.base | va_si;
+			LOG("l1_sba = 0x%08x, va_si = 0x%08x, ppa = 0x%08x",
+				l1ptd.base, va_si, *ppa);
+			return(1);
+		} break;
+		default:
+			LOG_ACTION(exit(-1));
+	}
+
+	count--;
+	if(0 >= count)
+		LOG_ACTION(exit(-1));
+
+	return(0);
 }
