@@ -1,6 +1,6 @@
 #include "soc_mmio_os_timer.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -29,7 +29,7 @@ static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, u
 	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 
-	uint32_t value = soc_data_read(data + (addr & 0xff), size);;
+	uint32_t value = csx_data_read(data + (addr & 0xff), size);;
 
 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
 	if(eat)
@@ -63,7 +63,7 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
 				break;
 		}
 
-		soc_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

@@ -12,6 +12,6 @@ LDFLAGS += -lcapstone
 all: $(OBJS) $(TARGET)
 
 clean:
-	-rm $(OBJ_DIR)/*.o $(TARGET)
+	-rm $(OBJ_DIR)/*.d $(OBJ_DIR)/*.o $(TARGET)
 
 include Makefile.common

@@ -1,6 +1,6 @@
 #include "soc_mmio_timer.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -73,11 +73,11 @@ static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint
 			case MPU_READ_TIMER(0):
 			case MPU_READ_TIMER(1):
 			case MPU_READ_TIMER(2):
-				value = soc_data_read(data + (addr & 0xff), size);
+				value = csx_data_read(data + (addr & 0xff), size);
 				value -= (csx->cycle - t->base[timer]);
 				break;
 			default:
-				value = soc_data_read(data + (addr & 0xff), size);
+				value = csx_data_read(data + (addr & 0xff), size);
 				break;
 		}
 	} else {
@@ -106,7 +106,7 @@ static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_
 				break;
 		}
 
-		soc_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
