@@ -1,6 +1,6 @@
 #include "soc_mmio_ocp.h"
 
-#include "csx_data.h"
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -98,7 +98,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t 
 			}	break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		soc_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG("addr = 0x%08x, cs = 0x%02x", addr, addr & 0xc);
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));

@@ -32,7 +32,6 @@ typedef struct csx_data_t* csx_data_p;
 #include "soc_nnd_flash.h"
 #include "soc_tlb.h"
 
-#include "csx_mmio.h"
 #include "csx_state.h"
 
 /* **** */
@@ -66,14 +65,13 @@ typedef struct csx_data_t {
 }csx_data_t;
 
 typedef struct csx_t {
-	csx_mmio_p						csx_mmio;
 	soc_core_p						core;
 //	soc_coprocessor_p				cp;
 	soc_mmu_p						mmu;
 	soc_mmio_p						mmio;
 	soc_nnd_p						nnd;
 	soc_tlb_p						tlb;
-
+	
 	uint64_t						cycle;
 	uint64_t						insns;
 	csx_state_t						state;

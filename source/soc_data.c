@@ -1,4 +1,4 @@
-#include "csx_data.h"
+#include "soc_data.h"
 
 /* **** */
 
@@ -6,26 +6,26 @@
 
 /* **** */
 
-void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, uint set)
+void soc_data_bit_bmas(void* p2dst, soc_data_bit_p sdbp, uint set)
 {
 	const void* p2data = p2dst + sdbp->offset;
 
-	uint value = csx_data_bit_read((void*)p2data, sdbp);
+	uint value = soc_data_bit_read((void*)p2data, sdbp);
 	BMAS(value, sdbp->bit, set);
 
-	csx_data_write((void*)p2data, value, sdbp->size);
+	soc_data_write((void*)p2data, value, sdbp->size);
 }
 
-uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
+uint soc_data_bit_read(void* p2src, soc_data_bit_p sdbp)
 {
 	const void* p2data = p2src + sdbp->offset;
 	
-	const uint value = csx_data_read((void*)p2data, sdbp->size);
+	const uint value = soc_data_read((void*)p2data, sdbp->size);
 
 	return(BEXT(value, sdbp->bit));
 }
 
-uint32_t csx_data_read(void* p2src, uint8_t size)
+uint32_t soc_data_read(void* p2src, uint8_t size)
 {
 	uint32_t res = 0;
 
@@ -37,7 +37,7 @@ uint32_t csx_data_read(void* p2src, uint8_t size)
 	return(res);
 }
 
-void csx_data_write(void* p2dst, uint32_t value, uint8_t size)
+void soc_data_write(void* p2dst, uint32_t value, uint8_t size)
 {
 	uint8_t* dst = (uint8_t*)p2dst;
 

@@ -1,6 +1,6 @@
 #include "soc_mmio_mpu.h"
 
-#include "csx_data.h"
+#include "soc_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -95,7 +95,7 @@ static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, uint32_t 
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		soc_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
