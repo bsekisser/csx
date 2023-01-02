@@ -1,6 +1,6 @@
 #include "soc_mmio.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 #include "soc_mmio_cfg.h"
@@ -51,15 +51,26 @@
 #define _MODULE(_x) \
 	((_MODULE_DATA_OFFSET(_x) >> 8) & 0x3ff)
 
+#define _CALLBACK_MVA(_x) \
+	((_x) - CSX_MMIO_BASE)
+
+#define _CALLBACK_DATA_OFFSET(_x) \
+	(_CALLBACK_MVA(_x) & 0x3ff00)
+	
+#define _CALLBACK(_x) &mmio->callback[_CALLBACK_MVA(_x) >> 2]
+
+#define _CALLBACK_DATA(_x) &mmio->data[_CALLBACK_DATA_OFFSET(_x)]
+
 typedef void (*void_fn_p)(void*);
 
 typedef struct soc_mmio_t* soc_mmio_p;
 typedef struct soc_mmio_t {
 	csx_p					csx;
 
-	uint8_t					data[CSX_MMIO_SIZE];
+	uint8_t					data[CSX_MMIO_SIZE << 2];
 	void*					param[0x400];
 	soc_mmio_peripheral_p	peripheral[0x400];
+	soc_mmio_callback_t		callback[CSX_MMIO_SIZE_32];
 
 	soc_mmio_cfg_p			cfg;
 	soc_mmio_dpll_p			dpll;
@@ -201,7 +212,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		if(value)
 		{
 			const uint32_t addr = tle->address;
-			soc_data_write(&mpt.data[addr & 0xff], value, tle->size);
+			csx_data_write(&mpt.data[addr & 0xff], value, tle->size);
 		}
 	}
 	
@@ -214,6 +225,19 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
 	const soc_mmio_peripheral_p mp = mpt.mp;
 
+	soc_mmio_callback_p cb = _CALLBACK(vaddr);
+	if(cb->read.fn) {
+		if(cb->read.name) {
+			LOG("cycle = 0x%016llx, [0x%08x]: %s",
+				mmio->csx->cycle, vaddr, cb->read.name);
+		} else {
+			LOG("cycle = 0x%016llx, [0x%08x]: ???",
+				mmio->csx->cycle, vaddr);
+		}
+
+		return(cb->read.fn(cb->read.param, _CALLBACK_DATA(vaddr), vaddr, size));
+	}
+	
 	ea_trace_p tl = mp ? mp->trace_list : trace_list;
 
 	assert(0 != ((mpt.offset + size) & 0xff));
@@ -230,7 +254,7 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	if(eat)
 	{
-		uint32_t value = soc_data_read(&mpt.data[mpt.offset], size);
+		uint32_t value = csx_data_read(&mpt.data[mpt.offset], size);
 		switch(vaddr)
 		{
 			case	x0xfffe_0x6014:
@@ -249,6 +273,25 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 	}
 
 	return(0);
+}
+
+void soc_mmio_register_read(csx_p csx, uint32_t pa, soc_mmio_read_fn fn, void* param)
+{
+	soc_mmio_p mmio = csx->mmio;
+	soc_mmio_callback_p cb = _CALLBACK(pa);
+
+	cb->read.fn = fn;
+	cb->read.param = param;
+}
+	
+
+void soc_mmio_register_write(csx_p csx, uint32_t pa, soc_mmio_write_fn fn, void* param)
+{
+	soc_mmio_p mmio = csx->mmio;
+	soc_mmio_callback_p cb = _CALLBACK(pa);
+
+	cb->write.fn = fn;
+	cb->write.param = param;
 }
 
 void soc_mmio_reset(soc_mmio_p mmio)
@@ -303,6 +346,10 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
 
+		soc_mmio_callback_p cb = _CALLBACK(tle->address);
+		cb->read.name = tle->name;
+		cb->write.name = tle->name;
+
 		__mpt_t mpt; _soc_mmio_peripheral(mmio, tle->address, &mpt);
 
 		if(mpt.module != module) {
@@ -312,7 +359,7 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
 			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
-		soc_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
+		csx_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
 	}while(tl[i].address);
 }
 
@@ -320,6 +367,19 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 {
 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
 	const soc_mmio_peripheral_p mp = mpt.mp;
+
+	soc_mmio_callback_p cb = _CALLBACK(vaddr);
+	if(cb->write.fn) {
+		if(cb->write.name) {
+			LOG("cycle = 0x%016llx, [0x%08x]: %s",
+				mmio->csx->cycle, vaddr, cb->write.name);
+		} else {
+			LOG("cycle = 0x%016llx, [0x%08x]: ???",
+				mmio->csx->cycle, vaddr);
+		}
+
+		return(cb->write.fn(cb->write.param, _CALLBACK_DATA(vaddr), vaddr, value, size));
+	}
 
 	ea_trace_p tl = mp ? mp->trace_list : trace_list;
 
@@ -347,7 +407,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 		{
 		}
 
-		soc_data_write(&mpt.data[mpt.offset], value, size);
+		csx_data_write(&mpt.data[mpt.offset], value, size);
 	} else {
 		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
 		LOG_ACTION(exit(1));

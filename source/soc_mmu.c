@@ -1,7 +1,7 @@
 #include "soc_mmu.h"
 
 #include "soc_core_cp15.h"
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc.h"
 
 /* **** */
@@ -107,7 +107,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(soc_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_read(src + PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -131,7 +131,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_read(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(soc_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_read(src + PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -155,7 +155,7 @@ void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 		dst = soc_tlb_write(csx->tlb, va, &tlbe);
 
 		if(dst)
-			return(soc_data_write(dst + PAGE_OFFSET(va), data, size));
+			return(csx_data_write(dst + PAGE_OFFSET(va), data, size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}

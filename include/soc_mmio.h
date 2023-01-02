@@ -7,6 +7,7 @@ typedef struct ea_trace_t* ea_trace_p;
 typedef struct soc_mmio_t** soc_mmio_h;
 typedef struct soc_mmio_t* soc_mmio_p;
 
+typedef struct soc_mmio_callback_t* soc_mmio_callback_p;
 typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
 
 /* **** */
@@ -15,12 +16,28 @@ typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
 
 /* **** */
 
-#define CSX_MMIO_BASE 0xfffb0000
-#define CSX_MMIO_STOP 0xfffeffff
-#define CSX_MMIO_SIZE (CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
+#define CSX_MMIO_BASE		0xfffb0000
+#define CSX_MMIO_STOP		0xfffeffff
+#define CSX_MMIO_SIZE		(CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
+#define CSX_MMIO_SIZE_32	(CSX_MMIO_SIZE >> 2)
+#define CSX_MMIO_SIZE_16	(CSX_MMIO_SIZE >> 1)
+
 
 typedef uint32_t (*soc_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
 typedef void (*soc_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
+
+typedef struct soc_mmio_callback_t {
+	struct {
+		const char*			name;
+		void*				param;
+		soc_mmio_read_fn	fn;
+	}read;
+	struct {
+		const char*			name;
+		void*				param;
+		soc_mmio_write_fn	fn;
+	}write;
+}soc_mmio_callback_t;
 
 typedef struct soc_mmio_peripheral_t {
 	uint32_t			base;
@@ -34,6 +51,8 @@ typedef struct soc_mmio_peripheral_t {
 
 /* **** */
 
+void* soc_mmio_data(csx_p csx, uint32_t addr);
+
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t addr, uint8_t size);
 void soc_mmio_write(soc_mmio_p mmio, uint32_t addr, uint32_t value, uint8_t size);
 void soc_mmio_reset(soc_mmio_p mmio);
@@ -42,5 +61,8 @@ void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* data);
 uint32_t soc_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl);
 void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p p);
 void soc_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl);
+
+void soc_mmio_register_read(csx_p csx, uint32_t pa, soc_mmio_read_fn fn, void* param);
+void soc_mmio_register_write(csx_p csx, uint32_t pa, soc_mmio_write_fn fn, void* param);
 
 int soc_mmio_init(csx_p csx, soc_mmio_h mmio);

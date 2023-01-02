@@ -1,7 +1,7 @@
 #include "soc.h"
 #include "soc_core.h"
 #include "soc_core_cp15.h"
-#include "soc_data.h"
+#include "csx_data.h"
 #include "csx.h"
 #include "csx_state.h"
 
@@ -69,7 +69,7 @@ static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* d
 	if(src)
 		*src = dspao;
 	
-	return(soc_data_read(dspao + PAGE_OFFSET(ppa), size));
+	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
 }
 
 static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
@@ -81,7 +81,7 @@ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** 
 	if(dst)
 		*dst = ddpao;
 	
-	return(soc_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
+	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
 }
 
 /* **** */

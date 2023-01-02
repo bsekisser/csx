@@ -1,6 +1,6 @@
 #include "soc_mmio_dpll.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -54,7 +54,7 @@ void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value,
 			}	break;
 		}
 
-		soc_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

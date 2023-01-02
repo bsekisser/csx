@@ -1,6 +1,6 @@
 #include "soc_mmio_uart.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -41,9 +41,8 @@ enum {
 	SYSS = 0x58,
 };
 
-soc_data_bit_t SYSC_SoftReset = { SYSC, 2, sizeof(uint8_t) };
-
-soc_data_bit_t SYSS_ResetDone = { SYSS, 0 , sizeof(uint8_t) };
+SOC_DATA_BIT_DECL(SYSC, _SoftReset, 2, sizeof(uint8_t));
+SOC_DATA_BIT_DECL(SYSC, _ResetDone, 0, sizeof(uint8_t));
 
 /* **** */
 
@@ -140,12 +139,12 @@ static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, uint32_t
 				LOG_END(", AutoIdle: %01u", BEXT(value, 0));
 				if(value & 2)
 					soc_mmio_peripheral_reset(uart->mmio, uart_peripheral);
-				soc_data_bit_clear(data, &SYSC_SoftReset);
-				soc_data_bit_set(data, &SYSS_ResetDone);
+				csx_data_bit_clear(data, &SYSC_SoftReset);
+				csx_data_bit_set(data, &SYSC_ResetDone);
 				break;
 		}
 
-		soc_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), value, size);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

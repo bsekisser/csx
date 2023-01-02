@@ -1,6 +1,6 @@
 #include "soc_mmio_timer.h"
 
-#include "soc_data.h"
+#include "csx_data.h"
 #include "soc_mmio_omap.h"
 
 /* **** */
@@ -21,6 +21,12 @@
 #define MPU_CNTL_TIMER(_t)	_TIMER((_t), 0x00)
 #define MPU_LOAD_TIMER(_t)	_TIMER((_t), 0x04)
 #define MPU_READ_TIMER(_t)	_TIMER((_t), 0x08)
+
+enum {
+	_MPU_CNTL_TIMER,
+	_MPU_LOAD_TIMER = 4,
+	_MPU_READ_TIMER = 8,
+};
 
 #define MMIO_LIST_1 \
 	MMIO_TRACE_LIST_HEAD(1) \
@@ -56,61 +62,91 @@ MMIO_ENUM_LIST
 #include "soc_mmio_ea_trace_list.h"
 MMIO_TRACE_LIST
 
-static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint8_t size)
+/* **** */
+
+SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _AR, 1, sizeof(uint32_t));
+SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _CLOCK_ENABLE, 5, sizeof(uint32_t));
+SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _FREE, 6, sizeof(uint32_t));
+SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _ST, 0, sizeof(uint32_t));
+
+static void _mpu_cntl_timer_w(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_timer_p t = param;
-	const csx_p csx = t->csx;
+	const soc_mmio_timer_unit_p smtu = param;
+	const soc_mmio_timer_p timer = smtu->timer;
+	const csx_p csx = timer->csx;
 
-	uint32_t value = 0;
+//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
 
-	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
-	if(eat)
-	{
-		const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+	csx_data_write(data + _MPU_CNTL_TIMER, value, size);
 
-		switch(addr)
-		{
-			case MPU_READ_TIMER(0):
-			case MPU_READ_TIMER(1):
-			case MPU_READ_TIMER(2):
-				value = soc_data_read(data + (addr & 0xff), size);
-				value -= (csx->cycle - t->base[timer]);
-				break;
-			default:
-				value = soc_data_read(data + (addr & 0xff), size);
-				break;
-		}
-	} else {
-		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
+	if(csx_data_bit_read(data, &_MPU_CNTL_TIMER_ST)) {
+		smtu->base = csx->cycle;
+		if(!smtu->count)
+			smtu->count = csx_data_read(data + _MPU_LOAD_TIMER, sizeof(uint32_t));
 	}
 
-	return(value);
+	LOG("base = 0x%016"PRIx64", count = 0x%08x, value = 0x%08x",
+		smtu->base, smtu->count, value);
+
+	UNUSED(addr);
 }
 
-static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void _mpu_load_timer_w(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	const soc_mmio_timer_p t = param;
-	const csx_p csx = t->csx;
+//	const soc_mmio_timer_unit_p smtu = param;
+//	const soc_mmio_timer_p timer = smtu->timer;
+//	const csx_p csx = timer->csx;
 
-	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
-	if(eat)
-	{
-		const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+	
+	LOG("value = 0x%08x", value);
+	
+	csx_data_write(data + _MPU_LOAD_TIMER, value, size);
 
-		switch(addr)
-		{
-			case MPU_LOAD_TIMER(0):
-			case MPU_LOAD_TIMER(1):
-			case MPU_LOAD_TIMER(2):
-				t->base[timer] = csx->cycle;
-				break;
-		}
-
-		soc_data_write(data + (addr & 0xff), value, size);
-	} else {
-		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
-	}
+	UNUSED(addr, data, param, value, size);
 }
+
+static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t addr, uint8_t size)
+{
+	const soc_mmio_timer_unit_p smtu = param;
+	const soc_mmio_timer_p timer = smtu->timer;
+	const csx_p csx = timer->csx;
+
+//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+
+	uint32_t elapsed = csx->cycle - smtu->base;
+	smtu->base = csx->cycle;
+
+	if(csx_data_bit_read(data, &_MPU_CNTL_TIMER_ST)) {
+		int32_t delta_count = smtu->count - elapsed;
+
+		uint reload = elapsed > smtu->count;
+
+		smtu->count -= elapsed;
+
+		uint ar = reload ? csx_data_bit_read(data, &_MPU_CNTL_TIMER_AR) : 0;
+
+		if(ar) {
+			smtu->count = 0;
+
+			uint32_t load = csx_data_read(data + _MPU_LOAD_TIMER, size);
+
+			smtu->count = load + delta_count;
+
+			LOG(":AR: base = 0x%016"PRIx64", count = 0x%08x, elapsed = 0x%08x, load = 0x%08x, delta = 0x%08x",
+				smtu->base, smtu->count, elapsed, load, delta_count);
+		} else {
+			LOG(" base = 0x%016"PRIx64", count = 0x%08x, elapsed = 0x%08x, delta = 0x%08x",
+				smtu->base, smtu->count, elapsed, delta_count);
+		}
+	}
+	
+	return(smtu->count);
+
+	UNUSED(addr);
+}
+
+/* **** */
 
 static void soc_mmio_timer_reset(void* param,
 	void* data,
@@ -126,7 +162,7 @@ static void soc_mmio_timer_reset(void* param,
 
 //	soc_mmio_trace_reset(t->mmio, mp->trace_list, module);
 
-	t->base[timer] = 0;
+	t->unit[timer].base = 0;
 
 	UNUSED(data, mp);
 }
@@ -137,25 +173,12 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
 		.trace_list = trace_list_1,
 
 		.reset = soc_mmio_timer_reset,
-
-		.read = soc_mmio_timer_read,
-		.write = soc_mmio_timer_write
 	}, {
 		.base = CSX_MMIO_TIMER(1),
 		.trace_list = trace_list_2,
-
-		.reset = 0,
-
-		.read = soc_mmio_timer_read,
-		.write = soc_mmio_timer_write
 	}, {
 		.base = CSX_MMIO_TIMER(2),
 		.trace_list = trace_list_3,
-
-		.reset = 0,
-
-		.read = soc_mmio_timer_read,
-		.write = soc_mmio_timer_write
 	},
 };
 
@@ -175,6 +198,14 @@ int soc_mmio_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_timer_h h2t)
 	for(int i = 0; i < 3; i++) {
 		t->mp[i] = &timer_peripheral[i];
 		soc_mmio_peripheral(mmio, t->mp[i], t);
+		
+		soc_mmio_timer_unit_p smtu = &t->unit[i];
+		
+		smtu->timer = t;
+		
+		soc_mmio_register_read(csx, MPU_READ_TIMER(i), _mpu_read_timer_r, smtu);
+		soc_mmio_register_write(csx, MPU_CNTL_TIMER(i), _mpu_cntl_timer_w, smtu);
+		soc_mmio_register_write(csx, MPU_LOAD_TIMER(i), _mpu_load_timer_w, smtu);
 	}
 
 	return(0);
