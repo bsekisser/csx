@@ -1,6 +1,11 @@
+*.d
 *.geany
 *.log
 *.o
+*.out
 archive/private/*
 build*
+csx
 private/*
+Makefile
+Makefile.*
