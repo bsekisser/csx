@@ -1,12 +1,8 @@
 #pragma once
 
-/* **** */
+/* **** forward declarations */
 
 typedef struct csx_data_bit_t* csx_data_bit_p;
-
-/* **** csx includes */
-
-#include "csx.h"
 
 /* **** system includes */
 

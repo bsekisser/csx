@@ -1,5 +1,5 @@
 CFLAGS = -g -Wall -Wextra
-CFLAGS += -Os
+CFLAGS += -O2
 CFLAGS += -march=native
 CFLAGS += $(INCLUDE)
 CFLAGS += -MD -MP

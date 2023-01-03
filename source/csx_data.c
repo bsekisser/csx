@@ -4,6 +4,11 @@
 
 #include "bitfield.h"
 
+/* **** system includes */
+
+#include <endian.h>
+#include <stdint.h>
+
 /* **** */
 
 void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, uint set)
@@ -28,7 +33,6 @@ uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
 uint32_t csx_data_read_x(void* p2src, uint8_t size)
 {
 	uint32_t res = 0;
-
 	uint8_t* src = (uint8_t*)p2src;
 
 	for(int i = 0; i < size; i++)

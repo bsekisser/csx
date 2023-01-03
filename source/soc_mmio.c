@@ -108,6 +108,8 @@ static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 	}
 }
 
+/* **** */
+
 ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
 	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
@@ -187,7 +189,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 
 	for(int i = 0; i < 256; i++)
 		mpt.data[i] = 0;
-		
+
 	for(int i = 0;; i++)
 	{
 		const ea_trace_p tle = &mp->trace_list[i];
@@ -204,7 +206,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 			csx_data_write(&mpt.data[addr & 0xff], value, tle->size);
 		}
 	}
-	
+
 	if(mp->reset)
 		mp->reset(mpt.param, mpt.data, mp);
 }
