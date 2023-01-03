@@ -63,24 +63,24 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* data_src, uint32_t base)
 {
 	uint32_t ppo = ppa - base;
-	
+
 	void* dspao = data_src + (ppo & PAGE_MASK);
-	
+
 	if(src)
 		*src = dspao;
-	
+
 	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
 }
 
 static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
 {
 	uint32_t ppo = ppa - base;
-	
+
 	void* ddpao = data_dst + (ppo & PAGE_MASK);
-	
+
 	if(dst)
 		*dst = ddpao;
-	
+
 	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
 }
 
@@ -91,35 +91,26 @@ int csx_soc_init(csx_p csx)
 	int err = 0;
 
 	CYCLE = 0;
-	
+
 	ERR(err = soc_core_init(csx, &csx->core));
 	ERR(err = soc_core_cp15_init(csx));
 	ERR(err = soc_mmu_init(csx, &csx->mmu));
-	ERR(err = soc_mmio_init(csx, &csx->mmio));
-	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
+//	ERR(err = soc_mmio_init(csx, &csx->mmio));
+//	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 	ERR(err = soc_tlb_init(csx, &csx->tlb));
 
 	return(err);
 }
 
-int csx_soc_main(csx_h h2csx, int core_trace, int loader_firmware)
+int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 {
 	int err = 0;
-	csx_p csx = calloc(1, sizeof(csx_t));
 
-	ERR_NULL(csx);
-	if(!csx)
-		return(-1);
-	
-	if(h2csx)
-		*h2csx = csx;
-	
 	if(loader_firmware)
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 	else
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 
-	ERR(err = csx_soc_init(csx));
 	csx_soc_reset(csx);
 
 	const soc_core_p core = csx->core;
@@ -129,7 +120,7 @@ int csx_soc_main(csx_h h2csx, int core_trace, int loader_firmware)
 	if(!err)
 	{
 		csx->state = CSX_STATE_RUN;
-		
+
 		int limit = Mb(4) + Kb(0) + Kb(0);
 		for(int i = 0; i < limit; i++)
 		{
@@ -214,7 +205,7 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 		case 0xffff0000 ... 0xffffffff: /* reserved */
 			break;
 	}
-	
+
 	const csx_data_p cdp = csx->cdp;
 	const uint32_t cdp_end = cdp->base + cdp->size;
 
@@ -294,7 +285,7 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 		case 0xffff0000 ... 0xffffffff: /* reserved */
 			break;
 	}
-	
+
 	const csx_data_p cdp = csx->cdp;
 	const uint32_t cdp_end = cdp->base + cdp->size;
 

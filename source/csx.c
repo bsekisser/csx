@@ -1,20 +1,26 @@
 #include "csx.h"
 
-/* **** */
-
-#include <libgen.h>
-#include <string.h>
-
-/* **** */
+/* **** soc_includes */
 
 #include "soc.h"
 #include "soc_core_arm.h"
+
+/* **** csx includes */
+
+#include "csx_mmio.h"
 #include "csx_test.h"
 
-/* **** */
+/* **** local includes */
 
 #include "dtime.h"
+#include "err_test.h"
 #include "log.h"
+
+/* **** system includes */
+
+#include <errno.h>
+#include <libgen.h>
+#include <string.h>
 
 /* **** */
 
@@ -35,12 +41,32 @@ void _preflight_tests(void)
 	for(int i = 1; i < 32; i++) {
 		uint32_t check1 = (32 - i);
 		uint32_t check2 = (-i & 31);
-		if(0) LOG("((32 - i) == (-i & 31)) -- (0x%08x, 0x%08x)", 
+		if(0) LOG("((32 - i) == (-i & 31)) -- (0x%08x, 0x%08x)",
 			check1, check2);
 		assert(check1 == check2);
 	}
 }
 
+/* **** */
+
+csx_p csx_init(void)
+{
+	int err = 0;
+
+	csx_p csx = calloc(1, sizeof(csx_t));
+
+	void* mmio_data = 0;
+
+	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
+	ERR(err = soc_mmio_init(csx, &csx->mmio, mmio_data));
+	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
+
+	ERR(err = csx_soc_init(csx));
+
+	return(csx);
+}
+
+/* **** */
 
 int main(int argc, char **argv)
 {
@@ -48,9 +74,9 @@ int main(int argc, char **argv)
 
 	for(int i = 0; i < argc; i++)
 		printf("%s:%s: argv[%d] == %s\n", __FILE__, __FUNCTION__, i, argv[i]);
-	
+
 	char *name = basename(argv[0]);
-	
+
 	printf("%s:%s: name == %s\n", __FILE__, __FUNCTION__, name);
 
 	int core_trace = 0;
@@ -68,21 +94,21 @@ int main(int argc, char **argv)
 
 //	dtime_calibrate(void);
 
-	csx_p csx = 0;
+	csx_p csx = csx_init();
 
 	uint64_t dtime_start = get_dtime();
-	
+
 	if(test)
-		csx_test_main(&csx, core_trace);
+		csx_test_main(csx, core_trace);
 	else
-		csx_soc_main(&csx, core_trace, loader_firmware);
-	
+		csx_soc_main(csx, core_trace, loader_firmware);
+
 	uint64_t dtime_end = get_dtime();
 	uint64_t dtime_run = dtime_end - dtime_start;
-	
+
 	uint64_t dtime_cycle = dtime_run / csx->cycle;
 	uint64_t dtime_insn = dtime_run / csx->insns;
-	
+
 	LOG("cycles = 0x%016llx, insns = 0x%016llx",
 		csx->cycle, csx->insns);
 	LOG("dtime_start = 0x%016llx, dtime_end = 0x%016llx, dtime_run = 0x%016llx",

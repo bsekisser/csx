@@ -2,7 +2,9 @@
 
 /* **** forward defines / typedefs */
 
+typedef struct csx_mmio_t** csx_mmio_h;
 typedef struct csx_mmio_t* csx_mmio_p;
+
 typedef struct csx_mmio_callback_t* csx_mmio_callback_p;
 
 typedef struct csx_mmio_regtrace_t* csx_mmio_regtrace_p;
@@ -57,7 +59,8 @@ typedef struct csx_mmio_callback_t {
 }csx_mmio_callback_t;
 
 typedef struct csx_mmio_t {
-	void* data[CSX_MMIO_SIZE];
+	csx_p csx;
+	uint8_t data[CSX_MMIO_SIZE];
 
 	csx_mmio_callback_t read[CSX_CALLBACK_COUNT];
 	csx_mmio_callback_t write[CSX_CALLBACK_COUNT];
@@ -66,6 +69,8 @@ typedef struct csx_mmio_t {
 /* **** function prototypes */
 
 void* csx_mmio_data_offset(csx_p csx, uint32_t mpa);
+
+int csx_mmio_init(csx_p csx, csx_mmio_h mmio, void** mmio_data);
 
 uint32_t csx_mmio_read(csx_p csx, uint32_t vaddr, uint8_t size);
 uint32_t csx_mmio_write(csx_p csx, uint32_t vaddr, uint32_t data, uint8_t size);

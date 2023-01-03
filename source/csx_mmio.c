@@ -5,9 +5,16 @@
 #include "csx_data.h"
 #include "csx.h"
 
+/* **** local includes */
+
+#include "err_test.h"
+#include "log.h"
+
 /* **** system includes */
 
+#include <errno.h>
 #include <stdint.h>
+#include <string.h>
 
 /* **** */
 
@@ -32,6 +39,25 @@ static void* _mmio_data_offset(csx_mmio_p mmio, uint32_t mpa)
 void* csx_mmio_data_offset(csx_p csx, uint32_t mpa)
 {
 	return(_mmio_data_offset(CSX_MMIO, mpa));
+}
+
+int csx_mmio_init(csx_p csx, csx_mmio_h p2mmio, void** mmio_data)
+{
+	int err = 0;
+
+	ERR_NULL(p2mmio);
+
+	csx_mmio_p mmio = calloc(1, sizeof(csx_mmio_t));
+
+	ERR_NULL(mmio);
+
+	mmio->csx = csx;
+
+	*p2mmio = mmio;
+
+	*mmio_data = mmio->data;
+
+	return(err);
 }
 
 uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size)

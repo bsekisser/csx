@@ -55,20 +55,13 @@ uint32_t csx_test_run_thumb(csx_test_p t, uint32_t count)
 	return(_csx_test_run(t, t->start_pc | 1, pc(t), count));
 }
 
-int csx_test_main(csx_h h2csx, int core_trace)
+int csx_test_main(csx_p csx, int core_trace)
 {
-	csx_p csx = calloc(1, sizeof(csx_t));
-	ERR_NULL(csx);
-
-	if(h2csx)
-		*h2csx = csx;
-
 	csx_test_p t = calloc(1, sizeof(csx_test_t));
 	ERR_NULL(t);
 
 	t->csx = csx;
 
-	ERR(csx_soc_init(csx));
 	csx->core->trace = core_trace;
 
 	t->start_pc = CSX_SDRAM_BASE;

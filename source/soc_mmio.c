@@ -57,7 +57,8 @@ typedef struct soc_mmio_t* soc_mmio_p;
 typedef struct soc_mmio_t {
 	csx_p					csx;
 
-	uint8_t					data[CSX_MMIO_SIZE];
+//	uint8_t					data[CSX_MMIO_SIZE];
+	uint8_t*				data;
 	void*					param[0x400];
 	soc_mmio_peripheral_p	peripheral[0x400];
 
@@ -132,7 +133,7 @@ ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 	return(0);
 }
 
-int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
+int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 {
 	LOG();
 
@@ -144,6 +145,8 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio)
 		return(-1);
 
 	mmio->csx = csx;
+	mmio->data = mmio_data;
+
 	*h2mmio = mmio;
 
 	for(int i = 0; i < 0x400; i++)

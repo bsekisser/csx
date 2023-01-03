@@ -43,4 +43,4 @@ uint32_t soc_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl);
 void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p p);
 void soc_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl);
 
-int soc_mmio_init(csx_p csx, soc_mmio_h mmio);
+int soc_mmio_init(csx_p csx, soc_mmio_h mmio, void* mmio_data);
