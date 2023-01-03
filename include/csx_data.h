@@ -4,11 +4,20 @@
 
 typedef struct csx_data_bit_t* csx_data_bit_p;
 
-/* **** */
+/* **** csx includes */
 
 #include "csx.h"
 
+/* **** system includes */
+
+#include <endian.h>
+#include <stdint.h>
+
 /* **** */
+
+#ifndef uint
+	typedef unsigned int uint;
+#endif
 
 typedef struct csx_data_bit_t {
 	uint8_t bit;
