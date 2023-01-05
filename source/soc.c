@@ -1,6 +1,14 @@
-#include "soc.h"
+//#include "soc.h"
+
+/* **** soc includes */
+
 #include "soc_core.h"
 #include "soc_core_cp15.h"
+#include "soc_omap_5912.h"
+#include "soc.h"
+
+/* **** csx includes */
+
 #include "csx_data.h"
 #include "csx.h"
 #include "csx_state.h"
@@ -98,6 +106,8 @@ int csx_soc_init(csx_p csx)
 //	ERR(err = soc_mmio_init(csx, &csx->mmio));
 //	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 	ERR(err = soc_tlb_init(csx, &csx->tlb));
+
+	soc_omap5912_init(csx, &csx->soc);
 
 	return(err);
 }

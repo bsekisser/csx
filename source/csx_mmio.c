@@ -24,14 +24,14 @@
 #define _MMIO_DATA_OFFSET(_x) (((_x) - CSX_MMIO_BASE) & 0x3ffff)
 #define _MMIO_DATA_PAGE(_x) (((_x) - CSX_MMIO_BASE) & 0x3ff00)
 
-static void* _mmio_data_page(csx_mmio_p mmio, uint32_t mpa)
-{
-	return(&mmio->data[_MMIO_DATA_PAGE(mpa)]);
-}
-
 static void* _mmio_data_offset(csx_mmio_p mmio, uint32_t mpa)
 {
 	return(&mmio->data[_MMIO_DATA_OFFSET(mpa)]);
+}
+
+static void* _mmio_data_page(csx_mmio_p mmio, uint32_t mpa)
+{
+	return(&mmio->data[_MMIO_DATA_PAGE(mpa)]);
 }
 
 /* **** */
@@ -75,22 +75,47 @@ uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size)
 	return(csx_data_read(src, size));
 }
 
-void csx_register_callback_read(csx_p csx, csx_mmio_read_fn fn, uint32_t mpa, void* param)
+int csx_mmio_register_read(csx_p csx, csx_mmio_read_fn fn, uint32_t mpa, void* param)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 
 	csx_mmio_callback_p cb = &mmio->read[_CALLBACK(mpa)];
 
+	if(cb->param || cb->rfn)
+		return(-1);
+
 	cb->param = param;
 	cb->rfn = fn;
+
+	return(0);
 }
 
-void csx_register_callback_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void* param)
+int csx_mmio_register_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void* param)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 
 	csx_mmio_callback_p cb = &mmio->write[_CALLBACK(mpa)];
 
+	if(cb->param || cb->wfn)
+		return(-1);
+
 	cb->param = param;
 	cb->wfn = fn;
+
+	return(0);
+}
+
+void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
+{
+	csx_mmio_p mmio = CSX_MMIO;
+
+	csx_mmio_callback_p cb = &mmio->write[_CALLBACK(mpa)];
+
+	if(cb->wfn) {
+		void* dst = _mmio_data_page(mmio, mpa);
+		return(cb->wfn(cb->param, dst, data, mpa, size));
+	}
+
+	void* dst = _mmio_data_offset(mmio, mpa);
+	return(csx_data_write(dst, data, size));
 }

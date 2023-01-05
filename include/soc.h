@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct csx_t* csx_p;
+//typedef struct csx_t* csx_p;
 
 /* **** */
 

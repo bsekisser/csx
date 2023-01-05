@@ -31,6 +31,7 @@ typedef struct csx_data_t* csx_data_p;
 #include "soc_mmio.h"
 #include "soc_nnd_flash.h"
 #include "soc_tlb.h"
+#include "soc_omap_5912.h"
 
 #include "csx_mmio.h"
 #include "csx_state.h"
@@ -73,6 +74,7 @@ typedef struct csx_t {
 	soc_mmio_p						mmio;
 	soc_nnd_p						nnd;
 	soc_tlb_p						tlb;
+	soc_p							soc;
 
 	uint64_t						cycle;
 	uint64_t						insns;
@@ -96,5 +98,6 @@ typedef struct csx_t {
 extern const int _arm_version;
 extern const int _check_pedantic_mmio;
 extern const int _check_pedantic_pc;
+extern const int _check_pedantic_size;
 
 /* **** */
