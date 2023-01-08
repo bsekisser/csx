@@ -1,0 +1,1364 @@
+diff --git a/include/csx.h b/include/csx.h
+index f80ea86..4e837e4 100644
+--- a/include/csx.h
++++ b/include/csx.h
+@@ -32,7 +32,6 @@ typedef struct csx_data_t* csx_data_p;
+ #include "soc_nnd_flash.h"
+ #include "soc_tlb.h"
+ 
+-#include "csx_mmio.h"
+ #include "csx_state.h"
+ 
+ /* **** */
+@@ -66,14 +65,13 @@ typedef struct csx_data_t {
+ }csx_data_t;
+ 
+ typedef struct csx_t {
+-	csx_mmio_p						csx_mmio;
+ 	soc_core_p						core;
+ //	soc_coprocessor_p				cp;
+ 	soc_mmu_p						mmu;
+ 	soc_mmio_p						mmio;
+ 	soc_nnd_p						nnd;
+ 	soc_tlb_p						tlb;
+-
++	
+ 	uint64_t						cycle;
+ 	uint64_t						insns;
+ 	csx_state_t						state;
+diff --git a/include/csx_data.h b/include/csx_data.h
+deleted file mode 100644
+index acf619b..0000000
+--- a/include/csx_data.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#pragma once
+-
+-/* **** */
+-
+-typedef struct csx_data_bit_t* csx_data_bit_p;
+-
+-/* **** */
+-
+-#include "csx.h"
+-
+-/* **** */
+-
+-#define SOC_DATA_BIT_DECL(_offset, _name, _bit, _reg_size) \
+-	static csx_data_bit_t _offset ## _name = { \
+-		.bit = _bit, \
+-		.offset = _offset, \
+-		.size = _reg_size, \
+-	};
+-
+-typedef struct csx_data_bit_t {
+-	uint8_t bit;
+-	uint8_t offset;
+-	uint8_t size;
+-}csx_data_bit_t;
+-
+-/*
+-	typedef struct csx_data_bfx_t {
+-		uint8_t offset;
+-		uint8_t msb;
+-		uint8_t lsb;
+-	}csx_data_bit_t;
+-*/
+-
+-uint32_t csx_data_read(void* p2src, uint8_t size);
+-void csx_data_write(void* p2dst, uint32_t value, uint8_t size);
+-
+-void csx_data_bit_bmas(void* p2data, csx_data_bit_p sdbp, uint set);
+-uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp);
+-uint32_t csx_data_read(void* p2src, uint8_t size);
+-void csx_data_write(void* p2dst, uint32_t value, uint8_t size);
+-
+-/* **** */
+-
+-static inline void csx_data_bit_clear(void* p2data, csx_data_bit_p sdbp) {
+-	csx_data_bit_bmas(p2data, sdbp, 0);
+-}
+-
+-static inline void csx_data_bit_set(void* p2data, csx_data_bit_p sdbp) {
+-	csx_data_bit_bmas(p2data, sdbp, 1);
+-}
+diff --git a/include/csx_mmio.h b/include/csx_mmio.h
+deleted file mode 100644
+index d73b120..0000000
+--- a/include/csx_mmio.h
++++ /dev/null
+@@ -1,58 +0,0 @@
+-#pragma once
+-
+-/* **** module includes */
+-
+-typedef struct csx_mmio_callback_t* csx_mmio_callback_p;
+-
+-typedef struct csx_mmio_t** csx_mmio_h;
+-typedef struct csx_mmio_t* csx_mmio_p;
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-
+-#include "csx_mmio_reg.h"
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-#define CSX_CALLBACK_COUNT (SOC_MMIO_SIZE >> 1)
+-#define CSX_MMIO_TRACE_REG(_x) _x
+-
+-/* **** */
+-
+-typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
+-typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
+-
+-typedef struct csx_mmio_callback_t {
+-		void*				param;
+-		union {
+-			csx_mmio_read_fn	rfn;
+-			csx_mmio_write_fn	wfn;
+-		};
+-}csx_mmio_callback_t;
+-
+-typedef struct csx_mmio_t {
+-	csx_p					csx;
+-
+-	uint8_t					data[CSX_MMIO_SIZE];
+-
+-	csx_mmio_callback_t		read[CSX_CALLBACK_COUNT];
+-	csx_mmio_callback_t		write[CSX_CALLBACK_COUNT];
+-	csx_mmio_reg_trace_t	reg[CSX_CALLBACK_COUNT];
+-}csx_mmio_t;
+-
+-/* **** */
+-
+-void* csx_mmio_data(csx_p csx, uint32_t mpa);
+-void* csx_mmio_data_mpa(csx_p csx, uint32_t mpa);
+-uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size);
+-
+-void csx_mmio_register_read(csx_p csx, uint32_t pa, soc_mmio_read_fn fn, void* param);
+-void csx_mmio_register_write(csx_p csx, uint32_t pa, soc_mmio_write_fn fn, void* param);
+diff --git a/include/csx_mmio_reg.h b/include/csx_mmio_reg.h
+deleted file mode 100644
+index 2311885..0000000
+--- a/include/csx_mmio_reg.h
++++ /dev/null
+@@ -1,106 +0,0 @@
+-#pragma once
+-
+-/* **** forward type definitions */
+-
+-typedef struct csx_mmio_reg_t* csx_mmio_reg_p;
+-typedef struct csx_mmio_reg_trace_t* csx_mmio_reg_trace_p;
+-typedef struct csx_mmio_regbit_t* csx_mmio_regbit_p;
+-
+-/* **** module includes */
+-
+-/* **** project includes */
+-
+-#include "csx_mmio.h"
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-#include "bitfield.h"
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-#define CSX_MMIO_DATAREG_GET(_name, _type) \
+-	static inline _type _name(csx_p csx, void* data) { \
+-		return(csx_mmio_datareg_get(csx, data, _ ## _name, sizeof(_type))); \
+-	}
+-
+-#define CSX_MMIO_REG_T_DECL(_mpa, _type) \
+-	{ \
+-		.mpa = _mpa, \
+-		.size = sizeof(_type), \
+-	}
+-
+-
+-#define CSX_MMIO_REG_DECL(_name, _mpa, _type) \
+-	static csx_mmio_reg_t _name = CSX_MMIO_REG_T_DECL(_mpa, _type)
+-
+-typedef struct csx_mmio_reg_t {
+-	uint32_t	mpa;
+-	size_t		size;
+-}csx_mmio_reg_t;
+-
+-#define CSX_MMIO_REGBIT_DECL(_reg, _bit) \
+-	static csx_mmio_regbit_t _reg ## _bit = { \
+-		.bit = _bit, \
+-		.reg = _reg, \
+-	};
+-
+-typedef struct csx_mmio_regbit_t {
+-	csx_mmio_reg_t	reg;
+-
+-	uint8_t			bit;
+-}csx_mmio_regbit_t;
+-
+-#define CSX_MMIO_REG_TRACE_T_DECL(_name, _base, _offset, _size) \
+-	{ \
+-	.name = # _name, \
+-	.reg = CSX_MMIO_REG_T_DECL(_base + _offset, _type), \
+-	};
+-
+-typedef struct csx_mmio_reg_trace_t {
+-	const char* name;
+-	csx_mmio_reg_t reg;
+-}csx_mmio_reg_trace_t;
+-
+-/* **** */
+-
+-static inline uint32_t csx_mmio_reg_get(csx_p csx, csx_mmio_reg_p cmr)
+-{
+-	void* src = csx_mmio_data_mpa(csx, cmr->mpa);
+-
+-	return(csx_data_read(src, cmr->size));
+-}
+-
+-static inline void csx_mmio_reg_set(csx_p csx, csx_mmio_reg_p cmr, uint32_t data)
+-{
+-	void* dst = csx_mmio_data_mpa(csx, cmr->mpa);
+-
+-	csx_data_write(dst, data, cmr->size);
+-}
+-
+-
+-static inline void csx_mmio_regbit_bmas(csx_p csx, csx_mmio_regbit_p cmrb, uint32_t value) {
+-	csx_mmio_reg_p reg = &cmrb->reg;
+-
+-	uint32_t data = csx_mmio_reg_get(csx, reg);
+-
+-	BMAS(data, cmrb->bit, value);
+-
+-	csx_mmio_reg_set(csx, reg, data);
+-}
+-
+-static inline void csx_mmio_regbit_clear(csx_p csx, csx_mmio_regbit_p cmrb) {
+-	csx_mmio_regbit_bmas(csx, cmrb, 0);
+-}
+-
+-static inline uint32_t csx_mmio_regbit_get(csx_p csx, csx_mmio_regbit_p cmrb) {
+-	return(BEXT(csx_mmio_reg_get(csx, &cmrb->reg), cmrb->bit));
+-}
+-
+-static inline void csx_mmio_regbit_set(csx_p csx, csx_mmio_regbit_p cmrb) {
+-	csx_mmio_regbit_bmas(csx, cmrb, 1);
+-}
+diff --git a/include/soc_mmio.h b/include/soc_mmio.h
+index f513916..1bfe3bc 100644
+--- a/include/soc_mmio.h
++++ b/include/soc_mmio.h
+@@ -7,7 +7,6 @@ typedef struct ea_trace_t* ea_trace_p;
+ typedef struct soc_mmio_t** soc_mmio_h;
+ typedef struct soc_mmio_t* soc_mmio_p;
+ 
+-typedef struct soc_mmio_callback_t* soc_mmio_callback_p;
+ typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
+ 
+ /* **** */
+@@ -16,29 +15,13 @@ typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
+ 
+ /* **** */
+ 
+-#define CSX_MMIO_BASE		0xfffb0000
+-#define CSX_MMIO_STOP		0xfffeffff
+-#define CSX_MMIO_SIZE		(CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
+-#define CSX_MMIO_SIZE_32	(CSX_MMIO_SIZE >> 2)
+-#define CSX_MMIO_SIZE_16	(CSX_MMIO_SIZE >> 1)
+-
++#define CSX_MMIO_BASE 0xfffb0000
++#define CSX_MMIO_STOP 0xfffeffff
++#define CSX_MMIO_SIZE (CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
+ 
+ typedef uint32_t (*soc_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
+ typedef void (*soc_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
+ 
+-typedef struct soc_mmio_callback_t {
+-	struct {
+-		const char*			name;
+-		void*				param;
+-		soc_mmio_read_fn	fn;
+-	}read;
+-	struct {
+-		const char*			name;
+-		void*				param;
+-		soc_mmio_write_fn	fn;
+-	}write;
+-}soc_mmio_callback_t;
+-
+ typedef struct soc_mmio_peripheral_t {
+ 	uint32_t			base;
+ 	ea_trace_p			trace_list;
+@@ -51,8 +34,6 @@ typedef struct soc_mmio_peripheral_t {
+ 
+ /* **** */
+ 
+-void* soc_mmio_data(csx_p csx, uint32_t addr);
+-
+ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t addr, uint8_t size);
+ void soc_mmio_write(soc_mmio_p mmio, uint32_t addr, uint32_t value, uint8_t size);
+ void soc_mmio_reset(soc_mmio_p mmio);
+@@ -62,7 +43,4 @@ uint32_t soc_mmio_peripheral_read(uint32_t addr, void* data, ea_trace_p tl);
+ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p p);
+ void soc_mmio_peripheral_write(uint32_t addr, uint32_t value, void* data, ea_trace_p tl);
+ 
+-void soc_mmio_register_read(csx_p csx, uint32_t pa, soc_mmio_read_fn fn, void* param);
+-void soc_mmio_register_write(csx_p csx, uint32_t pa, soc_mmio_write_fn fn, void* param);
+-
+ int soc_mmio_init(csx_p csx, soc_mmio_h mmio);
+diff --git a/include/soc_mmio_timer.h b/include/soc_mmio_timer.h
+index bd1a50c..3236719 100644
+--- a/include/soc_mmio_timer.h
++++ b/include/soc_mmio_timer.h
+@@ -5,32 +5,18 @@
+ typedef struct soc_mmio_timer_t** soc_mmio_timer_h;
+ typedef struct soc_mmio_timer_t* soc_mmio_timer_p;
+ 
+-typedef struct soc_mmio_timer_unit_t* soc_mmio_timer_unit_p;
+-
+ /* **** */
+ 
+ #include "csx.h"
+ 
+ /* **** */
+ 
+-typedef struct soc_mmio_timer_unit_t {
+-	csx_p				csx;
+-	soc_mmio_timer_p	timer;
+-
+-	uint64_t			base;
+-	
+-	uint32_t			count;
+-	uint32_t			ppa_base;
+-}soc_mmio_timer_unit_t;
+-
+ typedef struct soc_mmio_timer_t {
+ 	csx_p					csx;
+ 	soc_mmio_p				mmio;
+ 	soc_mmio_peripheral_p	mp[3];
+ 
+-	soc_mmio_timer_unit_t	unit[3];
+-	
+-	uint32_t				ppa_base;
++	uint64_t				base[3];
+ }soc_mmio_timer_t;
+ 
+ int soc_mmio_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_timer_h h2t);
+diff --git a/include/soc_mmio_watchdog.h b/include/soc_mmio_watchdog.h
+index aa3eb6b..d029970 100644
+--- a/include/soc_mmio_watchdog.h
++++ b/include/soc_mmio_watchdog.h
+@@ -14,8 +14,6 @@ typedef struct soc_mmio_watchdog_t* soc_mmio_watchdog_p;
+ typedef struct soc_mmio_watchdog_t {
+ 	csx_p			csx;
+ 	soc_mmio_p		mmio;
+-	
+-	uint32_t		ppa_base;
+ }soc_mmio_watchdog_t;
+ 
+ int soc_mmio_watchdog_init(csx_p csx, soc_mmio_p mmio, soc_mmio_watchdog_h wdt);
+diff --git a/include/soc_omap_5912.h b/include/soc_omap_5912.h
+deleted file mode 100644
+index 2a17419..0000000
+--- a/include/soc_omap_5912.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-#pragma once
+-
+-#define MPU_TIMERt_BASE(_t)		(0xfffec500UL + ((_t - 1) << 8))
+-#define MPU_TIMER_(_t, _x)		(MPU_TIMERt_BASE(_t) + _MPU_TIMER_NAME(_t, _x))
+-#define MPU_TIMER_ENUM(_t, _x)  MPU_TIMER_NAME(_t, _x) = MPU_TIMER_(_t, _x)
+-
+-#define MPU_TIMER_NAME(_t, _x)  MPU_ ## _x ## _TIMER ## _t
+-#define _MPU_TIMER_NAME(_t, _x)  _MPU_ ## _x ## _TIMER
+-
+-enum {
+-    SOC_MMIO_START =        0xfffb0000UL,
+-    SOC_MPU_TIMER1_BASE =   MPU_TIMERt_BASE(1),
+-    SOC_MPU_TIMER2_BASE =   MPU_TIMERt_BASE(2),
+-    SOC_MPU_TIMER3_BASE =   MPU_TIMERt_BASE(3),
+-    SOC_MMIO_END =          0xfffeffffUL,
+-};
+-
+-#define SOC_MMIO_SIZE (1 + (SOC_MMIO_END - SOC_MMIO_START))
+-
+-/* **** module includes */
+-
+-#include "soc_omap_timer.h"
+-//#include "soc_omap_watchdog.h"
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-typedef struct soc_t** soc_h;
+-typedef struct soc_t* soc_p;
+-typedef struct soc_t {
+-	csx_p					csx;
+-	soc_omap_timer_t		timer[3];
+-}soc_t;
+-
+-const soc_t omap5912 = {
+-    SOC_MPU_TIMER_DECL(1),
+-    SOC_MPU_TIMER_DECL(2),
+-    SOC_MPU_TIMER_DECL(3),
+-};
+diff --git a/include/soc_omap_timer.h b/include/soc_omap_timer.h
+deleted file mode 100644
+index 2aaba9f..0000000
+--- a/include/soc_omap_timer.h
++++ /dev/null
+@@ -1,77 +0,0 @@
+-#pragma once
+-
+-/* **** module includes */
+-
+-typedef struct soc_omap_timer_t* soc_omap_timer_p;
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-
+-#include "csx_mmio_reg.h"
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-enum {
+-	_MPU_CNTL_TIMER,
+-	_MPU_LOAD_TIMER = 4,
+-	_MPU_READ_TIMER = 8,
+-};
+-
+-enum {
+-	_MPU_TIMER1_BASE = MPU_TIMERt_BASE(1),
+-	MPU_TIMER_ENUM(1, CNTL),
+-	MPU_TIMER_ENUM(1, LOAD),
+-	MPU_TIMER_ENUM(1, READ),
+-
+-	_MPU_TIMER2_BASE = MPU_TIMERt_BASE(2),
+-	MPU_TIMER_ENUM(2, CNTL),
+-	MPU_TIMER_ENUM(2, LOAD),
+-	MPU_TIMER_ENUM(2, READ),
+-
+-	_MPU_TIMER3_BASE = MPU_TIMERt_BASE(3),
+-	MPU_TIMER_ENUM(3, CNTL),
+-	MPU_TIMER_ENUM(3, LOAD),
+-	MPU_TIMER_ENUM(3, READ),
+-};
+-
+-
+-//CSX_MMIO_REG_DECL(MPU_CNTL_TIMER1, MPU_TIMERt_BASE(0), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_LOAD_TIMER1, MPU_TIMERt_BASE(0), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_READ_TIMER1, MPU_TIMERt_BASE(0), sizeof(uint32_t))
+-
+-//CSX_MMIO_REG_DECL(MPU_CNTL_TIMER2, MPU_TIMERt_BASE(1), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_LOAD_TIMER2, MPU_TIMERt_BASE(1), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_READ_TIMER2, MPU_TIMERt_BASE(1), sizeof(uint32_t))
+-
+-//CSX_MMIO_REG_DECL(MPU_CNTL_TIMER3, MPU_TIMERt_BASE(2), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_LOAD_TIMER3, MPU_TIMERt_BASE(2), sizeof(uint32_t))
+-//CSX_MMIO_REG_DECL(MPU_READ_TIMER3, MPU_TIMERt_BASE(2), sizeof(uint32_t))
+-
+-#define SOC_MPU_TIMER_DECL(_t) \
+-    .timer[_t - 1] = { \
+-		.r_mpu_cntl_timer = CSX_MMIO_REG_T_DECL(MPU_TIMER_(_t, CNTL), uint32_t), \
+-		.r_mpu_read_timer = CSX_MMIO_REG_T_DECL(MPU_TIMER_(_t, READ), uint32_t), \
+-		.r_mpu_load_timer = CSX_MMIO_REG_T_DECL(MPU_TIMER_(_t, LOAD), uint32_t), \
+-    }
+-
+-typedef struct soc_omap_timer_t {
+-	csx_p					csx;
+-
+-	uint64_t				cycle;
+-
+-	csx_mmio_reg_t			r_mpu_cntl_timer;
+-	csx_mmio_reg_t			r_mpu_load_timer;
+-	csx_mmio_reg_t			r_mpu_read_timer;
+-}soc_omap_timer_t;
+-
+-/* **** */
+-
+-void soc_omap_timer_init(csx_p csx, soc_omap_timer_p timer);
+diff --git a/notes.txt b/notes.txt
+deleted file mode 100644
+index 3812c16..0000000
+--- a/notes.txt
++++ /dev/null
+@@ -1,13 +0,0 @@
+-* Credits to inspiring projects, in alphabetical order.
+-
+-QEMU ... https://www.qemu.org/
+-SIMAVR ... https://github.com/buserror/simavr
+-
+-
+-* Project organization...
+-
+-CSX ... CORE / MMIO / SOC / TRACE --- Conceptual parts.
+-
+-CORE ... ARM / THUMB --- Physical core parts.
+-
+-SOC ... OMAP --- Physical soc parts.
+diff --git a/source/csx_data.c b/source/csx_data.c
+deleted file mode 100644
+index 692f9ef..0000000
+--- a/source/csx_data.c
++++ /dev/null
+@@ -1,46 +0,0 @@
+-#include "csx_data.h"
+-
+-/* **** */
+-
+-#include "bitfield.h"
+-
+-/* **** */
+-
+-void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, uint set)
+-{
+-	const void* p2data = p2dst + sdbp->offset;
+-
+-	uint value = csx_data_bit_read((void*)p2data, sdbp);
+-	BMAS(value, sdbp->bit, set);
+-
+-	csx_data_write((void*)p2data, value, sdbp->size);
+-}
+-
+-uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
+-{
+-	const void* p2data = p2src + sdbp->offset;
+-	
+-	const uint value = csx_data_read((void*)p2data, sdbp->size);
+-
+-	return(BEXT(value, sdbp->bit));
+-}
+-
+-uint32_t csx_data_read(void* p2src, uint8_t size)
+-{
+-	uint32_t res = 0;
+-
+-	uint8_t* src = (uint8_t*)p2src;
+-
+-	for(int i = 0; i < size; i++)
+-		res |= ((*src++) << (i << 3));
+-
+-	return(res);
+-}
+-
+-void csx_data_write(void* p2dst, uint32_t value, uint8_t size)
+-{
+-	uint8_t* dst = (uint8_t*)p2dst;
+-
+-	for(int i = 0; i < size; i++)
+-		*dst++ = value >> (i << 3) & 0xff;
+-}
+diff --git a/source/csx_mmio.c b/source/csx_mmio.c
+deleted file mode 100644
+index b37bff5..0000000
+--- a/source/csx_mmio.c
++++ /dev/null
+@@ -1,88 +0,0 @@
+-/* **** module includes */
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-
+-#include "csx_mmio.h"
+-#include "csx_data.h"
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-#define _CALLBACK(_x) (_CALLBACK_MPA(_x) >> 1)
+-#define _CALLBACK_MPA(_x) ((_x) - SOC_MMIO_START)
+-
+-#define csx2mmio csx->csx_mmio
+-
+-/* **** */
+-
+-void* _mmio_data(csx_mmio_p mmio, uint32_t mpa)
+-{
+-	return(&mmio->data[_CALLBACK_MPA(mpa) & 0x3ff00]);
+-}
+-
+-void* _mmio_data_mpa(csx_mmio_p mmio, uint32_t mpa)
+-{
+-	return(&mmio->data[_CALLBACK_MPA(mpa) & 0x3ffff]);
+-}
+-
+-void _mmio_data_write(csx_mmio_p mmio, uint32_t mpa, uint32_t data, size_t size)
+-{
+-	void* dst = _mmio_data(mmio, mpa);
+-
+-	dst += (mpa & 0x1ff);
+-
+-	csx_data_write(dst, data, size);
+-}
+-
+-/* **** */
+-
+-void* csx_mmio_data(csx_p csx, uint32_t mpa)
+-{
+-	return(_mmio_data(csx2mmio, mpa));
+-}
+-
+-void* csx_mmio_data_mpa(csx_p csx, uint32_t mpa)
+-{
+-	return(_mmio_data_mpa(csx2mmio, mpa));
+-}
+-
+-uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size)
+-{
+-	csx_mmio_p mmio = csx2mmio;
+-
+-	csx_mmio_callback_p cb = &mmio->read[_CALLBACK(mpa)];
+-	void* src = _mmio_data(mmio, mpa);
+-
+-	if(cb->rfn)
+-		return(cb->rfn(cb->param, src, mpa, size));
+-
+-	return(csx_data_read(src + (mpa & 0xff), size));
+-}
+-
+-void csx_mmio_register_read(csx_p csx, uint32_t mpa, csx_mmio_read_fn fn, void* param)
+-{
+-	csx_mmio_p mmio = csx2mmio;
+-
+-	csx_mmio_callback_p cb = &mmio->read[_CALLBACK(mpa)];
+-
+-	cb->rfn = fn;
+-	cb->param = param;
+-}
+-
+-void csx_mmio_register_write(csx_p csx, uint32_t mpa, csx_mmio_write_fn fn, void* param)
+-{
+-	csx_mmio_p mmio = csx2mmio;
+-
+-	csx_mmio_callback_p cb = &mmio->write[_CALLBACK(mpa)];
+-
+-	cb->wfn = fn;
+-	cb->param = param;
+-}
+diff --git a/source/soc.c b/source/soc.c
+index ab4662c..2cb21e6 100644
+--- a/source/soc.c
++++ b/source/soc.c
+@@ -1,7 +1,7 @@
+ #include "soc.h"
+ #include "soc_core.h"
+ #include "soc_core_cp15.h"
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "csx.h"
+ #include "csx_state.h"
+ 
+@@ -69,7 +69,7 @@ static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* d
+ 	if(src)
+ 		*src = dspao;
+ 	
+-	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
++	return(soc_data_read(dspao + PAGE_OFFSET(ppa), size));
+ }
+ 
+ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
+@@ -81,7 +81,7 @@ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void**
+ 	if(dst)
+ 		*dst = ddpao;
+ 	
+-	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
++	return(soc_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
+ }
+ 
+ /* **** */
+diff --git a/source/soc_mmio.c b/source/soc_mmio.c
+index 4f75bcc..598f209 100644
+--- a/source/soc_mmio.c
++++ b/source/soc_mmio.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ #include "soc_mmio_cfg.h"
+@@ -51,26 +51,15 @@
+ #define _MODULE(_x) \
+ 	((_MODULE_DATA_OFFSET(_x) >> 8) & 0x3ff)
+ 
+-#define _CALLBACK_MVA(_x) \
+-	((_x) - CSX_MMIO_BASE)
+-
+-#define _CALLBACK_DATA_OFFSET(_x) \
+-	(_CALLBACK_MVA(_x) & 0x3ff00)
+-	
+-#define _CALLBACK(_x) &mmio->callback[_CALLBACK_MVA(_x) >> 2]
+-
+-#define _CALLBACK_DATA(_x) &mmio->data[_CALLBACK_DATA_OFFSET(_x)]
+-
+ typedef void (*void_fn_p)(void*);
+ 
+ typedef struct soc_mmio_t* soc_mmio_p;
+ typedef struct soc_mmio_t {
+ 	csx_p					csx;
+ 
+-	uint8_t					data[CSX_MMIO_SIZE << 2];
++	uint8_t					data[CSX_MMIO_SIZE];
+ 	void*					param[0x400];
+ 	soc_mmio_peripheral_p	peripheral[0x400];
+-	soc_mmio_callback_t		callback[CSX_MMIO_SIZE_32];
+ 
+ 	soc_mmio_cfg_p			cfg;
+ 	soc_mmio_dpll_p			dpll;
+@@ -212,7 +201,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
+ 		if(value)
+ 		{
+ 			const uint32_t addr = tle->address;
+-			csx_data_write(&mpt.data[addr & 0xff], value, tle->size);
++			soc_data_write(&mpt.data[addr & 0xff], value, tle->size);
+ 		}
+ 	}
+ 	
+@@ -225,19 +214,6 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
+ 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
+ 	const soc_mmio_peripheral_p mp = mpt.mp;
+ 
+-	soc_mmio_callback_p cb = _CALLBACK(vaddr);
+-	if(cb->read.fn) {
+-		if(cb->read.name) {
+-			LOG("cycle = 0x%016llx, [0x%08x]: %s",
+-				mmio->csx->cycle, vaddr, cb->read.name);
+-		} else {
+-			LOG("cycle = 0x%016llx, [0x%08x]: ???",
+-				mmio->csx->cycle, vaddr);
+-		}
+-
+-		return(cb->read.fn(cb->read.param, _CALLBACK_DATA(vaddr), vaddr, size));
+-	}
+-	
+ 	ea_trace_p tl = mp ? mp->trace_list : trace_list;
+ 
+ 	assert(0 != ((mpt.offset + size) & 0xff));
+@@ -254,7 +230,7 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
+ 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
+ 	if(eat)
+ 	{
+-		uint32_t value = csx_data_read(&mpt.data[mpt.offset], size);
++		uint32_t value = soc_data_read(&mpt.data[mpt.offset], size);
+ 		switch(vaddr)
+ 		{
+ 			case	x0xfffe_0x6014:
+@@ -275,25 +251,6 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
+ 	return(0);
+ }
+ 
+-void soc_mmio_register_read(csx_p csx, uint32_t pa, soc_mmio_read_fn fn, void* param)
+-{
+-	soc_mmio_p mmio = csx->mmio;
+-	soc_mmio_callback_p cb = _CALLBACK(pa);
+-
+-	cb->read.fn = fn;
+-	cb->read.param = param;
+-}
+-	
+-
+-void soc_mmio_register_write(csx_p csx, uint32_t pa, soc_mmio_write_fn fn, void* param)
+-{
+-	soc_mmio_p mmio = csx->mmio;
+-	soc_mmio_callback_p cb = _CALLBACK(pa);
+-
+-	cb->write.fn = fn;
+-	cb->write.param = param;
+-}
+-
+ void soc_mmio_reset(soc_mmio_p mmio)
+ {
+ 	for(int i = 0; i < 0x400; i++)
+@@ -346,10 +303,6 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
+ 
+ 		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+ 
+-		soc_mmio_callback_p cb = _CALLBACK(tle->address);
+-		cb->read.name = tle->name;
+-		cb->write.name = tle->name;
+-
+ 		__mpt_t mpt; _soc_mmio_peripheral(mmio, tle->address, &mpt);
+ 
+ 		if(mpt.module != module) {
+@@ -359,7 +312,7 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
+ 
+ 		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
+ 			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
+-		csx_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
++		soc_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
+ 	}while(tl[i].address);
+ }
+ 
+@@ -368,19 +321,6 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
+ 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
+ 	const soc_mmio_peripheral_p mp = mpt.mp;
+ 
+-	soc_mmio_callback_p cb = _CALLBACK(vaddr);
+-	if(cb->write.fn) {
+-		if(cb->write.name) {
+-			LOG("cycle = 0x%016llx, [0x%08x]: %s",
+-				mmio->csx->cycle, vaddr, cb->write.name);
+-		} else {
+-			LOG("cycle = 0x%016llx, [0x%08x]: ???",
+-				mmio->csx->cycle, vaddr);
+-		}
+-
+-		return(cb->write.fn(cb->write.param, _CALLBACK_DATA(vaddr), vaddr, value, size));
+-	}
+-
+ 	ea_trace_p tl = mp ? mp->trace_list : trace_list;
+ 
+ 	if(0 && mp)
+@@ -407,7 +347,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
+ 		{
+ 		}
+ 
+-		csx_data_write(&mpt.data[mpt.offset], value, size);
++		soc_data_write(&mpt.data[mpt.offset], value, size);
+ 	} else {
+ 		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
+ 		LOG_ACTION(exit(1));
+diff --git a/source/soc_mmio_dpll.c b/source/soc_mmio_dpll.c
+index 818908d..d44acfa 100644
+--- a/source/soc_mmio_dpll.c
++++ b/source/soc_mmio_dpll.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_dpll.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -54,7 +54,7 @@ void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value,
+ 			}	break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+ 	}
+diff --git a/source/soc_mmio_mpu.c b/source/soc_mmio_mpu.c
+index bc1201c..567a0bd 100644
+--- a/source/soc_mmio_mpu.c
++++ b/source/soc_mmio_mpu.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_mpu.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -95,7 +95,7 @@ static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, uint32_t
+ 				break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+ 	}
+diff --git a/source/soc_mmio_mpu_mmc.c b/source/soc_mmio_mpu_mmc.c
+index 2cdbe6f..b608934 100644
+--- a/source/soc_mmio_mpu_mmc.c
++++ b/source/soc_mmio_mpu_mmc.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_mpu_mmc.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -42,7 +42,7 @@ UNUSED_FN static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_
+ 	const soc_mmio_mpu_mmc_p mmc = param;
+ 	const csx_p csx = mmc->csx;
+ 
+-	uint32_t value = csx_data_read(data + (addr & 0xff), size);;
++	uint32_t value = soc_data_read(data + (addr & 0xff), size);;
+ 
+ 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
+ 	if(eat)
+@@ -72,7 +72,7 @@ UNUSED_FN static void soc_mmio_mpu_mmc_write(void* param, void* data, uint32_t a
+ 				break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+ 	}
+diff --git a/source/soc_mmio_ocp.c b/source/soc_mmio_ocp.c
+index 1bad6cc..c7ff446 100644
+--- a/source/soc_mmio_ocp.c
++++ b/source/soc_mmio_ocp.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_ocp.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -98,7 +98,7 @@ static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t
+ 			}	break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG("addr = 0x%08x, cs = 0x%02x", addr, addr & 0xc);
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+diff --git a/source/soc_mmio_os_timer.c b/source/soc_mmio_os_timer.c
+index db762f8..5893156 100644
+--- a/source/soc_mmio_os_timer.c
++++ b/source/soc_mmio_os_timer.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_os_timer.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -29,7 +29,7 @@ static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, u
+ 	const soc_mmio_os_timer_p ost = param;
+ 	const csx_p csx = ost->csx;
+ 
+-	uint32_t value = csx_data_read(data + (addr & 0xff), size);;
++	uint32_t value = soc_data_read(data + (addr & 0xff), size);;
+ 
+ 	const ea_trace_p eat = soc_mmio_trace(csx->mmio, trace_list, addr);
+ 	if(eat)
+@@ -63,7 +63,7 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
+ 				break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+ 	}
+diff --git a/source/soc_mmio_timer.c b/source/soc_mmio_timer.c
+index 40b0713..4abb77a 100644
+--- a/source/soc_mmio_timer.c
++++ b/source/soc_mmio_timer.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_timer.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -22,12 +22,6 @@
+ #define MPU_LOAD_TIMER(_t)	_TIMER((_t), 0x04)
+ #define MPU_READ_TIMER(_t)	_TIMER((_t), 0x08)
+ 
+-enum {
+-	_MPU_CNTL_TIMER,
+-	_MPU_LOAD_TIMER = 4,
+-	_MPU_READ_TIMER = 8,
+-};
+-
+ #define MMIO_LIST_1 \
+ 	MMIO_TRACE_LIST_HEAD(1) \
+ 	MMIO(0xfffe, 0xc500, 0x0000, 0x0000, 32, MEM_RW, MPU_CNTL_TIMER_1) \
+@@ -62,92 +56,62 @@ MMIO_ENUM_LIST
+ #include "soc_mmio_ea_trace_list.h"
+ MMIO_TRACE_LIST
+ 
+-/* **** */
+-
+-SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _AR, 1, sizeof(uint32_t));
+-SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _CLOCK_ENABLE, 5, sizeof(uint32_t));
+-SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _FREE, 6, sizeof(uint32_t));
+-SOC_DATA_BIT_DECL(_MPU_CNTL_TIMER, _ST, 0, sizeof(uint32_t));
+-
+-static void _mpu_cntl_timer_w(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
++static uint32_t soc_mmio_timer_read(void* param, void* data, uint32_t addr, uint8_t size)
+ {
+-	const soc_mmio_timer_unit_p smtu = param;
+-	const soc_mmio_timer_p timer = smtu->timer;
+-	const csx_p csx = timer->csx;
+-
+-//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
++	const soc_mmio_timer_p t = param;
++	const csx_p csx = t->csx;
+ 
+-	csx_data_write(data + _MPU_CNTL_TIMER, value, size);
++	uint32_t value = 0;
+ 
+-	if(csx_data_bit_read(data, &_MPU_CNTL_TIMER_ST)) {
+-		smtu->base = csx->cycle;
+-		if(!smtu->count)
+-			smtu->count = csx_data_read(data + _MPU_LOAD_TIMER, sizeof(uint32_t));
++	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
++	if(eat)
++	{
++		const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
++
++		switch(addr)
++		{
++			case MPU_READ_TIMER(0):
++			case MPU_READ_TIMER(1):
++			case MPU_READ_TIMER(2):
++				value = soc_data_read(data + (addr & 0xff), size);
++				value -= (csx->cycle - t->base[timer]);
++				break;
++			default:
++				value = soc_data_read(data + (addr & 0xff), size);
++				break;
++		}
++	} else {
++		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
+ 	}
+ 
+-	LOG("base = 0x%016"PRIx64", count = 0x%08x, value = 0x%08x",
+-		smtu->base, smtu->count, value);
+-
+-	UNUSED(addr);
++	return(value);
+ }
+ 
+-static void _mpu_load_timer_w(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
++static void soc_mmio_timer_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+ {
+-//	const soc_mmio_timer_unit_p smtu = param;
+-//	const soc_mmio_timer_p timer = smtu->timer;
+-//	const csx_p csx = timer->csx;
+-
+-//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+-	
+-	LOG("value = 0x%08x", value);
+-	
+-	csx_data_write(data + _MPU_LOAD_TIMER, value, size);
+-
+-	UNUSED(addr, data, param, value, size);
+-}
+-
+-static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t addr, uint8_t size)
+-{
+-	const soc_mmio_timer_unit_p smtu = param;
+-	const soc_mmio_timer_p timer = smtu->timer;
+-	const csx_p csx = timer->csx;
+-
+-//	const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
+-
+-	uint32_t elapsed = csx->cycle - smtu->base;
+-	smtu->base = csx->cycle;
+-
+-	if(csx_data_bit_read(data, &_MPU_CNTL_TIMER_ST)) {
+-		int32_t delta_count = smtu->count - elapsed;
+-
+-		uint reload = elapsed > smtu->count;
+-
+-		smtu->count -= elapsed;
+-
+-		uint ar = reload ? csx_data_bit_read(data, &_MPU_CNTL_TIMER_AR) : 0;
+-
+-		if(ar) {
+-			smtu->count = 0;
+-
+-			uint32_t load = csx_data_read(data + _MPU_LOAD_TIMER, size);
+-
+-			smtu->count = load + delta_count;
++	const soc_mmio_timer_p t = param;
++	const csx_p csx = t->csx;
+ 
+-			LOG(":AR: base = 0x%016"PRIx64", count = 0x%08x, elapsed = 0x%08x, load = 0x%08x, delta = 0x%08x",
+-				smtu->base, smtu->count, elapsed, load, delta_count);
+-		} else {
+-			LOG(" base = 0x%016"PRIx64", count = 0x%08x, elapsed = 0x%08x, delta = 0x%08x",
+-				smtu->base, smtu->count, elapsed, delta_count);
++	const ea_trace_p eat = soc_mmio_trace(csx->mmio, 0, addr);
++	if(eat)
++	{
++		const uint8_t timer = ((addr - CSX_MMIO_TIMER_BASE) >> 8) & 3;
++
++		switch(addr)
++		{
++			case MPU_LOAD_TIMER(0):
++			case MPU_LOAD_TIMER(1):
++			case MPU_LOAD_TIMER(2):
++				t->base[timer] = csx->cycle;
++				break;
+ 		}
+-	}
+-	
+-	return(smtu->count);
+ 
+-	UNUSED(addr);
++		soc_data_write(data + (addr & 0xff), value, size);
++	} else {
++		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
++	}
+ }
+ 
+-/* **** */
+-
+ static void soc_mmio_timer_reset(void* param,
+ 	void* data,
+ 	soc_mmio_peripheral_p mp)
+@@ -162,7 +126,7 @@ static void soc_mmio_timer_reset(void* param,
+ 
+ //	soc_mmio_trace_reset(t->mmio, mp->trace_list, module);
+ 
+-	t->unit[timer].base = 0;
++	t->base[timer] = 0;
+ 
+ 	UNUSED(data, mp);
+ }
+@@ -173,12 +137,25 @@ static soc_mmio_peripheral_t timer_peripheral[3] = {
+ 		.trace_list = trace_list_1,
+ 
+ 		.reset = soc_mmio_timer_reset,
++
++		.read = soc_mmio_timer_read,
++		.write = soc_mmio_timer_write
+ 	}, {
+ 		.base = CSX_MMIO_TIMER(1),
+ 		.trace_list = trace_list_2,
++
++		.reset = 0,
++
++		.read = soc_mmio_timer_read,
++		.write = soc_mmio_timer_write
+ 	}, {
+ 		.base = CSX_MMIO_TIMER(2),
+ 		.trace_list = trace_list_3,
++
++		.reset = 0,
++
++		.read = soc_mmio_timer_read,
++		.write = soc_mmio_timer_write
+ 	},
+ };
+ 
+@@ -198,14 +175,6 @@ int soc_mmio_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_timer_h h2t)
+ 	for(int i = 0; i < 3; i++) {
+ 		t->mp[i] = &timer_peripheral[i];
+ 		soc_mmio_peripheral(mmio, t->mp[i], t);
+-		
+-		soc_mmio_timer_unit_p smtu = &t->unit[i];
+-		
+-		smtu->timer = t;
+-		
+-		soc_mmio_register_read(csx, MPU_READ_TIMER(i), _mpu_read_timer_r, smtu);
+-		soc_mmio_register_write(csx, MPU_CNTL_TIMER(i), _mpu_cntl_timer_w, smtu);
+-		soc_mmio_register_write(csx, MPU_LOAD_TIMER(i), _mpu_load_timer_w, smtu);
+ 	}
+ 
+ 	return(0);
+diff --git a/source/soc_mmio_uart.c b/source/soc_mmio_uart.c
+index 47cb775..9ec4a7b 100644
+--- a/source/soc_mmio_uart.c
++++ b/source/soc_mmio_uart.c
+@@ -1,6 +1,6 @@
+ #include "soc_mmio_uart.h"
+ 
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc_mmio_omap.h"
+ 
+ /* **** */
+@@ -41,8 +41,9 @@ enum {
+ 	SYSS = 0x58,
+ };
+ 
+-SOC_DATA_BIT_DECL(SYSC, _SoftReset, 2, sizeof(uint8_t));
+-SOC_DATA_BIT_DECL(SYSC, _ResetDone, 0, sizeof(uint8_t));
++soc_data_bit_t SYSC_SoftReset = { SYSC, 2, sizeof(uint8_t) };
++
++soc_data_bit_t SYSS_ResetDone = { SYSS, 0 , sizeof(uint8_t) };
+ 
+ /* **** */
+ 
+@@ -139,12 +140,12 @@ static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, uint32_t
+ 				LOG_END(", AutoIdle: %01u", BEXT(value, 0));
+ 				if(value & 2)
+ 					soc_mmio_peripheral_reset(uart->mmio, uart_peripheral);
+-				csx_data_bit_clear(data, &SYSC_SoftReset);
+-				csx_data_bit_set(data, &SYSC_ResetDone);
++				soc_data_bit_clear(data, &SYSC_SoftReset);
++				soc_data_bit_set(data, &SYSS_ResetDone);
+ 				break;
+ 		}
+ 
+-		csx_data_write(data + (addr & 0xff), value, size);
++		soc_data_write(data + (addr & 0xff), value, size);
+ 	} else {
+ 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
+ 	}
+diff --git a/source/soc_mmu.c b/source/soc_mmu.c
+index f7ca5fc..fa5b950 100644
+--- a/source/soc_mmu.c
++++ b/source/soc_mmu.c
+@@ -1,7 +1,7 @@
+ #include "soc_mmu.h"
+ 
+ #include "soc_core_cp15.h"
+-#include "csx_data.h"
++#include "soc_data.h"
+ #include "soc.h"
+ 
+ /* **** */
+@@ -107,7 +107,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
+ 		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
+ 
+ 		if(src)
+-			return(csx_data_read(src + PAGE_OFFSET(va), size));
++			return(soc_data_read(src + PAGE_OFFSET(va), size));
+ 
+ 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+ 	}
+@@ -131,7 +131,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
+ 		src = soc_tlb_read(csx->tlb, va, &tlbe);
+ 
+ 		if(src)
+-			return(csx_data_read(src + PAGE_OFFSET(va), size));
++			return(soc_data_read(src + PAGE_OFFSET(va), size));
+ 
+ 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+ 	}
+@@ -155,7 +155,7 @@ void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
+ 		dst = soc_tlb_write(csx->tlb, va, &tlbe);
+ 
+ 		if(dst)
+-			return(csx_data_write(dst + PAGE_OFFSET(va), data, size));
++			return(soc_data_write(dst + PAGE_OFFSET(va), data, size));
+ 
+ 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
+ 	}
+diff --git a/source/soc_omap_5912.c b/source/soc_omap_5912.c
+deleted file mode 100644
+index ef5804d..0000000
+--- a/source/soc_omap_5912.c
++++ /dev/null
+@@ -1,25 +0,0 @@
+-/* **** module includes */
+-
+-#include "soc_omap_timer.h"
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-#include "soc.h"
+-
+-#include "csx_mmio.h"
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-void soc_omap5912_init(csx_p csx, soc_p soc) {
+-    for(int i = 0; i < 3; i++)
+-        soc_omap_timer_init(csx, &soc->timer[i]);
+-//  soc_omap_watchdog_init(csx, &soc->watchdog);
+-}
+diff --git a/source/soc_omap_timer.c b/source/soc_omap_timer.c
+deleted file mode 100644
+index 293fa33..0000000
+--- a/source/soc_omap_timer.c
++++ /dev/null
+@@ -1,52 +0,0 @@
+-/* **** module includes */
+-
+-#include "soc_omap_timer.h"
+-
+-/* **** project includes */
+-
+-#include "soc_omap_5912.h"
+-
+-#include "csx.h"
+-
+-/* **** local includes */
+-
+-/* **** system includes */
+-
+-#include <stdint.h>
+-
+-/* **** */
+-
+-CSX_MMIO_DATAREG_GET(MPU_CNTL_TIMER, uint32_t)
+-CSX_MMIO_DATAREG_GET(MPU_LOAD_TIMER, uint32_t)
+-CSX_MMIO_DATAREG_GET(MPU_READ_TIMER, uint32_t)
+-
+-CSX_MMIO_DATAREGBIT_GET(MPU_CNTL_TIMER, AR, 1);
+-CSX_MMIO_DATAREGBIT_GET(MPU_CNTL_TIMER, CLOCK_ENABLE, 5, sizeof(uint32_t));
+-CSX_MMIO_DATAREGBIT_GET(MPU_CNTL_TIMER, FREE, 6, sizeof(uint32_t));
+-CSX_MMIO_DATAREGBIT_GET(MPU_CNTL_TIMER, ST, 0, sizeof(uint32_t));
+-
+-static void _mpu_cntl_timer_w(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+-{
+-	const soc_omap_timer_p sot = param;
+-	const csx_p csx = sot->csx;
+-
+-	MPU_CNTL_TIMER_SET(data, value);
+-
+-	if(MPU_CNTL_TIMER_ST(data)) {
+-		sot->base = csx->cycle;
+-		if(!sot->count)
+-			sot->count = MPU_LOAD_TIMER();
+-	}
+-
+-	LOG("base = 0x%016"PRIx64", count = 0x%08x, value = 0x%08x",
+-		sot->base, sot->count, value);
+-
+-	UNUSED(addr);
+-}
+-
+-void soc_omap_timer_init(csx_p csx, soc_omap_timer_p t)
+-{
+-	csx_mmio_register_read(csx, t->r_mpu_read_timer, _mpu_read_timer_r, sot);
+-	csx_mmio_register_write(csx, t->r_mpu_cntl_timer, _mpu_cntl_timer_w, sot);
+-	csx_mmio_register_write(csx, t->r_mpu_load_timer, _mpu_load_timer_w, sot);
+-}

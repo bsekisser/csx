@@ -12,7 +12,6 @@
 #include "soc_mmio_ocp.h"
 #include "soc_mmio_gp_timer.h"
 #include "soc_mmio_os_timer.h"
-#include "soc_mmio_timer.h"
 #include "soc_mmio_uart.h"
 #include "soc_mmio_watchdog.h"
 
@@ -71,7 +70,6 @@ typedef struct soc_mmio_t {
 	soc_mmio_ocp_p			ocp;
 	soc_mmio_gp_timer_p		gp_timer;
 	soc_mmio_os_timer_p		os_timer;
-	soc_mmio_timer_p		timer;
 	soc_mmio_uart_p			uart;
 	soc_mmio_watchdog_p		wdt;
 
@@ -165,7 +163,7 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 	ERR(err = soc_mmio_ocp_init(csx, mmio, &mmio->ocp));
 	ERR(err = soc_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = soc_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
-	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer));
+//	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer));
 	ERR(err = soc_mmio_uart_init(csx, mmio, &mmio->uart));
 	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
@@ -216,6 +214,11 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
+	csx_p csx = mmio->csx;
+
+	if(csx_mmio_has_callback_read(csx, vaddr))
+		return(csx_mmio_read(csx, vaddr, size));
+
 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
 	const soc_mmio_peripheral_p mp = mpt.mp;
 
@@ -323,6 +326,11 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
+	csx_p csx = mmio->csx;
+
+	if(csx_mmio_has_callback_write(csx, vaddr))
+		return(csx_mmio_write(csx, vaddr, value, size));
+
 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
 	const soc_mmio_peripheral_p mp = mpt.mp;
 

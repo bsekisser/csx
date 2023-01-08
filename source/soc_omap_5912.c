@@ -35,7 +35,7 @@ int soc_omap5912_init(csx_p csx, soc_h h2soc)
 
 	/* **** */
 
-	for(int i = 0; i < 3; i++)
+	for(int i = 1; i <= 3; i++)
 		ERR(err = soc_omap_timer_init(csx, &soc->timer[i], i));
 //  soc_omap_watchdog_init(csx, &soc->watchdog);
 

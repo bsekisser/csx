@@ -41,6 +41,24 @@ void* csx_mmio_data_offset(csx_p csx, uint32_t mpa)
 	return(_mmio_data_offset(CSX_MMIO, mpa));
 }
 
+int csx_mmio_has_callback_read(csx_p csx, uint32_t mpa)
+{
+	csx_mmio_p mmio = CSX_MMIO;
+
+	csx_mmio_callback_p cb = &mmio->read[_CALLBACK(mpa)];
+
+	return(0 != cb->rfn);
+}
+
+int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa)
+{
+	csx_mmio_p mmio = CSX_MMIO;
+
+	csx_mmio_callback_p cb = &mmio->write[_CALLBACK(mpa)];
+
+	return(0 != cb->wfn);
+}
+
 int csx_mmio_init(csx_p csx, csx_mmio_h p2mmio, void** mmio_data)
 {
 	int err = 0;
@@ -113,7 +131,7 @@ void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
 
 	if(cb->wfn) {
 		void* dst = _mmio_data_page(mmio, mpa);
-		return(cb->wfn(cb->param, dst, data, mpa, size));
+		return(cb->wfn(cb->param, dst, mpa, data, size));
 	}
 
 	void* dst = _mmio_data_offset(mmio, mpa);

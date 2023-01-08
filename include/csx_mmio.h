@@ -28,8 +28,8 @@ typedef struct csx_mmio_callback_t* csx_mmio_callback_p;
 
 #define CSX_CALLBACK_COUNT (SOC_MMIO_SIZE >> 1)
 
-typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
-typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
+typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t mpa, uint8_t size);
+typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size);
 
 typedef struct csx_mmio_callback_t {
 	void* param;
@@ -51,18 +51,80 @@ typedef struct csx_mmio_t {
 
 void* csx_mmio_data_offset(csx_p csx, uint32_t mpa);
 
-__attribute__((unused))
-static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, uint32_t* value, size_t size)
+static inline uint32_t csx_mmio_datareg_get(void* pat, uint32_t mpao, size_t size)
 {
 	void* sdmpao = pat + mpao;
 
+	return(csx_data_read(sdmpao, size));
+}
+
+enum {
+	_MMIO_AND,
+	_MMIO_OR,
+	_MMIO_BIC,
+	_MMIO_EOR,
+	_MMIO_TEQ,
+	_MMIO_XOR,
+};
+
+static inline uint32_t csx_mmio_datareg_rmw(
+	void* pat,
+	uint32_t mpao,
+	uint32_t value,
+	size_t size,
+	uint8_t action)
+{
+	void* sdmpao = pat + mpao;
+	int wb = 1;
+
+	uint32_t data = csx_data_read(sdmpao, size);
+
+	switch(action) {
+		case _MMIO_AND:
+			data &= value;
+			break;
+		case _MMIO_BIC:
+			data &= ~value;
+			break;
+		case _MMIO_OR:
+			data |= value;
+			break;
+		case _MMIO_TEQ:
+			wb = 0;
+			__attribute__((fallthrough));
+		case _MMIO_EOR:
+		case _MMIO_XOR:
+			data ^= value;
+			break;
+	}
+
+	if(wb)
+		csx_data_write(sdmpao, data, size);
+
+	return(data);
+}
+
+
+static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, uint32_t value, size_t size)
+{
+	void* sdmpao = pat + mpao;
+
+	csx_data_write(sdmpao, value, size);
+}
+
+__attribute__((unused))
+static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, uint32_t* value, size_t size)
+{
 	if(value) {
-		csx_data_write(sdmpao, *value, size);
+		csx_mmio_datareg_set(pat, mpao, *value, size);
 		return(*value);
 	}
 
-	return(csx_data_read(sdmpao, size));
+	return(csx_mmio_datareg_get(pat, mpao, size));
 }
+
+int csx_mmio_has_callback_read(csx_p csx, uint32_t mpa);
+int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa);
 
 int csx_mmio_init(csx_p csx, csx_mmio_h mmio, void** mmio_data);
 
