@@ -13,7 +13,6 @@
 #include "soc_mmio_gp_timer.h"
 #include "soc_mmio_os_timer.h"
 #include "soc_mmio_uart.h"
-#include "soc_mmio_watchdog.h"
 
 /* **** */
 
@@ -71,9 +70,6 @@ typedef struct soc_mmio_t {
 	soc_mmio_gp_timer_p		gp_timer;
 	soc_mmio_os_timer_p		os_timer;
 	soc_mmio_uart_p			uart;
-	soc_mmio_watchdog_p		wdt;
-
-//	soc_mmio_dsp_p			dsp;
 }soc_mmio_t;
 
 typedef struct __mpt_t* __mpt_p;
@@ -163,9 +159,8 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 	ERR(err = soc_mmio_ocp_init(csx, mmio, &mmio->ocp));
 	ERR(err = soc_mmio_gp_timer_init(csx, mmio, &mmio->gp_timer));
 	ERR(err = soc_mmio_os_timer_init(csx, mmio, &mmio->os_timer));
-//	ERR(err = soc_mmio_timer_init(csx, mmio, &mmio->timer));
 	ERR(err = soc_mmio_uart_init(csx, mmio, &mmio->uart));
-	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
+//	ERR(err = soc_mmio_watchdog_init(csx, mmio, &mmio->wdt));
 
 	return(err);
 }

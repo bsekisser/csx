@@ -6,6 +6,7 @@ typedef struct csx_mmio_t** csx_mmio_h;
 typedef struct csx_mmio_t* csx_mmio_p;
 
 typedef struct csx_mmio_callback_t* csx_mmio_callback_p;
+typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
 
 /* **** soc includes */
 
@@ -32,12 +33,26 @@ typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t mpa, uint
 typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size);
 
 typedef struct csx_mmio_callback_t {
+	const char* name;
 	void* param;
 	union {
 		csx_mmio_read_fn rfn;
 		csx_mmio_write_fn wfn;
 	};
+	uint8_t size;
 }csx_mmio_callback_t;
+
+typedef struct csx_mmio_trace_t {
+	const char*	name;
+
+	uint32_t	mpa;
+	uint32_t	reset_value;
+
+	struct {
+		uint8_t	access:2;
+		uint8_t	size:4;
+	};
+}csx_mmio_trace_t;
 
 typedef struct csx_mmio_t {
 	csx_p csx;
@@ -45,6 +60,10 @@ typedef struct csx_mmio_t {
 
 	csx_mmio_callback_t read[CSX_CALLBACK_COUNT];
 	csx_mmio_callback_t write[CSX_CALLBACK_COUNT];
+	
+	uint8_t reset_value[SOC_MMIO_SIZE];
+	csx_mmio_trace_p trace_list[0x400];
+	uint8_t trace_list_count;
 }csx_mmio_t;
 
 /* **** function prototypes */
@@ -132,6 +151,7 @@ uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size);
 void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size);
 
 int csx_mmio_register_read(csx_p csx, csx_mmio_read_fn fn, uint32_t mpa, void* param);
+int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p fn);
 int csx_mmio_register_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void* param);
 
 /* **** */

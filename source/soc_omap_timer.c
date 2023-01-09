@@ -101,12 +101,14 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 	if(!MPU_CNTL_TIMER_RMW(data, value, _MMIO_TEQ))
 		return;
 
-	LOG("mpa = 0x%08x, value = 0x%08x, size = 0x%08x", mpa, value, size);
+	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
+		csx->cycle, size, mpa, value);
+
 	LOG_START("\n\tRESERVED[31:7] = 0x%08x", mlBFEXT(value, 31, 7));
 		_LOG_(", FREE[6] = %01u", BEXT(value, 6));
 		_LOG_(", CLOCK_ENABLE[5] = %01u", BEXT(value, 5));
 		uint8_t ptv = mlBFEXT(value, 4, 2);
-		_LOG_(", PTV[4:2] = %01u(%02x)", ptv, 1 << ptv);
+		_LOG_(", PTV[4:2] = %01u(%03u)", ptv, 2 << ptv);
 		_LOG_(", AR[1] = %01u", BEXT(value, 1));
 		_LOG_(", ST[0] = %01u", BEXT(value, 0));
 	LOG_END();
@@ -122,40 +124,33 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 		sot->count = MPU_LOAD_TIMER(data, size);
 	} else
 		__timer_update_count(sot, data);
-
-	UNUSED(mpa);
 }
 
 static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size)
 {
 	const soc_omap_timer_p sot = param;
-//	const csx_p csx = sot->csx;
+	const csx_p csx = sot->csx;
 
-	LOG_START("mpa = 0x%08x, value = 0x%08x, size = 0x%08x", mpa, value, size);
-	LOG_END(", cycle = 0x%016"PRIx64", count = 0x%08x, value = 0x%08x",
-		sot->cycle, sot->count, value);
+	LOG_START("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
+		csx->cycle, size, mpa, value);
+	LOG_END(", count = 0x%08x", sot->count);
 
 	__timer_update_count(sot, data);
 
 	MPU_LOAD_TIMER_SET(data, value, size);
-
-	UNUSED(mpa);
 }
 
 static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, uint8_t size)
 {
 	const soc_omap_timer_p sot = param;
-//	const csx_p csx = sot->csx;
-
-	LOG_START("mpa = 0x%08x, size = 0x%08x", mpa, size);
-	LOG_END(", cycle = 0x%016"PRIx64", count = 0x%08x",
-		sot->cycle, sot->count);
+	const csx_p csx = sot->csx;
 
 	uint32_t count = __timer_update_count(sot, data);
 
-	return(count);
+	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x",
+		csx->cycle, size, mpa, count);
 
-	UNUSED(mpa, size);
+	return(count);
 }
 
 int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
