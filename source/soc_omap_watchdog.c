@@ -34,6 +34,36 @@ csx_mmio_trace_t trace_list[] = {
 
 /* **** */
 
+MMIO_ESAC(MPU_WDT, TIMER_MODE)
+
+
+
+/* **** */
+
+static void _soc_omap_wdt_reset(void* param)
+{
+	soc_omap_watchdog_p sow = param;
+	
+	WDT_TIMER_CNTL_SET(sow, 0x00000e02);
+	WDT_TIMER_LOAD_SET(sow, 0x0000ffff);
+	WDT_TIMER_MODE_SET(sow, 0x00008000);
+}
+
+static uint32_t _soc_omap_wdt_read(void* param, uint32_t mpa, uint8_t size)
+{
+	soc_omap_watchdog_p sow = param;
+	
+	switch(_MODULE_DATA_OFFSET(mpa)) {
+		case _MPU_WDT_TIMER_READ:
+			_wdt_update(sow);
+		case _MPU_WDT_TIMER_CNTL:
+		case _MPU_WDT_TIMER_MODE:
+			break;
+	}
+}
+
+/* **** */
+
 int soc_omap_watchdog_init(csx_p csx, soc_omap_watchdog_h h2sow)
 {
 	soc_omap_watchdog_p sow = calloc(1, sizeof(soc_omap_watchdog_t));
@@ -44,7 +74,11 @@ int soc_omap_watchdog_init(csx_p csx, soc_omap_watchdog_h h2sow)
 	
 	/* **** */
 	
-	csx_mmio_register_trace_list(csx, trace_list);
+	csx_mmio_register_read(csx, SOC_MMIO_WDT_BASE, _soc_omap_wdt_read, sow);
+	csx_mmio_register_write(csx, SOC_MMIO_WDT_BASE, _soc_omap_wdt_write, sow);
+	
+	csx_mmio_register_reset(csx, _soc_omap_watchdog_reset, sow);
+	csx_mmio_register_reset(csx, _soc_omap_wdt_reset, sow);
 	
 	/* **** */
 	

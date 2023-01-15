@@ -27,43 +27,23 @@ typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
 
 /* **** */
 
-#define CSX_CALLBACK_COUNT (SOC_MMIO_SIZE >> 1)
-
-typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t mpa, uint8_t size);
-typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size);
+#define CSX_MODULE_COUNT ((SOC_MMIO_SIZE >> 8) & 0x3ff)
 
 typedef struct csx_mmio_callback_t {
-	const char* name;
 	void* param;
 	union {
-		csx_mmio_read_fn rfn;
-		csx_mmio_write_fn wfn;
+		csx_callback_read_fn rfn;
+		csx_callback_write_fn wfn;
 	};
-	uint8_t size;
 }csx_mmio_callback_t;
-
-typedef struct csx_mmio_trace_t {
-	const char*	name;
-
-	uint32_t	mpa;
-	uint32_t	reset_value;
-
-	struct {
-		uint8_t	access:2;
-		uint8_t	size:4;
-	};
-}csx_mmio_trace_t;
 
 typedef struct csx_mmio_t {
 	csx_p csx;
 	uint8_t data[SOC_MMIO_SIZE];
 
-	csx_mmio_callback_t read[CSX_CALLBACK_COUNT];
-	csx_mmio_callback_t write[CSX_CALLBACK_COUNT];
-	
-	uint8_t reset_value[SOC_MMIO_SIZE];
-	csx_mmio_trace_p trace_list[0x400];
-	uint8_t trace_list_count;
+	csx_mmio_callback_t read[CSX_MODULE_COUNT];
+	csx_mmio_callback_t write[CSX_MODULE_COUNT];
+	csx_callback_reset_fn reset[CSX_MODULE_COUNT];
 }csx_mmio_t;
 
 /* **** function prototypes */
@@ -142,16 +122,26 @@ static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, uint32_t* value, si
 	return(csx_mmio_datareg_get(pat, mpao, size));
 }
 
-int csx_mmio_has_callback_read(csx_p csx, uint32_t mpa);
-int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa);
+csx_callback_read_fn csx_mmio_has_callback_read(csx_p csx, uint32_t mpa);
+csx_callback_write_fn csx_mmio_has_callback_write(csx_p csx, uint32_t mpa);
 
 int csx_mmio_init(csx_p csx, csx_mmio_h mmio, void** mmio_data);
+
+void csx_mmio_module_reset(csx_p csx, uint32_t mpa);
 
 uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size);
 void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size);
 
-int csx_mmio_register_read(csx_p csx, csx_mmio_read_fn fn, uint32_t mpa, void* param);
-int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p fn);
-int csx_mmio_register_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void* param);
+int csx_mmio_register_module_read(csx_p csx, csx_callback_read_fn fn, uint32_t mpa, void* param);
+int csx_mmio_register_reset(csx_p csx, csx_callback_reset_fn fn, uint32_t mpa, void* param);
+int csx_mmio_register_module_write(csx_p csx, csx_callback_write_fn fn, uint32_t mpa, void* param);
 
 /* **** */
+
+#define CSX_MMIO_TRACE_READ(_csx, _mpa, _size, _data) \
+	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x", \
+			_csx->cycle, _size, _mpa, _data);
+
+#define CSX_MMIO_TRACE_WRITE(_csx, _mpa, _size, _data) \
+	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x", \
+			_csx->cycle, _size, _mpa, _data);

@@ -1,6 +1,8 @@
 /* **** module includes */
 
 #include "soc_omap_timer.h"
+#include "soc_mmio_uart.h"
+#include "soc_omap_watchdog.h"
 
 /* **** project includes */
 
@@ -37,7 +39,9 @@ int soc_omap5912_init(csx_p csx, soc_h h2soc)
 
 	for(int i = 1; i <= 3; i++)
 		ERR(err = soc_omap_timer_init(csx, &soc->timer[i], i));
-	soc_omap_watchdog_init(csx, &soc->watchdog);
+	for(int i = 1; i <= 3; i++)
+		ERR(err = soc_omap_uart_init(csx, &soc->uart[i], i));
+	ERR(err = soc_omap_watchdog_init(csx, &soc->watchdog));
 
 	return(err);
 }

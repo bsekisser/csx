@@ -55,10 +55,10 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
 {
 	csx_p csx = sot->csx;
 
-	if(!MPU_CNTL_TIMER_ST(data))
+	if(!BEXT(sot->cntl, _MPU_CNTL_TIMER_ST))
 		return(0);
 
-	if(!MPU_CNTL_TIMER_CLOCK_ENABLE(data))
+	if(!BEXT(sot->cntl, _MPU_CNTL_TIMER_CLOCK_ENABLE))
 		return(0);
 
 	uint64_t elapsed_cycles = csx->cycle - sot->cycle;
@@ -93,6 +93,14 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
 
 /* **** */
 
+static void _mpu_cntl_timer_r(void* param, uint32_t mpa, uint8_t size)
+{
+	const soc_omap_timer_p sot = param;
+//	const csx_p csx = sot->csx;
+
+	return(sot->cntl);
+}
+
 static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size)
 {
 	const soc_omap_timer_p sot = param;
@@ -101,8 +109,7 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 	if(!MPU_CNTL_TIMER_RMW(data, value, _MMIO_TEQ))
 		return;
 
-	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
-		csx->cycle, size, mpa, value);
+	CSX_MMIO_TRACE_WRITE(csx, mpa, size, data);
 
 	LOG_START("\n\tRESERVED[31:7] = 0x%08x", mlBFEXT(value, 31, 7));
 		_LOG_(", FREE[6] = %01u", BEXT(value, 6));
@@ -121,7 +128,7 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 
 	if(start) {
 		sot->cycle = csx->cycle;
-		sot->count = MPU_LOAD_TIMER(data, size);
+		sot->count = sot->load;
 	} else
 		__timer_update_count(sot, data);
 }
@@ -131,27 +138,50 @@ static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;
 
-	LOG_START("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
-		csx->cycle, size, mpa, value);
-	LOG_END(", count = 0x%08x", sot->count);
+	CSX_MMIO_TRACE_WRITE(csx, mpa, size, value);
+	LOG("count = 0x%08x", sot->count);
 
 	__timer_update_count(sot, data);
 
 	MPU_LOAD_TIMER_SET(data, value, size);
 }
 
-static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, uint8_t size)
+static uint32_t _mpu_read_timer_r(void* param, uint32_t mpa, uint8_t size)
 {
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;
+	void* data = sot->data;
 
 	uint32_t count = __timer_update_count(sot, data);
 
-	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x",
-		csx->cycle, size, mpa, count);
+	CSX_MMIO_TRACE_READ(csx, mpa, size, data);
 
 	return(count);
 }
+
+/* **** */
+
+static uint32_t soc_omap_timer_read(void* param, uint32_t mpa, uint8_t size)
+{
+//	const soc_omap_timer_p sot = param;
+//	const csx_p csx = sot->csx;
+
+	switch(mpa & 0xff) {
+		case	_MPU_READ_TIMER:
+			return(_mpu_read_timer_r(param, mpa, size));
+//
+		case	_MPU_CNTL_TIMER:
+			return(_mpu_cntl_timer_r(param, mpa, size));
+	}
+	
+	CSX_MMIO_INVALID_READ(csx);
+
+	return(0);
+}
+
+uint32_t soc_omap_timer_list[3] = {
+	SOC_MPU_TIMER1_BASE, SOC_MPU_TIMER2_BASE, SOC_MPU_TIMER3_BASE
+};
 
 int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
 {
@@ -165,14 +195,11 @@ int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
 
 	/* **** */
 
-	ERR(err = csx_mmio_register_write(csx, _mpu_cntl_timer_w,
-		MPU_TIMER_(i, CNTL), t));
-
-	ERR(err = csx_mmio_register_write(csx, _mpu_load_timer_w,
-		MPU_TIMER_(i, LOAD), t));
-
-	ERR(err = csx_mmio_register_read(csx, _mpu_read_timer_r,
-		MPU_TIMER_(i, READ), t));
+	ERR(err = csx_mmio_register_module_read(csx,
+		soc_omap_timer_read, soc_omap_timer_list[i], t);
+		
+	ERR(err = csx_mmio_register_module_write(csx,
+		soc_omap_timer_write, soc_omap_timer_list[i], t);
 
 	/* **** */
 

@@ -246,9 +246,10 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 
 		return(value);
 	} else {
-		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
-			vaddr, mpt.module, (uint)mp, (uint)eat);
-		LOG_ACTION(exit(1));
+		LOG("cycle = 0x%016" PRIx64", %02u:[0x%08x], module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
+			csx->cycle, size, vaddr, mpt.module, (uint)mp, (uint)eat);
+		LOG_ACTION(csx->state |= CSX_STATE_HALT);
+//		LOG_ACTION(exit(1));
 	}
 
 	return(0);
@@ -293,7 +294,8 @@ ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
 	const ea_trace_p eat = soc_mmio_get_trace(tl, address);
 	const char *name = eat ? eat->name : "";
 
-	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+//	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+	LOG("cycle = 0x%016" PRIx64", [0x%08x]: %s", mmio->csx->cycle, address, name);
 
 	return(eat);
 }
@@ -357,7 +359,8 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 
 		csx_data_write(&mpt.data[mpt.offset], value, size);
 	} else {
-		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
-		LOG_ACTION(exit(1));
+		LOG("%02u:[0x%08x] << 0x%08x, module = 0x%08x", size, vaddr, value, mpt.module);
+		LOG_ACTION(csx->state |= CSX_STATE_HALT);
+//		LOG_ACTION(exit(1));
 	}
 }

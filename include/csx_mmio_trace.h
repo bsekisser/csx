@@ -9,6 +9,7 @@ typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
 /* **** */
 
 enum {
+	_XX = 0,
 	_Rw = 1,
 	_rW = 2,
 	_RW = 3,
@@ -24,8 +25,11 @@ enum {
 		.mpa = MMIO_HILO(_ahi, _alo), \
 		.name = # _name, \
 		.reset_value = MMIO_HILO(_dhi, _dlo), \
-		.size = ((_size) >> 4), \
+		.size = ((_size) >> 3), \
 	},
 
 #define MMIO_TRACE_ENUM(_ahi, _alo, _size, _access, _dhi, _dlo, _name) \
 	_name = MMIO_HILO(_ahi, _alo),
+
+#define MMIO_TRACE_LIST_END \
+	MMIO_TRACE(0, 0, 0, XX, 0, 0, XXX)

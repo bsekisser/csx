@@ -13,6 +13,10 @@ typedef struct csx_data_t* csx_data_p;
 #include <stddef.h>
 #include <stdint.h>
 
+typedef uint32_t (*csx_callback_read_fn)(void* param, uint32_t pa, uint8_t size);
+typedef void (*csx_callback_reset_fn)(void* param);
+typedef void (*csx_callback_write_fn)(void* param, uint32_t pa, uint8_t size, uint32_t value);
+
 /* **** */
 
 #include <capstone/capstone.h>
