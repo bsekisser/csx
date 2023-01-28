@@ -43,14 +43,25 @@
 
 /* **** */
 
+int _check_bounds(cracker_p cj, uint32_t pat, uint8_t size, void **p2ptr)
+{
+	if((pat >= cj->content.base) && ((pat + size) <= cj->content.end))
+	{
+		if(p2ptr)
+			*p2ptr = cj->content.data + (pat - cj->content.base);
+		return(1);
+	}
+	
+	return(0);
+}
+
 uint32_t _read(cracker_p cj, uint32_t pat, uint8_t size)
 {
 	uint32_t res = 0;
 	uint8_t* src = 0;
 
-	if((pat >= cj->content.base) && ((pat + size) <= cj->content.end))
-		src = cj->content.data + (pat - cj->content.base);
-	else {
+	if(!_check_bounds(cj, pat, size, (void*)&src))
+	{
 		return(0xdeadbeef);
 		LOG_ACTION(exit(-1));
 	}
@@ -172,6 +183,18 @@ void symbol_log_queue(cracker_p cj, symbol_p sqh)
 
 /* **** */
 
+void cracker_clear(cracker_p cj)
+{
+	for(int i = 0; i < 16; i++) {
+		GPR(i) = 0;
+		GPR_SRC(i) = ~0;
+	}
+
+	for(int i = 0; i < REG_COUNT; i++) {
+		cj->rr[i] = 0;
+		cj->vr[i] = 0;
+	}
+}
 
 symbol_p cracker_data(cracker_p cj, uint32_t pat, size_t size)
 {
@@ -181,8 +204,9 @@ symbol_p cracker_data(cracker_p cj, uint32_t pat, size_t size)
 	symbol_p cjs = symbol_find_pat(sqh, pat, &lhs, &rhs);
 
 	if(cjs) {
-		assert(BTST(cjs->size, size));
+//		assert(BTST(cjs->size, size));
 		assert(BTST(cjs->type, SYMBOL_DATA));
+		BSET(cjs->size, size);
 		cjs->refs++;
 	} else {
 		cjs = calloc(1, sizeof(symbol_t));
@@ -195,6 +219,22 @@ symbol_p cracker_data(cracker_p cj, uint32_t pat, size_t size)
 	}
 
 	return(cjs);
+}
+
+void cracker_reg_dst(cracker_p cj, uint8_t r)
+{
+	if(!cj->symbol)
+		return;
+
+	BSET(cj->symbol->reg.dst, r);
+}
+
+void cracker_reg_src(cracker_p cj, uint8_t r)
+{
+	if(!cj->symbol)
+		return;
+
+	BSET(cj->symbol->reg.src, r);
 }
 
 static int cracker_step(cracker_p cj)
@@ -227,9 +267,13 @@ symbol_p cracker_text(cracker_p cj, uint32_t pat)
 		
 		symbol_enqueue(sqh, lhs, cjs, rhs);
 
+		if(!_check_bounds(cj, pat, sizeof(uint32_t), 0))
+			cjs->pass++;
+
 		if(cj->symbol && (cj->symbol->pat <= pat)) {
-			if(IP >= pat) {
-				cjs->pass++;
+			if(PC >= pat) {
+//			if(IP >= pat) {
+				cjs->pass += (0 == cjs->pass);
 			}
 		}
 	}
@@ -268,6 +312,8 @@ int main(void)
 	cjt.content.size = sb.st_size;
 	cjt.content.end = cjt.content.base + cjt.content.size;
 	
+	cracker_clear(cj);
+
 	PC = cjt.content.base;
 	
 	LOG("Loaded: " RGNFileName "_loader.bin... Start: 0x%08x, End: 0x%08x",
@@ -279,15 +325,7 @@ int main(void)
 
 	while(cjt.symbol) {
 		if(!cracker_step(cj)) {
-			for(int i = 0; i < 16; i++) {
-				cj->reg[i] = 0;
-				cj->reg_src[i] = 0;
-			}
-
-			for(int i = 0; i < REG_COUNT; i++) {
-				cj->rr[i] = 0;
-				cj->vr[i] = 0;
-			}
+			cracker_clear(cj);
 
 //			CORE_TRACE();
 			printf("\n");
@@ -313,7 +351,9 @@ int main(void)
 		}
 	};
 
-	CORE_TRACE();
+	CORE_TRACE("/* **** **** **** **** */");
+
+	printf("\n\n/* **** **** **** **** */\n\n");
 
 	symbol_log_queue(cj, cj->symbol_qhead);
 
