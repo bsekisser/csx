@@ -13,6 +13,14 @@
 
 /* **** */
 
+#include <stdint.h>
+
+/* **** */
+
+#include "cracker_alubox.h"
+
+/* **** */
+
 static int _fetch(cracker_p cj)
 {
 	PC += sizeof(uint16_t);
@@ -30,18 +38,15 @@ static int thumb_add_rd_pcsp_i(cracker_p cj)
 	setup_rR_vR(N, is_sp ? rSP : rPC, is_sp ? 0 : THUMB_PC);
 	
 	setup_rR_dst_src(D, mlBFEXT(IR, 10, 8), rR(N));
-	
-//	rR_SRC(D) = ~rR(N);
 
 	CORE_TRACE_START();
 
 	_CORE_TRACE_("ADD(%s, %s, 0x%03x)", rR_NAME(D), rR_NAME(N), imm8);
 
-//	if(rPC == xR_SRC(D)) {
 	if(rPC == rR(N)) {
-		rR_GPR(D) = vR(N) + imm8;
+		vGPR_rR(D) = vR(N) + imm8;
 
-		_CORE_TRACE_("; /* 0x%08x */XXX", rR_GPR(D));
+		_CORE_TRACE_("; /* 0x%08x */", vGPR_rR(D));
 	}
 
 	CORE_TRACE_END(")");
@@ -55,22 +60,36 @@ static int thumb_add_sub_rn_rd(cracker_p cj)
 	const uint8_t op2 = BEXT(IR, 9);
 	const char* ops[2] = { "SUBS", "ADDS" };
 
-	setup_rR_src(M, mlBFEXT(IR, 8, 6));
-	setup_rR_src(N, mlBFEXT(IR, 5, 3));
+	if(bit_i)
+		setup_rR_vR(M, ~0, mlBFEXT(IR, 8, 6));
+	else
+		setup_rR_src(M, mlBFEXT(IR, 8, 6));
+
+	setup_rR_vR_src(N, mlBFEXT(IR, 5, 3));
 	setup_rR_dst_src(D, mlBFEXT(IR, 2, 0), rR(N));
 
-//	rR_SRC(D) = ~rR(N);
+	CORE_TRACE_START("%s(%s, %s, ", ops[op2], reg_name[rR(D)],
+		reg_name[rR(N)]);
 
-	if(bit_i)
-	{
-		CORE_TRACE("%s(%s, %s, 0x%01x)", ops[op2], reg_name[rR(D)],
-			reg_name[rR(N)], rR(M));
+	if(bit_i) {
+		_CORE_TRACE_("0x%01x", vR(M));
+	} else {
+		_CORE_TRACE_("%s", reg_name[rR(M)]);
 	}
-	else
-	{
-		CORE_TRACE("%s(%s, %s, %s)", ops[op2], reg_name[rR(D)],
-			reg_name[rR(N)], reg_name[rR(M)]);
+
+	if(rPC == rR_SRC(N)) {
+		uint8_t aluop[2] = { ARM_SUB, ARM_ADD };
+		
+		vR(D) = alubox(aluop[op2], vR(N), vR(M));
+		vGPR_rR(D) = vR(D);
+		
+		const char aluopc[2] = { '-', '+' };
+		
+		_CORE_TRACE_("); /* 0x%08x %c 0x%08x = 0x%08x */ XXX",
+			vR(N), aluopc[op2], vR(M), vR(D));
 	}
+
+	CORE_TRACE_END();
 	
 	return(1);
 }
@@ -97,25 +116,42 @@ static int thumb_ascm_i(cracker_p cj)
 	const uint imm8 = mlBFEXT(IR, 7, 0);
 	const uint op = mlBFEXT(IR, 12, 11);
 	const char* opname[4] = { "MOVS", "CMPS", "ADDS", "SUBS" };
+	const uint aluop[4] = { ARM_MOV, ARM_CMP, ARM_ADD, ARM_SUB };
+	
+	setup_rR_vR_src(N, mlBFEXT(IR, 10, 8));
 
-	setup_rR_vR(D, mlBFEXT(IR, 10, 8), 0);
-	rR_SRC(D) = 0;
+	if(rPC == rR_SRC(N))
+		setup_rR_vR_dst_src(D, rR(N), rR(N));
+	else
+		setup_rR_dst_src(D, rR(N), rR(N));
 
 	switch(op) {
 		case THUMB_ASCM_ADD:
 		case THUMB_ASCM_CMP:
 		case THUMB_ASCM_MOV:
-		case THUMB_ASCM_SUB:
-			CORE_TRACE("%s(%s, 0x%02x)",
+		case THUMB_ASCM_SUB: {
+			CORE_TRACE_START("%s(%s, 0x%02x)",
 				opname[op], reg_name[rR(D)], imm8);
-			break;
+
+			if(rPC == rR_SRC(N)) {
+				vR(D) = alubox(aluop[op], vR(N), imm8);
+				vGPR_rR(D) = vR(D);
+
+				const char opc[4] = { '=', '-', '+', '-' };
+
+				_CORE_TRACE_("; /* 0x%08x %c 0x%02x = 0x%08x */ XXX",
+					vR(N), opc[op], imm8, vR(D));
+			}
+			
+			CORE_TRACE_END();
+		}break;
 		default:
 			CORE_TRACE("ASCM_OP = 0x%02x", op);
 			return(0);
 			LOG_ACTION(exit(-1));
 			break;
 	}
-	
+
 	return(1);
 }
 
@@ -183,7 +219,7 @@ static int thumb_bx_blx(cracker_p cj)
 	
 	_CORE_TRACE_("B%sX(%s)", link ? "L" : "", rR_NAME(M));
 	
-	if(rPC == xR_SRC(M)) {
+	if(rPC == rR_SRC(M)) {
 		_CORE_TRACE_("; /* 0x%08x */", vR(M));
 
 		cracker_text(cj, vR(M));
@@ -335,7 +371,7 @@ static int thumb_ldst_rd_i(cracker_p cj)
 		cracker_data(cj, ea, sizeof(uint32_t));
 
 		const uint32_t data = _read(cj, ea, sizeof(uint32_t));
-		rR_GPR(D) = data;
+		vGPR_rR(D) = data;
 
 		_CORE_TRACE_("); /* [0x%08x]:0x%08x */", ea, data);
 	}

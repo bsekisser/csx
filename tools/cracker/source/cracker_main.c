@@ -62,7 +62,8 @@ uint32_t _read(cracker_p cj, uint32_t pat, uint8_t size)
 
 	if(!_check_bounds(cj, pat, size, (void*)&src))
 	{
-		return(0xdeadbeef);
+//		return(0xdeadbeef);
+		return(-1);
 		LOG_ACTION(exit(-1));
 	}
 
@@ -138,7 +139,8 @@ void symbol_log(cracker_p cj, symbol_p cjs)
 
 	if(BTST(cjs->type, SYMBOL_TEXT))
 		LOG_END(" TEXT ENTRY");
-	else {
+	
+	if(BTST(cjs->type, SYMBOL_DATA)) {
 		uint32_t data = 0;
 		size_t size = cjs->size;
 		
@@ -186,13 +188,14 @@ void symbol_log_queue(cracker_p cj, symbol_p sqh)
 void cracker_clear(cracker_p cj)
 {
 	for(int i = 0; i < 16; i++) {
-		GPR(i) = 0;
-		GPR_SRC(i) = ~0;
+		vGPR(i) = 0;
+		GPR(i).src = ~0;
+		GPR(i).isPtr = 0;
 	}
 
 	for(int i = 0; i < REG_COUNT; i++) {
-		cj->rr[i] = 0;
-		cj->vr[i] = 0;
+		rRx(i) = 0;
+		vRx(i) = 0;
 	}
 }
 
@@ -205,8 +208,11 @@ symbol_p cracker_data(cracker_p cj, uint32_t pat, size_t size)
 
 	if(cjs) {
 //		assert(BTST(cjs->size, size));
-		assert(BTST(cjs->type, SYMBOL_DATA));
+//		assert(BTST(cjs->type, SYMBOL_DATA));
+
 		BSET(cjs->size, size);
+		BSET(cjs->type, SYMBOL_DATA);
+
 		cjs->refs++;
 	} else {
 		cjs = calloc(1, sizeof(symbol_t));
@@ -255,8 +261,12 @@ symbol_p cracker_text(cracker_p cj, uint32_t pat)
 	symbol_p cjs = symbol_find_pat(sqh, pat, &lhs, &rhs);
 
 	if(cjs) {
-		assert(BTST(cjs->size, sizeof(uint32_t)));
-		assert(BTST(cjs->type, SYMBOL_TEXT));
+//		assert(BTST(cjs->size, sizeof(uint32_t)));
+//		assert(BTST(cjs->type, SYMBOL_TEXT));
+
+		BSET(cjs->size, sizeof(uint32_t));
+		BSET(cjs->type, SYMBOL_TEXT);
+
 		cjs->refs++;
 	} else {
 		cjs = calloc(1, sizeof(symbol_t));

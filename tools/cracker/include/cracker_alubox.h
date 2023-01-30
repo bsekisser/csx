@@ -2,6 +2,10 @@
 
 /* **** */
 
+#include "cracker_arm_enum.h"
+
+/* **** */
+
 #include <stdint.h>
 
 /* **** */

@@ -1,3 +1,5 @@
+#pragma once
+
 enum {
 	ARM_AND, ARM_EOR, ARM_SUB, ARM_RSB,
 	ARM_ADD, ARM_ADC, ARM_SBC, ARM_RSC,

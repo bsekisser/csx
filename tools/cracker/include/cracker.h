@@ -19,6 +19,8 @@ enum {
 	rrRSOP,
 	rrRSCO,
 	REG_COUNT,
+
+	rrPTR = 0x10,
 };
 
 enum {
@@ -60,11 +62,14 @@ typedef struct cracker_t {
 	uint32_t ir;
 #define IR cj->ir
 
-	uint32_t reg[16];
-	uint8_t reg_src[16];
+	struct {
+		uint32_t v;
+		uint8_t src:4;
+		uint8_t isPtr:1;
+	}reg[16];
 #define GPR(_x) cj->reg[_x]
-#define GPR_SRC(_x) cj->reg_src[_x]
-	
+#define vGPR(_x) GPR(_x).v
+
 	uint32_t vr[REG_COUNT];
 #define vRx(_x) cj->vr[_x]
 #define vR(_x) vRx(rrR##_x)
@@ -91,17 +96,17 @@ typedef struct cracker_t {
 
 #define IS_THUMB (IP & 1)
 
-#define rR_GPR(_x) GPR(rR(_x))
-#define rRx_GPR(_x) GPR(rRx(_x))
-#define vRx_GPR(_x) (rPC == (_x) ? (IS_THUMB ? THUMB_PC : ARM_PC) : GPR(_x))
-#define vR_GPR(_x) vRx_GPR(rR(_x))
-//#define vR_GPR(_x) (rPC == rR(_x) ? (IS_THUMB ? THUMB_PC : ARM_PC) : rR_GPR(_x))
-#define rR_NAME(_x) reg_name[rR(_x)]
-#define rR_SRC(_x) GPR_SRC(rR(_x))
-#define xR_SRC(_x) ((uint8_t)~rR_SRC(_x))
+#define vGPR_rR(_x) vGPR(rR(_x))
+#define vGPR_rRx(_x) vGPR(rRx(_x))
 
-#define LR GPR(rLR)
-#define PC GPR(rPC)
+#define vRx_GPR(_x) (rPC == (_x) ? (IS_THUMB ? THUMB_PC : ARM_PC) : vGPR(_x))
+#define vR_GPR(_x) vRx_GPR(rR(_x))
+#define rR_NAME(_x) reg_name[rR(_x)]
+
+#define rR_SRC(_x) GPR(rR(_x)).src
+
+#define LR vGPR(rLR)
+#define PC vGPR(rPC)
 
 #define ARM_PC (4 + (PC & ~3))
 #define THUMB_PC (2 + (PC & ~1))
@@ -129,7 +134,8 @@ static inline void _setup_rR_dst(cracker_p cj, uint8_t rxd, uint8_t rrd)
 
 	cracker_reg_dst(cj, rrd);
 	
-	GPR_SRC(rrd) = 0;
+	GPR(rrd).src = 0;
+	GPR(rrd).isPtr = 0;
 }
 
 #define setup_rR_dst_src(_rxd, _rrd, _rrs) _setup_rR_dst_src(cj, rrR##_rxd, _rrd, _rrs)
@@ -137,7 +143,7 @@ static inline void _setup_rR_dst_src(cracker_p cj, uint8_t rxd, uint8_t rrd, uin
 {
 	_setup_rR_dst(cj, rxd, rrd);
 
-	GPR_SRC(rrd) = rrs;
+	GPR(rrd).src = rrs;
 }
 
 #define setup_rR_vR_dst_src(_rxd, _rrd, _rrs) _setup_rR_vR_dst_src(cj, rrR##_rxd, _rrd, _rrs)
