@@ -791,112 +791,95 @@ void soc_core_thumb_step(soc_core_p core)
 
 	IR = soc_core_reg_pc_fetch_step_thumb(core);
 
-	uint8_t lsb = 0;
+	uint8_t lsb = 8;
 	uint32_t opcode = 0;
 
-	for(lsb = 8; lsb <= 13; lsb++)
-	{
-		opcode = IR & mlBF(15, lsb);
+	opcode = mlBFTST(IR, 15, lsb);
 
-		switch(opcode)
-		{
-		/* **** */
-			case	0x0000:
-				if(SOC_CORE_THUMB_SBI_IMM5_RM_RD == (IR & SOC_CORE_THUMB_SBI_IMM5_RM_RD_MASK))
-					return(soc_core_thumb_sbi_imm5_rm_rd(core));
-				break;
-			case	0x1800:
-				if(SOC_CORE_THUMB_ADD_SUB_RN_RD == (IR & SOC_CORE_THUMB_ADD_SUB_RN_RD_MASK))
-					return(soc_core_thumb_add_sub_rn_rd(core));
-				break;
-			case	0x2000:
-				if(SOC_CORE_THUMB_ASCM_RD_I8(0) == (IR & SOC_CORE_THUMB_ASCM_RD_I8_MASK))
-					return(soc_core_thumb_ascm_rd_i(core));
-				break;
-			case	0x4000:
-				if(SOC_CORE_THUMB_DP_RMS_RDN == (IR & SOC_CORE_THUMB_DP_RMS_RDN_MASK))
-					return(soc_core_thumb_dp_rms_rdn(core));
-				break;
-			case	0x4400:
-				if(SOC_CORE_THUMB_SDP_RMS_RDN(0) == (IR & SOC_CORE_THUMB_SDP_RMS_RDN_MASK))
-					return(soc_core_thumb_sdp_rms_rdn(core));
-				break;
-			case	0x4700:
-				if(SOC_CORE_THUMB_BX == (IR & SOC_CORE_THUMB_BX_MASK))
-					return(soc_core_thumb_bx(core));
-				break;
-			case	0x4800:
-				if(SOC_CORE_THUMB_LDST_PC_RD_I == (IR & SOC_CORE_THUMB_LDST_PC_RD_I_MASK))
+	switch(opcode)
+	{
+	/* **** */
+		case 0x0000 ... (0x1000 | mlBF(10, 0)):
+			if(SOC_CORE_THUMB_SBI_IMM5_RM_RD == (IR & SOC_CORE_THUMB_SBI_IMM5_RM_RD_MASK))
+				return(soc_core_thumb_sbi_imm5_rm_rd(core));
+			break;
+		case 0x1800 ... (0x1800 | mlBF(9, 0)):
+		case 0x1c00 ... (0x1c00 | mlBF(9, 0)):
+			if(SOC_CORE_THUMB_ADD_SUB_RN_RD == (IR & SOC_CORE_THUMB_ADD_SUB_RN_RD_MASK))
+				return(soc_core_thumb_add_sub_rn_rd(core));
+			break;
+		case 0x2000 ... (0x2000 | mlBF(12, 0)):
+			if(SOC_CORE_THUMB_ASCM_RD_I8(0) == (IR & SOC_CORE_THUMB_ASCM_RD_I8_MASK))
+				return(soc_core_thumb_ascm_rd_i(core));
+			break;
+		case 0x4000 ... (0x4000 | mlBF(9, 0)):
+			if(SOC_CORE_THUMB_DP_RMS_RDN == (IR & SOC_CORE_THUMB_DP_RMS_RDN_MASK))
+				return(soc_core_thumb_dp_rms_rdn(core));
+			break;
+		case 0x4400 ... (0x4600 | mlBF(7, 0)):
+			if(SOC_CORE_THUMB_SDP_RMS_RDN(0) == (IR & SOC_CORE_THUMB_SDP_RMS_RDN_MASK))
+				return(soc_core_thumb_sdp_rms_rdn(core));
+			break;
+		case 0x4700 ... (0x4700 | mlBF(7, 0)): /* bx_blx */
+			if(SOC_CORE_THUMB_BX == (IR & SOC_CORE_THUMB_BX_MASK))
+				return(soc_core_thumb_bx(core));
+			break;
+		case 0x4800 ... (0x4800 | mlBF(10, 0)): /* ldr rd, pc[offset8] */
+		case 0x9000 ... (0x9000 | mlBF(11, 0)): /* str rd, sp[offset8] */
+			if((SOC_CORE_THUMB_LDST_PC_RD_I == (IR & SOC_CORE_THUMB_LDST_PC_RD_I_MASK))
+				|| (SOC_CORE_THUMB_LDST_SP_RD_I == (IR & SOC_CORE_THUMB_LDST_SP_RD_I_MASK)))
 					return(soc_core_thumb_ldst_rd_i(core));
-				break;
-			case	0x5000: /* 0101 000 -- str rd, [rn, rm] */
-			case	0x5200: /* 0101 001 -- strh rd, [rn, rm] */
-			case	0x5400: /* 0101 010 -- strb rd, [rn, rm] */
-			case	0x5600: /* 0101 011 -- ldrsb rd, [rn, rm] */
-			case	0x5800: /* 0101 100 -- ldr rd, [rn, rm] */
-			case	0x5a00: /* 0101 101 -- ldrh rd, [rn, rm] */
-			case	0x5c00: /* 0101 110 -- ldrb rd, [rn, rm] */
-			case	0x5e00: /* 0101 111 -- ldrsh rd, [rn, rm] */
-				if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
-					return(soc_core_thumb_ldst_rm_rn_rd(core));
-				LOG_ACTION(goto fail_decode);
-				break;
-			case	0x6000:
-				if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
+			break;
+		case 0x5000 ... (0x5000 | mlBF(11, 0)): /* [ld|st]r[b|h|sb|sh] rd, [rn, rm] */
+			if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
+				return(soc_core_thumb_ldst_rm_rn_rd(core));
+			LOG_ACTION(goto fail_decode);
+			break;
+		case 0x6000 ... (0x6000 | mlBF(12, 0)): /* str */
+		case 0x8000 ... (0x8000 | mlBF(11, 0)): /* strh */
+			if((SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
+				|| (SOC_CORE_THUMB_LDST_H_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_H_O_RN_RD_MASK)))
 					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
-				break;
-			case	0x8000:
-				if(SOC_CORE_THUMB_LDST_H_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_H_O_RN_RD_MASK))
-					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
-				break;
-			case	0x9000:
-				if(SOC_CORE_THUMB_LDST_SP_RD_I == (IR & SOC_CORE_THUMB_LDST_SP_RD_I_MASK))
-					return(soc_core_thumb_ldst_rd_i(core));
-				break;
-			case	0xa000:
-				if(SOC_CORE_THUMB_ADD_RD_PCSP_I == (IR & SOC_CORE_THUMB_ADD_RD_PCSP_I_MASK))
-					return(soc_core_thumb_add_rd_pcsp_i(core));
-				break;
-			case	0xb000:
-				if(SOC_CORE_THUMB_ADD_SUB_SP_I7 == (IR & SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK))
-					return(soc_core_thumb_add_sub_sp_i7(core));
-				break;
-			case	0xb400:
-			case	0xbc00:
-				if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
-					return(soc_core_thumb_pop_push(core));
+			break;
+		case 0xa000 ... (0xa000 | mlBF(11, 0)):
+			if(SOC_CORE_THUMB_ADD_RD_PCSP_I == (IR & SOC_CORE_THUMB_ADD_RD_PCSP_I_MASK))
+				return(soc_core_thumb_add_rd_pcsp_i(core));
+			break;
+		case 0xb000 ... (0xb000 | mlBF(11, 0)): /* miscelaneous */
+		{	switch(IR) {
+				case 0xb400 ... (0xbc00 | mlBF(8, 0)):
+					if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
+						return(soc_core_thumb_pop_push(core));
+					break;
+				default:
+					if(SOC_CORE_THUMB_ADD_SUB_SP_I7 == (IR & SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK))
+						return(soc_core_thumb_add_sub_sp_i7(core));
+					break;
+				}
 				LOG_ACTION(goto fail_decode);
-				break;
-			case	0xb200:
-			case	0xb600:
-			case	0xba00:
-			case	0xbe00:
-			case	0xbf00:
+		}	break;
+		case 0xc000 ... (0xc000 | mlBF(11, 0)):
+			if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
+				return(soc_core_thumb_ldstm_rn_rxx(core));
+			break;
+		case 0xd000 ... (0xdd00 | mlBF(7, 0)): /* bcc */
+			return(soc_core_thumb_bcc(core));
+			break;
+		case 0xde00 ... (0xde00 | mlBF(7, 0)): /* undefined instruction */
+		case 0xdf00 ... (0xdf00 | mlBF(7, 0)): /* swi */
+			LOG_ACTION(goto fail_decode);
+			break;
+		case 0xe800 ... (0xe800 | mlBF(10, 0)): /* blx suffix / undefined instruction */
+			if(IR & 1)
 				LOG_ACTION(goto fail_decode);
-				break;
-			case	0xc000:
-				if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
-					return(soc_core_thumb_ldstm_rn_rxx(core));
-				break;
-			case	0xd000:
-				return(soc_core_thumb_bcc(core));
-				break;
-			case	0xde00: /* undefined */
-			case	0xdf00: /* swi */
-				LOG_ACTION(goto fail_decode);
-				break;
-			case	0xe800: /* blx suffix / undefined instruction */
-				if(IR & 1)
-					LOG_ACTION(goto fail_decode);
-				__attribute__((fallthrough));
-			case	0xe000: /* unconditional branch */
-			case	0xf000: /* bl/blx prefix */
-			case	0xf800: /* bl suffix */
-					return(soc_core_thumb_bxx(core));
-				break;
-		/* **** */
-		}
-	}//while(lsb-- > 8);
+			__attribute__((fallthrough));
+		case 0xe000 ... (0xe000 | mlBF(10, 0)): /* unconditional branch */
+		case 0xf000 ... (0xf000 | mlBF(10, 0)): /* bl/blx prefix */
+		case 0xf800 ... (0xf800 | mlBF(10, 0)): /* bl suffix */
+				return(soc_core_thumb_bxx(core));
+			break;
+	/* **** */
+	}
 
 fail_decode:
 	LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
