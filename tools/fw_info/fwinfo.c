@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <endian.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -83,7 +84,7 @@ void rgn_get_fwinfo(void* content, size_t content_size, fw_info_p fwi)
 {
 	bfc_p bfc = content;
 
-	LOG("[0] = 0x%08x", bfc->b);
+	LOG("[0] = 0x%08x", le32toh(bfc->b));
 	
 	switch(bfc->b) {
 		case 0xea000002:
@@ -95,23 +96,28 @@ void rgn_get_fwinfo(void* content, size_t content_size, fw_info_p fwi)
 
 			LOG("fw_mark = 0x%08x", (uint)fw_mark);
 
-			fwi->base = bfc->v3.end - (fw_mark - content);
+			fwi->base = le32toh(bfc->v3.end) - (fw_mark - content);
 	
 			LOG("fwi->base = 0x%08x", fwi->base);
 			
 			assert(0 == (fwi->base % 4));
 			assert(!((fwi->base + content_size) < fwi->base));
 			
-			fwi->end = bfc->v3.end;
+			fwi->end = le32toh(bfc->v3.end);
 			
 			LOG("content_size - end - base = 0x%08x", content_size - (fwi->end - fwi->base));
 			
-			fwi->hwid = (uint16_t*)((content + bfc->v3.hwid) - fwi->base);
-			fwi->swvr = (uint16_t*)((content + bfc->v3.sw_version) - fwi->base);
+			uint32_t p2hwid = le32toh(bfc->v3.hwid);
+			fwi->hwid = (uint16_t*)((content + p2hwid) - fwi->base);
+			uint16_t hwid = le16toh(*fwi->hwid);
 
-			LOG("end @ 0x%08x", bfc->v3.end);
-			LOG("hwid @ 0x%08x = 0x%04x = %u", bfc->v3.hwid, *fwi->hwid, *fwi->hwid);
-			LOG("sw_version @ 0x%08x = 0x%04x = %u", bfc->v3.sw_version, *fwi->swvr, *fwi->swvr);
+			uint32_t p2swvr = le32toh(bfc->v3.sw_version);
+			fwi->swvr = (uint16_t*)((content + p2swvr) - fwi->base);
+			uint16_t swvr = le16toh(*fwi->swvr);
+
+			LOG("end @ 0x%08x", fwi->end);
+			LOG("hwid @ 0x%08x = 0x%04x = %u", p2hwid, hwid, hwid);
+			LOG("sw_version @ 0x%08x = 0x%04x = %u", p2swvr, swvr, swvr);
 		}break;
 		default:
 			LOG("unknown version");
