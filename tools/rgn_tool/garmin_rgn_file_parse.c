@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <endian.h>
 #include <stdint.h>
 #include <errno.h>
 #include <stdio.h>
@@ -16,6 +17,7 @@
 #include "bitfield.h"
 #include "err_test.h"
 #include "log.h"
+#include "shift_roll.h"
 
 /* **** */
 
@@ -61,64 +63,163 @@ static uint8_t* strjump(uint8_t **str)
 
 /* **** */
 
-static const uint32_t _ldst = _BV(26);
+enum {
+	rSP = 13,
+	rLR = 14,
+	rPC = 15,
+};
+
+typedef struct grf_t* grf_p;
+typedef struct grf_t {
+	uint32_t ip;
+	uint32_t ir;
+	uint32_t pc;
+
+	void* data;
+	void* data_content;
+	void* data_content_end;
+	size_t data_content_size;
+	void* data_end;
+	size_t data_size;
+
+	fw_info_t fwi;
+}grf_t;
+
+#define ARM_PC ((IP & ~3) + 8)
+
+#define IP grf->ip
+#define IR grf->ir
+#define PC grf->pc
+
+static uint32_t base_ip(grf_p grf)
+{
+	return(grf->fwi.base + IP);
+}
+
+static uint32_t ld32le(grf_p grf, uint32_t pat)
+{
+	if(pat > grf->data_content_size)
+		return(-1);
+	
+	void* src = grf->data_content + pat;
+
+	if((src + sizeof(uint32_t)) < grf->data_content_end)
+		return(data_read(src, sizeof(uint32_t)));
+	
+	return(-1);
+}
+
+static const uint32_t _rd_mask = mlBF(15, 12);
+static const uint32_t _rn_mask = mlBF(19, 16);
+
+static const uint32_t _cc_al = mlBF(31, 29);
+static const uint32_t _cc_mask = mlBF(31, 28);
+
+static const uint32_t _b = _cc_al | _BV(27) | _BV(25);
+static const uint32_t _b_mask = _cc_mask | mlBF(27, 24);
+
+static const uint32_t _dpi = _cc_al | _BV(25);
+//static const uint32_t _dpi_mask = mlBF(27, 25);
+static const uint32_t _dpi_mask = _cc_mask | mlBF(27, 21);
+
+static const uint32_t _ldst = _cc_al | _BV(26);
+static const uint32_t _ldst_bit_u = _BV(23);
+
 static const uint32_t _ldr = _ldst | _BV(20);
-static const uint32_t _ldr_mask = mlBF(27, 26) | _BV(22) | _BV(20);
+static const uint32_t _ldr_mask = _cc_mask | mlBF(27, 26) | _BV(22) | _BV(20);
+static const uint32_t _ldr_rn_mask = _ldr_mask | _rn_mask;
+static const uint32_t _ldr_rd_rn_mask = _ldr_rn_mask | _rd_mask;
 
-static const uint32_t _ldr_pc = _ldr | (0xf << 16);
-static const uint32_t _ldr_pc_mask = _ldr_mask | (0x0f << 16);
+static const uint32_t _mov_op = 0b1101 << 21;
 
-static uint8_t _rd(uint32_t ir) {
+static const uint32_t _movi = _dpi | _mov_op;
+static const uint32_t _movi_rd_mask = _dpi_mask | _rd_mask; 
+
+
+static uint32_t _arm_ldst_bit_u(uint32_t ir) {
+	return(BEXT(ir, _ldst_bit_u));
+}
+
+static uint32_t _arm_rd(uint32_t rd) {
+	return((rd & 0xf) << 12);
+}
+
+static uint32_t _arm_rn(uint32_t rn) {
+	return((rn & 0xf) << 16);
+}
+
+static uint32_t arm_ldr_rn(uint8_t rn) {
+	return(_ldr | _arm_rn(rn));
+}
+
+static uint32_t arm_ldr_rd_rn(uint8_t rd, uint8_t rn) {
+	return(arm_ldr_rn(rn) | _arm_rd(rd));
+}
+
+static uint32_t arm_movi_rd(uint8_t rd) {
+	return(_movi | _arm_rd(rd));
+}
+
+static uint8_t arm_ir_rd(uint32_t ir) {
 	return(mlBFEXT(ir, 15, 12));
 }
 
-/*static uint8_t _rn(uint32_t ir) {
+static uint8_t arm_ir_rn(uint32_t ir) {
 	return(mlBFEXT(ir, 19, 16));
-}*/
-
-static void log_ldr_pc_rd(fw_info_p fwi, void* content, void* ip, uint32_t ir)
-{
-	void* pc = ip + 8;
-	uint16_t offset = ir & 0xfff;
-
-	uint32_t base_ip = fwi->base + (ip - content);
-
-	void* src = pc + (BEXT(ir, 23) ? offset : -offset);
-
-	uint32_t base_pc = fwi->base + (src - content);
-
-	if((base_pc + sizeof(uint32_t)) >= fwi->end)
-		LOG("out of bounds");
-
-	if(src < content)
-		LOG("out of bounds");
-
-	uint32_t data = data_read(src, sizeof(uint32_t));
-
-	if(0xf == _rd(ir)) {
-		LOG("0x%08x, 0x%08x[0x%08x]: ldr pc, [pc, %s0x%04x](0x%08x)",
-			(uint)ip, base_ip, ir,
-			BEXT(ir, 23) ? "" : "-", offset, data);
-	} else {
-		LOG("0x%08x, 0x%08x[0x%08x]: ldr r%u, [pc, %s0x%04x](0x%08x)",
-			(uint)ip, base_ip, ir,
-			_rd(ir), BEXT(ir, 23) ? "" : "-", offset, data);
-	}
 }
 
-static void log_ldr_pc_pc(fw_info_p fwi, void* content, void* ip, uint32_t ir)
+static void log_b(grf_p grf)
 {
-	log_ldr_pc_rd(fwi, content, ip, ir);
+	int32_t offset = mlBFMOVs(IR, 23, 0, 2);
+	uint32_t pat = ARM_PC + offset;
+
+	uint32_t pat_ip = (base_ip(grf) + 8) + offset;
+
+	LOG("0x%08x, 0x%08x[0x%08x]: b 0x%08x%s",
+		IP, base_ip(grf), IR, pat, ((pat_ip == base_ip(grf)) ? " << ZZZZ" : ""));
+}
+
+static void log_ldr_rd_rn(grf_p grf)
+{
+	int _bit_u = _arm_ldst_bit_u(IR);
+
+	int16_t offset = mlBFEXT(IR, 11, 0);
+	if(_bit_u)
+		offset = -offset;
+
+	uint32_t pat = ARM_PC + offset;
+	uint32_t pat_ip = (base_ip(grf) + 8) + offset;
+
+	uint32_t data = ld32le(grf, pat);
+
+	LOG("0x%08x, 0x%08x[0x%08x]: ldr r%u, [r%u, 0x%04x] /* [0x%08x]:0x%08x */%s",
+		IP, base_ip(grf), IR,
+			arm_ir_rd(IR), arm_ir_rn(IR), offset, pat, data,
+			((pat_ip == base_ip(grf)) ? " << ZZZZ" : ""));
+}
+
+static void log_movi_rd(grf_p grf)
+{
+	uint8_t imm8 = mlBFEXT(IR, 7, 0);
+	uint8_t shift = mlBFMOV(IR, 11, 8, 1);
+	
+	uint32_t data = _ror(imm8, shift);
+	
+	LOG("0x%08x, 0x%08x[0x%08x]: mov r%u, #0x%08x",
+		IP, base_ip(grf), IR,
+			arm_ir_rd(IR), data);
 }
 
 /* **** */
 
-static void garmin_rgn_record_app_parse(rgn_record_app_p rar)
+static void garmin_rgn_record_app_parse(grf_p grf, rgn_record_app_p rar)
 {
-	uint8_t major = rar->version / 100;
-	uint8_t minor = rar->version % 100;
+	uint16_t version = le16toh(rar->version);
 
-	LOG("version=0x%02x (major=%u, minor=%02u)", rar->version, major, minor);
+	uint8_t major = version / 100;
+	uint8_t minor = version % 100;
+
+	LOG("version=0x%04x (major=%u, minor=%02u)", version, major, minor);
 	
 	uint8_t *src = &rar->data[0];
 	LOG("builder=%s", strjump(&src));
@@ -126,20 +227,45 @@ static void garmin_rgn_record_app_parse(rgn_record_app_p rar)
 	LOG("build time=%s", strjump(&src));
 }
 
-static void garmin_rgn_record_data_parse(rgn_record_data_p rdr)
+static void garmin_rgn_record_data_parse(grf_p grf, rgn_record_data_p rdr)
 {
-	uint8_t major = rdr->version / 100;
-	uint8_t minor = rdr->version % 100;
+	uint16_t version = le16toh(rdr->version);
+
+	uint8_t major = version / 100;
+	uint8_t minor = version % 100;
 	
-	LOG("version=0x%02x (major=%u, minor=%02u)", rdr->version, major, minor);
+	LOG("version=0x%04x (major=%u, minor=%02u)", version, major, minor);
 	
 	assert_abort_msg(kRGN_VERSION == rdr->version, "unexpected version");
 }
 
-static void garmin_rgn_record_region_parse(rgn_record_region_p rrr)
+static void garmin_rgn_record_region_parse_bin(grf_p grf, void* pat)
+{
+	
+	for(PC = 0; PC < grf->data_content_size; PC += sizeof(uint32_t))
+	{
+		IP = PC;
+		IR = ld32le(grf, IP);
+
+//		if(0xeafffffe == IR)
+//			log_b(grf);
+		if(_b == (IR & _b_mask))
+//		else if(_b == (IR & _b_mask))
+			log_b(grf);
+//		else if(arm_ldr_rd_rn(rPC, rPC) == (IR & _ldr_rd_rn_mask))
+//			log_ldr_rd_rn(grf);
+//		else if(arm_ldr_rn(rPC) == (IR & _ldr_rn_mask))
+//			log_ldr_rd_rn(grf);
+		else if(arm_movi_rd(rSP) == (IR & _movi_rd_mask))
+			log_movi_rd(grf);
+	}
+}
+
+static void garmin_rgn_record_region_parse(grf_p grf, rgn_record_region_p rrr)
 {
 	char *rgn_string = 0, *file_name = 0;
-	switch(rrr->version)
+	uint16_t version = le16toh(rrr->version);
+	switch(version)
 	{
 		case RGN_TYPE_LOADER:
 			rgn_string = "loader";
@@ -155,94 +281,60 @@ static void garmin_rgn_record_region_parse(rgn_record_region_p rrr)
 			break;
 	}
 	
-	LOG("region id=0x%02x, %03u (%s)", rrr->version, rrr->version, rgn_string);
-	LOG("delay=0x%04x", rrr->delay);
-	LOG("size=0x%02x", rrr->size);
+	LOG("region id = 0x%04x, %05u (%s)", version, version, rgn_string);
+	LOG("delay = 0x%08x", le32toh(rrr->delay));
+
+	size_t size = le32toh(rrr->size);
+
+	LOG("size = 0x%08x", size);
 	
 	if(file_name)
 	{
-		void *content = &rrr->data[0];
-		uint32_t content_size = rrr->size;
+		grf->data_content = &rrr->data[0];
+		grf->data_content_size = size;
+		grf->data_content_end = grf->data_content + size;
 		
-		LOG("content->0x%08x, size=0x%04x", (uint32_t)content, content_size);
+		LOG("content->0x%08x, size = 0x%08x",
+			(uint32_t)grf->data_content, grf->data_content_size);
 		
-		fw_info_t ffwi, *fwi = &ffwi;
-		rgn_get_fwinfo(content, content_size, fwi);
+		rgn_get_fwinfo(grf->data_content, grf->data_content_size, &grf->fwi);
 
 		if(0)
 		{
 			FILE *fout;
 			ERR_NULL(fout = fopen(file_name, "w"));
-			ERR(fwrite(content, content_size, 1, fout));
+			ERR(fwrite(grf->data_content, grf->data_content_size, 1, fout));
 		}
 		else
-		{
-			uint32_t opcode;
-			int ldr_pc_pc = 0;
-			int br = 0;
-			int miss = 0;
-			
-			if(0) for(int i=0; i < content_size; i++)
-			{
-				void* src = content + i;
-				opcode = data_read(src, sizeof(uint32_t));
-				if(0xe59ff000 == (opcode & 0xfffff000))
-				{
-					log_ldr_pc_pc(fwi, content, src, opcode);
-					ldr_pc_pc++;
-					miss = 0;
-					i += sizeof(uint32_t);
-				}
-				else if(_ldr_pc == (opcode & _ldr_pc_mask))
-					log_ldr_pc_rd(fwi, content, src, opcode);
-				else if(0xea000000 == (opcode & 0xfe000000))
-				{
-					br++;
-					miss = 0;
-					i += sizeof(uint32_t);
-				}
-				else
-				{
-					miss++;
-					uint32_t score = ldr_pc_pc + br;
-					if(miss > 2)
-					{
-						if(score > 2)
-							LOG("i = 0x%08x, score = 0x%08x (ldr_pc_pc = 0x%08x, br = 0x%08x), miss = 0x%08x",
-								i, score, ldr_pc_pc, br, miss);
-						ldr_pc_pc = 0;
-						br = 0;
-						miss = 0;
-					}
-				}
-			}
-		}
+			garmin_rgn_record_region_parse_bin(grf, grf->data_content);
 	}
 }
 
-static void garmin_rgn_general_record_parse(rgn_general_record_p rgn_record, uint32_t limit)
+static void garmin_rgn_general_record_parse(grf_p grf, rgn_general_record_p rgn_record)
 {
-	while((void*)rgn_record < (void*)limit)
+	while(((void*)rgn_record + sizeof(rgn_general_record_t)) <= grf->data_end)
 	{
-		LOG("length=0x%08x", rgn_record->length);
-		LOG("id=0x%02x (%c)", rgn_record->id, rgn_record->id);
+		uint32_t length = le32toh(rgn_record->length);
+		
+		LOG("length = 0x%08x", length);
+		LOG("id = 0x%02x (%c)", rgn_record->id, rgn_record->id);
 		void *data = (void *)rgn_record + sizeof(rgn_general_record_t);
-		void *next = data + rgn_record->length;
+		void *next = data + length;
 		switch(rgn_record->id) 
 		{
 			case 'D': /* data record */
 			{
-				garmin_rgn_record_data_parse(data);
+				garmin_rgn_record_data_parse(grf, data);
 				break;
 			}
 			case 'A': /* application record */
 			{
-				garmin_rgn_record_app_parse(data);
+				garmin_rgn_record_app_parse(grf, data);
 				break;
 			}
 			case 'R': /* region record */
 			{
-				garmin_rgn_record_region_parse(data);
+				garmin_rgn_record_region_parse(grf, data);
 				break;
 			}
 			default:
@@ -252,34 +344,52 @@ static void garmin_rgn_general_record_parse(rgn_general_record_p rgn_record, uin
 	}
 }
 
-static void garmin_rgn_file_parse(void *grf, uint32_t limit)
+static void garmin_rgn_file_parse(grf_p grf)
 {
-	rgn_file_header_p grfh = (rgn_file_header_p)grf;
+	rgn_file_header_p grfh = (rgn_file_header_p)grf->data;
 	rgn_version_id_p rvid = &grfh->rgn_version_id;
 	
-	LOG("signature=0x%04x", rvid->signature);
-	assert_abort_msg(kRGN_MAGIC == rvid->signature, "invalid signature");
+	uint32_t signature = le32toh(rvid->signature);
 
-	LOG("version=0x%02x", rvid->version);
-	assert_abort_msg(kRGN_VERSION == rvid->version, "unexpected version");
+	LOG("signature = 0x%08x", signature);
+	assert_abort_msg(kRGN_MAGIC == signature, "invalid signature");
 
-	garmin_rgn_general_record_parse(&grfh->rgn_record, limit);
+	uint16_t version = le16toh(rvid->version);
+
+	LOG("version=0x%04x", version);
+	assert_abort_msg(kRGN_VERSION == version, "unexpected version");
+
+	garmin_rgn_general_record_parse(grf, &grfh->rgn_record);
 }
 
 int main(void)
 {
+	LOG("0x%08x", arm_movi_rd(0));
+	LOG("0x%08x", arm_movi_rd(15));
+	LOG("0x%08x", _movi_rd_mask);
+	
+	grf_p grf = calloc(1, sizeof(grf_t));
+	
 	int fd;
 	ERR(fd = open(RGNDirPath RGNFileName ".rgn", O_RDONLY));
 
 	struct stat sb;
 
 	ERR(fstat(fd, &sb));
-	
-	void *data;
-	ERR_NULL(data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
-	
-	garmin_rgn_file_parse(data, (uint32_t)data + sb.st_size);
 
-	munmap(data, sb.st_size);
+	ERR_NULL(grf->data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0));
+	
 	close(fd);
+
+	grf->data_end = grf->data + sb.st_size;
+	grf->data_size = sb.st_size;
+
+	/* **** */
+
+	garmin_rgn_file_parse(grf);
+
+	/* **** */
+
+	munmap(grf->data, sb.st_size);
+	free(grf);
 }

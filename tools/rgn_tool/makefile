@@ -1,6 +1,9 @@
 CFLAGS = -Wall -g
 CFLAGS += -O2
+CFLAGS += -I../fw_info
 CFLAGS += -I../../../include
+
+VPATH = ../fw_info
 
 all: rfp
 
