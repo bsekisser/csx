@@ -23,10 +23,17 @@
 
 typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
 
+static uint32_t _alubox_error(soc_core_p core, uint32_t rn, uint32_t rm)
+{
+	LOG("operation = 0x%02x", DPI_OPERATION);
+	soc_core_disasm_arm(core, PC, IR);
+	LOG_ACTION(exit(-1));
+}
+
 alubox_fn _alubox_arm_dpi_fn[2][16] = {{
 		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
 		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		0,				0,				0,				0,
+		_alubox_error,	_alubox_error,	_alubox_error,	_alubox_error,
 		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
 	}, {
 		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
@@ -82,8 +89,7 @@ static void _arm_inst_dp(soc_core_p core)
 	soc_core_arm_decode_rn_rd(core, get_rn, 0);
 
 	alubox_fn dpi_fn = _alubox_arm_dpi_fn[CCx.e && DPI_BIT(s20)][DPI_OPERATION];
-	assert(0 != dpi_fn);
-	
+
 	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
 
 	_arm_inst_dpi_final(core);
@@ -317,30 +323,6 @@ static void arm_inst_bx(soc_core_p core)
 		soc_core_reg_set_pcx(core, new_pc);
 	}
 }
-
-/*
-static void arm_inst_dpi(soc_core_p core)
-{
-	soc_core_arm_decode_shifter_operand(core);
-
-	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
-
-	soc_core_arm_decode_rn_rd(core, get_rn, 0);
-
-	alubox_fn dpi_fn = _alubox_arm_dpi_fn[CCx.e && DPI_BIT(s20)][DPI_OPERATION];
-	assert(0 != dpi_fn);
-	
-	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
-
-	_arm_inst_dpi_final(core);
-	return;
-
-exit_fault:
-	LOG("operation = 0x%02x", DPI_OPERATION);
-	soc_core_disasm_arm(core, IP, IR);
-	UNIMPLIMENTED;
-}
-*/
 
 static void arm_inst_dp_immediate(soc_core_p core)
 {
