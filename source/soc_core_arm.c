@@ -19,28 +19,34 @@
 
 /* **** */
 
+//#define _CHECK_PEDANTIC_INST_SBZ_
 #include "alu_box.h"
 
-typedef uint32_t (*alubox_fn)(soc_core_p core, uint32_t rn, uint32_t rm);
-
-static uint32_t _alubox_error(soc_core_p core, uint32_t rn, uint32_t rm)
+/*static uint32_t _alubox_error(soc_core_p core, uint32_t rn, uint32_t rm)
 {
 	LOG("operation = 0x%02x", DPI_OPERATION);
 	soc_core_disasm_arm(core, PC, IR);
 	LOG_ACTION(exit(-1));
-}
+}*/
 
-alubox_fn _alubox_arm_dpi_fn[2][16] = {{
+alubox_fn _alubox_dpi_fn[3][16] = {
+	{
 		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
 		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		_alubox_error,	_alubox_error,	_alubox_error,	_alubox_error,
+		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_add,
 		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
-	}, {
+	}, { /* S && !(rPC == rR(D)) */
 		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
 		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
 		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
 		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
-}};
+	}, { /* S && (rPC == rR(D)) */
+		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
+		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
+		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
+		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
+	}
+};
 
 /* **** */
 
@@ -88,7 +94,9 @@ static void _arm_inst_dp(soc_core_p core)
 
 	soc_core_arm_decode_rn_rd(core, get_rn, 0);
 
-	alubox_fn dpi_fn = _alubox_arm_dpi_fn[CCx.e && DPI_BIT(s20)][DPI_OPERATION];
+	const uint8_t xspc = CCx.e && ((DPI_BIT(s20) && (1 + (rPC == rR(D)))));
+	
+	alubox_fn dpi_fn = _alubox_dpi_fn[xspc][DPI_OPERATION];
 
 	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
 
@@ -881,7 +889,7 @@ void soc_core_arm_step(soc_core_p core)
 		}
 	}
 
-decode_fault:
+decode_fault: __attribute__((unused))
 	switch(opcode)
 	{
 		case 0x00:

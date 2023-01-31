@@ -20,15 +20,16 @@ enum {
 typedef uint32_t (*thumb_fn)(uint32_t* rd, const uint32_t rn, const uint32_t rm);
 
 uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t rm, uint32_t* xpsr) {
-	volatile uint32_t xres = fn(0, rn, 0);
+	volatile uint32_t xres = fn(0, rn, rm);
 
-	asm("mrs %[xpsr], CPSR\n\t"
+	asm volatile ("mrs %[xpsr], CPSR\n\t"
 		: [xpsr] "=r" (*xpsr)
-		::);
+		: "r" (xres)
+		: "cc");
 
 	return(xres);
 
-	UNUSED(t, rm);
+	UNUSED(t);
 }
 
 uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t rm, uint32_t* cpsr) {
@@ -62,7 +63,7 @@ void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
 			break;
 	}
 	
-	xres = _test_thumb_asm(t, fn, rn, 0, &xpsr);
+	xres = _test_thumb_asm(t, fn, rn, rm, &xpsr);
 	cres = _test_thumb_adds_rn_i_inst(t, rn, rm, &cpsr);
 
 //	TRACE_PSR(xpsr);

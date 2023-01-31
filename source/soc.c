@@ -57,10 +57,18 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	ERR_NULL(data);
 
 	csx->cdp = cdp;
-//	cdp->base = 0x10020000; /* ? thoretical load address in sdram */
-	cdp->base = 0x14000000; /* ? safer as unknown load address */
 	cdp->data = data;
 	cdp->size = sb.st_size;
+
+	if(1) {
+		cdp->base = 0x10020000; /* ? thoretical load address in sdram */
+
+		void* src = cdp->data;
+		void* dst = &csx->sdram[cdp->base - CSX_SDRAM_BASE];
+		
+		memcpy(dst, src, cdp->size);
+	} else
+		cdp->base = 0x14000000; /* ? safer as unknown load address */
 
 	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
 		cdp->base, (uint)cdp->data, cdp->size);

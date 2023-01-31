@@ -50,7 +50,7 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -87,7 +87,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 	xres = csx_test_arm_adcs_asm(t, &xpsr, ~0, 1);
 	res = csx_test_arm_adcs_inst(t, &cpsr, ~0, 1);
 
-	LOG("xres = 0x%08x, res = 0x%08x", xres, res);
+//	LOG("xres = 0x%08x, res = 0x%08x", xres, res);
 	
 	assert(xres == res);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
@@ -131,7 +131,7 @@ static uint32_t csx_test_arm_adds_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -210,7 +210,7 @@ static uint32_t csx_test_arm_ands_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -339,7 +339,7 @@ static uint32_t csx_test_arm_bics_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -408,7 +408,7 @@ static uint32_t csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, 
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -502,7 +502,7 @@ static uint32_t csx_test_arm_eors_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -974,7 +974,7 @@ static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		"mrs %[psr], CPSR\n\t"
 		: [psr] "=r" (*psr), [result] "=r" (res)
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		:);
+		: "cc");
 
 	return(res);
 
@@ -1017,7 +1017,11 @@ static void csx_test_arm_subs(csx_test_p t)
 	xres = csx_test_arm_subs_asm(t, &xpsr, 12, 13);
 	res = csx_test_arm_subs_inst(t, &cpsr, 12, 13);
 
-	assert(-1UL == res);
+//	LOG("xres == 0x%08x, res = 0x%08x", xres, res);
+//	fflush(stdout); sync(); sync(); sync();
+
+//	assert(-1UL == res);
+	assert(res == xres);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
 	_assert_nzcv(t, 1, 0, 0, 0);
 	
