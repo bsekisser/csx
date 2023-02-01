@@ -54,9 +54,10 @@ const uint8_t soc_nnd_flash_manufacturer_code[] = {
 #define OFFSET_MSB (CSx_LSB - 1)
 
 
-const uint8_t soc_nnd_flash_id[2] = {
-	soc_nnd_flash_part_id[0],
-	soc_nnd_flash_manufacturer_code[0],
+const uint8_t soc_nnd_flash_id[5] = {
+	0xec, 0xd3, 0x51, 0x95, 0x58
+//	soc_nnd_flash_part_id[0],
+//	soc_nnd_flash_manufacturer_code[0],
 };
 
 /* **** */
@@ -73,7 +74,9 @@ const uint8_t soc_nnd_flash_id[2] = {
 
 static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 {
-	const uint cs = addr >> CSx_LSB;
+//	const uint cs = addr >> CSx_LSB;
+	const uint cs = 0;
+	
 	const soc_nnd_unit_p unit = &nnd->unit[cs];
 
 	LOG("nnd = 0x%08x, addr = 0x%08x, cs = 0x%02x, unit = 0x%08x", (uint)nnd, addr, cs, (uint)unit);
@@ -119,8 +122,8 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, uint size)
 			if(0x70 == (unit->cl & 0xff)) { /* read status */
 				value = unit->status;
 			} else if(0x90 == (unit->cl & 0xf0)) { /* read id */
-				value = soc_nnd_flash_id[index];
-				unit->cl = (unit->cl & 0xf0) | (index + 1);
+				value = soc_nnd_flash_id[index++];
+				unit->cl = (unit->cl & 0xf0) | ((index < 5) ? index : 0);
 			}
 			break;
 		default:
