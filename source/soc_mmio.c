@@ -293,7 +293,8 @@ ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
 	const ea_trace_p eat = soc_mmio_get_trace(tl, address);
 	const char *name = eat ? eat->name : "";
 
-	LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+	if(_trace_mmio)
+		LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
 
 	return(eat);
 }
@@ -347,7 +348,8 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 	}
 
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
-	LOG("write -- 0x%08x", value);
+	if(_trace_mmio)
+		LOG("write -- 0x%08x", value);
 
 	if(eat)
 	{
