@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 			test = 1;
 	}
 
-//	dtime_calibrate(void);
+	uint64_t est_host_cps = dtime_calibrate();
 
 	csx_p csx = csx_init();
 
@@ -117,4 +117,17 @@ int main(int argc, char **argv)
 		dtime_start, dtime_end, dtime_run);
 	LOG("dtime/cycle = 0x%016llx, dtime/insn = 0x%016llx",
 		dtime_cycle, dtime_insn);
+
+	double ratio = 1.0 / est_host_cps;
+//	double ratio = (double)dtime_run / est_host_cps;
+
+	double dcrt = (double)csx->cycle / dtime_run;
+
+	LOG("\n\n");
+	LOG("est_host_cps = 0x%016" PRIx64, est_host_cps);
+	LOG("ratio --- %0.05f", ratio);
+	LOG("cycle --- %0.05f", ratio * dtime_cycle);
+	LOG("insn --- %0.05f", ratio * dtime_insn);
+	LOG("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
+	
 }
