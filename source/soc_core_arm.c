@@ -778,7 +778,7 @@ static void arm_inst_msr(soc_core_p core)
 
 	const uint8_t cs = bit_r ? 'S' : 'C';
 
-	soc_core_trace_psr(core, 0, saved_psr);
+//	soc_core_trace_psr(core, 0, saved_psr);
 
 	if(bit_i)
 	{
@@ -793,7 +793,7 @@ static void arm_inst_msr(soc_core_p core)
 
 	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
 
-	soc_core_trace_psr(core, 0, new_psr);
+//	soc_core_trace_psr(core, 0, new_psr);
 }
 
 /* **** */
