@@ -343,6 +343,8 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 	else
 		vR(D) = soc_core_reg_get(core, rR(D));
 
+	vR(D) &= _BF(size << 3);
+
 	CORE_TRACE("%sr%s(%s, %s[0x%03x]); /* [(0x%08x + 0x%03x) = 0x%08x](0x%08x) */",
 		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), offset, vR(N), offset, ea, vR(D));
 
@@ -443,6 +445,9 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 			break;
 		case 0x07:
 			vR(D) = (int16_t)vR(D);
+			break;
+		default:
+			vR(D) &= _BF(size << 3);
 			break;
 	}
 

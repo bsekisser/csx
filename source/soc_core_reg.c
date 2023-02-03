@@ -108,6 +108,10 @@ void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 	new_pc &= (~3 >> thumb);
 
 	PC = new_pc;
+
+//	return(IP == new_pc);
+	if(IP && new_pc)
+		assert(IP != new_pc);
 }
 
 uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v)

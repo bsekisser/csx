@@ -139,7 +139,8 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		int limit = Mb(4) + Kb(0) + Kb(0);
+//		int limit = Mb(4) + Kb(0) + Kb(0);
+		int limit = Kb(65);
 		for(int i = 0; i < limit; i++)
 		{
 			csx->cycle++;

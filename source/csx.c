@@ -94,7 +94,8 @@ int main(int argc, char **argv)
 			test = 1;
 	}
 
-	uint64_t est_host_cps = dtime_calibrate();
+//	uint64_t est_host_cps = dtime_calibrate();
+	uint64_t est_host_cps = MHz(1023);
 
 	csx_p csx = csx_init();
 

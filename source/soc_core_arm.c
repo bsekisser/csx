@@ -159,7 +159,9 @@ static void _arm_inst_ldst(soc_core_p core,
 
 		if(LDST_FLAG_S) /* sign extend ? */
 			vR(D) = mlBFEXTs(vR(D), (ls->rw_size << 3), 0);
-	}
+	} else
+
+	vR(D) &= _BF(ls->rw_size << 3);
 
 	soc_core_trace_inst_ldst(core, ls);
 
