@@ -111,11 +111,11 @@ int main(int argc, char **argv)
 	uint64_t dtime_cycle = dtime_run / csx->cycle;
 	uint64_t dtime_insn = dtime_run / csx->insns;
 
-	LOG("cycles = 0x%016llx, insns = 0x%016llx",
+	LOG_ERR("cycles = 0x%016llx, insns = 0x%016llx",
 		csx->cycle, csx->insns);
-	LOG("dtime_start = 0x%016llx, dtime_end = 0x%016llx, dtime_run = 0x%016llx",
+	LOG_ERR("dtime_start = 0x%016llx, dtime_end = 0x%016llx, dtime_run = 0x%016llx",
 		dtime_start, dtime_end, dtime_run);
-	LOG("dtime/cycle = 0x%016llx, dtime/insn = 0x%016llx",
+	LOG_ERR("dtime/cycle = 0x%016llx, dtime/insn = 0x%016llx",
 		dtime_cycle, dtime_insn);
 
 	double ratio = 1.0 / est_host_cps;
@@ -123,11 +123,11 @@ int main(int argc, char **argv)
 
 	double dcrt = (double)csx->cycle / dtime_run;
 
-	LOG("\n\n");
-	LOG("est_host_cps = 0x%016" PRIx64, est_host_cps);
-	LOG("ratio --- %0.05f", ratio);
-	LOG("cycle --- %0.05f", ratio * dtime_cycle);
-	LOG("insn --- %0.05f", ratio * dtime_insn);
-	LOG("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
+	LOG_ERR("\n\n");
+	LOG_ERR("est_host_cps = 0x%016" PRIx64, est_host_cps);
+	LOG_ERR("ratio --- %0.05f", ratio);
+	LOG_ERR("cycle --- %0.05f", ratio * dtime_cycle);
+	LOG_ERR("insn --- %0.05f", ratio * dtime_insn);
+	LOG_ERR("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
 	
 }
