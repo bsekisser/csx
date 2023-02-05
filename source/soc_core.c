@@ -18,7 +18,7 @@
 void soc_core_reset(soc_core_p core)
 {
 	for(int i = 0; i < 16; i++)
-		soc_core_reg_set(core, i, ((~0) << 16) | _test_value(i));
+		soc_core_reg_set(core, i, ((~0U) << 16) | _test_value(i));
 
 	CPSR = 0x13;		/* Enter Supervisor mode */
 	BCLR(CPSR, 5);		/* Execute in ARM state */
