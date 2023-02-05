@@ -90,4 +90,3 @@ typedef struct soc_core_ldst_t {
 /* **** */
 
 void soc_core_arm_decode_coproc(soc_core_p core);
-const char* soc_core_arm_decode_shifter_op_string(uint8_t shopc);

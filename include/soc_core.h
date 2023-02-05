@@ -62,8 +62,6 @@ typedef struct soc_core_inst_t {
 #define CCx	SCIx->ccx
 }soc_core_inst_t;
 
-#define rR_NAME(_x) reg_name[rR(_x)]
-
 typedef struct soc_core_t {
 	uint32_t			reg[16];
 #define GPR(_x)			core->reg[_x]

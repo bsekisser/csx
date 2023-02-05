@@ -622,7 +622,7 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	soc_core_decode_get(core, rRD, 2, 0, 0);
 
 	uint8_t shift = imm5;
-	const char *sops = shift_op_string[operation];
+	const char *sops = shift_op_string[0][operation];
 
 	vR(D) = vR(M);
 

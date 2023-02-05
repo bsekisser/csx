@@ -1,4 +1,5 @@
 *.d
+*.diff
 *.geany
 *.log
 *.o

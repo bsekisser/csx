@@ -67,9 +67,6 @@ static void _arm_inst_dpi_final(soc_core_p core)
 
 	if(CCx.e)
 	{
-		if((rR(S) & 0x0f) == rR(S))
-			CYCLE++;
-
 		if(DPI_WB)
 		{
 			if(rPC == rR(D))
@@ -374,6 +371,9 @@ static void arm_inst_dp_register_shift(soc_core_p core)
 
 	soc_core_decode_get(core, rRS, 11, 8, 1);
 	vR(S) &= _BM(7);
+
+	if(CCx.e)
+		CYCLE++;
 
 	_arm_inst_dp_shift_operand(core);
 	_arm_inst_dp(core);

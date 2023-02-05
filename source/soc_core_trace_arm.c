@@ -15,6 +15,52 @@
 
 /* **** */
 
+static const char* dpi_ops[16] = {
+	"& ",  "^ ",  "- ",  "- ",
+	"+ ",  "+ ",  "- ",  "- ",
+	"& ",  "^ ",  "- ",  "+ ",
+	"| ",  "== ", "& ~", "= -",
+
+//		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
+//		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
+//		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
+//		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
+};
+
+static void _dpi_s_s_r(soc_core_p core)
+{
+	_CORE_TRACE_("; /* 0x%08x %s0x%08x --> 0x%08x */",
+		vR(N), dpi_ops[DPI_OPERATION], vR(SOP_V), vR(D));
+}
+
+static void _dpi_cmp_s_s_r(soc_core_p core)
+{
+	_CORE_TRACE_("; /* 0x%08x %s0x%08x ??? 0x%08x */",
+		vR(N), dpi_ops[DPI_OPERATION], vR(SOP_V), vR(D));
+}
+
+static void _dpi_mov_s_s(soc_core_p core)
+{
+	if(!DPI_BIT(i25)) {
+		if(mlBFEXT(IR, 11, 4)) {
+			_CORE_TRACE_("; /* %s(0x%08x, %03u) = 0x%08x */", 
+				shift_op_string[1][DPI_SHIFT_OP],
+					vR(M), vR(S), vR(D));
+		}
+		else if(rR(D) == rR(M))
+		{
+			_CORE_TRACE_("; /* nop */");
+		}
+	} else {
+		if(vR(S)) {
+			_CORE_TRACE_("; /* ROR(0x%08x, %03u) = 0x%08x */", 
+				vR(M), vR(S), vR(D));
+		} else {
+			_CORE_TRACE_("; /* 0x%08x */", vR(D));
+		}
+	}
+}
+
 void soc_core_trace_inst_dpi(soc_core_p core)
 {
 	if(!core->trace)
@@ -40,7 +86,7 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 	}
 	else
 	{
-		const char* sos = shift_op_string[DPI_SHIFT_OP];
+		const char* sos = shift_op_string[1][DPI_SHIFT_OP];
 		
 		if(DPI_BIT(x4))
 			_CORE_TRACE_(", %s(%s, %s)", sos, rR_NAME(M), rR_NAME(S));
@@ -63,62 +109,29 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 	_CORE_TRACE_(")");
 
 	switch(DPI_OPERATION) {
-		case ARM_DPI_OPERATION_ADC:
-		case ARM_DPI_OPERATION_ADD:
-			_CORE_TRACE_("; /* 0x%08x + 0x%08x --> 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
-			break;
-		case ARM_DPI_OPERATION_AND:
-			_CORE_TRACE_("; /* 0x%08x & 0x%08x --> 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
+		default:
+			_dpi_s_s_r(core);
 			break;
 		case ARM_DPI_OPERATION_BIC:
-			_CORE_TRACE_("; /* 0x%08x & !0x%08x(0x%08x) --> 0x%08x */",
+			_CORE_TRACE_("; /* 0x%08x & ~0x%08x(0x%08x) --> 0x%08x */",
 				vR(N), vR(SOP_V), ~vR(SOP_V), vR(D));
 			break;
 		case ARM_DPI_OPERATION_CMP:
-			_CORE_TRACE_("; /* 0x%08x - 0x%08x ??? 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
-			break;
-		case ARM_DPI_OPERATION_EOR:
-			_CORE_TRACE_("; /* 0x%08x ^ 0x%08x --> 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
+		case ARM_DPI_OPERATION_CMN:
+		case ARM_DPI_OPERATION_TEQ:
+		case ARM_DPI_OPERATION_TST:
+			_dpi_cmp_s_s_r(core);
 			break;
 		case ARM_DPI_OPERATION_MOV:
-			if(!DPI_BIT(i25)) {
-				if(mlBFEXT(IR, 11, 4)) {
-					_CORE_TRACE_("; /* %s(0x%08x, %03u) = 0x%08x */", 
-						shift_op_string[DPI_SHIFT_OP],
-							vR(M), vR(S), vR(D));
-				}
-				else if(rR(D) == rR(M))
-				{
-					_CORE_TRACE_("; /* nop */");
-				}
-			} else {
-				if(vR(S)) {
-					_CORE_TRACE_("; /* ROR(0x%08x, %03u) = 0x%08x */", 
-						vR(M), vR(S), vR(D));
-				} else {
-					_CORE_TRACE_("; /* 0x%08x */", vR(D));
-				}
-			}
+			_dpi_mov_s_s(core);
 			break;
 		case ARM_DPI_OPERATION_MVN:
 			_CORE_TRACE_("; /* 0x%08x */", vR(D));
 			break;
-		case ARM_DPI_OPERATION_ORR:
-			_CORE_TRACE_("; /* 0x%08x | 0x%08x --> 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
-			break;
 		case ARM_DPI_OPERATION_RSB:
+		case ARM_DPI_OPERATION_RSC:
 			_CORE_TRACE_("; /* 0x%08x - 0x%08x --> 0x%08x */",
 				vR(SOP_V), vR(N), vR(D));
-			break;
-		case ARM_DPI_OPERATION_SBC:
-		case ARM_DPI_OPERATION_SUB:
-			_CORE_TRACE_("; /* 0x%08x - 0x%08x --> 0x%08x */",
-				vR(N), vR(SOP_V), vR(D));
 			break;
 	}
 
