@@ -22,6 +22,9 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 #define DataAbort() \
 	({ LOG_ACTION(exit(-1)); })
 
+#define UNDEFINED \
+	({ LOG_ACTION(exit(-1)); })
+
 #define UNPREDICTABLE \
 	({ LOG("UNPREDICTABLE"); })
 

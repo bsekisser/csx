@@ -60,7 +60,7 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 
 	const char* ops[2] = { "adds", "subs" };
 	const char opc[2] = { '+', '-' };
-	
+
 	if(bit_i)
 	{
 		CORE_TRACE("%s(%s, %s, %01u); /* 0x%08x %c %01u = 0x%08x */",
@@ -113,7 +113,7 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 	alubox_fn _alubox_fn[4] = { _alubox_movs, _alubox_cmps, _alubox_adds, _alubox_subs };
 
 	_setup_rR_vR(D, rR(N), _alubox_fn[operation](core, vR(N), vR(M)));
-	
+
 	const char* ops[4] = { "movs", "cmps", "adds", "subs" };
 	const char opc[4] = { '=', '-', '+', '-' };
 
@@ -264,7 +264,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 		_alubox_tsts,	_alubox_rsbs,	_alubox_cmps,	_alubox_cmns,
 		_alubox_orrs,	_alubox_muls,	_alubox_bics,	_alubox_mvns,
 		};
-		
+
 	const char* _dpr_ops[2][16] = {{
 		"ands", "eors", "lsls", "lsrs", "asrs", "adcs", "sbcs", "rors",
 		"tsts", "rsbs", "cmps", "cmns", "orrs", "muls", "bics", "mvns",
@@ -709,6 +709,115 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 
 /* **** */
 
+void soc_core_thumb_step_0xe800(soc_core_p core)
+{
+	if(IR & 1)
+		UNDEFINED;
+
+	return(soc_core_thumb_bxx(core));
+}
+
+void soc_core_thumb_step_fail_decode(soc_core_p core)
+{
+	LOG("ir = 0x%04x", IR);
+
+	soc_core_disasm_thumb(core, IP, IR);
+	LOG_ACTION(exit(1));
+}
+
+void soc_core_thumb_step_undefined(soc_core_p core)
+{
+	UNDEFINED;
+
+	UNUSED(core);
+}
+
+void soc_core_thumb_step_unimplimented(soc_core_p core)
+{
+	UNIMPLIMENTED;
+
+	UNUSED(core);
+}
+
+void soc_core_thumb_step_unpredictable(soc_core_p core)
+{
+	UNPREDICTABLE;
+
+	UNUSED(core);
+}
+
+typedef void (*thumb_fn)(soc_core_p core);
+
+void soc_core_thumb_step_0xb600(soc_core_p core)
+{
+	thumb_fn xb600[0x100] = {
+		[0x40 ... 0x40] = soc_core_thumb_step_unpredictable, /* unpredictable */
+		[0x50 ... 0x50] = soc_core_thumb_step_unimplimented, /* set endianness */
+		[0x60 ... 0x67] = soc_core_thumb_step_unimplimented, /* change processor state */
+		[0x68 ... 0x6f] = soc_core_thumb_step_unpredictable, /* unpredictable */
+		[0x70 ... 0x77] = soc_core_thumb_step_unimplimented, /* change processor state */
+		[0x78 ... 0x7f] = soc_core_thumb_step_unpredictable, /* unpredictable */
+	};
+
+	thumb_fn fn = xb600[IR & 0xff];
+	if(fn)
+		return(fn(core));
+
+	return(soc_core_thumb_step_fail_decode(core));
+}
+
+void soc_core_thumb_step_0xba00(soc_core_p core)
+{
+	thumb_fn xba00[0x100] = {
+		[0x00 ... 0x70] = soc_core_thumb_step_unimplimented, /* reverse bytes */
+		[0x80 ... 0xb0] = soc_core_thumb_step_undefined,
+		[0xc0 ... 0xf0] = soc_core_thumb_step_unimplimented, /* reverse bytes */
+	};
+
+	thumb_fn fn = xba00[IR & 0xff];
+	if(fn)
+		return(fn(core));
+
+	return(soc_core_thumb_step_fail_decode(core));
+}
+
+static thumb_fn thumb_fn_list_x000[0x100] = {
+	[0x00 ... 0x17] = soc_core_thumb_sbi_imm5_rm_rd,
+	[0x18 ... 0x1b] = soc_core_thumb_add_sub_rn_rd,
+	[0x1c ... 0x1f] = soc_core_thumb_add_sub_rn_rd,
+	[0x20 ... 0x3f] = soc_core_thumb_ascm_rd_i,
+	[0x40 ... 0x43] = soc_core_thumb_dp_rms_rdn,
+	[0x44 ... 0x46] = soc_core_thumb_sdp_rms_rdn,
+	[0x47 ... 0x47] = soc_core_thumb_bx,
+	[0x48 ... 0x4f] = soc_core_thumb_ldst_rd_i,
+	[0x50 ... 0x5f] = soc_core_thumb_ldst_rm_rn_rd,
+	[0x60 ... 0x7f] = soc_core_thumb_ldst_bwh_o_rn_rd,
+	[0x80 ... 0x8f] = soc_core_thumb_ldst_bwh_o_rn_rd,
+	[0x90 ... 0x9f] = soc_core_thumb_ldst_rd_i,
+	[0xa0 ... 0xaf] = soc_core_thumb_add_rd_pcsp_i,
+	[0xb0 ... 0xb0] = soc_core_thumb_add_sub_sp_i7,
+	[0xb1 ... 0xb1] = soc_core_thumb_step_undefined,
+	[0xb2 ... 0xb2] = soc_core_thumb_step_unimplimented, /* sign / zero extend */
+	[0xb3 ... 0xb3] = soc_core_thumb_step_undefined,
+	[0xb4 ... 0xb5] = soc_core_thumb_pop_push,
+	[0xb6 ... 0xb6] = soc_core_thumb_step_0xb600,
+	[0xb7 ... 0xb7] = soc_core_thumb_step_undefined,
+	[0xb8 ... 0xb9] = soc_core_thumb_step_undefined,
+	[0xba ... 0xba] = soc_core_thumb_step_0xba00,
+	[0xbb ... 0xbb] = soc_core_thumb_step_undefined,
+	[0xbc ... 0xbd] = soc_core_thumb_pop_push,
+	[0xbe ... 0xbe] = soc_core_thumb_step_unimplimented, /* software breakpoint */
+	[0xbf ... 0xbf] = soc_core_thumb_step_undefined,
+	[0xc0 ... 0xcf] = soc_core_thumb_ldstm_rn_rxx,
+	[0xd0 ... 0xdd] = soc_core_thumb_bcc,
+	[0xde ... 0xde] = soc_core_thumb_step_undefined, /* undefined instruction */
+	[0xdf ... 0xdf] = soc_core_thumb_step_unimplimented, /* swi */
+	[0xe0 ... 0xe7] = soc_core_thumb_bxx,
+	[0xe8 ... 0xef] = soc_core_thumb_step_0xe800,
+	[0xf0 ... 0xf7] = soc_core_thumb_bxx,
+	[0xf8 ... 0xff] = soc_core_thumb_bxx,
+};
+
 void soc_core_thumb_step(soc_core_p core)
 {
 	CCx.e = 1;
@@ -716,12 +825,13 @@ void soc_core_thumb_step(soc_core_p core)
 
 	IR = soc_core_reg_pc_fetch_step_thumb(core);
 
-	uint8_t lsb = 8;
-	uint32_t opcode = 0;
+	thumb_fn fn = thumb_fn_list_x000[IR >> 8];
+	if(fn)
+		return(fn(core));
+	else
+		goto fail_decode;
 
-	opcode = mlBFTST(IR, 15, lsb);
-
-	switch(opcode)
+	switch(IR)
 	{
 	/* **** */
 		case 0x0000 ... (0x1000 | mlBF(10, 0)):
@@ -758,7 +868,6 @@ void soc_core_thumb_step(soc_core_p core)
 		case 0x5000 ... (0x5000 | mlBF(11, 0)): /* [ld|st]r[b|h|sb|sh] rd, [rn, rm] */
 			if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
 				return(soc_core_thumb_ldst_rm_rn_rd(core));
-			LOG_ACTION(goto fail_decode);
 			break;
 		case 0x6000 ... (0x6000 | mlBF(12, 0)): /* str */
 		case 0x8000 ... (0x8000 | mlBF(11, 0)): /* strh */
@@ -772,16 +881,38 @@ void soc_core_thumb_step(soc_core_p core)
 			break;
 		case 0xb000 ... (0xb000 | mlBF(11, 0)): /* miscelaneous */
 		{	switch(IR) {
-				case 0xb400 ... (0xbc00 | mlBF(8, 0)):
-					if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
-						return(soc_core_thumb_pop_push(core));
-					break;
-				default:
+				case 0xb000 ... (0xb000 | mlBF(7, 0)): /* adjust stack pointer */
 					if(SOC_CORE_THUMB_ADD_SUB_SP_I7 == (IR & SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK))
 						return(soc_core_thumb_add_sub_sp_i7(core));
 					break;
+				case 0xb100 ... 0xb1ff:
+				case 0xb300 ... 0xb3ff:
+				case 0xb700 ... 0xb7ff:
+				case 0xb800 ... 0xb9ff:
+//				case 0xba80 ... (0xba80 | mlBF(5, 0)):
+				case 0xbb00 ... 0xbbff:
+				case 0xbf00 ... 0xbfff:
+					UNDEFINED;
+					break;
+				case 0xb200 ... (0xb200 | mlBF(7, 0)): /* sign / zero extend */
+				case 0xb650 ... 0xb65f: /* set endianness */
+				case 0xb660 ... 0xb667: /* change processor state */
+				case 0xb670 ... 0xb677: /* change processor state */
+				case 0xba00 ... (0xba00 | mlBF(7, 0)): /* reverse bytes */
+				case 0xbe00 ... (0xbe00 | mlBF(7, 0)): /* software breakpoint */
+					UNIMPLIMENTED;
+					break;
+				case 0xb640 ... 0xb64f: /* unpredictable */
+				case 0xb668 ... 0xb66f: /* unpredictable */
+				case 0xb678 ... 0xb67f: /* unpredictable */
+					UNPREDICTABLE;
+					break;
+				case 0xb400 ... (0xb400 | mlBF(8, 0)):
+				case 0xbc00 ... (0xbc00 | mlBF(8, 0)):
+					if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
+						return(soc_core_thumb_pop_push(core));
+					break;
 				}
-				LOG_ACTION(goto fail_decode);
 		}	break;
 		case 0xc000 ... (0xc000 | mlBF(11, 0)):
 			if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
@@ -791,12 +922,14 @@ void soc_core_thumb_step(soc_core_p core)
 			return(soc_core_thumb_bcc(core));
 			break;
 		case 0xde00 ... (0xde00 | mlBF(7, 0)): /* undefined instruction */
+			UNDEFINED;
+			break;
 		case 0xdf00 ... (0xdf00 | mlBF(7, 0)): /* swi */
-			LOG_ACTION(goto fail_decode);
+			UNIMPLIMENTED;
 			break;
 		case 0xe800 ... (0xe800 | mlBF(10, 0)): /* blx suffix / undefined instruction */
 			if(IR & 1)
-				LOG_ACTION(goto fail_decode);
+				UNDEFINED;
 			__attribute__((fallthrough));
 		case 0xe000 ... (0xe000 | mlBF(10, 0)): /* unconditional branch */
 		case 0xf000 ... (0xf000 | mlBF(10, 0)): /* bl/blx prefix */
@@ -807,7 +940,7 @@ void soc_core_thumb_step(soc_core_p core)
 	}
 
 fail_decode:
-	LOG("ir = 0x%04x, opcode = 0x%04x, lsb = 0x%02x", IR, opcode, lsb);
+	LOG("IR = 0x%04x, IR[15:8] = 0x%04x", IR, mlBFTST(IR, 15, 8));
 
 	soc_core_disasm_thumb(core, IP, IR);
 	LOG_ACTION(exit(1));
