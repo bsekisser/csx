@@ -68,9 +68,16 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 
 	if(bit_i)
 	{
-		CORE_TRACE("%s(%s, %s, %01u); /* 0x%08x %c %01u = 0x%08x */",
-			ops[op2], rR_NAME(D), rR_NAME(N), vR(M),
-				vR(N), opc[op2], vR(M), vR(D));
+		if(op2 || vR(M)) {
+			CORE_TRACE("%s(%s, %s, %01u); /* 0x%08x %c %01u = 0x%08x */",
+				ops[op2], rR_NAME(D), rR_NAME(N), vR(M),
+					vR(N), opc[op2], vR(M), vR(D));
+		}
+		else // pseudo op mov is encoded as adds rd, rn, 0
+		{
+			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
+				ops[op2], rR_NAME(D), rR_NAME(N), vR(D));
+		}
 	}
 	else
 	{
