@@ -21,16 +21,47 @@
 		vR(_rvx) = _vr; \
 	})
 
-static inline void soc_core_decode_get(soc_core_p core,
-	uint _rxx,
-	uint msb,
-	uint lsb,
-	int get_rxx)
-{
-	soc_core_reg_p p2r = &rRX(_rxx);
+#define _setup_xR_xV(_xrv, _rr, _vr) \
+	({ \
+		rRX(_xrv) = _rr; \
+		vRX(_xrv) = _vr; \
+	})
 
-	*p2r = mlBFEXT(IR, msb, lsb);
-	
-	if(get_rxx)
-		vRX(_rxx) = soc_core_reg_get(core, *p2r);
+static inline void _setup_rR_dst(soc_core_p core, const uint8_t rrx, const uint8_t rr)
+{
+	rRX(rrx) = rr;
+}
+
+static inline void _setup_rR_dst_rR_src(soc_core_p core, const uint8_t rrx, const uint8_t rrd, const uint8_t rrs)
+{
+	_setup_xR_xV(rrx, rrd, vRX(rrs));
+}
+
+static inline void _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const uint8_t rr)
+{
+#ifndef rRvRvPC
+	#define rRvRvPC soc_core_reg_get(core, rPC)
+	#warning rRvRvPC undefined, using default
+#endif
+
+	if(rPC == rr) 
+		_setup_xR_xV(rrx, rr, rRvRvPC);
+	else
+		_setup_xR_xV(rrx, rr, GPR(rr));
+}
+
+static inline void soc_core_decode_dst(soc_core_p core,
+	uint rrx,
+	uint msb,
+	uint lsb)
+{
+	_setup_rR_dst(core, rrx, mlBFEXT(IR, msb, lsb));
+}
+
+static inline void soc_core_decode_src(soc_core_p core,
+	uint rrx,
+	uint msb,
+	uint lsb)
+{
+	_setup_rR_vR_src(core, rrx, mlBFEXT(IR, msb, lsb));
 }

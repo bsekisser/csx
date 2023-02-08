@@ -1,3 +1,5 @@
+#define rRvRvPC PC_ARM
+
 #include "soc_core_arm.h"
 #include "soc_core_arm_decode.h"
 #include "soc_core_arm_inst.h"
@@ -21,13 +23,6 @@
 
 //#define _CHECK_PEDANTIC_INST_SBZ_
 #include "alu_box.h"
-
-/*static uint32_t _alubox_error(soc_core_p core, uint32_t rn, uint32_t rm)
-{
-	LOG("operation = 0x%02x", DPI_OPERATION);
-	soc_core_disasm_arm(core, PC, IR);
-	LOG_ACTION(exit(-1));
-}*/
 
 alubox_fn _alubox_dpi_fn[3][16] = {
 	{
@@ -89,7 +84,10 @@ static void _arm_inst_dp(soc_core_p core)
 {
 	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
 
-	soc_core_arm_decode_rn_rd(core, get_rn, 0);
+	if(get_rn)
+		_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
 	const uint8_t xspc = CCx.e && ((DPI_BIT(s20) && (1 + (rPC == rR(D)))));
 	
@@ -132,9 +130,12 @@ static void _arm_inst_dp_shift_operand(soc_core_p core) {
 static void _arm_inst_ldst(soc_core_p core,
 	soc_core_ldst_p ls)
 {
-//	ls->ldstx = mlBFEXT(IR, 27, 25);
-	soc_core_arm_decode_rd(core, !LDST_BIT(l20));
-	soc_core_arm_decode_rn(core, 1);
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+
+	if(LDST_BIT(l20))
+		_setup_rR_dst(core, rRD, ARM_IR_RD);
+	else
+		_setup_rR_vR_src(core, rRD, ARM_IR_RD);
 
 	ls->ea = vR(N);
 
@@ -305,7 +306,7 @@ static void arm_inst_b(soc_core_p core)
 
 static void arm_inst_bx(soc_core_p core)
 {
-	soc_core_arm_decode_rm(core, 1);
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 
 	const int link = BEXT(IR, 5);
 
@@ -341,14 +342,12 @@ static void arm_inst_dp_immediate(soc_core_p core)
 	else
 		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
-//	_arm_inst_dp_shift_operand(core);
 	_arm_inst_dp(core);
 }
 
 static void arm_inst_dp_immediate_shift(soc_core_p core)
 {
-	soc_core_arm_decode_rm(core, 1);
-
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
 	
 	switch(DPI_SHIFT_OP) {
@@ -366,10 +365,10 @@ static void arm_inst_dp_immediate_shift(soc_core_p core)
 static void arm_inst_dp_register_shift(soc_core_p core)
 {
 	assert(0 == DPI_BIT(x7));
-	
-	soc_core_arm_decode_rm(core, 1);
 
-	soc_core_decode_get(core, rRS, 11, 8, 1);
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
+
 	vR(S) &= _BM(7);
 
 	if(CCx.e)
@@ -402,7 +401,7 @@ static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 {
 	soc_core_ldst_t ls;
 
-	soc_core_arm_decode_rm(core, 1);
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 
 	return(_arm_inst_ldst_sh(core, &ls));
 }
@@ -411,9 +410,8 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 {
 	soc_core_ldst_t ls; /* TODO: not tested/verified! */
 
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR(S, ~mlBFEXT(IR, 6, 5), mlBFEXT(IR, 11, 7));
-
-	soc_core_arm_decode_rm(core, 1);
 
 	uint32_t index = 0;
 
@@ -460,7 +458,7 @@ static void arm_inst_ldstm(soc_core_p core)
 	ls.rw_size = sizeof(uint32_t);
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
-	soc_core_arm_decode_rn(core, 1);
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	const uint8_t rcount = (__builtin_popcount(vR(M)) << 2);
 
@@ -622,7 +620,7 @@ static void arm_inst_mrs(soc_core_p core)
 	if(tsbo || tsbz)
 		UNPREDICTABLE;
 
-	soc_core_arm_decode_rd(core, 0);
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
 	const char* psrs = "";
 
@@ -691,7 +689,7 @@ static void arm_inst_msr(soc_core_p core)
 				UNPREDICTABLE;
 			}
 
-			soc_core_arm_decode_rm(core, 1);
+			_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 			operand = vR(M);
 		}
 		else

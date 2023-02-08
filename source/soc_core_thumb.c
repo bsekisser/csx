@@ -1,3 +1,5 @@
+#define rRvRvPC PC_THUMB
+
 #include "soc_core_thumb.h"
 #include "soc_core_thumb_inst.h"
 
@@ -23,21 +25,23 @@
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
 	const int pcsp = BEXT(IR, 11);
-	rR(N) = pcsp ? rSP : rPC;
-	vR(N) = pcsp ? SP : PC_THUMB;
+	
+	if(pcsp)
+		_setup_rR_vR(N, rSP, SP);
+	else
+		_setup_rR_vR(N, rPC, PC_THUMB);
 
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
-	soc_core_decode_get(core, rRD, 10, 8, 0);
+	_setup_rR_dst_rR_src(core, rRD, mlBFEXT(IR, 10, 8), rRN);
 
 	if(!pcsp)
 		vR(N) &= ~3;
 
-	vR(D) = vR(N) + imm8;
+	vR(D) += imm8;
 
-//	LOG("rPC:rSP");
 	CORE_TRACE("add(%s, %s, 0x%03x); /* 0x%08x + 0x%03x = 0x%08x */",
-				rR_NAME(D), pcsp ? "rSP" : "rPC", imm8, vR(N), imm8, vR(D));
+				rR_NAME(D), rR_NAME(N), imm8, vR(N), imm8, vR(D));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -47,12 +51,13 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 	const int bit_i = BEXT(IR, 10);
 	const uint8_t op2 = BEXT(IR, 9);
 
-	soc_core_decode_get(core, rRM, 8, 6, !bit_i);
 	if(bit_i)
-		vR(M) = rR(M);
+		_setup_rR_vR(M, ~0, mlBFEXT(IR, 8, 6));
+	else
+		soc_core_decode_src(core, rRM, 8, 6);
 
-	soc_core_decode_get(core, rRN, 5, 3, 1);
-	soc_core_decode_get(core, rRD, 2, 0, 0);
+	soc_core_decode_src(core, rRN, 5, 3);
+	soc_core_decode_dst(core, rRD, 2, 0);
 
 	alubox_fn _alubox_fn[2] = { _alubox_adds, _alubox_subs };
 
@@ -107,8 +112,8 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
 
-	soc_core_decode_get(core, rRN, 10, 8, 1);
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
+	soc_core_decode_src(core, rRN, 10, 8);
 
 	alubox_fn _alubox_fn[4] = { _alubox_movs, _alubox_cmps, _alubox_adds, _alubox_subs };
 
@@ -161,7 +166,7 @@ static void soc_core_thumb_bx(soc_core_p core)
 	if(tsbz)
 		LOG_ACTION(exit(1));
 
-	soc_core_decode_get(core, rRM, 6, 3, 1);
+	soc_core_decode_src(core, rRM, 6, 3);
 
 	const int link = BEXT(IR, 7);
 
@@ -273,8 +278,8 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 		"& ",	"- ",	"- ",	"+ ",	"| ",	"* ",	"& ~",	"-",
 		}};
 
-	soc_core_decode_get(core, rRM, 5, 3, 1);
-	soc_core_decode_get(core, rRN, 2, 0, 1);
+	soc_core_decode_src(core, rRM, 5, 3);
+	soc_core_decode_src(core, rRN, 2, 0);
 	_setup_rR_vR(D, rR(N), _alubox_fn[operation](core, vR(N), vR(M)));
 
 	int wb = 1;
@@ -309,8 +314,8 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 
 	const uint8_t imm5 = mlBFEXT(IR, 10, 6);
 
-	soc_core_decode_get(core, rRN, 5, 3, 1);
-	soc_core_decode_get(core, rRD, 2, 0, 0);
+	soc_core_decode_src(core, rRN, 5, 3);
+	soc_core_decode_dst(core, rRD, 2, 0);
 
 	const char *ss = "";
 	uint8_t size = 0;
@@ -358,7 +363,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 	const int bit_l = BEXT(IR, 11);
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
-	soc_core_decode_get(core, rRD, 10, 8, 0);
+	soc_core_decode_dst(core, rRD, 10, 8);
 
 	switch(operation)
 	{
@@ -398,9 +403,9 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 		const uint8_t bwh = mlBFEXT(IR, 11, 9);
 //	}bit;
 
-	soc_core_decode_get(core, rRM, 8, 6, 1);
-	soc_core_decode_get(core, rRN, 5, 3, 1);
-	soc_core_decode_get(core, rRD, 2, 0, 0);
+	soc_core_decode_src(core, rRM, 8, 6);
+	soc_core_decode_src(core, rRN, 5, 3);
+	soc_core_decode_dst(core, rRD, 2, 0);
 
 	const char *ss = "";
 	uint8_t size = 0;
@@ -461,7 +466,7 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 		const int bit_l = BEXT(IR, 11);
 //	}bit;
 
-	soc_core_decode_get(core, rRN, 10, 8, 1);
+	soc_core_decode_src(core, rRN, 10, 8);
 
 	const uint8_t rlist = mlBFEXT(IR, 7, 0);
 
@@ -618,8 +623,8 @@ static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
 	const uint8_t imm5 = mlBFEXT(IR, 10, 6);
 
-	soc_core_decode_get(core, rRM, 5, 3, 1);
-	soc_core_decode_get(core, rRD, 2, 0, 0);
+	soc_core_decode_src(core, rRM, 5, 3);
+	soc_core_decode_dst(core, rRD, 2, 0);
 
 	uint8_t shift = imm5;
 	const char *sops = shift_op_string[0][operation];
@@ -677,11 +682,8 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 {
 	const uint8_t operation = mlBFEXT(IR, 9, 8);
 
-	soc_core_decode_get(core, rRM, 6, 3, 1);
-
-	_setup_rR_vR(D,
-		mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3),
-		soc_core_reg_get(core, rR(D)));
+	soc_core_decode_src(core, rRM, 6, 3);
+	_setup_rR_vR_src(core, rRD, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
 
 	uint32_t res = vR(D);
 

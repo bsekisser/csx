@@ -13,33 +13,11 @@ typedef struct soc_core_ldst_t* soc_core_ldst_p;
 
 /* **** */
 
-static inline void soc_core_arm_decode_rd(soc_core_p core,
-	const int get_rd)
-{
-	soc_core_decode_get(core, rRD, 15, 12, get_rd);
-}
-
-static inline void soc_core_arm_decode_rm(soc_core_p core,
-	const int get_rm)
-{
-	soc_core_decode_get(core, rRM, 3, 0, get_rm);
-}
-
-static inline void soc_core_arm_decode_rn(soc_core_p core,
-	const int get_rn)
-{
-	soc_core_decode_get(core, rRN, 19, 16, get_rn);
-}
-
-static inline void soc_core_arm_decode_rn_rd(soc_core_p core,
-	const int get_rn,
-	const int get_rd)
-{
-	soc_core_arm_decode_rn(core, get_rn);
-	soc_core_arm_decode_rd(core, get_rd);
-}
-
-/* **** */
+#define ARM_IR_CC mlBFEXT(IR, 31, 28)
+#define ARM_IR_RD mlBFEXT(IR, 15, 12)
+#define ARM_IR_RM mlBFEXT(IR, 3, 0)
+#define ARM_IR_RN mlBFEXT(IR, 19, 16)
+#define ARM_IR_RS mlBFEXT(IR, 11, 8)
 
 enum {
 	DPI_BIT_i25 = 25,
