@@ -20,19 +20,22 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 /* **** */
 
 #define DataAbort() \
-	({ LOG_ACTION(exit(-1)); })
+	({ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); })
+
+#define DECODE_FAULT \
+	({ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); })
 
 #define UNDEFINED \
-	({ LOG_ACTION(exit(-1)); })
+	({ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); })
 
 #define UNPREDICTABLE \
 	({ LOG("UNPREDICTABLE"); })
 
 #define UNIMPLIMENTED \
-	({ LOG_ACTION(exit(-1)); })
+	({ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); })
 
 #define ILLEGAL_INSTRUCTION \
-	({ LOG_ACTION(exit(-1)); })
+	({ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); })
 
 enum	{
 	rRD,

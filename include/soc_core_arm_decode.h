@@ -44,7 +44,7 @@ enum {
 };
 
 #define LDST_BIT(_x)				BEXT(IR, LDST_BIT_##_x)
-#define LDST_FLAG_SH				(0 == mlBFEXT(IR, 27, 25))
+#define LDST_FLAG_SH				((0 == LDSTX) && (0  != mlBFEXT(IR, 6, 5)))
 #define LDST_FLAG_SH_I				(LDST_FLAG_SH && LDST_BIT(i22))
 #define LDST_FLAG_S					(LDST_FLAG_SH && LDST_BIT(l20) && LDST_BIT(s6))
 #define LDSTX						mlBFEXT(IR, 27, 25)

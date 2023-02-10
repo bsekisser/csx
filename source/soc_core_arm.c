@@ -82,6 +82,11 @@ static void _arm_inst_dpi_final(soc_core_p core)
 
 static void _arm_inst_dp(soc_core_p core)
 {
+	if(_check_pedantic_arm_decode_fault) {
+		if(ARM_INST_DP != (IR & ARM_INST_DP_MASK))
+			DECODE_FAULT;
+	}
+
 	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
 
 	if(get_rn)
@@ -273,6 +278,11 @@ static void _arm_inst_ldstm(soc_core_p core,
 
 static void arm_inst_b(soc_core_p core)
 {
+	if(_check_pedantic_arm_decode_fault) {
+		if(ARM_INST_B != (IR & ARM_INST_B_MASK))
+			DECODE_FAULT;
+	}
+
 	const int blx = (0x0f == mlBFEXT(IR, 31, 28));
 	const int hl = BEXT(IR, ARM_INST_BIT_LINK);
 	const int32_t offset = mlBFEXTs(IR, 23, 0);
@@ -452,6 +462,11 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 
 static void arm_inst_ldstm(soc_core_p core)
 {
+	if(_check_pedantic_arm_decode_fault) {
+		if(ARM_INST_LDSTM != (IR & ARM_INST_LDSTM_MASK))
+			DECODE_FAULT;
+	}
+	
 	const csx_p csx = core->csx;
 
 	soc_core_ldst_t ls;
@@ -583,6 +598,11 @@ static void arm_inst_ldstm(soc_core_p core)
 
 static void arm_inst_mcr_mrc(soc_core_p core)
 {
+	if(_check_pedantic_arm_decode_fault) {
+		if(ARM_INST_MCR_MRC != (IR & ARM_INST_MCR_MRC_MASK))
+			DECODE_FAULT;
+	}
+
 	soc_core_arm_decode_coproc(core);
 
 	CORE_TRACE("m%s(p(%u), %u, %s, %s, %s, %u)",
@@ -796,24 +816,76 @@ static void arm_inst_msr(soc_core_p core)
 
 /* **** */
 
-#define ARM_IR_CC					mlBFEXT(IR, 31, 28)
-
 static uint8_t soc_core_arm_check_cc(soc_core_p core)
 {
-	const uint8_t cc = ARM_IR_CC;
-	return(soc_core_check_cc(core, cc));
+	return(soc_core_check_cc(core, ARM_IR_CC));
 }
 
-const uint _inst0_0_i74 = _BV(7) | _BV(4);
+static void soc_core_arm_step_group0_ldst(soc_core_p core)
+{
+	if(LDST_FLAG_SH) {
+		if(LDST_FLAG_SH_I)
+			return(arm_inst_ldst_immediate_offset_sh(core));
+		else
+			return(arm_inst_ldst_register_offset_sh(core));
+	}
 
-const uint _inst0_1_misc = _BV(24);
-const uint _inst0_1_misc_mask = mlBF(27, 23) | _BV(20);
+	UNIMPLIMENTED;
+}
 
-const uint _inst1_0_undef = mlBF(25, 24);
-const uint _inst1_0_mitsr = _inst1_0_undef | _BV(21);
-const uint _inst1_0_mitsr_mask = mlBF(27, 23) | mlBF(21, 20);
+static void soc_core_arm_step_group0_misc(soc_core_p core)
+{
+	if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
+		return(arm_inst_bx(core));
+	if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
+		return(arm_inst_mrs(core));
+	if((ARM_INST_MSR_I == (IR & ARM_INST_MSR_I_MASK))
+		|| (ARM_INST_MSR_R == (IR & ARM_INST_MSR_R_MASK)))
+			return(arm_inst_msr(core));
 
-const uint _inst3_i4_mask = _BV(4);
+	UNIMPLIMENTED;
+}
+
+static void soc_core_arm_step_group0(soc_core_p core)
+{
+	if(BTST(IR, 4)) {
+		if(BTST(IR, 7))
+			return(soc_core_arm_step_group0_ldst(core));
+		else {
+			if((2 == mlBFEXT(IR, 24, 23)) && !BTST(IR, 20))
+				return(soc_core_arm_step_group0_misc(core));
+			else
+				return(arm_inst_dp_register_shift(core));
+		}
+	} else {
+		if((2 == mlBFEXT(IR, 24, 23)) && !BTST(IR, 20))
+			return(soc_core_arm_step_group0_misc(core));
+		else
+			return(arm_inst_dp_immediate_shift(core));
+	}
+
+	UNIMPLIMENTED;
+}
+
+static void soc_core_arm_step_group1(soc_core_p core)
+{
+	if(2 == mlBFEXT(IR, 24, 23)) {
+		if(0 == mlBFEXT(IR, 21, 20)) {
+			UNDEFINED;
+		} else if(2 == mlBFEXT(IR, 21, 20))
+			UNIMPLIMENTED; /* move immediate to status register */
+	}
+	
+	return(arm_inst_dp_immediate(core));
+}
+
+static void soc_core_arm_step_group7(soc_core_p core)
+{
+	if(ARM_INST_MCR_MRC == (IR & ARM_INST_MCR_MRC_MASK))
+		return(arm_inst_mcr_mrc(core));
+
+	UNIMPLIMENTED;
+}
 
 void soc_core_arm_step(soc_core_p core)
 {
@@ -827,85 +899,28 @@ void soc_core_arm_step(soc_core_p core)
 		switch(opcode)
 		{
 			case 0x00: /* xxxx 000x xxxx xxxx */
-				if(_inst0_0_i74 == (IR & _inst0_0_i74)) {
-					if(LDST_FLAG_SH_I)
-						return(arm_inst_ldst_immediate_offset_sh(core));
-					else
-						return(arm_inst_ldst_register_offset_sh(core));
-				} else if(_inst0_1_misc != (IR & _inst0_1_misc_mask)) {
-					if(BEXT(IR, 4))
-						return(arm_inst_dp_register_shift(core));
-					else
-						return(arm_inst_dp_immediate_shift(core));
-//					if(ARM_INST_DP == (IR & ARM_INST_DP_MASK)) {
-//						return(arm_inst_dpi(core));
-//					}
-				} else {
-					if(ARM_INST_BX == (IR & ARM_INST_BX_MASK))
-						return(arm_inst_bx(core));
-					if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
-						return(arm_inst_mrs(core));
-					if((ARM_INST_MSR_I == (IR & ARM_INST_MSR_I_MASK))
-						|| (ARM_INST_MSR_R == (IR & ARM_INST_MSR_R_MASK)))
-							return(arm_inst_msr(core));
-				}
-				break;
+				return(soc_core_arm_step_group0(core));
 			case 0x01: /* xxxx 001x xxxx xxxx */
-				if(_inst1_0_mitsr == (IR & _inst1_0_mitsr_mask))
-					;
-				else if((_inst1_0_undef != (IR & _inst1_0_mitsr_mask))
-					&&(ARM_INST_DP == (IR & ARM_INST_DP_MASK)))
-						return(arm_inst_dp_immediate(core));
-//						return(arm_inst_dpi(core));
-				break;
+				return(soc_core_arm_step_group1(core));
 			case 0x02: /* xxxx 010x xxxx xxxx */
 				return(arm_inst_ldst_immediate_offset(core));
-				break;
 			case 0x03:
-				if(!(IR & _inst3_i4_mask))
+				if(!BTST(IR, 4))
 					return(arm_inst_ldst_scaled_register_offset(core));
 				break;
 			case 0x04: /* xxxx 100x xxxx xxxx */
-				if(ARM_INST_LDSTM == (IR & ARM_INST_LDSTM_MASK))
-					return(arm_inst_ldstm(core));
-				break;
+				return(arm_inst_ldstm(core));
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				if(ARM_INST_B == (IR & ARM_INST_B_MASK))
-					return(arm_inst_b(core));
-				break;
+				return(arm_inst_b(core));
 			case 0x07: /* xxxx 111x xxxx xxxx */
-				if(ARM_INST_MCR_MRC == (IR & ARM_INST_MCR_MRC_MASK))
-					return(arm_inst_mcr_mrc(core));
-				break;
+				return(soc_core_arm_step_group7(core));
 		}
 	} else if(INST_CC_NV == ARM_IR_CC) {
 		switch(opcode) {
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				if(ARM_INST_B == (IR & ARM_INST_B_MASK))
-					return(arm_inst_b(core));
-				break;
+				return(arm_inst_b(core));
 		}
 	}
 
-decode_fault: __attribute__((unused))
-	switch(opcode)
-	{
-		case 0x00:
-		case 0x01: {
-			const uint dpi_opcode = mlBFEXT(IR, 24, 21);
-			LOG(">> ir = 0x%08x, opcode = 0x%02x, dpi_opcode = 0x%02x",
-				IR, opcode, dpi_opcode);
-			} break;
-		case 0x07: {
-			const uint opcode7 = mlBFEXT(IR, 27, 24);
-			LOG(">> ir = 0x%08x, opcode = 0x%02x, 0x%02x, 20: %01u, 4: %01u",
-				IR, opcode, opcode7, BEXT(IR, 20), BEXT(IR, 4));
-			} break;
-		default:
-			LOG(">> ir = 0x%08x, opcode = 0x%02x", IR, opcode);
-			break;
-	}
-
-	soc_core_disasm_arm(core, IP, IR);
-	UNIMPLIMENTED;
+	DECODE_FAULT;
 }
