@@ -6,6 +6,7 @@
 #include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
+#include "soc_core_ldst.h"
 #include "soc_core_psr.h"
 #include "soc_core_strings.h"
 #include "soc_core_trace.h"
@@ -22,21 +23,64 @@
 #include "alu_box.h"
 
 /* **** */
+
+static void _thumb_ldmia(soc_core_p core, uint rlist, char* reglist)
+{
+	for(int i = 0; i <= 7; i++)
+	{
+		const uint rxx = BEXT(rlist, i);
+		reglist[i] = rxx ? ('0' + i) : '.';
+
+		if(rxx)
+		{
+			CYCLE++;
+			_soc_core_ldria(core, i);
+		}
+	}
+}
+
+static void _thumb_stmdb(soc_core_p core, uint rlist, char* reglist)
+{
+	int i = 7;
+	do {
+		const uint rxx = BEXT(rlist, i);
+		reglist[i] = rxx ? ('0' + i) : '.';
+
+		if(rxx)
+		{
+			CYCLE++;
+			_soc_core_strdb(core, i);
+		}
+	}while(i--);
+}
+
+static void _thumb_stmia(soc_core_p core, uint rlist, char* reglist)
+{
+	for(int i = 0; i <= 7; i++)
+	{
+		const uint rxx = BEXT(rlist, i);
+		reglist[i] = rxx ? ('0' + i) : '.';
+
+		if(rxx)
+		{
+			CYCLE++;
+			_soc_core_stria(core, i);
+		}
+	};
+}
+
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
 	const int pcsp = BEXT(IR, 11);
 	
 	if(pcsp)
-		_setup_rR_vR(N, rSP, SP);
+		_setup_rR_vR_src(core, rRN, rSP);
 	else
-		_setup_rR_vR(N, rPC, PC_THUMB);
+		_setup_rR_vR(N, rPC, PC_THUMB & ~3);
 
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
 	_setup_rR_dst_rR_src(core, rRD, mlBFEXT(IR, 10, 8), rRN);
-
-	if(!pcsp)
-		vR(N) &= ~3;
 
 	vR(D) += imm8;
 
@@ -76,7 +120,7 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		else // pseudo op mov is encoded as adds rd, rn, 0
 		{
 			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
-				ops[op2], rR_NAME(D), rR_NAME(N), vR(D));
+				rR_NAME(D), rR_NAME(N), vR(D));
 		}
 	}
 	else
@@ -94,8 +138,7 @@ static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
 	const int sub = BEXT(IR, 7);
 	const uint16_t imm7 = mlBFMOV(IR, 6, 0, 2);
 
-	_setup_rR_vR(N, rSP, SP);
-	vR(D) = vR(N);
+	vR(D) = _setup_rR_vR_src(core, rRN, rSP);
 
 	if(sub)
 	{
@@ -378,7 +421,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 			_setup_rR_vR(N, rPC, PC_THUMB & ~0x03);
 			break;
 		case	0x9000:
-			_setup_rR_vR(N, rSP, SP);
+			_setup_rR_vR_src(core, rRN, rSP);
 			break;
 		default:
 			LOG("operation = 0x%03x", operation);
@@ -480,44 +523,23 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 	const uint32_t start_address = vR(N);
 	const uint32_t end_address = start_address + (__builtin_popcount(rlist) << 2) - 4;
 
-	uint32_t ea = start_address;
-
 	/* CP15_r1_Ubit == 0 */
-	assert(0 == (ea & 3));
+	assert(0 == (vR(N) & 3));
 
 	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
+	if(bit_l)
+		_thumb_ldmia(core, rlist, reglist);
+	else
+		_thumb_stmia(core, rlist, reglist);
 
-	for(int i = 0; i <= 7; i++)
-	{
-		const uint rxx = BEXT(rlist, i);
-		reglist[i] = rxx ? ('0' + i) : '.';
-
-		if(rxx)
-		{
-			uint32_t rxx_v = 0;
-			CYCLE++;
-
-			if(bit_l)
-			{
-				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-				soc_core_reg_set(core, i, rxx_v);
-			}
-			else
-			{
-				rxx_v = soc_core_reg_get(core, i);
-				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
-			}
-			ea += sizeof(uint32_t);
-		}
-	}
-
-	assert(end_address == ea - 4);
+	assert(end_address == vR(N) - 4);
+//	assert(end_address == vR(N));
 
 	const int wb_l = bit_l && (0 == BTST(rlist, rR(N)));
 	const int wb = !bit_l || wb_l;
 
 	if(wb)
-		soc_core_reg_set(core, rR(N), ea);
+		soc_core_reg_set(core, rR(N), vR(N));
 
 	reglist[8] = 0;
 
@@ -535,24 +557,14 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		const int bit_r = BEXT(IR, 8);
 //	}bit;
 
+	_setup_rR_vR_src(core, rRN, rSP);
+	
 	const uint8_t rlist = mlBFEXT(IR, 7, 0);
-
-	const uint32_t sp_v = SP;
 
 	const uint8_t rcount = (bit_r + __builtin_popcount(rlist)) << 2;
 
-	uint32_t start_address = sp_v;
-	uint32_t end_address = sp_v;
-
-	if(bit_l)
-	{ /* pop */
-		end_address += rcount;
-	}
-	else
-	{ /* push */
-		start_address -= rcount;
-		end_address -= 4;
-	}
+	const uint32_t start_address = vR(N) + (bit_l ? 0 : -rcount);
+	const uint32_t end_address = vR(N) + (bit_l ? rcount : - 4);
 
 	if(CP15_reg1_AbitOrUbit && (0 != (start_address & 3))) {
 		LOG("start_address = 0x%08x, 0x%08x", start_address, start_address & 3);
@@ -560,67 +572,41 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		DataAbort();
 	}
 
-	uint32_t ea = start_address & ~3;
-
-	uint32_t rxx_v = 0;
+	vR(N) &= ~3;
 	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
 
-	for(int i = 0; i <=7; i++)
-	{
-		const uint rxx = BEXT(rlist, i);
-		reglist[i] = rxx ? ('0' + i) : '.';
+	if(bit_l) { /* pop */
+		_thumb_ldmia(core, rlist, reglist);
 
-		if(rxx)
-		{
-			CYCLE++;
-			if(bit_l)
-			{ /* pop */
-				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				soc_core_reg_set(core, i, rxx_v);
-			}
-			else
-			{ /* push */
-				rxx_v = soc_core_reg_get(core, i);
-				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
-			}
-			ea += sizeof(uint32_t);
-		}
-	}
-
-	CORE_T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
-	reglist[8] = 0;
-	CORE_TRACE("%s(rSP, r{%s%s});", bit_l ? "pop" : "push", reglist, pclrs);
-
-	if(bit_r)
-	{
-		if(bit_l)
-		{ /* pop */
-			rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
+		if(bit_r) {
+			uint32_t rxx_v = soc_core_read(core, vR(N), sizeof(uint32_t));
 			if(_arm_version >= arm_v5t)
 				soc_core_reg_set_pcx(core, rxx_v);
 			else
 				soc_core_reg_set(core, rPC, rxx_v);
+			vR(N) += sizeof(uint32_t);
 		}
-		else
-		{ /* push */
-			rxx_v = LR;
-			soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+	} else { /* push */
+		if(bit_r) {
+			vR(N) -= sizeof(uint32_t);
+			soc_core_write(core, vR(N), LR, sizeof(uint32_t));
 		}
-		ea += sizeof(uint32_t);
-	}
 
-	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);
+		_thumb_stmdb(core, rlist, reglist);
+	}
+	CORE_T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
+	reglist[8] = 0;
+	CORE_TRACE("%s(rSP, r{%s%s});", bit_l ? "pop" : "push", reglist, pclrs);
 
 	if(bit_l)
 	{ /* pop */
-		assert(end_address == ea);
+		assert(end_address == vR(N));
 		SP = end_address;
 	}
 	else
 	{ /* push */
-		assert(end_address == (ea - 4));
+//		assert(end_address == (vR(N) - 4));
+		assert(start_address == vR(N));
 		SP = start_address;
 	}
 }
@@ -718,15 +704,7 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 
 /* **** */
 
-void soc_core_thumb_step_0xe800(soc_core_p core)
-{
-	if(IR & 1)
-		UNDEFINED;
-
-	return(soc_core_thumb_bxx(core));
-}
-
-void soc_core_thumb_step_fail_decode(soc_core_p core)
+static void soc_core_thumb_step_fail_decode(soc_core_p core)
 {
 	LOG("ir = 0x%04x", IR);
 
@@ -734,21 +712,21 @@ void soc_core_thumb_step_fail_decode(soc_core_p core)
 	LOG_ACTION(exit(1));
 }
 
-void soc_core_thumb_step_undefined(soc_core_p core)
+static void soc_core_thumb_step_undefined(soc_core_p core)
 {
 	UNDEFINED;
 
 	UNUSED(core);
 }
 
-void soc_core_thumb_step_unimplimented(soc_core_p core)
+static void soc_core_thumb_step_unimplimented(soc_core_p core)
 {
 	UNIMPLIMENTED;
 
 	UNUSED(core);
 }
 
-void soc_core_thumb_step_unpredictable(soc_core_p core)
+static void soc_core_thumb_step_unpredictable(soc_core_p core)
 {
 	UNPREDICTABLE;
 
@@ -757,7 +735,7 @@ void soc_core_thumb_step_unpredictable(soc_core_p core)
 
 typedef void (*thumb_fn)(soc_core_p core);
 
-void soc_core_thumb_step_0xb600(soc_core_p core)
+static void soc_core_thumb_step_0xb600(soc_core_p core)
 {
 	thumb_fn xb600[0x100] = {
 		[0x40 ... 0x40] = soc_core_thumb_step_unpredictable, /* unpredictable */
@@ -775,7 +753,7 @@ void soc_core_thumb_step_0xb600(soc_core_p core)
 	return(soc_core_thumb_step_fail_decode(core));
 }
 
-void soc_core_thumb_step_0xba00(soc_core_p core)
+static void soc_core_thumb_step_0xba00(soc_core_p core)
 {
 	thumb_fn xba00[0x100] = {
 		[0x00 ... 0x70] = soc_core_thumb_step_unimplimented, /* reverse bytes */
@@ -788,6 +766,14 @@ void soc_core_thumb_step_0xba00(soc_core_p core)
 		return(fn(core));
 
 	return(soc_core_thumb_step_fail_decode(core));
+}
+
+static void soc_core_thumb_step_0xe800(soc_core_p core)
+{
+	if(IR & 1)
+		UNDEFINED;
+
+	return(soc_core_thumb_bxx(core));
 }
 
 static thumb_fn thumb_fn_list_x000[0x100] = {

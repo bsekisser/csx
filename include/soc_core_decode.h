@@ -37,7 +37,7 @@ static inline void _setup_rR_dst_rR_src(soc_core_p core, const uint8_t rrx, cons
 	_setup_xR_xV(rrx, rrd, vRX(rrs));
 }
 
-static inline void _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const uint8_t rr)
+static inline uint32_t _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const uint8_t rr)
 {
 #ifndef rRvRvPC
 	#define rRvRvPC soc_core_reg_get(core, rPC)
@@ -48,6 +48,8 @@ static inline void _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const ui
 		_setup_xR_xV(rrx, rr, rRvRvPC);
 	else
 		_setup_xR_xV(rrx, rr, GPR(rr));
+	
+	return(vRX(rrx));
 }
 
 static inline void soc_core_decode_dst(soc_core_p core,
@@ -58,10 +60,10 @@ static inline void soc_core_decode_dst(soc_core_p core,
 	_setup_rR_dst(core, rrx, mlBFEXT(IR, msb, lsb));
 }
 
-static inline void soc_core_decode_src(soc_core_p core,
+static inline uint32_t soc_core_decode_src(soc_core_p core,
 	uint rrx,
 	uint msb,
 	uint lsb)
 {
-	_setup_rR_vR_src(core, rrx, mlBFEXT(IR, msb, lsb));
+	return(_setup_rR_vR_src(core, rrx, mlBFEXT(IR, msb, lsb)));
 }

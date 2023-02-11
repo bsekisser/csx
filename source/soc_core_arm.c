@@ -6,6 +6,7 @@
 
 #include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
+#include "soc_core_ldst.h"
 #include "soc_core_psr.h"
 #include "soc_core_shifter.h"
 #include "soc_core_strings.h"
@@ -44,6 +45,82 @@ alubox_fn _alubox_dpi_fn[3][16] = {
 };
 
 /* **** */
+
+static void _arm_inst_ldmda(soc_core_p core)
+{
+	if(CCx.e) {
+		int i = 15;
+		do {
+			if(BTST(vR(M), i))
+				_soc_core_ldrda(core, i);
+		}while(i--);
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
+
+static void _arm_inst_ldmdb(soc_core_p core)
+{
+	if(CCx.e) {
+		int i = 15;
+		do {
+			if(BTST(vR(M), i))
+				_soc_core_ldrdb(core, i);
+		}while(i--);
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
+
+static void _arm_inst_ldmia(soc_core_p core)
+{
+	if(CCx.e) {
+		for(int i = 0; i < 16; i++) {
+			if(BTST(vR(M), i))
+				_soc_core_ldria(core, i);
+		};
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
+
+static void _arm_inst_ldmib(soc_core_p core)
+{
+	if(CCx.e) {
+		for(int i = 0; i < 16; i++) {
+			if(BTST(vR(M), i))
+				_soc_core_ldrib(core, i);
+		};
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
+
+static void _arm_inst_stmdb(soc_core_p core)
+{
+	if(CCx.e) {
+		int i = 15;
+		do {
+			if(BTST(vR(M), i))
+				_soc_core_strdb(core, i);
+		}while(i--);
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
+
+static void _arm_inst_stmib(soc_core_p core)
+{
+	if(CCx.e) {
+		int i = 15;
+		do {
+			if(BTST(vR(M), i))
+				_soc_core_strdb(core, i);
+		}while(i--);
+
+		soc_core_reg_set(core, rR(N), vR(N));
+	}
+}
 
 static void _arm_inst_dpi_final(soc_core_p core)
 {
@@ -461,6 +538,73 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 }
 
 static void arm_inst_ldstm(soc_core_p core)
+{
+	uint action = mlBFEXT(IR, 24, 20);
+	
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+
+	char reglist[17] = "\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0";
+
+	for(int i = 0; i < 16; i++) {
+		const uint8_t c = (i > 9 ? ('a' + (i - 10)) : '0' + i);
+		reglist[i] = BTST(vR(M), i) ? c : '.';
+	}
+
+	/* **** */
+
+	const char* opstr[2][2] = {{ "stm", "ldm", }, { "push", "pop", }, };
+
+	const int ldst_pc = BEXT(vR(M), rPC);
+	const int load_spsr = LDST_BIT(s22) && !ldst_pc;
+	const int user_mode_regs = LDST_BIT(s22) && ldst_pc;
+
+	CORE_TRACE_START();
+	
+	_CORE_TRACE_("%s", opstr[rSP == rR(N)][LDST_BIT(l20)]);
+	
+	if(rSP != rR(N))
+		_CORE_TRACE_("%c%c",
+			LDST_BIT(u23) ? 'i' : 'd', LDST_BIT(p24) ? 'b' : 'a');
+
+	_CORE_TRACE_("(%s%s, {%s}%s%s) /* 0x%08x XXX */" ,
+		rR_NAME(N), LDST_BIT(w21) ? "!" : "", reglist,
+		user_mode_regs ? ", USER" : "",
+		load_spsr ? ", SPSR" : "", vR(N));
+
+	CORE_TRACE_END();
+
+	/* **** */
+
+	typedef void (*ldstm_fn)(soc_core_p core);
+	
+	ldstm_fn _list[32]={
+		[0b00011] = _arm_inst_ldmda, /* 0x03 -- pusWL */
+		[0b01011] = _arm_inst_ldmia, /* 0x0b -- pUsWL */
+		[0b10010] = _arm_inst_stmdb, /* 0x12 -- PusWl */
+		[0b10011] = _arm_inst_ldmdb, /* 0x13 -- PusWL */
+		/* 0x1a -- PUsWL */// [0b11010] = _arm_inst_stmib,
+		[0b11011] = _arm_inst_ldmib, /* 0x1b -- PUsWL */
+	};
+
+	ldstm_fn fn = _list[action];
+
+	if(CCx.e && fn)
+		return(fn(core));
+
+	/* **** */
+
+	LOG("action = 0x%02x -- %c%c%c%c%c", action,
+		BEXT(IR, 24) ? 'P' : 'p',
+		BEXT(IR, 23) ? 'U' : 'u',
+		BEXT(IR, 22) ? 'S' : 's',
+		BEXT(IR, 21) ? 'W' : 'w',
+		BEXT(IR, 20) ? 'L' : 'l');
+
+	UNIMPLIMENTED;
+};
+
+static void xxx_arm_inst_ldstm(soc_core_p core)
 {
 	if(_check_pedantic_arm_decode_fault) {
 		if(ARM_INST_LDSTM != (IR & ARM_INST_LDSTM_MASK))
