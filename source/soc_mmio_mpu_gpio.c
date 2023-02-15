@@ -18,6 +18,7 @@
 
 #define MMIO_GPIO1_LIST \
 	MMIO_TRACE_LIST_HEAD(1) \
+	MMIO(0xfffb, 0xe410, 0x0000, 0x0000, 16|32, MEM_RW, GPIO1_SYSCONFIG) \
 	MMIO(0xfffb, 0xe430, 0x0000, 0x0000, 32, MEM_RW, GPIO1_DATAOUT) \
 	MMIO(0xfffb, 0xe434, 0x0000, 0xffff, 32, MEM_RW, GPIO1_DIRECTION) \
 	MMIO(0xfffb, 0xe4b0, 0x0000, 0x0000, 32, MEM_RW, GPIO1_CLEAR_DATAOUT) \
@@ -26,6 +27,7 @@
 
 #define MMIO_GPIO2_LIST \
 	MMIO_TRACE_LIST_HEAD(2) \
+	MMIO(0xfffb, 0xec10, 0x0000, 0x0000, 16|32, MEM_RW, GPIO2_SYSCONFIG) \
 	MMIO(0xfffb, 0xec1c, 0x0000, 0x0000, 32, MEM_RW, GPIO2_IRQENABLE2) \
 	MMIO(0xfffb, 0xec30, 0x0000, 0x0000, 32, MEM_RW, GPIO2_DATAOUT) \
 	MMIO(0xfffb, 0xec34, 0x0000, 0xffff, 32, MEM_RW, GPIO2_DIRECTION) \
@@ -35,6 +37,7 @@
 
 #define MMIO_GPIO3_LIST \
 	MMIO_TRACE_LIST_HEAD(3) \
+	MMIO(0xfffb, 0xb410, 0x0000, 0x0000, 16|32, MEM_RW, GPIO3_SYSCONFIG) \
 	MMIO(0xfffb, 0xb430, 0x0000, 0x0000, 32, MEM_RW, GPIO3_DATAOUT) \
 	MMIO(0xfffb, 0xb434, 0x0000, 0xffff, 32, MEM_RW, GPIO3_DIRECTION) \
 	MMIO(0xfffb, 0xb4b0, 0x0000, 0x0000, 32, MEM_RW, GPIO3_CLEAR_DATAOUT) \
@@ -43,6 +46,7 @@
 
 #define MMIO_GPIO4_LIST \
 	MMIO_TRACE_LIST_HEAD(4) \
+	MMIO(0xfffb, 0xbc10, 0x0000, 0x0000, 16|32, MEM_RW, GPIO4_SYSCONFIG) \
 	MMIO(0xfffb, 0xbc30, 0x0000, 0x0000, 32, MEM_RW, GPIO4_DATAOUT) \
 	MMIO(0xfffb, 0xbc34, 0x0000, 0xffff, 32, MEM_RW, GPIO4_DIRECTION) \
 	MMIO_TRACE_LIST_TAIL
@@ -68,6 +72,13 @@ UNUSED_FN static uint soc_mmio_mpu_gpio_unit(uint32_t addr)
 	return(unit);
 }
 
+enum {
+	GPIO_REVISION = 0X00,
+	GPIO_SYSCONFIG = 0X10,
+};
+
+//static uint32_t mpu_gpio_read(void* param, 
+
 static soc_mmio_peripheral_t mpu_gpio_peripheral[] = {
 	{
 		.base = CSX_MMIO_MPU_GPIO1_BASE,
@@ -75,7 +86,7 @@ static soc_mmio_peripheral_t mpu_gpio_peripheral[] = {
 
 		.reset = 0,
 
-		.read = 0,
+		.read = 0 /*mpu_gpio_read*/,
 		.write = 0,
 	}, {
 		.base = CSX_MMIO_MPU_GPIO2_BASE,

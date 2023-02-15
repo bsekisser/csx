@@ -199,7 +199,8 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		if(value)
 		{
 			const uint32_t addr = tle->address;
-			csx_data_write(&mpt.data[addr & 0xff], value, tle->size);
+			const size_t size = BTST(tle->size, 4) ? 4 : (BTST(tle->size, 2) ? 2 : 1);
+			csx_data_write(&mpt.data[addr & 0xff], value, size);
 		}
 	}
 
@@ -316,7 +317,9 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
 			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
-		csx_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
+
+		const size_t size = BTST(tle->size, 4) ? 4 : (BTST(tle->size, 2) ? 2 : 1);
+		csx_data_write(&mpt.data[mpt.offset], tle->reset_value, size);
 	}while(tl[i].address);
 }
 

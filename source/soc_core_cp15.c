@@ -31,9 +31,18 @@ uint32_t soc_core_cp15_read(soc_core_p core)
 	uint32_t data = vCR(rR(N));
 
 	switch(opcode) {
+		case cp15(0, 1, 0, 0): /* control register */
+			break;
+		case cp15(0, 2, 0, 0): /* translation table base 0 */
+			break;
 		case cp15(0, 7, 10, 3):
 			LOG("Cache, Test and Clean");
 			data = (CPSR & SOC_CORE_PSR_NZCV) | SOC_CORE_PSR_Z;
+			break;
+		default:
+			LOG("opcode = 0x%08x, data = 0x%08x", opcode, data);
+			soc_core_disasm_arm(core, PC, IR);
+			LOG_ACTION(exit(-1));
 			break;
 	}
 	
@@ -48,7 +57,7 @@ void soc_core_cp15_write(soc_core_p core)
 
 	switch(opcode) {
 		case cp15(0, 1, 0, 0):
-			LOG("Control Register");
+			LOG("Control Register == 0x%08x", vR(D));
 			if(1) {
 				LOG_START("SBZ(0x%03x)", mlBFEXT(vR(D), 31, 27));
 				_LOG_(":%c2", BEXT(vR(D), 26) ? 'L' : 'l');
@@ -128,7 +137,7 @@ void soc_core_cp15_write(soc_core_p core)
 			soc_tlb_invalidate_all(csx->tlb);
 			break;
 		default:
-			LOG("opcode = 0x%08x", opcode);
+			LOG("opcode = 0x%08x, data = 0x%08x", opcode, vR(D));
 			soc_core_disasm_arm(core, PC, IR);
 			LOG_ACTION(exit(-1));
 			break;

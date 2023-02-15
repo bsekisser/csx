@@ -97,6 +97,8 @@ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** 
 	if(dst)
 		*dst = ddpao;
 
+//	void* dpat = ddpao + PAGE_OFFSET(ppa);
+
 	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
 }
 

@@ -3,9 +3,11 @@
 /* **** forward declarations */
 
 typedef struct csx_data_bit_t* csx_data_bit_p;
+extern const int _check_pedantic_data;
 
 /* **** system includes */
 
+#include <assert.h>
 #include <endian.h>
 #include <stdint.h>
 
@@ -38,6 +40,9 @@ void csx_data_write_x(void* p2dst, uint32_t value, uint8_t size);
 /* **** */
 
 static inline uint32_t csx_data_read(void* p2src, uint8_t size) {
+	if(_check_pedantic_data)
+		assert(0 != p2src);
+
 	switch(size) {
 		case 4:
 			return(le32toh(*(uint32_t*)p2src));
@@ -51,6 +56,9 @@ static inline uint32_t csx_data_read(void* p2src, uint8_t size) {
 }
 
 static inline void csx_data_write(void* p2dst, uint32_t value, uint8_t size) {
+	if(_check_pedantic_data)
+		assert(0 != p2dst);
+
 	switch(size) {
 		case 4:
 			*(uint32_t*)p2dst = htole32((uint32_t)value);

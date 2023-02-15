@@ -26,11 +26,12 @@
 
 const int _arm_version = arm_v5tej;
 
-const int _check_pedantic_arm_decode_fault = 0;
-const int _check_pedantic_mmio = 0;
+const int _check_pedantic_arm_decode_fault = 1;
+const int _check_pedantic_data = 1;
+const int _check_pedantic_mmio = 1;
 const int _check_pedantic_pc = 0;
-const int _check_pedantic_rname = 0;
-const int _check_pedantic_size = 0;
+const int _check_pedantic_rname = 1;
+const int _check_pedantic_size = 1;
 const int _trace_mmio = 0;
 
 /* **** */
@@ -66,6 +67,16 @@ csx_p csx_init(void)
 	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 
 	ERR(err = csx_soc_init(csx));
+
+	if(csx->cdp) {
+		LOG("cdp->data    -- 0x%08x", csx->cdp->data);
+	}
+	
+	LOG("loader       -- 0x%08x", csx->loader.data);
+	LOG("firmware     -- 0x%08x", csx->firmware.data);
+	LOG("frame_buffer -- 0x%08x", csx->frame_buffer);
+	LOG("mmio_data    -- 0x%08x", mmio_data);
+	LOG("sdram        -- 0x%08x", csx->sdram);
 
 	return(csx);
 }
@@ -121,7 +132,8 @@ int main(int argc, char **argv)
 		dtime_cycle, dtime_insn);
 
 	double ratio = 1.0 / est_host_cps;
-//	double ratio = (double)dtime_run / est_host_cps;
+//	double ratio = (double)dtime_run / est_host_cps / MHz(1);
+//	double ratio = (double)est_host_cps / dtime_run / MHz(1);
 
 	double dcrt = (double)csx->cycle / dtime_run;
 
@@ -129,7 +141,17 @@ int main(int argc, char **argv)
 	LOG_ERR("est_host_cps = 0x%016" PRIx64, est_host_cps);
 	LOG_ERR("ratio --- %0.05f", ratio);
 	LOG_ERR("cycle --- %0.05f", ratio * dtime_cycle);
+	LOG_ERR("cycle --- %0.05f", ratio * 1.0 / dtime_cycle);
+	LOG_ERR("cycle --- %0.05f", 0.001 / dtime_cycle * csx->cycle);
+	LOG_ERR("cycle --- %0.05f", ratio * csx->cycle);
+	LOG_ERR("cycle --- %0.05f", (double)est_host_cps * 1.0 / dtime_cycle);
+	LOG_ERR("cycle --- %0.05f", (double)dtime_cycle / est_host_cps * dtime_run);
 	LOG_ERR("insn --- %0.05f", ratio * dtime_insn);
+	LOG_ERR("insn --- %0.05f", ratio * 1.0 / dtime_insn);
+	LOG_ERR("insn --- %0.05f", 0.001 / dtime_insn * csx->insns);
+	LOG_ERR("insn --- %0.05f", ratio * csx->insns);
+	LOG_ERR("insn --- %0.05f", (double)est_host_cps * 1.0 / dtime_insn);
+	LOG_ERR("insn --- %0.05f", (double)dtime_insn / est_host_cps * dtime_run);
 	LOG_ERR("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
 	
 }
