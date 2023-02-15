@@ -1,4 +1,5 @@
 #include "soc_core_disasm.h"
+#include "soc_core_psr.h"
 
 /* **** */
 
@@ -43,6 +44,14 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 	cs_close(&handle);
 
 	UNUSED(core);
+}
+
+void soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode)
+{
+	if(BTST(CPSR, SOC_CORE_PSR_BIT_T))
+		soc_core_disasm_thumb(core, address, opcode);
+	else
+		soc_core_disasm_arm(core, address, opcode);
 }
 
 void soc_core_disasm_arm(soc_core_p core, uint32_t address, uint32_t opcode)
