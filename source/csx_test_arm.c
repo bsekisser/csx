@@ -1,4 +1,5 @@
 #include "csx_test_arm.h"
+#include "csx_test_arm_a32.h"
 #include "csx_test_arm_inst.h"
 
 /* **** */
@@ -39,23 +40,6 @@ static inline uint32_t eao(csx_test_p t, int32_t ieao)
 }
 
 /* **** */
-
-static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"adcs %[result], %[ir0], %[ir1]\n\t"
-//	asm("adcs %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
 
 static uint32_t csx_test_arm_adcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
@@ -123,21 +107,6 @@ static void csx_test_arm_adcs(csx_test_p t)
 
 /* **** */
 
-static uint32_t csx_test_arm_adds_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("adds %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
-
 static uint32_t csx_test_arm_adds_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	const soc_core_p core = t->csx->core;
@@ -200,22 +169,6 @@ static void csx_test_arm_adds(csx_test_p t)
 }
 
 /* **** */
-
-static uint32_t csx_test_arm_ands_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"ands %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
 
 static uint32_t csx_test_arm_ands_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
@@ -330,22 +283,6 @@ static void csx_test_arm_b(csx_test_p t)
 
 /* **** */
 
-static uint32_t csx_test_arm_bics_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"bics %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
-
 static uint32_t csx_test_arm_bics_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	const soc_core_p core = t->csx->core;
@@ -400,21 +337,6 @@ static void csx_test_arm_bics(csx_test_p t)
 
 /* **** */
 
-static uint32_t csx_test_arm_cmp_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	const uint32_t res = 0;
-
-	asm("cmp %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
-
 static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	const soc_core_p core = t->csx->core;
@@ -432,7 +354,7 @@ static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0,
 	return(res);
 }
 
-static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1);
+//static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1);
 static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1);
 
 static void csx_test_arm_cmp(csx_test_p t)
@@ -492,22 +414,6 @@ static void csx_test_arm_cmp(csx_test_p t)
 }
 
 /* **** */
-
-static uint32_t csx_test_arm_eors_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"eors %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
 
 static uint32_t csx_test_arm_eors_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
@@ -748,12 +654,14 @@ static void csx_test_arm_ldm_dump_stack(
 	UNUSED(t);
 }
 
-const uint32_t _stm_sp = (0xe << 28) | _BV(27) | _BV(21) | (rSP << 16);
-const uint32_t _ldm_sp = _stm_sp | _BV(20);
-
-const uint32_t _ldstm_reglist = _BV(1) | _BV(2) | _BV(3) | _BV(4);
-
-const uint32_t _ldstm_da = 0;
+enum {
+	_stm_sp = (0xeUL << 28) | _BV(27) | _BV(21) | (rSP << 16),
+	_ldm_sp = _stm_sp | _BV(20),
+//
+	_ldstm_reglist = _BV(1) | _BV(2) | _BV(3) | _BV(4),
+//
+	_ldstm_da = 0UL,
+};
 
 static void csx_test_arm_ldmda(csx_test_p t)
 {
@@ -763,6 +671,7 @@ static void csx_test_arm_ldmda(csx_test_p t)
 
 	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
+#if defined(__arm__) && !defined(__aarch64__)
 	asm(
 		"ldmda %[stack]!, {r1, r2, r3, r4}\n\t"
 		"mov %[r1], r1\n\t"
@@ -776,6 +685,10 @@ static void csx_test_arm_ldmda(csx_test_p t)
 			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
+#else
+	assert(0);
+	#warning
+#endif
 
 	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
@@ -803,6 +716,7 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 
 	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
+#if defined(__arm__) && !defined(__aarch64__)	
 	asm(
 		"ldmdb %[stack]!, {r1, r2, r3, r4}\n\t"
 		"mov %[r1], r1\n\t"
@@ -816,6 +730,10 @@ static void csx_test_arm_ldmdb(csx_test_p t)
 			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
+#else
+	assert(0);
+	#warning
+#endif
 
 	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
@@ -843,6 +761,7 @@ static void csx_test_arm_ldmia(csx_test_p t)
 
 	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
+#if defined(__arm__) && !defined(__aarch64__)	
 	asm(
 		"ldmia %[stack]!, {r1, r2, r3, r4}\n\t"
 		"mov %[r1], r1\n\t"
@@ -856,6 +775,10 @@ static void csx_test_arm_ldmia(csx_test_p t)
 			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
+#else
+	assert(0);
+	#warning
+#endif
 
 	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
@@ -883,6 +806,7 @@ static void csx_test_arm_ldmib(csx_test_p t)
 
 	csx_test_arm_ldstm_setup_stack(t, &ldstm, 4);
 
+#if defined(__arm__) && !defined(__aarch64__)	
 	asm(
 		"ldmib %[stack]!, {r1, r2, r3, r4}\n\t"
 		"mov %[r1], r1\n\t"
@@ -896,6 +820,10 @@ static void csx_test_arm_ldmib(csx_test_p t)
 			, [r4] "=r" (ldstm.r[3]) ::
 		"r1", "r2", "r3", "r4"
 		);
+#else
+	assert(0);
+	#warning
+#endif
 
 	csx_test_arm_ldm_dump_stack(t, &ldstm);
 
@@ -965,21 +893,6 @@ static void csx_test_arm_mov(csx_test_p t)
 }
 
 /* **** */
-
-static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	uint32_t res = 0;
-	
-	asm("subs %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	return(res);
-
-	UNUSED(t);
-}
 
 static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
