@@ -6,21 +6,27 @@
 
 /* **** */
 
-uint32_t __attribute__((target("thumb")))
+#if defined(__arm__) & !defined(__aarch64__)
+	#define THUMB __attribute__((target("thumb")))
+#else
+	#define THUMB
+#endif
+
+uint32_t THUMB
 	_test_thumb_adds_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 1);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_adds_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 7);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_adds_rn_x_asm(uint32_t n, const uint32_t rn, const uint32_t rm) {
 
 	switch(n) {
@@ -45,7 +51,7 @@ uint32_t __attribute__((target("thumb")))
 	UNUSED(rm);
 }
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_adds_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + rm);
 
@@ -54,42 +60,42 @@ uint32_t __attribute__((target("thumb")))
 
 /* **** */
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_ands_rn_rm_asm(uint32_t rd, const uint32_t rm) {
 		return(rd & rm);
 }
 
 /* **** */
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_asrs_rn_rm_asm(int32_t rd, const uint32_t rm) {
 		return(rd >> rm);
 }
 
 /* **** */
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_bics_rn_rm_asm(uint32_t rd, const uint32_t rm) {
 		return(rd & ~rm);
 }
 
 /* **** */
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_subs_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 1);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_subs_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 7);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t __attribute__((target("thumb")))
+uint32_t THUMB
 	_test_thumb_subs_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - rm);
 

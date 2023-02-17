@@ -22,10 +22,15 @@ typedef uint32_t (*thumb_fn)(uint32_t* rd, const uint32_t rn, const uint32_t rm)
 uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t rm, uint32_t* xpsr) {
 	volatile uint32_t xres = fn(0, rn, rm);
 
+#if defined(__arm__) & !defined(__aarch64__)
 	asm volatile ("mrs %[xpsr], CPSR\n\t"
 		: [xpsr] "=r" (*xpsr)
 		: "r" (xres)
 		: "cc");
+#else
+	assert(0);
+	#warning
+#endif
 
 	return(xres);
 

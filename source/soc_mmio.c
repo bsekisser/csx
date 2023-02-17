@@ -294,7 +294,7 @@ ea_trace_p soc_mmio_trace(soc_mmio_p mmio, ea_trace_p tl, uint32_t address)
 	const char *name = eat ? eat->name : "";
 
 	if(_trace_mmio)
-		LOG("cycle = 0x%016llx, [0x%08x]: %s", mmio->csx->cycle, address, name);
+		LOG("cycle = 0x%016" PRIx64 ", [0x%08x]: %s", mmio->csx->cycle, address, name);
 
 	return(eat);
 }
