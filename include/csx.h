@@ -89,6 +89,41 @@ typedef struct csx_t {
 	csx_data_t						loader;
 	csx_data_t						firmware;
 
+	struct {
+		uint32_t					csx_soc_read;
+		struct {
+			uint32_t				cdp;
+			uint32_t				count;
+			uint32_t				flash;
+			uint32_t				framebuffer;
+			uint32_t				mmio;
+			uint32_t				sdram;
+		}csx_soc_read_ppa;
+		uint32_t					csx_soc_write;
+		struct {
+			uint32_t				cdp;
+			uint32_t				count;
+			uint32_t				flash;
+			uint32_t				framebuffer;
+			uint32_t				mmio;
+			uint32_t				sdram;
+		}csx_soc_write_ppa;
+		struct {
+			struct {
+				uint32_t			hit;
+				uint32_t			miss;
+			}ifetch;
+			struct {
+				uint32_t			hit;
+				uint32_t			miss;
+			}read;
+			struct {
+				uint32_t			hit;
+				uint32_t			miss;
+			}write;
+		}soc_tlb;
+	}count;
+
 	uint8_t							sdram[CSX_SDRAM_SIZE];
 	uint8_t							frame_buffer[CSX_FRAMEBUFFER_SIZE];
 }csx_t;

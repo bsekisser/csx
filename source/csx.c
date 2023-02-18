@@ -50,6 +50,29 @@ csx_p csx_init(void)
 
 	void* mmio_data = 0;
 
+	csx->count.csx_soc_read = 0;
+	csx->count.csx_soc_read_ppa.cdp = 0;
+	csx->count.csx_soc_read_ppa.count = 0;
+	csx->count.csx_soc_read_ppa.flash = 0;
+	csx->count.csx_soc_read_ppa.framebuffer = 0;
+	csx->count.csx_soc_read_ppa.mmio = 0;
+	csx->count.csx_soc_read_ppa.sdram = 0;
+	
+	csx->count.csx_soc_write = 0;
+	csx->count.csx_soc_write_ppa.cdp = 0;
+	csx->count.csx_soc_write_ppa.count = 0;
+	csx->count.csx_soc_write_ppa.flash = 0;
+	csx->count.csx_soc_write_ppa.framebuffer = 0;
+	csx->count.csx_soc_write_ppa.mmio = 0;
+	csx->count.csx_soc_write_ppa.sdram = 0;
+
+	csx->count.soc_tlb.ifetch.hit = 0;
+	csx->count.soc_tlb.ifetch.miss = 0;
+	csx->count.soc_tlb.read.hit = 0;
+	csx->count.soc_tlb.read.miss = 0;
+	csx->count.soc_tlb.write.hit = 0;
+	csx->count.soc_tlb.write.miss = 0;
+
 	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
 	ERR(err = soc_mmio_init(csx, &csx->mmio, mmio_data));
 	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
@@ -60,6 +83,11 @@ csx_p csx_init(void)
 }
 
 /* **** */
+
+#define LOG_DATA32(_x) \
+	({ \
+		LOG_ERR(#_x " == 0x%08x", _x); \
+	})
 
 int main(int argc, char **argv)
 {
@@ -120,5 +148,29 @@ int main(int argc, char **argv)
 	LOG_ERR("cycle --- %0.05f", ratio * dtime_cycle);
 	LOG_ERR("insn --- %0.05f", ratio * dtime_insn);
 	LOG_ERR("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
+
+	LOG_ERR("\n\n");
+
+	LOG_DATA32(csx->count.csx_soc_read);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.cdp);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.count);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.flash);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.framebuffer);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.mmio);
+	LOG_DATA32(csx->count.csx_soc_read_ppa.sdram);
+
+	LOG_DATA32(csx->count.csx_soc_write);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.cdp);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.count);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.flash);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.framebuffer);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.mmio);
+	LOG_DATA32(csx->count.csx_soc_write_ppa.sdram);
 	
+	LOG_DATA32(csx->count.soc_tlb.ifetch.hit);
+	LOG_DATA32(csx->count.soc_tlb.ifetch.miss);
+	LOG_DATA32(csx->count.soc_tlb.read.hit);
+	LOG_DATA32(csx->count.soc_tlb.read.miss);
+	LOG_DATA32(csx->count.soc_tlb.write.hit);
+	LOG_DATA32(csx->count.soc_tlb.write.miss);
 }

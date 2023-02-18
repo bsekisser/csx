@@ -7,5 +7,5 @@ const int _check_pedantic_mmio = 0;
 const int _check_pedantic_pc = 0;
 const int _check_pedantic_rname = 0;
 const int _check_pedantic_size = 0;
+const int _performance_counters = 1;
 const int _trace_mmio = 0;
-
