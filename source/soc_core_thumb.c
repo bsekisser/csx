@@ -29,14 +29,11 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 	if(pcsp)
 		_setup_rR_vR(N, rSP, SP);
 	else
-		_setup_rR_vR(N, rPC, PC_THUMB);
+		_setup_rR_vR(N, rPC, PC_THUMB & ~3);
 
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
 	_setup_rR_dst_rR_src(core, rRD, mlBFEXT(IR, 10, 8), rRN);
-
-	if(!pcsp)
-		vR(N) &= ~3;
 
 	vR(D) += imm8;
 
@@ -76,7 +73,7 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 		else // pseudo op mov is encoded as adds rd, rn, 0
 		{
 			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
-				ops[op2], rR_NAME(D), rR_NAME(N), vR(D));
+				rR_NAME(D), rR_NAME(N), vR(D));
 		}
 	}
 	else
