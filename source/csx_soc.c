@@ -9,6 +9,7 @@
 
 /* **** csx includes */
 
+#include "csx_counters.h"
 #include "csx_data.h"
 #include "csx.h"
 #include "csx_state.h"
@@ -220,11 +221,15 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 uint32_t csx_soc_read(csx_p csx, uint32_t ppa, size_t size)
 {
+	CSX_COUNTER_INC(csx_soc.read);
+
 	return(csx_soc_read_ppa(csx, ppa, size, 0));
 }
 
 uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 {
+	CSX_COUNTER_INC(csx_soc.read_ppa.count);
+
 	if(src)
 		*src = 0;
 
@@ -244,16 +249,22 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 		case 0x04000000 ... 0x07ffffff: /* CS1 -- 64M */
 		case 0x08000000 ... 0x0bffffff: /* CS2 -- 64M */
 		case 0x0c000000 ... 0x0fffffff: /* CS3 -- 64M */
+			CSX_COUNTER_INC(csx_soc.read_ppa.flash);
+
 			return(soc_nnd_flash_read(csx->nnd, ppa, size));
 			break;
 		/* EMIFF */
 		case 0x10000000 ... 0x13ffffff: /* SDRAM -- 64M -- external */
+			CSX_COUNTER_INC(csx_soc.read_ppa.sdram);
+
 			return(_csx_soc_read_ppa(ppa, size, src, csx->sdram, CSX_SDRAM_BASE));
 			break;
 		case 0x14000000 ... 0x1fffffff: /* reserved */
 			break;
 		/* L3 OCP T1 */
 		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
+			CSX_COUNTER_INC(csx_soc.read_ppa.framebuffer);
+
 			return(_csx_soc_read_ppa(ppa, size, src, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
 			break;
 		case 0x2003e800 ... 0x2007cfff: /* reserved */
@@ -285,8 +296,11 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 	const csx_data_p cdp = csx->cdp;
 	const uint32_t cdp_end = cdp->base + cdp->size;
 
-	if(_in_bounds(ppa, size, cdp->base, cdp_end))
+	if(_in_bounds(ppa, size, cdp->base, cdp_end)) {
+			CSX_COUNTER_INC(csx_soc.read_ppa.cdp);
+
 			return(_csx_soc_read_ppa(ppa, size, src, cdp->data, cdp->base));
+	}
 
 	return(0);
 }
@@ -298,11 +312,15 @@ void csx_soc_reset(csx_p csx)
 
 void csx_soc_write(csx_p csx, uint32_t ppa, uint32_t data, size_t size)
 {
+	CSX_COUNTER_INC(csx_soc.write);
+
 	return(csx_soc_write_ppa(csx, ppa, data, size, 0));
 }
 
 void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void** dst)
 {
+	CSX_COUNTER_INC(csx_soc.write_ppa.count);
+
 	if(dst)
 		*dst = 0;
 
@@ -322,16 +340,22 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 		case 0x04000000 ... 0x07ffffff: /* CS1 -- 64M */
 		case 0x08000000 ... 0x0bffffff: /* CS2 -- 64M */
 		case 0x0c000000 ... 0x0fffffff: /* CS3 -- 64M */
+			CSX_COUNTER_INC(csx_soc.write_ppa.flash);
+
 			return(soc_nnd_flash_write(csx->nnd, ppa, data, size));
 			break;
 		/* EMIFF */
 		case 0x10000000 ... 0x13ffffff: /* SDRAM -- 64M -- external */
+			CSX_COUNTER_INC(csx_soc.write_ppa.sdram);
+
 			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->sdram, CSX_SDRAM_BASE));
 			break;
 		case 0x14000000 ... 0x1fffffff: /* reserved */
 			break;
 		/* L3 OCP T1 */
 		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
+			CSX_COUNTER_INC(csx_soc.write_ppa.framebuffer);
+
 			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
 			break;
 		case 0x2003e800 ... 0x2007cfff: /* reserved */

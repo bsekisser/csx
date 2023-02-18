@@ -1,6 +1,7 @@
 #include "config.h"
 #include "soc_mmio.h"
 
+#include "csx_counters.h"
 #include "csx_data.h"
 #include "soc_mmio_omap.h"
 
@@ -256,6 +257,8 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
 {
+	CSX_COUNTER_INC(mmio.read);
+
 	csx_p csx = mmio->csx;
 
 	if(csx_mmio_has_callback_read(csx, vaddr))
@@ -369,6 +372,8 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
 {
+	CSX_COUNTER_INC(mmio.write);
+
 	csx_p csx = mmio->csx;
 
 	if(csx_mmio_has_callback_write(csx, vaddr))

@@ -7,6 +7,7 @@
 
 /* **** csx includes */
 
+#include "csx_counters.h"
 #include "csx_mmio.h"
 //#include "csx_test.h"
 
@@ -64,7 +65,10 @@ csx_p csx_init(void)
 
 	void* mmio_data = 0;
 
+	ERR(err = csx_counters_init(csx));
+
 	ERR(err = csx_mem_init(csx, &csx->mem));
+
 	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
 	ERR(err = csx_soc_init(csx, &csx->csx_soc));
 
@@ -82,5 +86,3 @@ void csx_reset(csx_p csx)
 
 	callback_list_process(&csx->atreset_list);
 }
-
-/* **** */

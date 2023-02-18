@@ -2,6 +2,10 @@
 
 /* **** */
 
+#include "csx_counters.h"
+
+/* **** */
+
 #include "bitfield.h"
 #include "err_test.h"
 #include "handle.h"
@@ -225,16 +229,22 @@ void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
 	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
 
-	soc_tlbe_p tlbe = _tlb_entry(tlb->itlb, iTLB_BITS, va, h2tlbe);
+	soc_tlbe_p tlbe = 0;
+	void* src = _tlb_read(tlb->itlb, iTLB_BITS, va, &tlbe);
+
+	if(h2tlbe)
+		*h2tlbe = tlbe;
+
+	CSX_COUNTER_HIT_IF(soc_tlb.ifetch, 0 != src);
 
 	if(!tlbe)
 		return(0);
-
+	
 #if 0
 	if(!(tlbe->rwx & RwX))
 		return(0);
 #else
-	return(tlbe->src);
+	return(src);
 #endif
 }
 
@@ -285,7 +295,11 @@ void* soc_tlb_read(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
 	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
 
-	return(_tlb_read(tlb->dtlb, dTLB_BITS, va, h2tlbe));
+	void* src = _tlb_read(tlb->dtlb, dTLB_BITS, va, h2tlbe);
+
+	CSX_COUNTER_HIT_IF(soc_tlb.read, 0 != src);
+
+	return(src);
 }
 
 void soc_tlb_reset(soc_tlb_p tlb)
@@ -297,5 +311,9 @@ void* soc_tlb_write(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
 	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
 
-	return(_tlb_write(tlb->dtlb, dTLB_BITS, va, h2tlbe));
+	void* dst = _tlb_write(tlb->dtlb, dTLB_BITS, va, h2tlbe);
+
+	CSX_COUNTER_HIT_IF(soc_tlb.write, 0 != dst);
+
+	return(dst);
 }
