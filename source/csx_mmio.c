@@ -8,6 +8,7 @@
 
 /* **** local includes */
 
+#include "callback_list.h"
 #include "err_test.h"
 #include "log.h"
 
@@ -25,6 +26,36 @@
 #define _MMIO_DATA_OFFSET(_x) (((_x) - CSX_MMIO_BASE) & 0x3ffff)
 #define _MMIO_DATA_PAGE(_x) (((_x) - CSX_MMIO_BASE) & 0x3ff00)
 
+static int _csx_mmio_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	csx_mmio_h h2mmio = param;
+	csx_mmio_p mmio = *h2mmio;
+	
+	callback_list_process(&mmio->atexit_list);
+	
+	free(mmio);
+	*h2mmio = 0;
+	
+	return(0);
+}
+
+static int _csx_mmio_reset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	csx_mmio_p mmio = param;
+
+	callback_list_process(&mmio->atreset_list);
+	
+	return(0);
+}
+
 static void* _mmio_data_offset(csx_mmio_p mmio, uint32_t mpa)
 {
 	return(&mmio->data[_MMIO_DATA_OFFSET(mpa)]);
@@ -36,6 +67,16 @@ static void* _mmio_data_page(csx_mmio_p mmio, uint32_t mpa)
 }
 
 /* **** */
+
+void csx_mmio_callback_atexit(csx_mmio_p mmio, callback_fn fn, void* param)
+{
+	callback_list_register_callback(&mmio->atexit_list, fn, param);
+}
+
+void csx_mmio_callback_atreset(csx_mmio_p mmio, callback_fn fn, void* param)
+{
+	callback_list_register_callback(&mmio->atreset_list, fn, param);
+}
 
 void* csx_mmio_data_offset(csx_p csx, uint32_t mpa)
 {
@@ -60,21 +101,31 @@ int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa)
 	return((0 != cb->wfn) || (0 != cb->name));
 }
 
-int csx_mmio_init(csx_p csx, csx_mmio_h p2mmio, void** mmio_data)
+int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data)
 {
+	if(_trace_init) {
+		LOG();
+	}
+
+	assert(0 != csx);
+	assert(0 != h2mmio);
+	assert(0 != mmio_data);
+
 	int err = 0;
 
-	ERR_NULL(p2mmio);
-
 	csx_mmio_p mmio = calloc(1, sizeof(csx_mmio_t));
-
 	ERR_NULL(mmio);
 
 	mmio->csx = csx;
-
-	*p2mmio = mmio;
+	*h2mmio = mmio;
 
 	*mmio_data = mmio->data;
+
+	callback_list_init(&mmio->atexit_list, 0, LIST_LIFO);
+	callback_list_init(&mmio->atreset_list, 0, LIST_FIFO);
+
+	csx_callback_atexit(csx, _csx_mmio_atexit, h2mmio);
+	csx_callback_atreset(csx, _csx_mmio_reset, mmio);
 
 	return(err);
 }

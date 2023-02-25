@@ -1,6 +1,8 @@
+#include "config.h"
 #include "soc_core.h"
 
 #include "soc_core_trace.h"
+#include "soc.h"
 
 /* **** */
 
@@ -15,8 +17,27 @@
 
 /* **** */
 
-void soc_core_reset(soc_core_p core)
+static int _soc_core_atexit(void* param)
 {
+	if(_trace_atexit) {
+		LOG();
+	}
+	
+	free(param);
+	
+	return(0);
+}
+
+static int _soc_core_reset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	// TODO: bootrom
+
+	soc_core_p core = param;
+
 	for(int i = 0; i < 16; i++)
 		soc_core_reg_set(core, i, ((~0U) << 16) | _test_value(i));
 
@@ -38,6 +59,8 @@ void soc_core_reset(soc_core_p core)
 	soc_core_trace_psr(core, __FUNCTION__, CPSR);
 
 	soc_core_psr_mode_switch(core, CPSR);
+
+	return(0);
 }
 
 int soc_core_in_a_privaleged_mode(soc_core_p core)
@@ -47,6 +70,12 @@ int soc_core_in_a_privaleged_mode(soc_core_p core)
 
 int soc_core_init(csx_p csx, soc_core_h h2core)
 {
+	if(_trace_init) {
+		LOG();
+	}
+
+	// TODO: move to csx_soc
+
 	int err = 0;
 
 	soc_core_p core = calloc(1, sizeof(soc_core_t));
@@ -55,7 +84,17 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 	core->csx = csx;
 	*h2core = core;
 
-	soc_core_reset(core);
+	csx_soc_callback_atexit(csx->csx_soc, _soc_core_atexit, core);
+	csx_soc_callback_atreset(csx->csx_soc, _soc_core_reset, core);
+
+	/* **** */
+
+//	soc_core_reset(core);
 
 	return(err);
+}
+
+void soc_core_reset(soc_core_p core)
+{
+	_soc_core_reset(core);
 }

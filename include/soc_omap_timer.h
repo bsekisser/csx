@@ -26,6 +26,8 @@ typedef struct soc_omap_timer_t {
 	csx_p					csx;
 
 	uint64_t				cycle;
+
+	uint32_t				cntl;
 	uint32_t				count;
 }soc_omap_timer_t;
 

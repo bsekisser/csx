@@ -20,9 +20,12 @@
 /* **** */
 
 typedef struct soc_mmu_t* soc_mmu_p;
-typedef struct soc_mmu_t {
+typedef struct soc_mmu_t { // TODO: move to header
 	csx_p							csx;
 	uint32_t						ttbcr;
+	
+	callback_list_t atexit_list;
+	callback_list_t atreset_list;
 }soc_mmu_t;
 
 typedef struct soc_mmu_ptd_t {
@@ -35,6 +38,40 @@ typedef struct soc_mmu_ptd_t {
 }soc_mmu_ptd_t;
 
 /* **** */
+
+static int _soc_mmu_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmu_h h2mmu = param;
+	soc_mmu_p mmu = *h2mmu;
+	
+	callback_list_process(&mmu->atexit_list);
+
+	free(mmu);
+	*h2mmu = 0;
+	
+	return(0);
+}
+
+static int _soc_mmu_reset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	soc_mmu_p mmu = param;
+	csx_p csx = mmu->csx;
+	
+	TTBR0 = -1;
+	CP15_reg1_set(m);
+
+	callback_list_process(&mmu->atreset_list);
+
+	return(0);
+}
 
 soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 {
@@ -168,18 +205,24 @@ void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 
 int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 {
-	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
+	if(_trace_init) {
+		LOG();
+	}
 
+	assert(0 != csx);
+	assert(0 != h2mmu);
+	
+	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
 	ERR_NULL(mmu);
-	if(!mmu)
-		return(-1);
 
 	mmu->csx = csx;
-
-	TTBR0 = -1;
-	CP15_reg1_set(m);
-
 	*h2mmu = mmu;
+
+	callback_list_init(&mmu->atexit_list, 0, LIST_LIFO);
+	callback_list_init(&mmu->atreset_list, 0, LIST_FIFO);
+
+	csx_callback_atexit(csx, _soc_mmu_atexit, h2mmu);
+	csx_callback_atreset(csx, _soc_mmu_reset, mmu);
 
 	return(0);
 }

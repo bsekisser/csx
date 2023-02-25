@@ -6,6 +6,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_list.h"
 #include "err_test.h"
 #include "log.h"
 
@@ -70,9 +71,40 @@ static soc_mmio_peripheral_t dpll_peripheral = {
 	.write = soc_mmio_dpll_write,
 };
 
+static int _mmio_dpll_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_dpll_h h2dpll = param;
+	soc_mmio_dpll_p dpll = *h2dpll;
+
+	free(dpll);
+	*h2dpll = 0;
+
+	return(0);
+}
+
+#if 0
+static int _mmio_dpll_atreset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+//	soc_mmio_dpll_p dpll = param;
+
+	return(0);
+}
+#endif
 
 int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 {
+	if(_trace_init) {
+		LOG();
+	}
+
 	soc_mmio_dpll_p dpll = calloc(1, sizeof(soc_mmio_dpll_t));
 
 	ERR_NULL(dpll);
@@ -83,6 +115,9 @@ int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 	dpll->mmio = mmio;
 
 	*h2dpll = dpll;
+
+	soc_mmio_callback_atexit(mmio, _mmio_dpll_atexit, h2dpll);
+//	soc_mmio_callback_atreset(mmio, _mmio_dpll_atreset, dpll);
 
 	soc_mmio_peripheral(mmio, &dpll_peripheral, dpll);
 

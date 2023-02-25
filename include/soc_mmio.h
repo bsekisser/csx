@@ -19,6 +19,10 @@ typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
 
 /* **** */
 
+#include "callback_list.h"
+
+/* **** */
+
 typedef uint32_t (*soc_mmio_read_fn)(void* param, void* data, uint32_t addr, uint8_t size);
 typedef void (*soc_mmio_write_fn)(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
 
@@ -33,6 +37,9 @@ typedef struct soc_mmio_peripheral_t {
 }soc_mmio_peripheral_t;
 
 /* **** */
+
+void soc_mmio_callback_atexit(soc_mmio_p mmio, callback_fn fn, void* param);
+void soc_mmio_callback_atreset(soc_mmio_p mmio, callback_fn fn, void* param);
 
 uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t addr, uint8_t size);
 void soc_mmio_write(soc_mmio_p mmio, uint32_t addr, uint32_t value, uint8_t size);

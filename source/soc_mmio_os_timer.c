@@ -69,6 +69,7 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
 	}
 }
 
+#if 0
 static void soc_mmio_os_timer_reset(void* param, void* data, soc_mmio_peripheral_p mp)
 {
 	const soc_mmio_os_timer_p ost = param;
@@ -77,29 +78,67 @@ static void soc_mmio_os_timer_reset(void* param, void* data, soc_mmio_peripheral
 
 	UNUSED(data, mp);
 }
+#endif
 
 static soc_mmio_peripheral_t os_timer_peripheral = {
 	.base = CSX_MMIO_OS_TIMER_BASE,
 	.trace_list = trace_list,
 
-	.reset = soc_mmio_os_timer_reset,
+//	.reset = soc_mmio_os_timer_reset,
 
 	.read = soc_mmio_os_timer_read,
 	.write = soc_mmio_os_timer_write
 };
 
+static int _os_timer_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_os_timer_h h2ost = param;
+	soc_mmio_os_timer_p ost = *h2ost;
+
+	free(ost);
+	*h2ost = 0;
+
+	return(0);
+}
+
+static int _os_timer_atreset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	soc_mmio_os_timer_p ost = param;
+
+	ost->base = 0;
+//	ost->tick_val = 0x00ffffff;
+
+	return(0);
+}
+
 int soc_mmio_os_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_os_timer_h h2ost)
 {
-	soc_mmio_os_timer_p ost = calloc(1, sizeof(soc_mmio_os_timer_t));
+	// TODO: csx_mmio, csx_mem
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2ost);
 
+	if(_trace_init) {
+		LOG();
+	}
+	
+	soc_mmio_os_timer_p ost = calloc(1, sizeof(soc_mmio_os_timer_t));
 	ERR_NULL(ost);
-	if(!ost)
-		return(-1);
 
 	ost->csx = csx;
 	ost->mmio = mmio;
 
 	*h2ost = ost;
+
+	soc_mmio_callback_atexit(mmio, _os_timer_atexit, h2ost);
 
 	soc_mmio_peripheral(mmio, &os_timer_peripheral, ost);
 

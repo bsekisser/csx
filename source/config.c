@@ -7,5 +7,8 @@ const int _check_pedantic_mmio = 0;
 const int _check_pedantic_pc = 0;
 const int _check_pedantic_rname = 0;
 const int _check_pedantic_size = 0;
-const int _trace_mmio = 0;
 
+const int _trace_atexit = 0;
+const int _trace_atreset = 0;
+const int _trace_init = 0;
+const int _trace_mmio = 0;

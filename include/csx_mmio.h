@@ -20,6 +20,7 @@ typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
 /* **** local includes */
 
 #include "bitfield.h"
+#include "callback_list.h"
 
 /* **** system includes */
 
@@ -64,6 +65,9 @@ typedef struct csx_mmio_t {
 	uint8_t reset_value[SOC_MMIO_SIZE];
 	csx_mmio_trace_p trace_list[0x400];
 	uint8_t trace_list_count;
+
+	callback_list_t atexit_list;
+	callback_list_t atreset_list;
 }csx_mmio_t;
 
 /* **** function prototypes */
@@ -142,10 +146,13 @@ static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, uint32_t* value, si
 	return(csx_mmio_datareg_get(pat, mpao, size));
 }
 
+void csx_mmio_callback_atexit(csx_mmio_p mmio, callback_fn fn, void* param);
+void csx_mmio_callback_atreset(csx_mmio_p mmio, callback_fn fn, void* param);
+
 int csx_mmio_has_callback_read(csx_p csx, uint32_t mpa);
 int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa);
 
-int csx_mmio_init(csx_p csx, csx_mmio_h mmio, void** mmio_data);
+int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data);
 
 uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size);
 void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size);

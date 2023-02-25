@@ -153,8 +153,46 @@ static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, uint8_t
 	return(count);
 }
 
+static int _timer_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_omap_timer_h h2t = param;
+	soc_omap_timer_p t = *h2t;
+
+	free(t);
+	*h2t = 0;
+
+	return(0);
+}
+
+static int _timer_atreset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	soc_omap_timer_p t = param;
+
+	t->cntl = 0;
+	/* load undefined */
+	/* read undefined */
+	
+	return(0);
+}
+
 int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
 {
+	// TODO: csx_soc, csx_mem
+	assert(0 != csx);
+	assert(0 != h2t);
+
+	if(_trace_init) {
+		LOG();
+	}
+	
 	int err = 0;
 
 	soc_omap_timer_p t = calloc(1, sizeof(soc_omap_timer_t));
@@ -162,6 +200,9 @@ int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
 
 	*h2t = t;
 	t->csx = csx;
+
+	csx_soc_callback_atexit(csx->csx_soc, _timer_atexit, h2t);
+	csx_soc_callback_atreset(csx->csx_soc, _timer_atreset, t);
 
 	/* **** */
 

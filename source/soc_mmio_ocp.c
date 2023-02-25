@@ -115,18 +115,41 @@ static soc_mmio_peripheral_t ocp_peripheral = {
 	.write = soc_mmio_ocp_write,
 };
 
+static int _ocp_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_ocp_h h2ocp = param;
+	soc_mmio_ocp_p ocp = *h2ocp;
+
+	free(ocp);
+	*h2ocp = 0;
+
+	return(0);
+}
+
 int soc_mmio_ocp_init(csx_p csx, soc_mmio_p mmio, soc_mmio_ocp_h h2ocp)
 {
-	soc_mmio_ocp_p ocp = calloc(1, sizeof(soc_mmio_ocp_t));
+	// TODO: csx_mmio, csx_mem
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2ocp);
 
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_ocp_p ocp = calloc(1, sizeof(soc_mmio_ocp_t));
 	ERR_NULL(ocp);
-	if(!ocp)
-		return(-1);
 
 	ocp->csx = csx;
 	ocp->mmio = mmio;
 
 	*h2ocp = ocp;
+
+	soc_mmio_callback_atexit(mmio, _ocp_atexit, h2ocp);
 
 	soc_mmio_peripheral(mmio, &ocp_peripheral, ocp);
 

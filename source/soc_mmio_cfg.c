@@ -5,6 +5,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_list.h"
 #include "err_test.h"
 #include "log.h"
 
@@ -100,18 +101,53 @@ static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	}
 };
 
+int _mmio_cfg_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_cfg_h h2cfg = param;
+	soc_mmio_cfg_p cfg = *h2cfg;
+
+	free(cfg);
+	*h2cfg = 0;
+
+	return(0);
+}
+
+int _mmio_cfg_atreset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+//	soc_mmio_cfg_p cfg = param;
+
+	return(0);
+	UNUSED(param);
+}
+
 int soc_mmio_cfg_init(csx_p csx, soc_mmio_p mmio, soc_mmio_cfg_h h2cfg)
 {
-	soc_mmio_cfg_p cfg = calloc(1, sizeof(soc_mmio_cfg_t));
+	if(_trace_init) {
+		LOG();
+	}
 
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2cfg);
+
+	soc_mmio_cfg_p cfg = calloc(1, sizeof(soc_mmio_cfg_t));
 	ERR_NULL(cfg);
-	if(!cfg)
-		return(-1);
 
 	cfg->csx = csx;
 	cfg->mmio = mmio;
 
 	*h2cfg = cfg;
+
+	soc_mmio_callback_atexit(mmio, _mmio_cfg_atexit, h2cfg);
+	soc_mmio_callback_atreset(mmio, _mmio_cfg_atreset, cfg);
 
 	soc_mmio_peripheral(mmio, &cfg_peripheral[0], (void*)cfg);
 	soc_mmio_peripheral(mmio, &cfg_peripheral[1], (void*)cfg);

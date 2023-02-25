@@ -1,4 +1,4 @@
-//#include "soc.h"
+#include "soc.h"
 
 /* **** soc includes */
 
@@ -17,6 +17,7 @@
 
 #include "bitfield.h"
 #include "bounds.h"
+#include "callback_list.h"
 #include "err_test.h"
 #include "log.h"
 #include "page.h"
@@ -38,6 +39,23 @@
 #include "garmin_rgn.h"
 
 /* **** */
+
+static int _csx_soc_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	csx_soc_h h2soc = param;
+	csx_soc_p soc = *h2soc;
+
+	callback_list_process(&soc->atexit_list);
+
+	free(soc);
+	*h2soc = 0;
+
+	return(0);
+}	
 
 static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* file_name)
 {
@@ -88,6 +106,23 @@ static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* d
 	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
 }
 
+static int _csx_soc_reset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	csx_soc_p soc = param;
+	csx_p csx = soc->csx;
+
+	// TODO: move soc modules to soc
+	soc_core_reset(csx->core);
+	soc_mmio_reset(csx->mmio);
+	soc_tlb_reset(csx->tlb);
+
+	return(0);
+}
+
 static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
 {
 	uint32_t ppo = ppa - base;
@@ -102,11 +137,35 @@ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** 
 
 /* **** */
 
-int csx_soc_init(csx_p csx)
+DECL_CALLBACK_REGISTER_FN(csx_soc, csx_soc_p, soc, atexit)
+DECL_CALLBACK_REGISTER_FN(csx_soc, csx_soc_p, soc, atreset)
+
+int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 {
+	if(_trace_init) {
+		LOG();
+	}
+
+	assert(0 != csx);
+	assert(0 != h2soc);
+
+	csx_soc_p soc = calloc(1, sizeof(csx_soc_t));
+	ERR_NULL(soc);
+	
+	soc->csx = csx;
+	*h2soc = soc;
+	
+	callback_list_init(&soc->atexit_list, 0, LIST_LIFO);
+	callback_list_init(&soc->atreset_list, 0, LIST_FIFO);
+	
+	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
+	csx_callback_atreset(csx, _csx_soc_reset, soc);
+
 	int err = 0;
 
 	CYCLE = 0;
+
+	// TODO: fix soc module locations into soc
 
 	ERR(err = soc_core_init(csx, &csx->core));
 	ERR(err = soc_core_cp15_init(csx));
@@ -235,9 +294,7 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 
 void csx_soc_reset(csx_p csx)
 {
-	soc_core_reset(csx->core);
-	soc_mmio_reset(csx->mmio);
-	soc_tlb_reset(csx->tlb);
+	_csx_soc_reset(csx->soc);
 }
 
 void csx_soc_write(csx_p csx, uint32_t ppa, uint32_t data, size_t size)

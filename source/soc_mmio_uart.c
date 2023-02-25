@@ -61,18 +61,41 @@ static soc_mmio_peripheral_t uart_peripheral[3] = {
 	},
 };
 
+static int _uart_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_uart_h h2uart = param;
+	soc_mmio_uart_p uart = *h2uart;
+
+	free(uart);
+	*h2uart = 0;
+
+	return(0);
+}
+
 int soc_mmio_uart_init(csx_p csx, soc_mmio_p mmio, soc_mmio_uart_h h2uart)
 {
-	soc_mmio_uart_p uart = calloc(1, sizeof(soc_mmio_uart_t));
+	// TODO: csx_mmio, csx_mem
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2uart);
 
+	if(_trace_init) {
+		LOG();
+	}
+
+	soc_mmio_uart_p uart = calloc(1, sizeof(soc_mmio_uart_t));
 	ERR_NULL(uart);
-	if(!uart)
-		return(-1);
 
 	uart->csx = csx;
 	uart->mmio = mmio;
 
 	*h2uart = uart;
+
+	soc_mmio_callback_atexit(mmio, _uart_atexit, h2uart);
 
 	soc_mmio_peripheral(mmio, uart_peripheral, uart);
 

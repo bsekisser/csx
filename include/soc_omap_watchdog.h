@@ -20,6 +20,10 @@ typedef struct soc_omap_watchdog_t* soc_omap_watchdog_p;
 
 typedef struct soc_omap_watchdog_t {
 	csx_p					csx;
+
+	uint32_t				cntl;
+	uint32_t				load;
+	uint32_t				mode;
 }soc_omap_watchdog_t;
 
 /* **** */

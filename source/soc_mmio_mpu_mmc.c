@@ -93,18 +93,41 @@ static soc_mmio_peripheral_t mpu_mmc_peripheral[2] = {
 
 /* **** */
 
+static int _mpu_mmc_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_mpu_mmc_h h2mmc = param;
+	soc_mmio_mpu_mmc_p mmc = *h2mmc;
+
+	free(mmc);
+	*h2mmc = 0;
+
+	return(0);
+}
+
 int soc_mmio_mpu_mmc_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_mmc_h h2mmc)
 {
-	soc_mmio_mpu_mmc_p mmc = calloc(1, sizeof(soc_mmio_mpu_mmc_t));
+	// TODO: csx_mmio
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2mmc);
+	
+	if(_trace_init) {
+		LOG();
+	}
 
+	soc_mmio_mpu_mmc_p mmc = calloc(1, sizeof(soc_mmio_mpu_mmc_t));
 	ERR_NULL(mmc);
-	if(!mmc)
-		return(-1);
 
 	mmc->csx = csx;
 	mmc->mmio = mmio;
 
 	*h2mmc = mmc;
+
+	soc_mmio_callback_atexit(mmio, _mpu_mmc_atexit, h2mmc);
 
 	soc_mmio_peripheral(mmio, &mpu_mmc_peripheral[0], mmc);
 	soc_mmio_peripheral(mmio, &mpu_mmc_peripheral[1], mmc);

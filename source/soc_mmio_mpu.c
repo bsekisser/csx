@@ -111,8 +111,32 @@ static soc_mmio_peripheral_t mpu_peripheral = {
 	.write = soc_mmio_mpu_write,
 };
 
+static int _mpu_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_mpu_h h2mpu = param;
+	soc_mmio_mpu_p mpu = *h2mpu;
+	
+	free(mpu);
+	*h2mpu = 0;
+	
+	return(0);
+}
+
 int soc_mmio_mpu_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_h h2mpu)
 {
+	// TODO: csx_mmio
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2mpu);
+
+	if(_trace_init) {
+		LOG();
+	}
+
 	soc_mmio_mpu_p mpu = calloc(1, sizeof(soc_mmio_mpu_t));
 
 	ERR_NULL(mpu);
@@ -123,6 +147,9 @@ int soc_mmio_mpu_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_h h2mpu)
 	mpu->mmio = mmio;
 
 	*h2mpu = mpu;
+
+	soc_mmio_callback_atexit(mmio, _mpu_atexit, h2mpu);
+//	soc_mmio_callback_atreset(mmio, _mpu_atreset, mpu);
 
 	soc_mmio_peripheral(mmio, &mpu_peripheral, mpu);
 

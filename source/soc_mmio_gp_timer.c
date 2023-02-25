@@ -138,19 +138,41 @@ static soc_mmio_peripheral_t gp_timer_peripheral[7] = {
 	}
 };
 
+static int _gp_timer_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_gp_timer_h h2gpt = param;
+	soc_mmio_gp_timer_p gpt = *h2gpt;
+
+	free(gpt);
+	*h2gpt = 0;
+
+	return(0);
+}
 
 int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt)
 {
-	soc_mmio_gp_timer_p gpt = calloc(1, sizeof(soc_mmio_gp_timer_t));
+	// TODO: csx_mmio, csx_mem
+	assert(0 != csx);
+	assert(0 != mmio);
+	assert(0 != h2gpt);
+	
+	if(_trace_init) {
+		LOG();
+	}
 
+	soc_mmio_gp_timer_p gpt = calloc(1, sizeof(soc_mmio_gp_timer_t));
 	ERR_NULL(gpt);
-	if(!gpt)
-		return(-1);
 
 	gpt->csx = csx;
 	gpt->mmio = mmio;
 
 	*h2gpt = gpt;
+
+	soc_mmio_callback_atexit(mmio, _gp_timer_atexit, h2gpt);
 
 	for(int i = 1; i <= 7; i++)
 	{

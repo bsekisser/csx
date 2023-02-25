@@ -35,16 +35,21 @@ enum {
 
 /* **** local includes */
 
+#include "callback_list.h"
+
 /* **** system includes */
 
 #include <stdint.h>
 
 /* **** */
 
-typedef struct soc_t {
+typedef struct soc_t { // TODO: rename, move to soc.h
 	csx_p                   csx;
 	soc_omap_timer_p        timer[3];
 	soc_omap_watchdog_p     watchdog;
+	
+	callback_list_t			atexit_list;
+	callback_list_t			reset_list;
 }soc_t;
 
 int soc_omap5912_init(csx_p csx, soc_h h2soc);

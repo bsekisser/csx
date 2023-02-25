@@ -1,3 +1,4 @@
+#include "config.h"
 #include "soc_mmio.h"
 
 #include "csx_data.h"
@@ -70,6 +71,9 @@ typedef struct soc_mmio_t {
 	soc_mmio_gp_timer_p		gp_timer;
 	soc_mmio_os_timer_p		os_timer;
 	soc_mmio_uart_p			uart;
+
+	callback_list_t			atexit_list;
+	callback_list_t			atreset_list;
 }soc_mmio_t;
 
 typedef struct __mpt_t* __mpt_p;
@@ -81,6 +85,23 @@ typedef struct __mpt_t {
 	void* param;
 	uint16_t offset;
 }__mpt_t;
+
+static int _soc_mmio_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	soc_mmio_h h2mmio = param;
+	soc_mmio_p mmio = *h2mmio;
+	
+	callback_list_process(&mmio->atexit_list);
+	
+	*h2mmio = 0;
+	free(mmio);
+	
+	return(0);
+}
 
 static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 {
@@ -103,7 +124,26 @@ static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 	}
 }
 
+static int _soc_mmio_reset(void* param)
+{
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	soc_mmio_p mmio = param;
+
+	soc_mmio_reset(mmio);
+
+	callback_list_process(&mmio->atreset_list);
+
+	return(0);
+}
+
+
 /* **** */
+
+DECL_CALLBACK_REGISTER_FN(soc_mmio, soc_mmio_p, mmio, atexit)
+DECL_CALLBACK_REGISTER_FN(soc_mmio, soc_mmio_p, mmio, atreset)
 
 ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
@@ -129,19 +169,28 @@ ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 
 int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 {
-	LOG();
+	if(_trace_init) {
+		LOG();
+	}
 
+	assert(0 != csx);
+	assert(0 != h2mmio);
+	
 	int err = 0;
-	soc_mmio_p mmio = calloc(1, sizeof(soc_mmio_t));
 
+	soc_mmio_p mmio = calloc(1, sizeof(soc_mmio_t));
 	ERR_NULL(mmio);
-	if(!mmio)
-		return(-1);
 
 	mmio->csx = csx;
 	mmio->data = mmio_data;
 
 	*h2mmio = mmio;
+
+	callback_list_init(&mmio->atexit_list, 0, LIST_LIFO);
+	callback_list_init(&mmio->atreset_list, 0, LIST_FIFO);
+
+	csx_callback_atexit(csx, _soc_mmio_atexit, h2mmio);
+	csx_callback_atreset(csx, _soc_mmio_reset, mmio);
 
 	for(int i = 0; i < 0x400; i++)
 	{
