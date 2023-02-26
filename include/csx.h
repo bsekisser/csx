@@ -34,6 +34,7 @@ typedef struct csx_data_t* csx_data_p;
 #include "soc_omap_5912.h"
 #include "soc.h" // TODO: move soc to csx_soc
 
+#include "csx_mem.h"
 #include "csx_mmio.h"
 #include "csx_state.h"
 
@@ -69,6 +70,7 @@ typedef struct csx_data_t {
 }csx_data_t;
 
 typedef struct csx_t {
+	csx_mem_p						mem;
 	csx_mmio_p						csx_mmio;
 	csx_soc_p						csx_soc;
 

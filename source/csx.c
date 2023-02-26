@@ -65,6 +65,7 @@ csx_p csx_init(void)
 
 	void* mmio_data = 0;
 
+	ERR(err = csx_mem_init(csx, &csx->mem));
 	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
 	ERR(err = csx_soc_init(csx, &csx->csx_soc));
 
