@@ -11,13 +11,12 @@ SRC_DIR = source
 #OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)/$(TARGET_DIR)
 OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)
 
-INCLUDE += -I$(TOP_DIR)/../lib_dtime
 INCLUDE += -I$(TOP_DIR)/../include
 INCLUDE += -Iinclude
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 SRCS += $(TOP_DIR)/../include/callback_list.c
-SRCS += $(TOP_DIR)/../lib_dtime/dtime.c
+SRCS += $(TOP_DIR)/../include/dtime.c
 
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 DEPS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.d, $(SRCS))
