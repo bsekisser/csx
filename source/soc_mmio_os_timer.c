@@ -139,6 +139,7 @@ int soc_mmio_os_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_os_timer_h h2ost
 	*h2ost = ost;
 
 	soc_mmio_callback_atexit(mmio, _os_timer_atexit, h2ost);
+	soc_mmio_callback_atreset(mmio, _os_timer_atreset, ost);
 
 	soc_mmio_peripheral(mmio, &os_timer_peripheral, ost);
 
