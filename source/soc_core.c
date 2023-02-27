@@ -6,6 +6,10 @@
 
 /* **** */
 
+#include "csx_test_utility.h"
+
+/* **** */
+
 #include "bitfield.h"
 #include "err_test.h"
 #include "log.h"
@@ -39,7 +43,7 @@ static int _soc_core_reset(void* param)
 	soc_core_p core = param;
 
 	for(int i = 0; i < 16; i++)
-		soc_core_reg_set(core, i, ((~0U) << 16) | _test_value(i));
+		soc_core_reg_set(core, i, ((~0UL) << 16) | _test_value(i));
 
 	CPSR = 0x13;		/* Enter Supervisor mode */
 	BCLR(CPSR, 5);		/* Execute in ARM state */
