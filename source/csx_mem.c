@@ -55,37 +55,49 @@ static int _csx_mem_atexit(void* param)
 	return(0);
 }
 
-csx_mem_callback_p _csx_mem_access(csx_mem_p mem, uint32_t ppa, csx_mem_callback_h h2l2page)
+static void** _csx_mem_access_l1(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
 {
-	const uint32_t l1l2page = PAGE(ppa);
-	const uint32_t l1page = PAGE(l1l2page) & PAGE_MASK;
-	const uint32_t l2page = l1l2page & PAGE_MASK;
+	// ->l1->l2->csx_mem_callback_t
+	// l1->l2->csx_mem_callback_t
+	// ->l2->csx_mem_callback_t
 	
-	void** l2 = mem->l1[l1page];
-	if(h2l2page)
-		*h2l2page = (csx_mem_callback_p)l2;
+	void*** p2l1e = &mem->l1[PAGE_OFFSET(PAGE(PAGE(ppa)))];
+	void** p2l2 = *p2l1e;
+	
+	if(h2l1e)
+		*h2l1e = (void**)p2l1e;
 
-	if(!l2)
+	return(p2l2);
+}
+
+static void** _csx_mem_access_l2(csx_mem_p mem, uint32_t ppa, void** p2l2)
+{
+	// ->l1->l2->csx_mem_callback_t
+	// l1->l2->csx_mem_callback_t
+	// ->l2->csx_mem_callback_t
+
+	return(&p2l2[PAGE_OFFSET(PAGE(ppa))]);
+	
+	UNUSED(mem);
+}
+
+static csx_mem_callback_p _csx_mem_access(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
+{
+	void** p2l2 = _csx_mem_access_l1(mem, ppa, h2l1e);
+	
+	if(!p2l2)
 		return(0);
-
-	const csx_mem_callback_p cmcbp = l2[l2page];
-
-	if(!cmcbp) {
-		LOG("unmapped -- ppa = 0x%08x", ppa);
-		
-		return(&_mmap_unmapped_callback);
-	}
-
-	return(cmcbp);
+	
+	return(_csx_mem_access_l2(mem, ppa, (void*)p2l2));
 }
 
 static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, uint ppa)
 {
 	const size_t l2size = sizeof(csx_mem_callback_t) * PAGE_SIZE;
 	
-	csx_mem_callback_h p2l2 = 0;
-	csx_mem_callback_p l2 = _csx_mem_access(mem, ppa, p2l2);
-	
+	void** p2l1e = 0;
+	csx_mem_callback_p l2 = _csx_mem_access(mem, ppa, &p2l1e);
+		
 	if(!l2) {
 		qelem_p qel2 = mem->l2free.head;
 		if(qel2) {
@@ -116,11 +128,11 @@ static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, uint ppa)
 				l2size, (uint)p2l2, (uint)l2);
 		}
 
-		*p2l2 = l2;
+		*(csx_mem_callback_h)p2l2 = l2;
 		memset(l2, 0, l2size);
 	}
 
-	return(&l2[PAGE_OFFSET(ppa)]);
+	return(&l2[PAGE_OFFSET(PAGE(ppa))]);
 }
 
 static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint32_t* write)
@@ -200,7 +212,7 @@ void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* p
 	uint32_t start = base & PAGE_MASK;
 	uint32_t stop = end & PAGE_MASK;
 
-	for(uint32_t ppa = start; ppa <= stop; ppa++) {
+	for(uint32_t ppa = start; ppa <= stop; ppa += PAGE_SIZE) {
 		csx_mem_callback_p cb = _csx_mem_mmap_alloc(mem, ppa);
 
 		LOG(">> cb = 0x%08x, ppa = 0x%08x, fn = 0x%08x, param = 0x%08x",

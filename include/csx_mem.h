@@ -5,6 +5,7 @@
 typedef struct csx_mem_t** csx_mem_h;
 typedef struct csx_mem_t* csx_mem_p;
 
+typedef struct csx_mem_callback_t*** csx_mem_callback_hp;
 typedef struct csx_mem_callback_t** csx_mem_callback_h;
 typedef struct csx_mem_callback_t* csx_mem_callback_p;
 
