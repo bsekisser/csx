@@ -38,8 +38,8 @@
 
 static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
 {
-	if(0) LOG("param = 0x%08x, data = 0x%08x, va = 0x%08x, value = 0x%08x, size 0x%02x",
-		(uint)param, (uint)data, addr, value, size);
+	if(0) LOG("param = %#08" PRIxPTR ", data = %#08" PRIxPTR ", va = 0x%08x, value = 0x%08x, size 0x%02x",
+		(uintptr_t)param, (uintptr_t)data, addr, value, size);
 
 	const soc_mmio_ocp_p ocp = param;
 	const csx_p csx = ocp->csx;

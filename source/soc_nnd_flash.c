@@ -79,7 +79,8 @@ static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 	
 	const soc_nnd_unit_p unit = &nnd->unit[cs];
 
-	LOG("nnd = 0x%08x, addr = 0x%08x, cs = 0x%02x, unit = 0x%08x", (uint)nnd, addr, cs, (uint)unit);
+	LOG("nnd = 0x%08" PRIxPTR ", addr = 0x%08x, cs = 0x%02x, unit = 0x%08" PRIxPTR,
+	    (uintptr_t)nnd, addr, cs, (uintptr_t)unit);
 
 	assert(cs < 16);
 

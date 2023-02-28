@@ -1,15 +1,15 @@
 #include "soc_core_decode.h"
 
 #include "soc_core_arm_decode.h"
-#include "soc_core_disasm.h"
-#include "soc_core_psr.h"
-#include "soc_core_shifter.h"
+//#include "soc_core_disasm.h"
+//#include "soc_core_psr.h"
+//#include "soc_core_shifter.h"
 
 /* **** */
 
-#include "bitfield.h"
-#include "log.h"
-#include "shift_roll.h"
+//#include "bitfield.h"
+//#include "log.h"
+//#include "shift_roll.h"
 
 /* **** */
 

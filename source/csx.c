@@ -52,7 +52,7 @@ void csx_callback_atreset(csx_p csx, callback_fn fn, void* param)
 csx_p csx_init(void)
 {
 	if(_trace_init) {
-		LOG();
+		LOG(">>>> Starting initialization...");
 	}
 
 	int err = 0;
@@ -72,16 +72,24 @@ csx_p csx_init(void)
 	ERR(err = soc_mmio_init(csx, &csx->mmio, mmio_data));
 	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 
+	if(_trace_init) {
+		LOG("<<<< Initialization completed.");
+	}
+
 	return(csx);
 }
 
 void csx_reset(csx_p csx)
 {
 	if(_trace_atreset) {
-		LOG();
+		LOG(">>>> Starting reset...");
 	}
 
 	callback_list_process(&csx->atreset_list);
+
+	if(_trace_atreset) {
+		LOG("<<<< Reset completed.");
+	}
 }
 
 /* **** */

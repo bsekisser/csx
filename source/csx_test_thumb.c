@@ -29,7 +29,6 @@ uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t rm, ui
 		: "cc");
 #else
 	assert(0);
-	#warning
 #endif
 
 	return(xres);
@@ -108,15 +107,15 @@ void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 	csx_test_thumb_adds_rn_1(t, 1);
 	csx_test_thumb_adds_rn_1(t, ~0);
 	csx_test_thumb_adds_rn_1(t, ~0 - 1);
-	csx_test_thumb_adds_rn_1(t, ~0UL >> 1);
-	csx_test_thumb_adds_rn_1(t, (~0UL >> 1) - 1);
+	csx_test_thumb_adds_rn_1(t, ~0U >> 1);
+	csx_test_thumb_adds_rn_1(t, (~0U >> 1) - 1);
 
 	csx_test_thumb_adds_rn_7(t, 0);
 	csx_test_thumb_adds_rn_7(t, 1);
 	csx_test_thumb_adds_rn_7(t, ~0);
 	csx_test_thumb_adds_rn_7(t, ~0 - 1);
-	csx_test_thumb_adds_rn_7(t, ~0UL >> 1);
-	csx_test_thumb_adds_rn_7(t, (~0UL >> 1) - 1);
+	csx_test_thumb_adds_rn_7(t, ~0U >> 1);
+	csx_test_thumb_adds_rn_7(t, (~0U >> 1) - 1);
 }
 
 void csx_test_thumb_b(csx_test_p t)

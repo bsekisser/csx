@@ -65,7 +65,7 @@ static int _soc_mmu_reset(void* param)
 	soc_mmu_p mmu = param;
 	csx_p csx = mmu->csx;
 	
-	TTBR0 = -1;
+	TTBR0 = ~0U;
 	CP15_reg1_set(m);
 
 	callback_list_process(&mmu->atreset_list);
@@ -82,7 +82,8 @@ soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 	const uint32_t l1ttb = mlBFTST(TTBR0, 31, 14 - x);
 	const uint32_t va_ti = mlBFMOV(va, 31 - x, 20, 2);
 	const uint32_t l1pta = l1ttb | va_ti;
-	LOG("TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x", TTBR0, l1ttb, va_ti, l1pta);
+	LOG("va = %#08x, TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x",
+	    va, TTBR0, l1ttb, va_ti, l1pta);
 
 	const uint32_t l1ptd = csx_soc_read_ppa(csx, l1pta, sizeof(uint32_t), 0);
 	LOG("l1ptd = 0x%08x, [1:0] = %01u", l1ptd, l1ptd & 3);
@@ -232,7 +233,7 @@ int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* ppa)
 	static int count = 1;
 	const csx_p csx = mmu->csx;
 
-	if(!CP15_reg1_Mbit || (-1UL == TTBR0)) {
+	if(!CP15_reg1_Mbit || (~0U == TTBR0)) {
 		*ppa = va;
 		return(-1UL == TTBR0);
 	}

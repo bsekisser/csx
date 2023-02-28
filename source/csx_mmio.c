@@ -178,8 +178,8 @@ int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p tl)
 		csx_mmio_trace_p tle = &tl[i];
 		
 		if(0) {
-			LOG("tle = 0x%08x, mpa = 0x%08x, name = %s",
-				(uint32_t)tle, tle->mpa, tle->name);
+			LOG("tle = 0x%08" PRIxPTR ", mpa = 0x%08x, name = %s",
+				(uintptr_t)tle, tle->mpa, tle->name);
 		}
 		
 		if(_Rw & tle->access) {

@@ -88,8 +88,10 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	} else
 		cdp->base = 0x14000000; /* ? safer as unknown load address */
 
-	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		cdp->base, (uint)cdp->data, cdp->size);
+//	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
+//		cdp->base, (uint)cdp->data, cdp->size);
+	LOG("base = %#08x, data = %#08" PRIxPTR ", size = %#08x",
+		cdp->base, (uintptr_t)cdp->data, cdp->size);
 
 	close(fd);
 }
@@ -188,7 +190,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	else
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 
-	csx_soc_reset(csx);
+//	csx_soc_reset(csx);
 
 	const soc_core_p core = csx->core;
 
@@ -214,7 +216,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 		}
 	}
 
-	LOG("CYCLE = 0x%016llx, IP = 0x%08x", csx->cycle, IP);
+	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x", csx->cycle, IP);
 
 	return(err);
 }
@@ -283,8 +285,11 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 			break;
 	}
 
+	if(!csx->cdp)
+		return(0);
+
 	const csx_data_p cdp = csx->cdp;
-	const uint32_t cdp_end = cdp->base + cdp->size;
+	const uintptr_t cdp_end = cdp->base + cdp->size;
 
 	if(_in_bounds(ppa, size, cdp->base, cdp_end))
 			return(_csx_soc_read_ppa(ppa, size, src, cdp->data, cdp->base));
@@ -361,8 +366,11 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 			break;
 	}
 
+	if(!csx->cdp)
+		return;
+
 	const csx_data_p cdp = csx->cdp;
-	const uint32_t cdp_end = cdp->base + cdp->size;
+	const uintptr_t cdp_end = cdp->base + cdp->size;
 
 	assert(!_in_bounds(ppa, size, cdp->base, cdp_end));
 //			return(_csx_soc_write_ppa(ppa, size, dst, cdp->data, cdp->base));

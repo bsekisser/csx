@@ -30,7 +30,7 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 		size_t j;
 		for (j = 0; j < count; j++) {
 			const uint64_t insn_address = insn[j].address;
-			printf("0x%08llx:\t", insn_address);
+			printf("0x%08" PRIx64 ":\t", insn_address);
 			for(int k = 0; k < size; k++)
 				printf(" 0x%02x", insn_data[(j << 2) + k]);
 			printf("\t\t%s\t\t%s\n", insn[j].mnemonic,
