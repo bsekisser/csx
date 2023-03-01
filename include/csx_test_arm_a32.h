@@ -1,10 +1,51 @@
 #pragma once
 
-#if defined(__arm__) && !defined(__aarch64__)	
+#if 1 && defined(__arm__) && !defined(__aarch64__)	
+
+#include "csx_test_utility.h"
+#include "soc_core_psr.h"
+#include "log.h"
+
+static void _test_flags_nz(csx_test_p t, uint32_t* psr, uint32_t res)
+{
+	BMAS(*psr, SOC_CORE_PSR_BIT_N, BEXT(res, 31));
+//	BMAS(*psr, SOC_CORE_PSR_BIT_N, (((int32_t)res) < 0));
+	BMAS(*psr, SOC_CORE_PSR_BIT_Z, (0 == res));
+
+	UNUSED(t);
+}
+
+static void _test_flags_add(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t ir1, uint32_t res)
+{
+	_test_flags_nz(t, psr, res);
+
+//	int cf_in = BEXT(*psr, SOC_CORE_PSR_BIT_C);
+
+	uint32_t cf = ir0 ^ ir1 ^ res;
+	uint32_t vf = ir0 ^ (~ir1) ^ res;
+
+	BMAS(*psr, SOC_CORE_PSR_BIT_C, BEXT(cf, 31));
+	BMAS(*psr, SOC_CORE_PSR_BIT_V, BEXT(vf, 30));
+
+	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	TRACE_PSR(*psr);
+}
+
+#endif
 
 static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	uint32_t res = 0;
+
+#if defined(__arm__) && !defined(__aarch64__)	
+	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+		"mrs %[psr], CPSR\n\t"
+		: [psr] "=r" (*psr), [result] "=r" (res)
+		: [ir0] "r" (ir0), [ir1] "r" (ir1)
+		: "cc");
+
+	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	TRACE_PSR(*psr)
 
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 		"adcs %[result], %[ir0], %[ir1]\n\t"
@@ -13,10 +54,24 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		: "cc");
 
+	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	TRACE_PSR(*psr)
+//#else
+	uint32_t result = ir0 + ir1;
+	_test_flags_add(t, psr, ir0, ir1, result);
+
+	int cf = BEXT(*psr, SOC_CORE_PSR_BIT_C);
+	result = ir0 + ir1 + cf;
+	
+	_test_flags_add(t, psr, ir0, ir1, result);
+#endif
+
 	return(res);
 
 	UNUSED(t);
 }
+
+#if 0 && defined(__arm__) && !defined(__aarch64__)	
 
 static uint32_t csx_test_arm_adds_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
@@ -117,27 +172,6 @@ static uint32_t csx_test_arm_subs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 #include "soc_core_psr.h"
 #include "log.h"
 
-static void _test_flags_nz(csx_test_p t, uint32_t* psr, uint32_t res)
-{
-	BMAS(*psr, SOC_CORE_PSR_BIT_N, (((int32_t)res) < 0));
-	BMAS(*psr, SOC_CORE_PSR_BIT_Z, (0 == res));
-
-	UNUSED(t);
-}
-
-static void _test_flags_add(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t ir1, uint32_t res)
-{
-	_test_flags_nz(t, psr, res);
-
-	int cf = ir0 < ir1;
-	int vf = ((signed)ir0) < ((signed)ir1);
-
-	BMAS(*psr, SOC_CORE_PSR_BIT_C, cf);
-	BMAS(*psr, SOC_CORE_PSR_BIT_V, vf);
-
-	TRACE_PSR(*psr);
-}
-
 static void _test_flags_sub(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t ir1, uint32_t res)
 {
 	_test_flags_nz(t, psr, res);
@@ -148,24 +182,8 @@ static void _test_flags_sub(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 	BMAS(*psr, SOC_CORE_PSR_BIT_C, cf);
 	BMAS(*psr, SOC_CORE_PSR_BIT_V, vf);
 
+	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
 	TRACE_PSR(*psr);
-}
-
-static uint32_t _test_arm_adds_adcs(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t ir1)
-{
-	_test_flags_add(t, psr, ir0, ir1, (ir0 + ir1));
-
-	int cf = BEXT(*psr, SOC_CORE_PSR_BIT_C);
-	uint32_t result = ir0 + ir1 + cf;
-	
-	_test_flags_add(t, psr, ir0, ir1, result);
-
-	return(result);
-}
-
-static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
-{
-	return(_test_arm_adds_adcs(t, psr, ir0, ir1));
 }
 
 static uint32_t csx_test_arm_adds_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1) { assert(0); }

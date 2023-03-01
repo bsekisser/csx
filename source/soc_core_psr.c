@@ -123,7 +123,7 @@ static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, 
 	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, SOC_CORE_PSR_BIT_C);
 	CPSR |= BMOV(ovec, 31, SOC_CORE_PSR_BIT_V);
 
-	if(0) CORE_TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
+	if(1) CORE_TRACE("N = %1u, Z = %1u, C = %1u, V = %1u",
 		!!(CPSR & SOC_CORE_PSR_N), !!(CPSR & SOC_CORE_PSR_Z),
 		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
 }

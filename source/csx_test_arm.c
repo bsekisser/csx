@@ -80,7 +80,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 	xres = csx_test_arm_adcs_asm(t, &xpsr, 12, 1);
 	res = csx_test_arm_adcs_inst(t, &cpsr, 12, 1);
 
-	assert(xres == res);
+	ASSERT_LOG(xres == res, "xres = %#08x, res = %#08x", xres, res);
 	_assert_cpsr_xpsr(t, cpsr, xpsr);
 //	_assert_nzcv(t, 0, 0, 0, 0);
 
