@@ -38,7 +38,7 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 {
 	uint32_t xres = 0, xpsr = 0;
 
-#if defined(__arm__) && !defined(__aarch64__)	
+#if defined(__arm__)
 	#if !defined(__aarch64__)
 		asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 			"mrs %[psr], CPSR\n\t"
@@ -54,9 +54,7 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 
 		_assert_cpsr_xpsr(t, *psr, xpsr);
 	#endif
-#endif
 
-#if defined(__arm__)
 	#if !defined(__aarch64__)	
 		asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
 			"adcs %[result], %[ir0], %[ir1]\n\t"
@@ -198,7 +196,7 @@ static void _test_flags_sub(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 	BMAS(*psr, SOC_CORE_PSR_BIT_C, cf);
 	BMAS(*psr, SOC_CORE_PSR_BIT_V, vf);
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr);
 }
 

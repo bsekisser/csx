@@ -82,7 +82,7 @@ soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 	const uint32_t l1ttb = mlBFTST(TTBR0, 31, 14 - x);
 	const uint32_t va_ti = mlBFMOV(va, 31 - x, 20, 2);
 	const uint32_t l1pta = l1ttb | va_ti;
-	LOG("va = %#08x, TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x",
+	LOG("va = 0x%08x, TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x",
 	    va, TTBR0, l1ttb, va_ti, l1pta);
 
 	const uint32_t l1ptd = csx_soc_read_ppa(csx, l1pta, sizeof(uint32_t), 0);
