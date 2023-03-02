@@ -19,6 +19,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 //#include "page.h"
 //#include "queue.h"
@@ -97,8 +98,7 @@ static int _soc_mmio_atexit(void* param)
 	
 	callback_list_process(&mmio->atexit_list);
 	
-	*h2mmio = 0;
-	free(mmio);
+	handle_free(param);
 	
 	return(0);
 }
@@ -178,13 +178,11 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 	
 	int err = 0;
 
-	soc_mmio_p mmio = calloc(1, sizeof(soc_mmio_t));
+	soc_mmio_p mmio = HANDLE_CALLOC(h2mmio, 1, sizeof(soc_mmio_t));
 	ERR_NULL(mmio);
 
 	mmio->csx = csx;
 	mmio->data = mmio_data;
-
-	*h2mmio = mmio;
 
 	callback_list_init(&mmio->atexit_list, 0, LIST_LIFO);
 	callback_list_init(&mmio->atreset_list, 0, LIST_FIFO);

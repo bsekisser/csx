@@ -7,6 +7,7 @@
 #include "bitfield.h"
 #include "callback_list.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -107,11 +108,10 @@ int _mmio_cfg_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_cfg_h h2cfg = param;
-	soc_mmio_cfg_p cfg = *h2cfg;
+//	soc_mmio_cfg_h h2cfg = param;
+//	soc_mmio_cfg_p cfg = *h2cfg;
 
-	free(cfg);
-	*h2cfg = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -138,13 +138,11 @@ int soc_mmio_cfg_init(csx_p csx, soc_mmio_p mmio, soc_mmio_cfg_h h2cfg)
 	assert(0 != mmio);
 	assert(0 != h2cfg);
 
-	soc_mmio_cfg_p cfg = calloc(1, sizeof(soc_mmio_cfg_t));
+	soc_mmio_cfg_p cfg = HANDLE_CALLOC(h2cfg, 1, sizeof(soc_mmio_cfg_t));
 	ERR_NULL(cfg);
 
 	cfg->csx = csx;
 	cfg->mmio = mmio;
-
-	*h2cfg = cfg;
 
 	soc_mmio_callback_atexit(mmio, _mmio_cfg_atexit, h2cfg);
 	soc_mmio_callback_atreset(mmio, _mmio_cfg_atreset, cfg);

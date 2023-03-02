@@ -4,6 +4,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 #include "page.h"
 
@@ -54,6 +55,23 @@ enum {
 };
 
 /* **** */
+
+static int _soc_tlb_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	handle_free(param);
+	return(0);
+}
+
+static int _soc_tlb_atreset(void* param)
+{
+	soc_tlb_p tlb = param;
+	
+	soc_tlb_invalidate_all(tlb);
+}
 
 static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 	uint tlb_bits,
@@ -219,20 +237,26 @@ void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 
 int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
 {
-	if(0) LOG("csx = 0x%08x, h2tlb = 0x%08x", (uint)csx, (uint)h2tlb);
+	assert(0 != csx);
+	assert(0 != h2tlb);
 
-	soc_tlb_p tlb = calloc(1, sizeof(soc_tlb_t));
+	if(_trace_init) {
+		LOG();
+	}
+
+	soc_tlb_p tlb = HANDLE_CALLOC(h2tlb, 1, sizeof(soc_tlb_t));
 	ERR_NULL(tlb);
-	if(!tlb)
-		return(-1);
 	
 	/* **** */
+	
+	soc_p soc = csx->csx_soc;
 	
 	tlb->csx = csx;
 	
+	csx_soc_callback_atexit(soc, _soc_tlb_atexit, h2tlb);
+	csx_soc_callback_atreset(soc, _soc_tlb_atreset, tlb);
+
 	/* **** */
-	
-	*h2tlb = tlb;
 	
 	return(0);
 }
@@ -262,9 +286,7 @@ void* soc_tlb_read(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 
 void soc_tlb_reset(soc_tlb_p tlb)
 {
-	if(0) LOG("tlb = 0x%08x", (uint)tlb);
-
-	soc_tlb_invalidate_all(tlb);
+	_soc_tlb_atreset(tlb);
 }
 
 void* soc_tlb_write(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)

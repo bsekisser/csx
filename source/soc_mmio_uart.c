@@ -7,6 +7,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -67,11 +68,10 @@ static int _uart_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_uart_h h2uart = param;
-	soc_mmio_uart_p uart = *h2uart;
+//	soc_mmio_uart_h h2uart = param;
+//	soc_mmio_uart_p uart = *h2uart;
 
-	free(uart);
-	*h2uart = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -87,13 +87,11 @@ int soc_mmio_uart_init(csx_p csx, soc_mmio_p mmio, soc_mmio_uart_h h2uart)
 		LOG();
 	}
 
-	soc_mmio_uart_p uart = calloc(1, sizeof(soc_mmio_uart_t));
+	soc_mmio_uart_p uart = HANDLE_CALLOC(h2uart, 1, sizeof(soc_mmio_uart_t));
 	ERR_NULL(uart);
 
 	uart->csx = csx;
 	uart->mmio = mmio;
-
-	*h2uart = uart;
 
 	soc_mmio_callback_atexit(mmio, _uart_atexit, h2uart);
 

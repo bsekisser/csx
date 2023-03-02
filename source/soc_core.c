@@ -12,6 +12,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -27,7 +28,7 @@ static int _soc_core_atexit(void* param)
 		LOG();
 	}
 	
-	free(param);
+	handle_free(param);
 	
 	return(0);
 }
@@ -82,11 +83,10 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 
 	int err = 0;
 
-	soc_core_p core = calloc(1, sizeof(soc_core_t));
+	soc_core_p core = HANDLE_CALLOC(h2core, 1, sizeof(soc_core_t));
 	ERR_NULL(core);
 
 	core->csx = csx;
-	*h2core = core;
 
 	csx_soc_callback_atexit(csx->csx_soc, _soc_core_atexit, core);
 	csx_soc_callback_atreset(csx->csx_soc, _soc_core_reset, core);

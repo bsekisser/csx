@@ -6,6 +6,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -272,11 +273,10 @@ static int _mpu_ihr_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_mpu_ihr_h h2ihr = param;
-	soc_mmio_mpu_ihr_p ihr = *h2ihr;
+//	soc_mmio_mpu_ihr_h h2ihr = param;
+//	soc_mmio_mpu_ihr_p ihr = *h2ihr;
 	
-	free(ihr);
-	*h2ihr = 0;
+	handle_free(param);
 	
 	return(0);
 }
@@ -291,13 +291,11 @@ int soc_mmio_mpu_ihr_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_ihr_h h2ihr)
 	assert(0 != mmio);
 	assert(0 != h2ihr);
 
-	soc_mmio_mpu_ihr_p ihr = calloc(1, sizeof(soc_mmio_mpu_ihr_t));
+	soc_mmio_mpu_ihr_p ihr = HANDLE_CALLOC(h2ihr, 1, sizeof(soc_mmio_mpu_ihr_t));
 	ERR_NULL(ihr);
 
 	ihr->csx = csx;
 	ihr->mmio = mmio;
-
-	*h2ihr = ihr;
 
 	soc_mmio_callback_atreset(mmio, _mpu_ihr_atexit, h2ihr);
 

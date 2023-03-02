@@ -11,6 +11,7 @@
 /* **** local includes */
 
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** system includes */
@@ -159,11 +160,10 @@ static int _timer_atexit(void* param)
 		LOG();
 	}
 
-	soc_omap_timer_h h2t = param;
-	soc_omap_timer_p t = *h2t;
+//	soc_omap_timer_h h2t = param;
+//	soc_omap_timer_p t = *h2t;
 
-	free(t);
-	*h2t = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -195,10 +195,9 @@ int soc_omap_timer_init(csx_p csx, soc_omap_timer_h h2t, int i)
 	
 	int err = 0;
 
-	soc_omap_timer_p t = calloc(1, sizeof(soc_omap_timer_t));
+	soc_omap_timer_p t = HANDLE_CALLOC(h2t, 1, sizeof(soc_omap_timer_t));
 	ERR_NULL(t);
 
-	*h2t = t;
 	t->csx = csx;
 
 	csx_soc_callback_atexit(csx->csx_soc, _timer_atexit, h2t);

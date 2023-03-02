@@ -6,6 +6,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -144,11 +145,10 @@ static int _gp_timer_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_gp_timer_h h2gpt = param;
-	soc_mmio_gp_timer_p gpt = *h2gpt;
+//	soc_mmio_gp_timer_h h2gpt = param;
+//	soc_mmio_gp_timer_p gpt = *h2gpt;
 
-	free(gpt);
-	*h2gpt = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -164,13 +164,11 @@ int soc_mmio_gp_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_gp_timer_h h2gpt
 		LOG();
 	}
 
-	soc_mmio_gp_timer_p gpt = calloc(1, sizeof(soc_mmio_gp_timer_t));
+	soc_mmio_gp_timer_p gpt = HANDLE_CALLOC(h2gpt, 1, sizeof(soc_mmio_gp_timer_t));
 	ERR_NULL(gpt);
 
 	gpt->csx = csx;
 	gpt->mmio = mmio;
-
-	*h2gpt = gpt;
 
 	soc_mmio_callback_atexit(mmio, _gp_timer_atexit, h2gpt);
 

@@ -7,6 +7,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -110,11 +111,10 @@ static int _mpu_gpio_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_mpu_gpio_h h2gpio = param;
-	soc_mmio_mpu_gpio_p gpio = *h2gpio;
+//	soc_mmio_mpu_gpio_h h2gpio = param;
+//	soc_mmio_mpu_gpio_p gpio = *h2gpio;
 	
-	free(gpio);
-	*h2gpio = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -129,13 +129,11 @@ int soc_mmio_mpu_gpio_init(csx_p csx, soc_mmio_p mmio, soc_mmio_mpu_gpio_h h2gpi
 		LOG();
 	}
 	
-	soc_mmio_mpu_gpio_p gpio = calloc(1, sizeof(soc_mmio_mpu_gpio_t));
+	soc_mmio_mpu_gpio_p gpio = HANDLE_CALLOC(h2gpio, 1, sizeof(soc_mmio_mpu_gpio_t));
 	ERR_NULL(gpio);
 
 	gpio->csx = csx;
 	gpio->mmio = mmio;
-
-	*h2gpio = gpio;
 
 	soc_mmio_callback_atexit(mmio, _mpu_gpio_atexit, h2gpio);
 

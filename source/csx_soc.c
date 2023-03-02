@@ -19,6 +19,7 @@
 #include "bounds.h"
 #include "callback_list.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 #include "page.h"
 
@@ -51,8 +52,7 @@ static int _csx_soc_atexit(void* param)
 
 	callback_list_process(&soc->atexit_list);
 
-	free(soc);
-	*h2soc = 0;
+	handle_free(param);
 
 	return(0);
 }	
@@ -149,11 +149,10 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	assert(0 != csx);
 	assert(0 != h2soc);
 
-	csx_soc_p soc = calloc(1, sizeof(csx_soc_t));
+	csx_soc_p soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
 	ERR_NULL(soc);
 	
 	soc->csx = csx;
-	*h2soc = soc;
 	
 	callback_list_init(&soc->atexit_list, 0, LIST_LIFO);
 	callback_list_init(&soc->atreset_list, 0, LIST_FIFO);

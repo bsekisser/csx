@@ -8,6 +8,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -72,6 +73,17 @@ const uint8_t soc_nnd_flash_id[5] = {
  * 	 \  24
  */
 
+static int _soc_nnd_flash_atexit(void* param)
+{
+	if(_trace_atexit) {
+		LOG();
+	}
+
+	handle_free(param);
+
+	return(0);
+}
+
 static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 {
 //	const uint cs = addr >> CSx_LSB;
@@ -90,16 +102,23 @@ static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 
 int soc_nnd_flash_init(csx_p csx, soc_nnd_h h2nnd)
 {
-	soc_nnd_p nnd = calloc(1, sizeof(soc_nnd_t));
+	assert(0 != csx);
+	assert(0 != h2nnd);
+
+	if(_trace_init) {
+		LOG();
+	}
+
+	soc_nnd_p nnd = HANDLE_CALLOC(h2nnd, 1, sizeof(soc_nnd_t));
 	ERR_NULL(nnd);
 
 	nnd->csx = csx;
 
 	/* **** */
 
-	/* **** */
+	csx_callback_atexit(csx, _soc_nnd_flash_atexit, h2nnd);
 
-	*h2nnd = nnd;
+	/* **** */
 
 	return(0);
 }

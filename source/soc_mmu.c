@@ -9,6 +9,7 @@
 #include "bitfield.h"
 #include "bounds.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 #include "page.h"
 
@@ -50,8 +51,7 @@ static int _soc_mmu_atexit(void* param)
 	
 	callback_list_process(&mmu->atexit_list);
 
-	free(mmu);
-	*h2mmu = 0;
+	handle_free(param);
 	
 	return(0);
 }
@@ -212,11 +212,10 @@ int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 	assert(0 != csx);
 	assert(0 != h2mmu);
 	
-	soc_mmu_p mmu = calloc(1, sizeof(soc_mmu_t));
+	soc_mmu_p mmu = HANDLE_CALLOC(h2mmu, 1, sizeof(soc_mmu_t));
 	ERR_NULL(mmu);
 
 	mmu->csx = csx;
-	*h2mmu = mmu;
 
 	callback_list_init(&mmu->atexit_list, 0, LIST_LIFO);
 	callback_list_init(&mmu->atreset_list, 0, LIST_FIFO);

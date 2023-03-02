@@ -7,6 +7,7 @@
 /* **** local includes */
 
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** system includes */
@@ -40,11 +41,10 @@ static int _watchdog_atexit(void* param)
 		LOG();
 	}
 
-	soc_omap_watchdog_h h2sow = param;
-	soc_omap_watchdog_p sow = *h2sow;
+//	soc_omap_watchdog_h h2sow = param;
+//	soc_omap_watchdog_p sow = *h2sow;
 
-	free(sow);
-	*h2sow = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -74,12 +74,11 @@ int soc_omap_watchdog_init(csx_p csx, soc_omap_watchdog_h h2sow)
 		LOG();
 	}
 	
-	soc_omap_watchdog_p sow = calloc(1, sizeof(soc_omap_watchdog_t));
+	soc_omap_watchdog_p sow = HANDLE_CALLOC(h2sow, 1, sizeof(soc_omap_watchdog_t));
 	ERR_NULL(sow);
 	
 	sow->csx = csx;
-	*h2sow = sow;
-	
+
 	csx_soc_callback_atexit(csx->csx_soc, _watchdog_atexit, h2sow);
 	csx_soc_callback_atreset(csx->csx_soc, _watchdog_atreset, sow);
 	

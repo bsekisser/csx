@@ -8,6 +8,7 @@
 #include "bitfield.h"
 #include "callback_list.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -77,11 +78,10 @@ static int _mmio_dpll_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_dpll_h h2dpll = param;
-	soc_mmio_dpll_p dpll = *h2dpll;
+//	soc_mmio_dpll_h h2dpll = param;
+//	soc_mmio_dpll_p dpll = *h2dpll;
 
-	free(dpll);
-	*h2dpll = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -105,16 +105,11 @@ int soc_mmio_dpll_init(csx_p csx, soc_mmio_p mmio, soc_mmio_dpll_h h2dpll)
 		LOG();
 	}
 
-	soc_mmio_dpll_p dpll = calloc(1, sizeof(soc_mmio_dpll_t));
-
+	soc_mmio_dpll_p dpll = HANDLE_CALLOC(h2dpll, 1, sizeof(soc_mmio_dpll_t));
 	ERR_NULL(dpll);
-	if(!dpll)
-		return(-1);
 
 	dpll->csx = csx;
 	dpll->mmio = mmio;
-
-	*h2dpll = dpll;
 
 	soc_mmio_callback_atexit(mmio, _mmio_dpll_atexit, h2dpll);
 //	soc_mmio_callback_atreset(mmio, _mmio_dpll_atreset, dpll);

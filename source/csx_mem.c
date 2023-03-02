@@ -7,6 +7,7 @@
 /* **** local library includes */
 
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 #include "page.h"
 
@@ -49,8 +50,7 @@ static int _csx_mem_atexit(void* param)
 		*h2l2 = 0;
 	}
 
-	free(mem);
-	*h2mem = mem = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -169,11 +169,10 @@ int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 		LOG();
 	}
 	
-	const csx_mem_p mem = calloc(1, sizeof(csx_mem_t));
+	const csx_mem_p mem = HANDLE_CALLOC(h2mem, 1, sizeof(csx_mem_t));
 	ERR_NULL(mem);
 
 	mem->csx = csx;
-	*h2mem = mem;
 
 	csx_callback_atexit(csx, _csx_mem_atexit, h2mem);
 	

@@ -14,6 +14,7 @@
 
 #include "dtime.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** system includes */
@@ -34,9 +35,7 @@ void csx_atexit(csx_h h2csx)
 	
 	callback_list_process(&csx->atexit_list);
 
-	free(csx);
-	
-	*h2csx = csx = 0;
+	handle_free((void**)h2csx);
 }
 
 void csx_callback_atexit(csx_p csx, callback_fn fn, void* param)

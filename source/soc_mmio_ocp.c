@@ -7,6 +7,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -121,11 +122,10 @@ static int _ocp_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_ocp_h h2ocp = param;
-	soc_mmio_ocp_p ocp = *h2ocp;
+//	soc_mmio_ocp_h h2ocp = param;
+//	soc_mmio_ocp_p ocp = *h2ocp;
 
-	free(ocp);
-	*h2ocp = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -141,13 +141,11 @@ int soc_mmio_ocp_init(csx_p csx, soc_mmio_p mmio, soc_mmio_ocp_h h2ocp)
 		LOG();
 	}
 
-	soc_mmio_ocp_p ocp = calloc(1, sizeof(soc_mmio_ocp_t));
+	soc_mmio_ocp_p ocp = HANDLE_CALLOC(h2ocp, 1, sizeof(soc_mmio_ocp_t));
 	ERR_NULL(ocp);
 
 	ocp->csx = csx;
 	ocp->mmio = mmio;
-
-	*h2ocp = ocp;
 
 	soc_mmio_callback_atexit(mmio, _ocp_atexit, h2ocp);
 

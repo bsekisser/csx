@@ -7,6 +7,7 @@
 
 #include "bitfield.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** */
@@ -96,11 +97,10 @@ static int _os_timer_atexit(void* param)
 		LOG();
 	}
 
-	soc_mmio_os_timer_h h2ost = param;
-	soc_mmio_os_timer_p ost = *h2ost;
+//	soc_mmio_os_timer_h h2ost = param;
+//	soc_mmio_os_timer_p ost = *h2ost;
 
-	free(ost);
-	*h2ost = 0;
+	handle_free(param);
 
 	return(0);
 }
@@ -130,13 +130,11 @@ int soc_mmio_os_timer_init(csx_p csx, soc_mmio_p mmio, soc_mmio_os_timer_h h2ost
 		LOG();
 	}
 	
-	soc_mmio_os_timer_p ost = calloc(1, sizeof(soc_mmio_os_timer_t));
+	soc_mmio_os_timer_p ost = HANDLE_CALLOC(h2ost, 1, sizeof(soc_mmio_os_timer_t));
 	ERR_NULL(ost);
 
 	ost->csx = csx;
 	ost->mmio = mmio;
-
-	*h2ost = ost;
 
 	soc_mmio_callback_atexit(mmio, _os_timer_atexit, h2ost);
 	soc_mmio_callback_atreset(mmio, _os_timer_atreset, ost);

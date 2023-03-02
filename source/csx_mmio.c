@@ -10,6 +10,7 @@
 
 #include "callback_list.h"
 #include "err_test.h"
+#include "handle.h"
 #include "log.h"
 
 /* **** system includes */
@@ -37,8 +38,7 @@ static int _csx_mmio_atexit(void* param)
 	
 	callback_list_process(&mmio->atexit_list);
 	
-	free(mmio);
-	*h2mmio = 0;
+	handle_free(param);
 	
 	return(0);
 }
@@ -113,11 +113,10 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data)
 
 	int err = 0;
 
-	csx_mmio_p mmio = calloc(1, sizeof(csx_mmio_t));
+	csx_mmio_p mmio = HANDLE_CALLOC(h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
 
 	mmio->csx = csx;
-	*h2mmio = mmio;
 
 	*mmio_data = mmio->data;
 
