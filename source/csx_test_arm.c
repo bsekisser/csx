@@ -586,10 +586,10 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	uint tvs,
 	uint rvs)
 {
-	const uint32_t asp_diff = l->asp[1] - l->asp[0];
-	const uint32_t esp_diff = l->esp[1] - l->esp[0];
+	const ptrdiff_t asp_diff = l->asp[1] - l->asp[0];
+	const ptrdiff_t esp_diff = l->esp[1] - l->esp[0];
 
-	if(0) LOG("esp_in = 0x%08x, esp_out 0x%08x, esp_diff = 0x%08x",
+	if(0) LOG("esp_in = 0x%08x, esp_out 0x%08x, esp_diff = 0x%08tx",
 		l->esp[0], l->esp[1], esp_diff);
 
 	assert(asp_diff == esp_diff);
@@ -630,10 +630,10 @@ static void csx_test_arm_ldm_dump_stack(
 	csx_test_p t,
 	ldstm_p l)
 {
-	const uint32_t sp_diff = l->asp[1] - l->asp[0];
+	const ptrdiff_t asp_diff = l->asp[1] - l->asp[0];
 
-	if(0) LOG("asp_in = 0x%08" PRIxPTR ", asp_out = 0x%08" PRIxPTR ", asp_diff = 0x%08x",
-		(uintptr_t)l->asp[0], (uintptr_t)l->asp[1], sp_diff);
+	if(0) LOG("asp_in = 0x%08" PRIxPTR ", asp_out = 0x%08" PRIxPTR ", asp_diff = 0x%08tx",
+		(uintptr_t)l->asp[0], (uintptr_t)l->asp[1], asp_diff);
 
 	const uint32_t* stack = l->stack;
 
