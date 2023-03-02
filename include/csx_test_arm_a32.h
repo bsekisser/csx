@@ -27,7 +27,7 @@ static void _test_flags_add(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 	BMAS(*psr, SOC_CORE_PSR_BIT_C, BEXT(cf, 31));
 	BMAS(*psr, SOC_CORE_PSR_BIT_V, BEXT(vf, 30));
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr);
 }
 
@@ -44,7 +44,7 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		: "cc");
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr)
 
 	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
@@ -54,7 +54,7 @@ static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0,
 		: [ir0] "r" (ir0), [ir1] "r" (ir1)
 		: "cc");
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr)
 //#else
 	uint32_t result = ir0 + ir1;
@@ -182,7 +182,7 @@ static void _test_flags_sub(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 	BMAS(*psr, SOC_CORE_PSR_BIT_C, cf);
 	BMAS(*psr, SOC_CORE_PSR_BIT_V, vf);
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr);
 }
 

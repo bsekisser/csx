@@ -90,7 +90,7 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 
 //	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
 //		cdp->base, (uint)cdp->data, cdp->size);
-	LOG("base = %#08x, data = %#08" PRIxPTR ", size = %#08x",
+	LOG("base = 0x%08x, data = 0x%08" PRIxPTR ", size = 0x%08x",
 		cdp->base, (uintptr_t)cdp->data, cdp->size);
 
 	close(fd);
