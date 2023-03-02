@@ -22,12 +22,13 @@ static void _test_flags_add(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 //	int cf_in = BEXT(*psr, SOC_CORE_PSR_BIT_C);
 
 	uint32_t cf = ir0 ^ ir1 ^ res;
-	uint32_t vf = ir0 ^ (~ir1) ^ res;
+//	uint32_t vf = ((ir0 & ir1) ^ res) ^ ((ir0 ^ ir1) & res);
+	uint32_t vf = ((ir0 & ir1) & ~res);
 
 	BMAS(*psr, SOC_CORE_PSR_BIT_C, BEXT(cf, 31));
-	BMAS(*psr, SOC_CORE_PSR_BIT_V, BEXT(vf, 30));
+	BMAS(*psr, SOC_CORE_PSR_BIT_V, BEXT(vf, 31));
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
+	LOG("/* test -- 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, res);
 	TRACE_PSR(*psr);
 }
 
@@ -35,38 +36,53 @@ static void _test_flags_add(csx_test_p t, uint32_t* psr, uint32_t ir0, uint32_t 
 
 static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	uint32_t res = 0;
+	uint32_t xres = 0, xpsr = 0;
 
 #if defined(__arm__) && !defined(__aarch64__)	
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
+	#if !defined(__aarch64__)
+		asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+			"mrs %[psr], CPSR\n\t"
+			: [psr] "=r" (xpsr), [result] "=r" (xres)
+			: [ir0] "r" (ir0), [ir1] "r" (ir1)
+			: "cc");
 
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
-	TRACE_PSR(*psr)
+		LOG("/* asm -- 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, xres);
+//		TRACE_PSR(xpsr)
+//	#else
+		uint32_t result = ir0 + ir1;
+		_test_flags_add(t, psr, ir0, ir1, result);
 
-	asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
-		"adcs %[result], %[ir0], %[ir1]\n\t"
-		"mrs %[psr], CPSR\n\t"
-		: [psr] "=r" (*psr), [result] "=r" (res)
-		: [ir0] "r" (ir0), [ir1] "r" (ir1)
-		: "cc");
-
-	LOG("/* %#08x + %#08x = %#08x */", ir0, ir1, res);
-	TRACE_PSR(*psr)
-//#else
-	uint32_t result = ir0 + ir1;
-	_test_flags_add(t, psr, ir0, ir1, result);
-
-	int cf = BEXT(*psr, SOC_CORE_PSR_BIT_C);
-	result = ir0 + ir1 + cf;
-	
-	_test_flags_add(t, psr, ir0, ir1, result);
+		_assert_cpsr_xpsr(t, *psr, xpsr);
+	#endif
 #endif
 
-	return(res);
+#if defined(__arm__)
+	#if !defined(__aarch64__)	
+		asm("adds %[result], %[ir0], %[ir1]\n\t" /* << ensure predictable psr result */
+			"adcs %[result], %[ir0], %[ir1]\n\t"
+			"mrs %[psr], CPSR\n\t"
+			: [psr] "=r" (xpsr), [result] "=r" (xres)
+			: [ir0] "r" (ir0), [ir1] "r" (ir1)
+			: "cc");
+
+		LOG("/* asm -- 0x%08x + 0x%08x = 0x%08x */", ir0, ir1, xres);
+//		TRACE_PSR(xpsr)
+//	#else
+		int cf = BEXT(*psr, SOC_CORE_PSR_BIT_C);
+		result = ir0 + ir1 + cf;
+		
+		_test_flags_add(t, psr, ir0, ir1, result);
+
+		_assert_cpsr_xpsr(t, *psr, xpsr);
+	#endif
+#endif
+
+#if 0
+	*psr = xpsr;
+	return(xres);
+#else
+	return(result);
+#endif
 
 	UNUSED(t);
 }
