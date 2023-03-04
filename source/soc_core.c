@@ -88,7 +88,7 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 
 	core->csx = csx;
 
-	csx_soc_callback_atexit(csx->csx_soc, _soc_core_atexit, core);
+	csx_soc_callback_atexit(csx->csx_soc, _soc_core_atexit, h2core);
 	csx_soc_callback_atreset(csx->csx_soc, _soc_core_reset, core);
 
 	/* **** */

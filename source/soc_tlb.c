@@ -40,6 +40,7 @@ typedef struct soc_tlb_t {
 	soc_tlbe_t						dtlb[_BV(dTLB_BITS)];
 
 	csx_p							csx;
+	csx_soc_p						soc;
 }soc_tlb_t;
 
 /* **** */
@@ -71,6 +72,8 @@ static int _soc_tlb_atreset(void* param)
 	soc_tlb_p tlb = param;
 	
 	soc_tlb_invalidate_all(tlb);
+	
+	return(0);
 }
 
 static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
@@ -249,9 +252,10 @@ int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
 	
 	/* **** */
 	
-	soc_p soc = csx->csx_soc;
+	csx_soc_p soc = csx->csx_soc;
 	
 	tlb->csx = csx;
+	tlb->soc = soc;
 	
 	csx_soc_callback_atexit(soc, _soc_tlb_atexit, h2tlb);
 	csx_soc_callback_atreset(soc, _soc_tlb_atreset, tlb);
