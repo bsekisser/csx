@@ -198,6 +198,22 @@ static uint32_t _mem_access_generic_pedantic(void* param, uint32_t ppa, size_t s
 	LOG_ACTION(abort());
 }
 
+static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	const csx_mem_callback_p cb = param;
+
+	uint8_t* ppat = cb->data;
+	ppat -= cb->base;
+	ppat += PAGE_OFFSET(ppa);
+	
+	if(write)
+;//		csx_data_write(ppat, size, *write);
+	else
+		return(csx_data_read(ppat, size));
+	
+	return(0);
+}
+
 csx_mem_callback_p csx_mem_access(csx_p csx, uint32_t ppa)
 {
 	return(_csx_mem_access(csx->mem, ppa, 0));
@@ -267,8 +283,18 @@ void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* p
 		}
 
 		cb->base = base;
-//		cb->end = end;
-		cb->param = param;
-		cb->fn = fn;
+
+		if(fn && (((csx_mem_fn)~0U) != fn)) {
+			cb->fn = fn;
+			cb->param = param;
+		} else {
+			cb->data = param;
+			cb->param = cb;
+
+			if(((csx_mem_fn)~0U) == fn)
+				cb->fn = _mem_access_generic_ro;
+			else
+				cb->fn = _mem_access_generic;
+		}
 	}
 }

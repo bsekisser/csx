@@ -10,6 +10,7 @@
 /* **** csx includes */
 
 #include "csx_data.h"
+#include "csx_mem.h"
 #include "csx_statistics.h"
 #include "csx.h"
 #include "csx_state.h"
@@ -160,6 +161,8 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	
 	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
 	csx_callback_atreset(csx, _csx_soc_reset, soc);
+
+	csx_mem_mmap(csx, CSX_SRAM_BASE, CSX_SRAM_END, 0, soc->sram);
 
 	int err = 0;
 

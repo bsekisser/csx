@@ -26,21 +26,6 @@
 
 /* **** */
 
-uint32_t _csx_sdram_access(void* param, uint32_t ppa, size_t size, uint32_t* data)
-{
-	void* ptr = param + (ppa - CSX_SDRAM_BASE);
-	void* limit = param + (CSX_SDRAM_SIZE - size);
-
-	assert(ptr <= limit);
-
-	if(data)
-		csx_data_write(ptr, size, *data);
-	else
-		return(csx_data_read(ptr, size));
-
-	return(0);
-}
-
 void csx_atexit(csx_h h2csx)
 {
 	if(_trace_atexit) {
@@ -86,7 +71,7 @@ csx_p csx_init(void)
 
 	ERR(err = csx_mem_init(csx, &csx->mem));
 
-	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, _csx_sdram_access, csx->sdram);
+	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, 0, csx->sdram);
 
 	/* **** */
 	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
