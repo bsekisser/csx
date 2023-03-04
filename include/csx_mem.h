@@ -36,7 +36,7 @@ typedef struct csx_mem_callback_t {
 }csx_mem_callback_t;
 
 typedef struct csx_mem_t {
-	void** l1[PAGE_SIZE];
+	void* l1[PAGE_SIZE];
 	csx_mem_callback_t l2heap[PAGE_SIZE][PAGE_SIZE];
 
 	queue_t l2free;

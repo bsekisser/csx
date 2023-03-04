@@ -22,8 +22,8 @@
 
 static uint32_t _mmap_unmapped(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
-	LOG("param = 0x%08x, ppa = 0x%08x, size = 0x%08x, write = 0x%08x(0x%08x)",
-		(uint)param, ppa, size, (uint)write, write ? *write : 0);
+	LOG("param = 0x%08" PRIxPTR" , ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
+		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
 	return(0);
 }
@@ -55,84 +55,115 @@ static int _csx_mem_atexit(void* param)
 	return(0);
 }
 
-static void** _csx_mem_access_l1(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
+static void* _csx_mem_access_l1(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
 {
 	// ->l1->l2->csx_mem_callback_t
 	// l1->l2->csx_mem_callback_t
 	// ->l2->csx_mem_callback_t
 	
-	void*** p2l1e = &mem->l1[PAGE_OFFSET(PAGE(PAGE(ppa)))];
-	void** p2l2 = *p2l1e;
+	void** p2l1e = &mem->l1[PAGE_OFFSET(PAGE(PAGE(ppa)))];
+	void* p2l2 = *p2l1e;
 	
+	if(0) LOG("p2l1e = 0x%08" PRIxPTR ", p2l2 = 0x%08" PRIxPTR,
+		(uintptr_t)p2l1e, (uintptr_t)p2l2);
+
 	if(h2l1e)
-		*h2l1e = (void**)p2l1e;
+		*h2l1e = (void*)p2l1e;
 
 	return(p2l2);
 }
 
-static void** _csx_mem_access_l2(csx_mem_p mem, uint32_t ppa, void** p2l2)
+static csx_mem_callback_p _csx_mem_access_l2(csx_mem_p mem, uint32_t ppa, void* p2l2)
 {
 	// ->l1->l2->csx_mem_callback_t
 	// l1->l2->csx_mem_callback_t
 	// ->l2->csx_mem_callback_t
 
-	return(&p2l2[PAGE_OFFSET(PAGE(ppa))]);
+	csx_mem_callback_p l2 = p2l2;
+
+	return(&l2[PAGE_OFFSET(PAGE(ppa))]);
 	
 	UNUSED(mem);
 }
 
 static csx_mem_callback_p _csx_mem_access(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
 {
-	void** p2l2 = _csx_mem_access_l1(mem, ppa, h2l1e);
+	void* p2l2 = _csx_mem_access_l1(mem, ppa, h2l1e);
 	
 	if(!p2l2)
 		return(0);
 	
-	return(_csx_mem_access_l2(mem, ppa, (void*)p2l2));
+	return(_csx_mem_access_l2(mem, ppa, p2l2));
 }
+
+static csx_mem_callback_p _csx_mem_mmap_alloc_free(csx_mem_p mem)
+{
+	qelem_p qel2 = mem->l2free.head;
+	csx_mem_callback_p p2l2 = (csx_mem_callback_p)qel2;
+
+	if(qel2) {
+		if(_trace_mem_mmap_alloc_free) {
+			LOG(">> qel2 = 0x%08" PRIxPTR ", next = 0x%08" PRIxPTR,
+				(uintptr_t)qel2, (uintptr_t)qel2->next);
+		}
+
+		mem->l2free.head = qel2->next;
+	}
+	
+	return(p2l2);
+}	
+
+static csx_mem_callback_p _csx_mem_mmap_alloc_malloc(csx_mem_p mem, size_t l2size)
+{
+	const csx_mem_callback_p p2l2 = malloc(l2size);
+
+	uint count = mem->l2alloc.count;
+	mem->l2alloc.ptr[count] = p2l2;
+	mem->l2alloc.count++;
+
+	if(_trace_mem_mmap_alloc_malloc) {
+		LOG(">> malloc = 0x%08" PRIxPTR ", size = 0x%08zx, count = 0x%08x",
+			(uintptr_t)p2l2, l2size, count);
+	}
+
+	return(p2l2);
+}
+
 
 static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, uint ppa)
 {
-	const size_t l2size = sizeof(csx_mem_callback_t) * PAGE_SIZE;
+	uint l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
+	uint l2page = PAGE_OFFSET(PAGE(ppa));
+	uint offset = PAGE_OFFSET(ppa);
 	
+	if(0) LOG("ppa = 0x%08x -- %03x:%03x:%03x", ppa, l1page, l2page, offset);
+
+	const size_t l2size = sizeof(csx_mem_callback_t) * PAGE_SIZE;
+
 	void** p2l1e = 0;
-	csx_mem_callback_p l2 = _csx_mem_access(mem, ppa, &p2l1e);
+	csx_mem_callback_p p2l2 = _csx_mem_access(mem, ppa, &p2l1e);
 		
-	if(!l2) {
-		qelem_p qel2 = mem->l2free.head;
-		if(qel2) {
-			if(_trace_mem_mmap_alloc_free) {
-				LOG(">> qel2 = 0x%08x, next = 0x%08x",
-					(uint)qel2, (uint)qel2->next);
-			}
+	if(!p2l2) {
+		p2l2 = _csx_mem_mmap_alloc_free(mem);
 
-			l2 = (csx_mem_callback_p)qel2;
-			mem->l2free.head = qel2->next;
-		} else {
-			LOG("l2 -- alloc");
-			
-			l2 = malloc(l2size);
-			
-			uint count = mem->l2alloc.count;
-			mem->l2alloc.ptr[count] = l2;
-			mem->l2alloc.count++;
-
-			if(_trace_mem_mmap_alloc_malloc) {
-				LOG(">> malloc = 0x%08x, count = 0x%08x",
-					(uint)l2, (uint)count);
-			}
-		}
+		if(!p2l2)
+			p2l2 = _csx_mem_mmap_alloc_malloc(mem, l2size);
 
 		if(_trace_mem_mmap_alloc) {
-			LOG("l2size = 0x%08x, p2l2 = 0x%08x, l2 = 0x%08x",
-				l2size, (uint)p2l2, (uint)l2);
+			LOG("l2size = 0x%08zx, p2l1e = 0x%08" PRIxPTR ", l2 = 0x%08" PRIxPTR,
+				l2size, (uintptr_t)p2l1e, (uintptr_t)p2l2);
 		}
 
-		*(csx_mem_callback_h)p2l2 = l2;
-		memset(l2, 0, l2size);
+		if(!p2l2)
+			return(0);
+
+		*p2l1e = p2l2;
+		memset(p2l2, 0, l2size);
+		
+		p2l2 = &p2l2[PAGE_OFFSET(PAGE(ppa))];
 	}
 
-	return(&l2[PAGE_OFFSET(PAGE(ppa))]);
+	return(p2l2);
 }
 
 static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint32_t* write)
@@ -161,8 +192,8 @@ static uint32_t _mem_access_generic_pedantic(void* param, uint32_t ppa, size_t s
 			return(_mem_access_generic(param, ppa, size, write));
 	}
 	
-	LOG("generic access failure -- param = 0x%08x, ppa = 0x%08x, size = 0x%08x, write = 0x%08x(0x%08x)",
-		(uint)param, ppa, size, (uint)write, write ? *write : 0);
+	LOG("generic access failure -- param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
 	LOG_ACTION(abort());
 }
@@ -180,7 +211,7 @@ int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 	if(_trace_init) {
 		LOG();
 	}
-	
+
 	const csx_mem_p mem = HANDLE_CALLOC(h2mem, 1, sizeof(csx_mem_t));
 	ERR_NULL(mem);
 
@@ -190,10 +221,25 @@ int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 	
 	/* **** */
 	
+	const uint ppa = 0x12345678;
+	const uint l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
+	const uint l2page = PAGE_OFFSET(PAGE(ppa));
+	const uint offset = PAGE_OFFSET(ppa);
+	
+	if(0) {
+		LOG_START("PAGE_SIZE = 0x%08zx", (size_t)PAGE_SIZE);
+		_LOG_(", 0x%08x --- %03x:%03x:%03x", ppa, l1page, l2page, offset);
+		LOG_END();
+
+		LOG_START("sizeof(csx_mem_callback_t) = 0x%08zx", sizeof(csx_mem_callback_t));
+		_LOG_(", l2heap_page_size = 0x%08zx", sizeof(mem->l2heap[0]));
+		LOG_END();
+	}
+
 	queue_init(&mem->l2free);
 		
 	for(uint32_t i = 0; i < PAGE_SIZE; i++)
-		enqueue(&mem->l2free, (qelem_p)&mem->l2heap[i]);
+		enqueue(&mem->l2free, (qelem_p)&mem->l2heap[i][0]);
 
 	memset(&mem->l2alloc, 0, sizeof(mem->l2alloc));
 
@@ -203,8 +249,8 @@ int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* param)
 {
 	if(_trace_mem_mmap) {
-		LOG("base = 0x%08x, end = 0x%08x, fn = 0x%08x, param = 0x%08x",
-			base, end, (uint)fn, (uint)param);
+		LOG("base = 0x%08x, end = 0x%08x, fn = 0x%08" PRIxPTR ", param = 0x%08" PRIxPTR,
+			base, end, (uintptr_t)fn, (uintptr_t)param);
 	}
 
 	const csx_mem_p mem = csx->mem;
@@ -215,8 +261,10 @@ void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* p
 	for(uint32_t ppa = start; ppa <= stop; ppa += PAGE_SIZE) {
 		csx_mem_callback_p cb = _csx_mem_mmap_alloc(mem, ppa);
 
-		LOG(">> cb = 0x%08x, ppa = 0x%08x, fn = 0x%08x, param = 0x%08x",
-			(uint)cb, ppa, (uint)fn, (uint)param);
+		if(_trace_mem_mmap) {
+			LOG(">> cb = 0x%08" PRIxPTR ", ppa = 0x%08x, fn = 0x%08" PRIxPTR ", param = 0x%08" PRIxPTR,
+				(uintptr_t)cb, ppa, (uintptr_t)fn, (uintptr_t)param);
+		}
 
 		cb->base = base;
 //		cb->end = end;
