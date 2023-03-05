@@ -170,9 +170,10 @@ static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint
 {
 	const csx_mem_callback_p cb = param;
 
-	uint8_t* ppat = cb->data;
-	ppat -= cb->base;
-	ppat += PAGE_OFFSET(ppa);
+	uint8_t* ppat = &cb->data[PAGE_OFFSET(ppa)];
+
+	if(0) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 	
 	if(write)
 		csx_data_write(ppat, size, *write);
@@ -202,10 +203,11 @@ static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, u
 {
 	const csx_mem_callback_p cb = param;
 
-	uint8_t* ppat = cb->data;
-	ppat -= cb->base;
-	ppat += PAGE_OFFSET(ppa);
+	uint8_t* ppat = &cb->data[PAGE_OFFSET(ppa)];
 	
+	if(1) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
+
 	if(write)
 ;//		csx_data_write(ppat, size, *write);
 	else
@@ -288,7 +290,7 @@ void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* p
 			cb->fn = fn;
 			cb->param = param;
 		} else {
-			cb->data = param;
+			cb->data = &((uint8_t*)param)[ppa - base];
 			cb->param = cb;
 
 			if(((csx_mem_fn)~0U) == fn)

@@ -19,3 +19,5 @@ extern const int _trace_mem_mmap_alloc_free;
 extern const int _trace_mem_mmap_alloc_malloc;
 
 extern const int _trace_mmio;
+
+extern const int _use_csx_mem_access;

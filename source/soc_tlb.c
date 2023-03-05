@@ -29,13 +29,12 @@
  */
 
 typedef struct soc_tlbe_t {
+	csx_mem_callback_p				cb;
 	void*							src;
 	void*							dst;
 	uint32_t						vp:20;
-#if 0
 	uint32_t						u_rwx:3;
 	uint32_t						rwx:3;
-#endif
 	uint32_t						i:1;
 }soc_tlbe_t;
 
@@ -111,6 +110,7 @@ static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 
 static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va) {
 	if(!tlbe->i) {
+		tlbe->cb = 0;
 		tlbe->src = 0;
 		tlbe->dst = 0;
 		
@@ -138,6 +138,19 @@ static void _tlb_fill_tlbe_read(soc_tlbe_p tlbe, uint32_t va, void** src)
 #endif
 }
 
+static void _tlb_fill_tlbe_read_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
+{
+	if(0) LOG("tlbe = 0x%08" PRIxPTR ", va = 0x%08x, cb = 0x%08" PRIxPTR,
+		(uintptr_t)tlbe, va, (uintptr_t)cb);
+
+	_tlb_fill_tlbe(tlbe, va);
+
+	tlbe->cb = cb;
+
+	tlbe->u_rwx |= Rwx;
+	tlbe->rwx |= Rwx;
+}
+
 static void _tlb_fill_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
 {
 	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)dst);
@@ -150,6 +163,19 @@ static void _tlb_fill_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
 	tlbe->u_rwx |= rWx;
 	tlbe->rwx |= rWx;
 #endif
+}
+
+static void _tlb_fill_tlbe_write_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
+{
+	if(0) LOG("tlbe = 0x%08" PRIxPTR ", va = 0x%08x, cb = 0x%08" PRIxPTR,
+		(uintptr_t)tlbe, va, (uintptr_t)cb);
+
+	_tlb_fill_tlbe(tlbe, va);
+
+	tlbe->cb = cb;
+
+	tlbe->u_rwx |= rWx;
+	tlbe->rwx |= rWx;
 }
 
 static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
@@ -176,6 +202,22 @@ static void* _tlb_read(soc_tlbe_p tlbe_table,
 	return(tlbe->src);
 }
 
+static csx_mem_callback_p _tlb_read_ma(soc_tlbe_p tlbe_table,
+	uint tlb_bits,
+	uint va,
+	soc_tlbe_h h2tlbe)
+{
+	soc_tlbe_p tlbe = _tlb_entry(tlbe_table, tlb_bits, va, h2tlbe);
+
+	if(!tlbe)
+		return(0);
+
+	if(!(tlbe->rwx & Rwx))
+		return(0);
+
+	return(tlbe->cb);
+}
+
 static void* _tlb_write(soc_tlbe_p tlbe_table,
 	uint tlb_bits,
 	uint va,
@@ -194,6 +236,22 @@ static void* _tlb_write(soc_tlbe_p tlbe_table,
 	return(tlbe->dst);
 }
 
+static void* _tlb_write_ma(soc_tlbe_p tlbe_table,
+	uint tlb_bits,
+	uint va,
+	soc_tlbe_h h2tlbe)
+{
+	soc_tlbe_p tlbe = _tlb_entry(tlbe_table, tlb_bits, va, h2tlbe);
+
+	if(!tlbe)
+		return(0);
+
+	if(!(tlbe->rwx & rWx))
+		return(0);
+
+	return(tlbe->cb);
+}
+
 #if 0
 static void set_tlbe_urwx_rwx(soc_tlbe_p t, int u_rwx, int rwx)
 {
@@ -209,11 +267,20 @@ void soc_tlb_fill_data_tlbe_read(soc_tlbe_p tlbe, uint32_t va, void** src)
 	_tlb_fill_tlbe_read(tlbe, va, src);
 }	
 
+void soc_tlb_fill_data_tlbe_read_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
+{
+	_tlb_fill_tlbe_read_ma(tlbe, va, cb);
+}	
+
 void soc_tlb_fill_data_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
 {
 	_tlb_fill_tlbe_write(tlbe, va, dst);
 }	
 
+void soc_tlb_fill_data_tlbe_write_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
+{
+	_tlb_fill_tlbe_write_ma(tlbe, va, cb);
+}	
 
 void soc_tlb_fill_instruction_tlbe(soc_tlbe_p tlbe, uint32_t va, void** src)
 {
@@ -223,6 +290,14 @@ void soc_tlb_fill_instruction_tlbe(soc_tlbe_p tlbe, uint32_t va, void** src)
 	t->u_rwx |= rwX;
 	t->rwx |= rwX;
 #endif
+}
+
+void soc_tlb_fill_instruction_tlbe_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
+{
+	_tlb_fill_tlbe_read_ma(tlbe, va, cb);
+
+	tlbe->u_rwx |= rwX;
+	tlbe->rwx |= rwX;
 }
 
 void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
@@ -246,6 +321,21 @@ void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 #else
 	return(src);
 #endif
+}
+
+csx_mem_callback_p soc_tlb_ifetch_ma(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
+{
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
+
+	csx_mem_callback_p cb = _tlb_read_ma(tlb->itlb, iTLB_BITS, va, h2tlbe);
+
+	soc_tlbe_p tlbe = *h2tlbe;
+
+	if(!(tlbe->rwx & RwX))
+		return(0);
+
+	return(cb);
 }
 
 int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
@@ -302,6 +392,14 @@ void* soc_tlb_read(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 	return(src);
 }
 
+csx_mem_callback_p soc_tlb_read_ma(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
+{
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
+
+	return(_tlb_read_ma(tlb->dtlb, dTLB_BITS, va, h2tlbe));
+}
+
 void soc_tlb_reset(soc_tlb_p tlb)
 {
 	_soc_tlb_atreset(tlb);
@@ -316,4 +414,12 @@ void* soc_tlb_write(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 	CSX_COUNTER_HIT_IF(soc_tlb.write, 0 != dst);
 
 	return(dst);
+}
+
+csx_mem_callback_p soc_tlb_write_ma(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
+{
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
+
+	return(_tlb_write_ma(tlb->dtlb, dTLB_BITS, va, h2tlbe));
 }

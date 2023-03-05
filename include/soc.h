@@ -16,7 +16,8 @@ typedef struct csx_soc_t* csx_soc_p;
 
 enum {
 	CSX_SRAM_BASE = 0x20000000UL,
-	CSX_SRAM_END = 0x2003e7ffUL,
+//	CSX_SRAM_END = 0x2003e7ffUL, /* TODO: actual on chip sram listed as 250Kb */
+	CSX_SRAM_END = 0x2003efffUL,
 	CSX_SRAM_ALLOC,
 };
 

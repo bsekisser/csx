@@ -29,7 +29,7 @@ typedef struct csx_mem_callback_t {
 	csx_mem_fn fn;
 
 	void* param;
-	void* data;
+	uint8_t* data;
 
 	uint32_t base;
 //	uint32_t end;

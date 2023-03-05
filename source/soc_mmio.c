@@ -125,6 +125,16 @@ static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 	}
 }
 
+static uint32_t _soc_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(write)
+		soc_mmio_write(param, ppa, *write, size);
+	else
+		return(soc_mmio_read(param, ppa, size));
+	
+	return(0);
+}
+
 static int _soc_mmio_reset(void* param)
 {
 	if(_trace_atreset) {
@@ -197,6 +207,8 @@ int soc_mmio_init(csx_p csx, soc_mmio_h h2mmio, void* mmio_data)
 		mmio->param[i] = 0;
 		mmio->peripheral[i] = 0;
 	}
+
+	csx_mem_mmap(csx, CSX_MMIO_BASE, CSX_MMIO_STOP, _soc_mmio_mem_access, mmio);
 
 	ERR(err = soc_mmio_cfg_init(csx, mmio, &mmio->cfg));
 	ERR(err = soc_mmio_dpll_init(csx, mmio, &mmio->dpll));

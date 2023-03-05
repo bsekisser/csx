@@ -45,10 +45,6 @@ typedef struct csx_data_t* csx_data_p;
 
 /* **** */
 
-#define CSX_FRAMEBUFFER_BASE	0x20000000
-#define CSX_FRAMEBUFFER_STOP	0x2003e7ff
-#define CSX_FRAMEBUFFER_SIZE	(CSX_FRAMEBUFFER_STOP - CSX_FRAMEBUFFER_BASE)
-
 #define CSX_SDRAM_BASE			0x10000000
 #define CSX_SDRAM_SIZE			Mb(16)
 #define CSX_SDRAM_STOP			((CSX_SDRAM_BASE + CSX_SDRAM_SIZE) - 1)
@@ -97,9 +93,6 @@ typedef struct csx_t {
 
 	uint8_t							sdram[CSX_SDRAM_SIZE];
 
-	// TODO: move to csx_soc_t as sram
-	uint8_t							frame_buffer[CSX_FRAMEBUFFER_SIZE];
-	
 	callback_list_t					atexit_list;
 	callback_list_t					atreset_list;
 }csx_t;

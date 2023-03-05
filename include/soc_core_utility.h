@@ -2,10 +2,12 @@
 
 /* **** */
 
+#include "soc.h"
+
+/* **** */
+
 #include "csx.h"
 #include "csx_statistics.h"
-
-#include "soc.h"
 
 /* **** */
 
@@ -54,7 +56,10 @@ static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size
 	uint32_t data = 0;
 	const uint64_t dtime = _profile_soc_core_ifetch ? get_dtime() : 0;
 
-	data = csx_mmu_ifetch(core->csx, va, size);
+	if(_use_csx_mem_access)
+		data = csx_mmu_ifetch_ma(core->csx, va, size);
+	else
+		data = csx_mmu_ifetch(core->csx, va, size);
 
 	if(_profile_soc_core_ifetch)
 		CSX_PROFILE_STAT_COUNT(soc_core.ifetch, dtime);
@@ -67,7 +72,10 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
  	uint32_t data = 0;
 	const uint64_t dtime = _profile_soc_core_read ? get_dtime() : 0;
 
-	data = csx_mmu_read(core->csx, va, size);
+	if(_use_csx_mem_access)
+		data = csx_mmu_read_ma(core->csx, va, size);
+	else
+		data = csx_mmu_read(core->csx, va, size);
 
 	if(_profile_soc_core_read)
 		CSX_PROFILE_STAT_COUNT(soc_core.read, dtime);
@@ -79,7 +87,10 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 {
 	const uint64_t dtime = _profile_soc_core_write ? get_dtime() : 0;
 
-	csx_mmu_write(core->csx, va, data, size);
+	if(_use_csx_mem_access)
+		csx_mmu_write_ma(core->csx, va, data, size);
+	else
+		csx_mmu_write(core->csx, va, data, size);
 
 	if(_profile_soc_core_write)
 		CSX_PROFILE_STAT_COUNT(soc_core.write, dtime);

@@ -267,8 +267,7 @@ uint32_t csx_soc_read_ppa(csx_p csx, uint32_t ppa, size_t size, void** src)
 		/* L3 OCP T1 */
 		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
 			CSX_COUNTER_INC(csx_soc.read_ppa.framebuffer);
-
-			return(_csx_soc_read_ppa(ppa, size, src, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
+			return(_csx_soc_read_ppa(ppa, size, src, csx->csx_soc->sram, CSX_SRAM_BASE));
 			break;
 		case 0x2003e800 ... 0x2007cfff: /* reserved */
 		case 0x2007d000 ... 0x2007d3ff: /* reserved */
@@ -358,8 +357,7 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 		/* L3 OCP T1 */
 		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
 			CSX_COUNTER_INC(csx_soc.write_ppa.framebuffer);
-
-			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->frame_buffer, CSX_FRAMEBUFFER_BASE));
+			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->csx_soc->sram, CSX_SRAM_BASE));
 			break;
 		case 0x2003e800 ... 0x2007cfff: /* reserved */
 		case 0x2007d000 ... 0x2007d3ff: /* reserved */
