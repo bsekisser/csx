@@ -1,8 +1,8 @@
 #include "config.h"
 #include "soc_mmio.h"
 
-#include "csx_counters.h"
 #include "csx_data.h"
+#include "csx_statistics.h"
 #include "soc_mmio_omap.h"
 
 #include "soc_mmio_cfg.h"

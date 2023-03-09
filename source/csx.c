@@ -7,8 +7,8 @@
 
 /* **** csx includes */
 
-#include "csx_counters.h"
 #include "csx_mmio.h"
+#include "csx_statistics.h"
 //#include "csx_test.h"
 
 /* **** local includes */
@@ -65,7 +65,7 @@ csx_p csx_init(void)
 
 	void* mmio_data = 0;
 
-	ERR(err = csx_counters_init(csx));
+	ERR(err = csx_statistics_init(csx));
 
 	ERR(err = csx_mem_init(csx, &csx->mem));
 

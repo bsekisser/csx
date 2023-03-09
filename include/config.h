@@ -8,7 +8,7 @@ extern const int _check_pedantic_pc;
 extern const int _check_pedantic_rname;
 extern const int _check_pedantic_size;
 
-extern const int _performance_counters;
+extern const int _csx_statistical_counters;
 
 extern const int _trace_atexit;
 extern const int _trace_atreset;

@@ -15,6 +15,10 @@
 
 /* **** */
 
+#include "csx_statistics.h"
+
+/* **** */
+
 #include "bitfield.h"
 #include "log.h"
 #include "shift_roll.h"
@@ -895,32 +899,51 @@ void soc_core_arm_step(soc_core_p core)
 
 	CCx.e = soc_core_arm_check_cc(core);
 
+	const uint64_t dtime = _profile_soc_core_step_arm ? get_dtime() : 0;
+
 	if(INST_CC_NV != ARM_IR_CC) {
 		switch(opcode)
 		{
 			case 0x00: /* xxxx 000x xxxx xxxx */
-				return(soc_core_arm_step_group0(core));
+				soc_core_arm_step_group0(core);
+				break;
 			case 0x01: /* xxxx 001x xxxx xxxx */
-				return(soc_core_arm_step_group1(core));
+				soc_core_arm_step_group1(core);
+				break;
 			case 0x02: /* xxxx 010x xxxx xxxx */
-				return(arm_inst_ldst_immediate_offset(core));
+				arm_inst_ldst_immediate_offset(core);
+				break;
 			case 0x03:
 				if(!BTST(IR, 4))
-					return(arm_inst_ldst_scaled_register_offset(core));
+					arm_inst_ldst_scaled_register_offset(core);
+				else
+					goto decode_fault;
 				break;
 			case 0x04: /* xxxx 100x xxxx xxxx */
-				return(arm_inst_ldstm(core));
+				arm_inst_ldstm(core);
+				break;
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				return(arm_inst_b(core));
+				arm_inst_b(core);
+				break;
 			case 0x07: /* xxxx 111x xxxx xxxx */
-				return(soc_core_arm_step_group7(core));
+				soc_core_arm_step_group7(core);
+				break;
+			default:
+				goto decode_fault;
 		}
 	} else if(INST_CC_NV == ARM_IR_CC) {
 		switch(opcode) {
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				return(arm_inst_b(core));
+				arm_inst_b(core);
+				break;
+			default:
+				goto decode_fault;
 		}
 	}
 
+	CSX_PROFILE_STAT_COUNT(soc_core.step.arm, dtime);
+	return;
+
+decode_fault:
 	DECODE_FAULT;
 }

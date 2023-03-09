@@ -9,8 +9,8 @@
 
 /* **** csx includes */
 
-#include "csx_counters.h"
 #include "csx_data.h"
+#include "csx_statistics.h"
 #include "csx.h"
 #include "csx_state.h"
 

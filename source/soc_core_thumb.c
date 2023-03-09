@@ -832,9 +832,14 @@ void soc_core_thumb_step(soc_core_p core)
 	IR = soc_core_reg_pc_fetch_step_thumb(core);
 
 	thumb_fn fn = thumb_fn_list_x000[IR >> 8];
-	if(fn)
-		return(fn(core));
-	else
+
+	const uint64_t dtime = _profile_soc_core_step_thumb ? get_dtime() : 0;
+
+	if(fn) {
+		fn(core);
+		CSX_PROFILE_STAT_COUNT(soc_core.step.thumb, dtime);
+		return;
+	} else
 		goto fail_decode;
 
 	switch(IR)

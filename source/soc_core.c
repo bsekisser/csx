@@ -6,6 +6,7 @@
 
 /* **** */
 
+#include "csx_statistics.h"
 #include "csx_test_utility.h"
 
 /* **** */
