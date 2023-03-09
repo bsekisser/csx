@@ -20,4 +20,4 @@ const int _trace_mem_mmap_alloc_malloc = 1;
 
 const int _trace_mmio = 0;
 
-const int _use_csx_mem_access = 0;
+const int _use_csx_mem_access = 1;
