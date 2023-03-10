@@ -100,11 +100,18 @@ void soc_core_reg_set(soc_core_p core, soc_core_reg_t r, uint32_t v)
 	core->reg[r] = v;
 }
 
+typedef void (*step_fn)(soc_core_p);
+
 void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 {
+	step_fn step_fn_list[2][2] = {
+		{ soc_core_arm_step, soc_core_arm_step_profile, },
+		{ soc_core_thumb_step, soc_core_arm_step_profile, },
+	};
+	
 	const int thumb = new_pc & 1;
 	BMAS(CPSR, SOC_CORE_PSR_BIT_T, thumb);
-	core->step = thumb ? soc_core_thumb_step : soc_core_arm_step;
+	core->step = step_fn_list[thumb][_profile_soc_core_step];
 	new_pc &= (~3 >> thumb);
 
 	PC = new_pc;

@@ -833,12 +833,8 @@ void soc_core_thumb_step(soc_core_p core)
 
 	thumb_fn fn = thumb_fn_list_x000[IR >> 8];
 
-	const uint64_t dtime = _profile_soc_core_step_thumb ? get_dtime() : 0;
-
 	if(fn) {
-		fn(core);
-		CSX_PROFILE_STAT_COUNT(soc_core.step.thumb, dtime);
-		return;
+		return(fn(core));
 	} else
 		goto fail_decode;
 
@@ -955,4 +951,13 @@ fail_decode:
 
 	soc_core_disasm_thumb(core, IP, IR);
 	LOG_ACTION(exit(1));
+}
+
+void soc_core_thumb_step_profile(soc_core_p core)
+{
+	const uint64_t dtime = _profile_soc_core_step_thumb ? get_dtime() : 0;
+
+	soc_core_thumb_step(core);
+
+	CSX_PROFILE_STAT_COUNT(soc_core.step.thumb, dtime);
 }

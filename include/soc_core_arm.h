@@ -19,3 +19,4 @@ enum {
 /* **** */
 
 void soc_core_arm_step(soc_core_p core);
+void soc_core_arm_step_profile(soc_core_p core);

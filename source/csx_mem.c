@@ -2,6 +2,7 @@
 
 /* **** csx project includes */
 
+#include "csx_statistics.h"
 #include "csx.h"
 
 /* **** local library includes */
@@ -183,6 +184,26 @@ static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint
 	return(0);
 }
 
+UNUSED_FN static uint32_t _mem_access_generic_counted(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(write) {
+		CSX_COUNTER_INC(csx_mem_access.generic.write);
+	} else {
+		CSX_COUNTER_INC(csx_mem_access.generic.read);
+	}
+
+	return(_mem_access_generic(param, ppa, size, write));
+}
+
+UNUSED_FN static uint32_t _mem_access_generic_profiled(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	volatile const uint64_t dtime = get_dtime();
+	volatile const uint32_t data = _mem_access_generic(param, ppa, size, write);
+	CSX_PROFILE_STAT_COUNT(csx_mem_access.generic, dtime);
+	return(data);
+	UNUSED(dtime);
+}
+
 UNUSED_FN
 static uint32_t _mem_access_generic_pedantic(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
@@ -214,6 +235,26 @@ static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, u
 		return(csx_data_read(ppat, size));
 	
 	return(0);
+}
+
+UNUSED_FN static uint32_t _mem_access_generic_ro_counted(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(write) {
+		CSX_COUNTER_INC(csx_mem_access.generic.ro_write);
+	} else {
+		CSX_COUNTER_INC(csx_mem_access.generic.ro);
+	}
+	
+	return(_mem_access_generic_ro(param, ppa, size, write));
+}
+
+UNUSED_FN static uint32_t _mem_access_generic_ro_profiled(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	volatile const uint64_t dtime = get_dtime();
+	volatile const uint32_t data = _mem_access_generic_ro(param, ppa, size, write);
+	CSX_PROFILE_STAT_COUNT(csx_mem_access.generic_ro, dtime);
+	return(data);
+	UNUSED(dtime);
 }
 
 csx_mem_callback_p csx_mem_access(csx_p csx, uint32_t ppa)
@@ -293,10 +334,17 @@ void csx_mem_mmap(csx_p csx, uint32_t base, uint32_t end, csx_mem_fn fn, void* p
 			cb->data = &((uint8_t*)param)[ppa - base];
 			cb->param = cb;
 
-			if(((csx_mem_fn)~0U) == fn)
-				cb->fn = _mem_access_generic_ro;
-			else
-				cb->fn = _mem_access_generic;
+			if(((csx_mem_fn)~0U) == fn) {
+				if(_profile_csx_mem_access)
+					cb->fn = _mem_access_generic_ro_profiled;
+				else
+					cb->fn = _mem_access_generic_ro;
+			} else {
+				if(_profile_csx_mem_access)
+					cb->fn = _mem_access_generic_profiled;
+				else
+					cb->fn = _mem_access_generic;
+			}
 		}
 	}
 }

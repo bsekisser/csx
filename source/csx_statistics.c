@@ -13,12 +13,6 @@
 
 csx_statistics_p statistics;
 
-int _profile_soc_core_ifetch = 1;
-int _profile_soc_core_read = 1;
-int _profile_soc_core_step_arm = 1;
-int _profile_soc_core_step_thumb = 1;
-int _profile_soc_core_write = 1;
-
 #define STRINGIFY(_x) #_x
 
 /* **** */
@@ -44,6 +38,9 @@ static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
 	_stat_profile_clear(&CSX_PROFILE_MEMBER(_member));
 
 #define PROFILE_LIST(_action) \
+	PROFILE_LIST_ ## _action(csx_mem_access.sdram) \
+	PROFILE_LIST_ ## _action(csx_mem_access.generic) \
+	PROFILE_LIST_ ## _action(csx_mem_access.generic_ro) \
 	PROFILE_LIST_ ## _action(soc_core.ifetch) \
 	PROFILE_LIST_ ## _action(soc_core.read) \
 	PROFILE_LIST_ ## _action(soc_core.step.arm) \
@@ -73,6 +70,13 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 	COUNTER_LIST_ZERO(_member.miss) \
 
 #define COUNTER_LIST(_action) \
+	COUNTER_LIST_ ## _action(csx_mem_access.sdram.read) \
+	COUNTER_LIST_ ## _action(csx_mem_access.sdram.write) \
+	COUNTER_LIST_ ## _action(csx_mem_access.generic.read) \
+	COUNTER_LIST_ ## _action(csx_mem_access.generic.write) \
+	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro) \
+	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro_write) \
+	\
 	COUNTER_LIST_ ## _action(csx_soc.read) \
 	COUNTER_LIST_ ## _action(csx_soc.read_ppa.cdp) \
 	COUNTER_LIST_ ## _action(csx_soc.read_ppa.count) \

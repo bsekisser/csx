@@ -51,31 +51,43 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 	return(0 != rresult);
 }
 
-static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size)
-{
-	uint32_t data = 0;
+static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
+	if(_use_csx_mem_access)
+		return(csx_mmu_ifetch_ma(core->csx, va, size));
+
+	return(csx_mmu_ifetch(core->csx, va, size));
+}
+
+
+static inline uint32_t _soc_core_ifetch_profile(soc_core_p core, uint32_t va, size_t size) {
 	const uint64_t dtime = _profile_soc_core_ifetch ? get_dtime() : 0;
 
-	if(_use_csx_mem_access)
-		data = csx_mmu_ifetch_ma(core->csx, va, size);
-	else
-		data = csx_mmu_ifetch(core->csx, va, size);
+	const uint32_t data = _soc_core_ifetch(core, va, size);
 
-	if(_profile_soc_core_ifetch)
-		CSX_PROFILE_STAT_COUNT(soc_core.ifetch, dtime);
+	CSX_PROFILE_STAT_COUNT(soc_core.ifetch, dtime);
 
  	return(data);
 }
 
-static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
+static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
+	if(_profile_soc_core_ifetch)
+		return(_soc_core_ifetch_profile(core, va, size);
+
+	return(_soc_core_ifetch(core, va, size);
+}
+
+static inline uint32_t _soc_core_read(soc_core_p core, uint32_t va, size_t size) {
+	if(_use_csx_mem_access)
+		return(csx_mmu_read_ma(core->csx, va, size));
+
+	return(csx_mmu_read(core->csx, va, size));
+}
+
+static inline uint32_t _soc_core_read_profile(soc_core_p core, uint32_t va, size_t size)
 {
- 	uint32_t data = 0;
 	const uint64_t dtime = _profile_soc_core_read ? get_dtime() : 0;
 
-	if(_use_csx_mem_access)
-		data = csx_mmu_read_ma(core->csx, va, size);
-	else
-		data = csx_mmu_read(core->csx, va, size);
+	const uint32_t data = _soc_core_read(core, va, size);
 
 	if(_profile_soc_core_read)
 		CSX_PROFILE_STAT_COUNT(soc_core.read, dtime);
@@ -83,15 +95,36 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 	return(data);
 }
 
- static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 {
-	const uint64_t dtime = _profile_soc_core_write ? get_dtime() : 0;
+	if(_profile_soc_core_read)
+		return(_soc_core_read_profile(core, va, size));
 
+	return(_soc_core_read(core, va, size));
+}
+
+static inline void _soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+{
 	if(_use_csx_mem_access)
 		csx_mmu_write_ma(core->csx, va, data, size);
 	else
 		csx_mmu_write(core->csx, va, data, size);
+}
+
+static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+{
+	const uint64_t dtime = _profile_soc_core_write ? get_dtime() : 0;
+
+	_soc_core_write(core, va, data, size);
 
 	if(_profile_soc_core_write)
 		CSX_PROFILE_STAT_COUNT(soc_core.write, dtime);
+}
+
+static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+{
+	if(_profile_soc_core_write)
+		_soc_core_write_profile(core, va, data, size);
+	else
+		_soc_core_write(core, va, data, size);
 }
