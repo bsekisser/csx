@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 /* **** */
 
 #include "soc.h"
@@ -69,11 +71,11 @@ static inline uint32_t _soc_core_ifetch_profile(soc_core_p core, uint32_t va, si
  	return(data);
 }
 
-static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
+static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
 	if(_profile_soc_core_ifetch)
-		return(_soc_core_ifetch_profile(core, va, size);
+		return(_soc_core_ifetch_profile(core, va, size));
 
-	return(_soc_core_ifetch(core, va, size);
+	return(_soc_core_ifetch(core, va, size));
 }
 
 static inline uint32_t _soc_core_read(soc_core_p core, uint32_t va, size_t size) {
@@ -89,8 +91,7 @@ static inline uint32_t _soc_core_read_profile(soc_core_p core, uint32_t va, size
 
 	const uint32_t data = _soc_core_read(core, va, size);
 
-	if(_profile_soc_core_read)
-		CSX_PROFILE_STAT_COUNT(soc_core.read, dtime);
+	CSX_PROFILE_STAT_COUNT(soc_core.read, dtime);
 
 	return(data);
 }
@@ -117,8 +118,7 @@ static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, uint32_
 
 	_soc_core_write(core, va, data, size);
 
-	if(_profile_soc_core_write)
-		CSX_PROFILE_STAT_COUNT(soc_core.write, dtime);
+	CSX_PROFILE_STAT_COUNT(soc_core.write, dtime);
 }
 
 static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)

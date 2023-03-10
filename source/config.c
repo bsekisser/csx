@@ -32,3 +32,4 @@ const int _trace_mmio = 0;
 
 const int _use_csx_mem_access = 1;
 const int _use_csx_sdram_mem_access = 0;
+const int _use_for_uint_downcounter = 0;

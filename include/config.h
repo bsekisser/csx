@@ -31,6 +31,7 @@ extern const int _trace_mmio;
 
 extern const int _use_csx_mem_access;
 extern const int _use_csx_sdram_mem_access;
+extern const int _use_for_uint_downcounter;
 
-#define CSX_COUNTERS(_x)
-#define CSX_PROFILE(_x)
+//#define CSX_COUNTERS(_x)
+//#define CSX_PROFILE(_x)
