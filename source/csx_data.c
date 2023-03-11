@@ -39,30 +39,14 @@ uint32_t csx_data_read_x(void* p2src, uint8_t size)
 	uint32_t res = 0;
 	uint8_t* src = (uint8_t*)p2src;
 
-	if(_use_for_uint_downcounter) {
-		for(uint i = size; i != 0; i--)
-			res |= ((*src++) << ((size - i) << 3));
-	} else {
-		for(int i = 0; i < size; i++)
-			res |= ((*src++) << (i << 3));
-	}
+	for(int i = 0; i < size; i++)
+		res |= ((*src++) << (i << 3));
 
 	return(res);
 }
 
-void csx_data_write_xx(void* p2dst, uint32_t value, uint8_t size)
-{
-	uint8_t* dst = (uint8_t*)p2dst;
-
-	for(uint i = size; i != 0; i--)
-	*dst++ = value >> ((size - i) << 3) & 0xff;
-}
-
 void csx_data_write_x(void* p2dst, uint32_t value, uint8_t size)
 {
-	if(_use_for_uint_downcounter)
-		return(csx_data_write_xx(p2dst, value, size));
-
 	uint8_t* dst = (uint8_t*)p2dst;
 
 	for(int i = 0; i < size; i++)

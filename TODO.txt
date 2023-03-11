@@ -1,5 +1,0 @@
-for:
-	unsigned int counters;
-	count down to zero;
-
-for(unsigned int j = 10; j != 0 ; j--)

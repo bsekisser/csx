@@ -940,6 +940,8 @@ void soc_core_arm_step(soc_core_p core)
 	}
 
 decode_fault:
+	LOG("IR[27:25] = %1u", opcode);
+
 	DECODE_FAULT;
 }
 

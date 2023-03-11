@@ -106,7 +106,7 @@ void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 {
 	step_fn step_fn_list[2][2] = {
 		{ soc_core_arm_step, soc_core_arm_step_profile, },
-		{ soc_core_thumb_step, soc_core_arm_step_profile, },
+		{ soc_core_thumb_step, soc_core_thumb_step_profile, },
 	};
 	
 	const int thumb = new_pc & 1;

@@ -17,6 +17,15 @@ csx_statistics_p statistics;
 
 /* **** */
 
+static void _stat_profile_assert_zero(csx_profile_stat_p s, const char* name) {
+	int fail = (0 != s->count);
+	fail |= (0 != s->elapsed);
+	
+	if(fail) {
+		LOG("assert(fail -- %s)", name);
+	}
+}
+
 static void _stat_profile_clear(csx_profile_stat_p s) {
 	s->count = 0;
 	s->elapsed = 0;
@@ -31,6 +40,9 @@ static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
 
 #define _PROFILE_NAME(_member) STRINGIFY(profile._member)
 
+#define PROFILE_LIST_ASSERT_ZERO(_member) \
+	_stat_profile_assert_zero(&CSX_PROFILE_MEMBER(_member), _PROFILE_NAME(_member));
+	
 #define PROFILE_LIST_LOG(_member) \
 	_stat_profile_log(&CSX_PROFILE_MEMBER(_member), _PROFILE_NAME(_member));
 
@@ -54,6 +66,13 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 }
 
 #define _COUNTER_NAME(_member) STRINGIFY(counters._member)
+
+#define COUNTER_LIST_ASSERT_ZERO(_member) \
+	assert(0 == CSX_COUNTER_MEMBER(_member));
+
+#define COUNTER_LIST_ASSERT_ZERO_HIT(_member) \
+	COUNTER_LIST_ASSERT_ZERO(_member.hit) \
+	COUNTER_LIST_ASSERT_ZERO(_member.hit) \
 
 #define COUNTER_LIST_LOG(_member) \
 	_stat_counter_log(CSX_COUNTER_MEMBER(_member), _COUNTER_NAME(_member));
@@ -104,8 +123,17 @@ static int _csx_statistics_atexit(void* param) {
 //	csx_statistics_h h2c = param;
 //	csx_statistics_p c = *h2c;
 
-	COUNTER_LIST(LOG);
-	PROFILE_LIST(LOG);
+	if(_csx_statistical_counters) {
+		COUNTER_LIST(LOG);
+	} else {
+		COUNTER_LIST(ASSERT_ZERO);
+	}
+
+	if(_csx_statistical_profile) {
+		PROFILE_LIST(LOG);
+	} else {
+		PROFILE_LIST(ASSERT_ZERO);
+	}
 	
 	handle_free(param);
 
