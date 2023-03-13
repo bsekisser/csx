@@ -129,7 +129,7 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data)
 	return(err);
 }
 
-uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size)
+uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 
@@ -199,7 +199,8 @@ int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p tl)
 			cb->size = tle->size;
 		}
 		
-		mmio->reset_value[_CALLBACK(tle->mpa)] = tle->reset_value;
+		void* dst = &mmio->reset_value[_CALLBACK(tle->mpa)];
+		*(uint32_t*)dst = tle->reset_value;
 	}
 	
 	return(0);
@@ -220,7 +221,7 @@ int csx_mmio_register_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void*
 	return(0);
 }
 
-void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
+void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, size_t size)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 

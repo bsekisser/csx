@@ -38,5 +38,5 @@
 
 #define _trace_mmio 0
 
-#define _use_csx_mem_access 0
+#define _use_csx_mem_access 1
 #define _use_csx_sdram_mem_access 0

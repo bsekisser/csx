@@ -156,17 +156,17 @@ shifter_operand_t arm_dpi_ror_i_s(uint8_t i, uint8_t shift)
 
 /* arm instruction compilers */
 
-void arm_b(csx_test_p t, uint32_t offset)
+void arm_b(csx_test_p t, int32_t offset)
 {
 	_bcc_al(t, offset, 0);
 }
 
-void arm_bl(csx_test_p t, uint32_t offset)
+void arm_bl(csx_test_p t, int32_t offset)
 {
 	_bcc_al(t, offset, 1);
 }
 
-void arm_blx(csx_test_p t, uint32_t offset)
+void arm_blx(csx_test_p t, int32_t offset)
 {
 	_bcc(t, COND_NV, offset, (offset >> 1) & 1);
 }

@@ -19,7 +19,7 @@
 
 /* **** */
 
-uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
+static uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
 {
 	const csx_p csx = t->csx;
 	const soc_core_p core = csx->core;

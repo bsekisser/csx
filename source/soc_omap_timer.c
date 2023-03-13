@@ -94,7 +94,7 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
 
 /* **** */
 
-static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size)
+static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, size_t size)
 {
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;
@@ -127,7 +127,7 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 		__timer_update_count(sot, data);
 }
 
-static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size)
+static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, uint32_t value, size_t size)
 {
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;
@@ -141,7 +141,7 @@ static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, uint32_t va
 	MPU_LOAD_TIMER_SET(data, value, size);
 }
 
-static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, uint8_t size)
+static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, size_t size)
 {
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;

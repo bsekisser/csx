@@ -17,8 +17,9 @@
 
 /* **** */
 
-void _preflight_tests(void)
+static void _preflight_tests(void)
 {
+	assert(~0 == -1);
 	assert(0x01 == sizeof(uint8_t));
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));

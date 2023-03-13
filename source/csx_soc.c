@@ -73,12 +73,12 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	struct stat sb;
 	ERR(fstat(fd, &sb));
 
-	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	void *data = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	ERR_NULL(data);
 
 	csx->cdp = cdp;
 	cdp->data = data;
-	cdp->size = sb.st_size;
+	cdp->size = (size_t)sb.st_size;
 
 	if(1) {
 		cdp->base = 0x10020000; /* ? thoretical load address in sdram */
@@ -195,7 +195,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	const soc_core_p core = csx->core;
 
-	core->trace = core_trace;
+	core->trace = !!core_trace;
 
 	if(!err)
 	{

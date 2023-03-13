@@ -34,21 +34,21 @@ uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
 	return(BEXT(value, sdbp->bit));
 }
 
-uint32_t csx_data_read_x(void* p2src, uint8_t size)
+uint32_t csx_data_read_x(void* p2src, size_t size)
 {
 	uint32_t res = 0;
 	uint8_t* src = (uint8_t*)p2src;
 
-	for(int i = 0; i < size; i++)
+	for(uint i = 0; i < size; i++)
 		res |= ((*src++) << (i << 3));
 
 	return(res);
 }
 
-void csx_data_write_x(void* p2dst, uint32_t value, uint8_t size)
+void csx_data_write_x(void* p2dst, uint32_t value, size_t size)
 {
 	uint8_t* dst = (uint8_t*)p2dst;
 
-	for(int i = 0; i < size; i++)
+	for(uint i = 0; i < size; i++)
 		*dst++ = value >> (i << 3) & 0xff;
 }

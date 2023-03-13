@@ -78,7 +78,7 @@ static int _soc_mmu_reset(void* param)
 	return(0);
 }
 
-soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
+static soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 {
 	const csx_p csx = mmu->csx;
 

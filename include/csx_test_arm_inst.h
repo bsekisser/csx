@@ -22,10 +22,10 @@ void arm_adds_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 void arm_ands_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_asr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift);
 void arm_asrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift);
-void arm_b(csx_test_p t, uint32_t offset);
+void arm_b(csx_test_p t, int32_t offset);
 void arm_bics_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
-void arm_bl(csx_test_p t, uint32_t offset);
-void arm_blx(csx_test_p t, uint32_t offset);
+void arm_bl(csx_test_p t, int32_t offset);
+void arm_blx(csx_test_p t, int32_t offset);
 void arm_bx(csx_test_p t, soc_core_reg_t rm);
 void arm_cmps_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_eors_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);

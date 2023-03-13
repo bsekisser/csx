@@ -18,7 +18,7 @@ typedef struct csx_data_bit_t* csx_data_bit_p;
 typedef struct csx_data_bit_t {
 	uint8_t bit;
 	uint8_t offset;
-	uint8_t size;
+	size_t size;
 }csx_data_bit_t;
 
 /*
@@ -32,12 +32,12 @@ typedef struct csx_data_bit_t {
 void csx_data_bit_bmas(void* p2data, csx_data_bit_p sdbp, uint set);
 uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp);
 
-uint32_t csx_data_read_x(void* p2src, uint8_t size);
-void csx_data_write_x(void* p2dst, uint32_t value, uint8_t size);
+uint32_t csx_data_read_x(void* p2src, size_t size);
+void csx_data_write_x(void* p2dst, size_t size, uint32_t value);
 
 /* **** */
 
-static inline uint32_t csx_data_read(void* p2src, uint8_t size) {
+static inline uint32_t csx_data_read(void* p2src, size_t size) {
 	switch(size) {
 		case 4:
 			return(le32toh(*(uint32_t*)p2src));
@@ -50,7 +50,7 @@ static inline uint32_t csx_data_read(void* p2src, uint8_t size) {
 	return(csx_data_read_x(p2src, size));
 }
 
-static inline void csx_data_write(void* p2dst, uint32_t value, uint8_t size) {
+static inline void csx_data_write(void* p2dst, size_t size, uint32_t value) {
 	switch(size) {
 		case 4:
 			*(uint32_t*)p2dst = htole32((uint32_t)value);
@@ -63,7 +63,7 @@ static inline void csx_data_write(void* p2dst, uint32_t value, uint8_t size) {
 			return;
 	}
 
-	csx_data_write_x(p2dst, value, size);
+	csx_data_write_x(p2dst, size, value);
 }
 
 static inline void csx_data_bit_clear(void* p2data, csx_data_bit_p sdbp) {

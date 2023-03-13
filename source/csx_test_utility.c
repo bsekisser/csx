@@ -58,9 +58,9 @@ void _cxx(csx_test_p t, uint32_t value, uint8_t size)
 	t->pc += size;
 }
 
-uint32_t _test_value(uint8_t i)
+uint _test_value(uint i)
 {
-	uint32_t test_value = i | i << 16;
+	uint test_value = i | i << 16;
 
 	test_value |= test_value << 4;
 	test_value |= test_value << 8;

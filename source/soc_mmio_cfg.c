@@ -102,7 +102,7 @@ static soc_mmio_peripheral_t cfg_peripheral[2] = {
 	}
 };
 
-int _mmio_cfg_atexit(void* param)
+static int _mmio_cfg_atexit(void* param)
 {
 	if(_trace_atexit) {
 		LOG();
@@ -116,7 +116,7 @@ int _mmio_cfg_atexit(void* param)
 	return(0);
 }
 
-int _mmio_cfg_atreset(void* param)
+static int _mmio_cfg_atreset(void* param)
 {
 	if(_trace_atreset) {
 		LOG();

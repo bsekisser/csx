@@ -1,5 +1,12 @@
 CFLAGS = -g -Wall -Wextra
-CFLAGS += -O2
+CFLAGS += -Werror
+CFLAGS += -Wformat=2 -Wformat-overflow=2 -Winline -Wredundant-decls
+CFLAGS += -Wpacked -Wmissing-prototypes -Wmissing-declarations
+CFLAGS += -Wstrict-prototypes -Wlogical-op -Wjump-misses-init
+CFLAGS += -Wparentheses -Wwrite-strings -Wcast-align
+CFLAGS += -Wconversion
+#CFLAGS += -Wpadded
+#CFLAGS += -O1
 CFLAGS += -march=native
 CFLAGS += $(INCLUDE)
 CFLAGS += -MD -MP
