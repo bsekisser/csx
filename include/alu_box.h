@@ -5,6 +5,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "shift_roll.h"
 
 /* **** */
 

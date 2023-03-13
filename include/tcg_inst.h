@@ -1,3 +1,18 @@
+#pragma once
+
+/* **** forward declarations/definitions*/
+
+typedef struct tcg_t** tcg_h;
+typedef struct tcg_t* tcg_p;
+
+#include <stdint.h>
+
+typedef uint8_t cc_t;
+typedef uint8_t reg_t;
+typedef uint8_t shift_t;
+
+/* **** */
+
 /*
  * iuiu iuiu | iuiu iuiu | iuiu iuiu | opop opop
  * iuiu iuiu | iuiu iuiu | iuiu cccc | opop opop
@@ -15,13 +30,13 @@
  *
  */
 
-extern adc(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
-extern add(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
-extern and(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
-extern b(tcg_p tcg, int32_t offset);
-extern bic(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
-extern bl(tcg_p tcg, int32_t offset);
-extern blx(tcg_p tcg, int32_t offset);
-extern eor(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
-extern mov(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, shift_t shift);
-extern mvn(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, shift_t shift);
+extern void adc(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
+extern void add(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
+extern void and(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
+extern void b(tcg_p tcg, int32_t offset);
+extern void bic(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
+extern void bl(tcg_p tcg, int32_t offset);
+extern void blx(tcg_p tcg, int32_t offset);
+extern void eor(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, reg_t r2, shift_t shift);
+extern void mov(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, shift_t shift);
+extern void mvn(tcg_p tcg, cc_t cc, reg_t r0, reg_t r1, shift_t shift);

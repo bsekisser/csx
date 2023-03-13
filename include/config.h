@@ -1,39 +1,42 @@
-#pragma once
+#include "soc_core_arm.h"
 
-extern const int _arm_version;
+#define _arm_version arm_v5tej
 
-extern const int _check_pedantic_arm_decode_fault;
-extern const int _check_pedantic_mmio;
-extern const int _check_pedantic_pc;
-extern const int _check_pedantic_rname;
-extern const int _check_pedantic_size;
+#define _check_pedantic_arm_decode_fault 0
+#define _check_pedantic_mmio 0
+#define _check_pedantic_pc 0
+#define _check_pedantic_rname 0
+#define _check_pedantic_size 0
 
-extern const int _csx_counter_sdram;
+#define _csx_statistics 0
 
-extern const int _csx_statistics;
-extern const int _csx_statistical_counters;
-extern const int _csx_statistical_profile;
+#define IF_STATISTICS(_x) _csx_statistics ? (_x) : 0
+#define _csx_statistical_counters IF_STATISTICS(1)
+#define _csx_statistical_profile IF_STATISTICS(0)
 
-extern const int _profile_csx_mem_access;
-extern const int _profile_soc_core_ifetch;
-extern const int _profile_soc_core_read;
-extern const int _profile_soc_core_step;
-extern const int _profile_soc_core_step_arm;
-extern const int _profile_soc_core_step_thumb;
-extern const int _profile_soc_core_write;
+#define IF_COUNTERS(_x) (_csx_statistical_counters ? (_x) : 0)
+#define _csx_counter_sdram IF_COUNTERS(1)
 
-extern const int _trace_atexit;
-extern const int _trace_atreset;
-extern const int _trace_init;
-extern const int _trace_mem_mmap;
-extern const int _trace_mem_mmap_alloc;
-extern const int _trace_mem_mmap_alloc_free;
-extern const int _trace_mem_mmap_alloc_malloc;
+#define IF_PROFILING(_x) (_csx_statistical_profile ? (_x) : 0)
+#define _profile_csx_mem_access IF_PROFILING(1)
+#define _profile_soc_core_ifetch  IF_PROFILING(1)
+#define _profile_soc_core_read IF_PROFILING(1)
+#define _profile_soc_core_step IF_PROFILING(1)
+#define _profile_soc_core_write IF_PROFILING(1)
 
-extern const int _trace_mmio;
+#define IF_PROFILING_SOC_CORE_STEP(_x) (_profile_soc_core_step ? (_x) : 0)
+#define _profile_soc_core_step_arm IF_PROFILING_SOC_CORE_STEP(1)
+#define _profile_soc_core_step_thumb IF_PROFILING_SOC_CORE_STEP(1)
 
-extern const int _use_csx_mem_access;
-extern const int _use_csx_sdram_mem_access;
+#define _trace_atexit 0
+#define _trace_atreset 0
+#define _trace_init 0
+#define _trace_mem_mmap 0
+#define _trace_mem_mmap_alloc 0
+#define _trace_mem_mmap_alloc_free 0
+#define _trace_mem_mmap_alloc_malloc 0
 
-//#define CSX_COUNTERS(_x)
-//#define CSX_PROFILE(_x)
+#define _trace_mmio 0
+
+#define _use_csx_mem_access 0
+#define _use_csx_sdram_mem_access 0

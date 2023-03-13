@@ -1,5 +1,15 @@
 #pragma once
 
+/* **** */
+
+#include "csx_test.h"
+
+/* **** */
+
+#include <stdint.h>
+
+/* **** */
+
 #if defined(__arm__) && !defined(__aarch64__)	
 
 static uint32_t csx_test_arm_adcs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
