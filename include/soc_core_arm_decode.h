@@ -62,7 +62,7 @@ typedef struct soc_core_ldst_t {
 	uint32_t	ea;
 	uint32_t	index;
 
-	uint8_t		rw_size;
+	size_t		rw_size;
 }soc_core_ldst_t;
 
 /* **** */

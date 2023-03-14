@@ -34,7 +34,7 @@ static inline void csx_mmio_reg_set(csx_p csx, csx_mmio_reg_p cmr, uint32_t data
 {
 	void* dst = csx_mmio_data_offset(csx, cmr->mpa);
 
-	csx_data_write(dst, data, cmr->size);
+	csx_data_write(dst, cmr->size, data);
 }
 
 static inline void csx_mmio_regbit_bmas(csx_p csx, csx_mmio_regbit_p cmrb, uint32_t value)

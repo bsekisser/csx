@@ -43,7 +43,7 @@ enum {
 typedef struct ea_trace_t {
 	uint32_t	address;
 	uint32_t	reset_value;
-	uint8_t		size;
+	size_t		size;
 	uint32_t	access;
 	const char *name;
 }ea_trace_t;

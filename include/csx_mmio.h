@@ -30,8 +30,8 @@ typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
 
 #define CSX_CALLBACK_COUNT (SOC_MMIO_SIZE >> 1)
 
-typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t mpa, uint8_t size);
-typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t mpa, uint32_t value, uint8_t size);
+typedef uint32_t (*csx_mmio_read_fn)(void* param, void* data, uint32_t mpa, size_t size);
+typedef void (*csx_mmio_write_fn)(void* param, void* data, uint32_t mpa, size_t size, uint32_t value);
 
 typedef struct csx_mmio_callback_t {
 	const char* name;
@@ -122,24 +122,24 @@ static inline uint32_t csx_mmio_datareg_rmw(
 	}
 
 	if(wb)
-		csx_data_write(sdmpao, data, size);
+		csx_data_write(sdmpao, size, data);
 
 	return(data);
 }
 
 
-static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, uint32_t value, size_t size)
+static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, size_t size, uint32_t value)
 {
 	void* sdmpao = pat + mpao;
 
-	csx_data_write(sdmpao, value, size);
+	csx_data_write(sdmpao, size, value);
 }
 
 __attribute__((unused))
-static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, uint32_t* value, size_t size)
+static uint32_t csx_mmio_datareg_x(void* pat, uint32_t mpao, size_t size, uint32_t* value)
 {
 	if(value) {
-		csx_mmio_datareg_set(pat, mpao, *value, size);
+		csx_mmio_datareg_set(pat, mpao, size, *value);
 		return(*value);
 	}
 
@@ -154,8 +154,8 @@ int csx_mmio_has_callback_write(csx_p csx, uint32_t mpa);
 
 int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data);
 
-uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size);
-void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size);
+uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size);
+void csx_mmio_write(csx_p csx, uint32_t mpa, size_t size, uint32_t data);
 
 int csx_mmio_register_read(csx_p csx, csx_mmio_read_fn fn, uint32_t mpa, void* param);
 int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p fn);

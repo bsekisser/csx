@@ -11,7 +11,7 @@ void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr);
 void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask);
 void _assert_nzc(csx_test_p t, int n, int z, int c);
 void _assert_nzcv(csx_test_p t, int n, int z, int c, int v);
-void _cxx(csx_test_p t, uint32_t value, uint8_t size);
+void _cxx(csx_test_p t, uint32_t value, size_t size);
 uint32_t _test_value(uint8_t i);
 
 /* **** */

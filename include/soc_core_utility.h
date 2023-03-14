@@ -104,27 +104,27 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 	return(_soc_core_read(core, va, size));
 }
 
-static inline void _soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+static inline void _soc_core_write(soc_core_p core, uint32_t va, size_t size, uint32_t data)
 {
 	if(_use_csx_mem_access)
-		csx_mmu_write_ma(core->csx, va, data, size);
+		csx_mmu_write_ma(core->csx, va, size, data);
 	else
-		csx_mmu_write(core->csx, va, data, size);
+		csx_mmu_write(core->csx, va, size, data);
 }
 
-static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, size_t size, uint32_t data)
 {
 	const uint64_t dtime = _profile_soc_core_write ? get_dtime() : 0;
 
-	_soc_core_write(core, va, data, size);
+	_soc_core_write(core, va, size, data);
 
 	CSX_PROFILE_STAT_COUNT(soc_core.write, dtime);
 }
 
-static inline void soc_core_write(soc_core_p core, uint32_t va, uint32_t data, size_t size)
+static inline void soc_core_write(soc_core_p core, uint32_t va, size_t size, uint32_t data)
 {
 	if(_profile_soc_core_write)
-		_soc_core_write_profile(core, va, data, size);
+		_soc_core_write_profile(core, va, size, data);
 	else
-		_soc_core_write(core, va, data, size);
+		_soc_core_write(core, va, size, data);
 }

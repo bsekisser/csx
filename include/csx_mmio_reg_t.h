@@ -23,7 +23,7 @@ typedef struct csx_mmio_regbit_t* csx_mmio_regbit_p;
 /* **** */
 
 #define CSX_MMIO_DATAREG_GET(_name, _type) \
-	static inline _type _name(void* pat, uint8_t size) { \
+	static inline _type _name(void* pat, size_t size) { \
 		size = size ? size : sizeof(_type); \
 	\
 		if(_check_pedantic_size) assert(size == sizeof(_type)); \
@@ -33,16 +33,16 @@ typedef struct csx_mmio_regbit_t* csx_mmio_regbit_p;
 
 #define CSX_MMIO_DATAREG_RMW(_name, _type) \
 	static inline _type _name ## _RMW(void* dst, uint32_t value, uint8_t action) { \
-		return(csx_mmio_datareg_rmw(dst, _ ## _name, value, sizeof(_type), action)); \
+		return(csx_mmio_datareg_rmw(dst, _ ## _name, sizeof(type), value, action)); \
 	}
 
 #define CSX_MMIO_DATAREG_SET(_name, _type) \
-	static inline void _name ## _SET(void* dst, uint32_t value, uint8_t size) { \
+	static inline void _name ## _SET(void* dst, size_t size, uint32_t value) { \
 		size = size ? size : sizeof(_type); \
 	\
 		if(_check_pedantic_size) assert(size == sizeof(_type)); \
 	\
-		csx_mmio_datareg_set(dst, _ ## _name, value, size); \
+		csx_mmio_datareg_set(dst, _ ## _name, size, value); \
 	}
 
 #define CSX_MMIO_REG_T_DECL(_mpa, _type) \
