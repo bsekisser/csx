@@ -15,29 +15,25 @@
 static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode, int thumb)
 {
 	csh handle = 0;
-	cs_insn *insn = 0;
+	cs_insn insn;
 
-	const size_t size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
+	size_t size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
 	const int mode = thumb ? CS_MODE_THUMB : CS_MODE_ARM;
 
 	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &handle));
 
-	const uint8_t *insn_data = (uint8_t*)&opcode;
+	const uint8_t* insn_data = (uint8_t*)&opcode;
+	uint64_t insn_addr = address;
 
-	size_t count = cs_disasm_iter(handle, insn_data, size, address, &insn);
+	size_t count = cs_disasm_iter(handle, &insn_data, &size, &insn_addr, &insn);
 
 	if (count > 0) {
-		size_t j;
-		for (j = 0; j < count; j++) {
-			const uint64_t insn_address = insn[j].address;
-			printf("0x%08llx:\t", insn_address);
-			for(int k = 0; k < size; k++)
-				printf(" 0x%02x", insn_data[(j << 2) + k]);
-			printf("\t\t%s\t\t%s\n", insn[j].mnemonic,
-					insn[j].op_str);
-		}
-
-		cs_free(insn, count);
+		const uint64_t insn_address = insn.address;
+		printf("0x%08llx:\t", insn_address);
+		for(unsigned int k = 0; k < size; k++)
+			printf(" 0x%02x", insn_data[k]);
+		printf("\t\t%s\t\t%s\n", insn.mnemonic,
+				insn.op_str);
 	} else
 		printf("0x%08x:(0x%02x): Failed to disassemble given code!\n", address, size);
 
