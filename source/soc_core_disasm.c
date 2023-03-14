@@ -17,14 +17,14 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 	csh handle = 0;
 	cs_insn *insn = 0;
 
-	const int size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
+	const size_t size = thumb ? sizeof(uint16_t) : sizeof(uint32_t);
 	const int mode = thumb ? CS_MODE_THUMB : CS_MODE_ARM;
 
 	cs_assert_success(cs_open(CS_ARCH_ARM, mode, &handle));
 
 	const uint8_t *insn_data = (uint8_t*)&opcode;
 
-	size_t count = cs_disasm(handle, insn_data, size, address, 0, &insn);
+	size_t count = cs_disasm_iter(handle, insn_data, size, address, &insn);
 
 	if (count > 0) {
 		size_t j;
