@@ -715,7 +715,7 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 
 /* **** */
 
-void soc_core_thumb_step_0xe800(soc_core_p core)
+static void soc_core_thumb_step_0xe800(soc_core_p core)
 {
 	if(IR & 1)
 		UNDEFINED;
@@ -723,7 +723,7 @@ void soc_core_thumb_step_0xe800(soc_core_p core)
 	return(soc_core_thumb_bxx(core));
 }
 
-void soc_core_thumb_step_fail_decode(soc_core_p core)
+static void soc_core_thumb_step_fail_decode(soc_core_p core)
 {
 	LOG("ir = 0x%04x", IR);
 
@@ -731,21 +731,21 @@ void soc_core_thumb_step_fail_decode(soc_core_p core)
 	LOG_ACTION(exit(1));
 }
 
-void soc_core_thumb_step_undefined(soc_core_p core)
+static void soc_core_thumb_step_undefined(soc_core_p core)
 {
 	UNDEFINED;
 
 	UNUSED(core);
 }
 
-void soc_core_thumb_step_unimplimented(soc_core_p core)
+static void soc_core_thumb_step_unimplimented(soc_core_p core)
 {
 	UNIMPLIMENTED;
 
 	UNUSED(core);
 }
 
-void soc_core_thumb_step_unpredictable(soc_core_p core)
+static void soc_core_thumb_step_unpredictable(soc_core_p core)
 {
 	UNPREDICTABLE;
 
@@ -754,7 +754,7 @@ void soc_core_thumb_step_unpredictable(soc_core_p core)
 
 typedef void (*thumb_fn)(soc_core_p core);
 
-void soc_core_thumb_step_0xb600(soc_core_p core)
+static void soc_core_thumb_step_0xb600(soc_core_p core)
 {
 	thumb_fn xb600[0x100] = {
 		[0x40 ... 0x40] = soc_core_thumb_step_unpredictable, /* unpredictable */
@@ -772,7 +772,7 @@ void soc_core_thumb_step_0xb600(soc_core_p core)
 	return(soc_core_thumb_step_fail_decode(core));
 }
 
-void soc_core_thumb_step_0xba00(soc_core_p core)
+static void soc_core_thumb_step_0xba00(soc_core_p core)
 {
 	thumb_fn xba00[0x100] = {
 		[0x00 ... 0x70] = soc_core_thumb_step_unimplimented, /* reverse bytes */
