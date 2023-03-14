@@ -408,7 +408,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, size_t size, uint32_t value
 			assert(0 != mpt.param);
 		}
 
-		return(mp->write(mpt.param, mpt.data, vaddr, value, size));
+		return(mp->write(mpt.param, mpt.data, vaddr, size, value));
 	}
 
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);

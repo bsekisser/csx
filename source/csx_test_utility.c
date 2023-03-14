@@ -52,9 +52,9 @@ void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 	_assert_cpsr_xpsr(t, CPSR, xpsr);
 }
 
-void _cxx(csx_test_p t, uint32_t value, uint8_t size)
+void _cxx(csx_test_p t, uint32_t value, size_t size)
 {
-	csx_soc_write(t->csx, pc(t), value, size);
+	csx_soc_write(t->csx, pc(t), size, value);
 	t->pc += size;
 }
 

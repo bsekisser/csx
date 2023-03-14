@@ -38,7 +38,7 @@ MMIO_TRACE_LIST
 
 /* **** */
 
-UNUSED_FN static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, size_t size, uint32_t addr)
+UNUSED_FN static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_t addr, size_t size)
 {
 	const soc_mmio_mpu_mmc_p mmc = param;
 	const csx_p csx = mmc->csx;
@@ -73,7 +73,7 @@ UNUSED_FN static void soc_mmio_mpu_mmc_write(void* param, void* data, uint32_t a
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

@@ -125,7 +125,7 @@ static int _csx_soc_reset(void* param)
 	return(0);
 }
 
-static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** dst, void* data_dst, uint32_t base)
+static void _csx_soc_write_ppa(uint32_t ppa, size_t size, uint32_t data, void** dst, void* data_dst, uint32_t base)
 {
 	uint32_t ppo = ppa - base;
 

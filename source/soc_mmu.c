@@ -244,7 +244,7 @@ uint32_t csx_mmu_read_ma(csx_p csx, uint32_t va, size_t size)
 	return(data);
 }
 
-void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
+void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 {
 	uint32_t ppa = va;
 	void* dst = 0;

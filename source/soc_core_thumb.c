@@ -322,7 +322,7 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 	soc_core_decode_dst(core, rRD, 2, 0);
 
 	const char *ss = "";
-	uint8_t size = 0;
+	size_t size = 0;
 
 	if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
 	{
@@ -412,7 +412,7 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	soc_core_decode_dst(core, rRD, 2, 0);
 
 	const char *ss = "";
-	uint8_t size = 0;
+	size_t size = 0;
 
 	switch(bwh)
 	{

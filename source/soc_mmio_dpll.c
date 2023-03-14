@@ -56,7 +56,7 @@ static void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, size_t s
 			}	break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}
