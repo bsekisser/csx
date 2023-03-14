@@ -37,7 +37,7 @@
 #include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_ocp_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value)
 {
 	if(0) LOG("param = 0x%08x, data = 0x%08x, va = 0x%08x, value = 0x%08x, size 0x%02x",
 		(uint)param, (uint)data, addr, value, size);

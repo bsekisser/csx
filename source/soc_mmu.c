@@ -255,18 +255,18 @@ void csx_mmu_write(csx_p csx, uint32_t va, uint32_t data, size_t size)
 		dst = soc_tlb_write(csx->tlb, va, &tlbe);
 
 		if(dst)
-			return(csx_data_write(dst + PAGE_OFFSET(va), data, size));
+			return(csx_data_write(dst + PAGE_OFFSET(va), size, data));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
 
-	csx_soc_write_ppa(csx, ppa, data, size, &dst);
+	csx_soc_write_ppa(csx, ppa, size, data, &dst);
 
 	if(tlb && dst)
 		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
 }
 
-void csx_mmu_write_ma(csx_p csx, uint32_t va, uint32_t data, size_t size)
+void csx_mmu_write_ma(csx_p csx, uint32_t va, size_t size, uint32_t data)
 {
 	uint32_t ppa = va;
 	csx_mem_callback_p dst = 0;
@@ -277,10 +277,8 @@ void csx_mmu_write_ma(csx_p csx, uint32_t va, uint32_t data, size_t size)
 		dst = soc_tlb_write_ma(csx->tlb, va, &tlbe);
 
 		if(dst) {
-			if(0) {
 				dst->fn(dst->param, va, size, &data);
 				return;
-			}
 		} else
 			tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}

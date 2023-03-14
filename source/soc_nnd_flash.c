@@ -123,7 +123,7 @@ int soc_nnd_flash_init(csx_p csx, soc_nnd_h h2nnd)
 	return(0);
 }
 
-uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, uint size)
+uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
@@ -155,7 +155,7 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, uint size)
 	return(value);
 }
 
-static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, uint32_t value, uint size)
+static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, size_t size, uint32_t value)
 {
 	LOG("value = 0x%08x, size = 0x%08x, cl = 0x%08x", value, size, unit->cl);
 
@@ -174,7 +174,7 @@ static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, uint32_t
 	UNUSED(nnd);
 }
 
-void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, uint32_t value, uint size)
+void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, size_t size, uint32_t value)
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
@@ -183,7 +183,7 @@ void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, uint32_t value, uint size
 	switch(offset) {
 		case CLE:
 			LOG("CLE: value = 0x%08x, size = 0x%08x", value, size);
-			soc_nnd_flash_write_cle(nnd, unit, value, size);
+			soc_nnd_flash_write_cle(nnd, unit, size, value);
 			break;
 		default:
 			LOG("addr = 0x%08x, offset = 0x%08x, value = 0x%08x, size = 0x%08x",

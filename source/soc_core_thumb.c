@@ -358,7 +358,7 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
 	else
-		soc_core_write(core, ea, vR(D), size);
+		soc_core_write(core, ea, size, vR(D));
 }
 
 static void soc_core_thumb_ldst_rd_i(soc_core_p core)
@@ -397,7 +397,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
 	else
-		soc_core_write(core, ea, vR(D), sizeof(uint32_t));
+		soc_core_write(core, ea, sizeof(uint32_t), vR(D));
 }
 
 static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
@@ -461,7 +461,7 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	if(bit_l)
 		soc_core_reg_set(core, rR(D), vR(D));
 	else
-		soc_core_write(core, ea, vR(D), size);
+		soc_core_write(core, ea, size, vR(D));
 }
 
 static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
@@ -502,7 +502,7 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 			else
 			{
 				rxx_v = soc_core_reg_get(core, i);
-				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+				soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
 			}
 			ea += sizeof(uint32_t);
 		}
@@ -580,7 +580,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 			{ /* push */
 				rxx_v = soc_core_reg_get(core, i);
 				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+				soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
 			}
 			ea += sizeof(uint32_t);
 		}
@@ -603,7 +603,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		else
 		{ /* push */
 			rxx_v = LR;
-			soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+			soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
 		}
 		ea += sizeof(uint32_t);
 	}

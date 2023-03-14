@@ -202,7 +202,7 @@ static void _arm_inst_ldst(soc_core_p core,
 			if(ls->rw_size == sizeof(uint32_t))
 				ls->ea &= ~3;
 
-			soc_core_write(core, ls->ea, vR(D), ls->rw_size);
+			soc_core_write(core, ls->ea, ls->rw_size, vR(D));
 		}
 	}
 }
@@ -274,7 +274,7 @@ static void _arm_inst_ldstm(soc_core_p core,
 
 		if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, i, rxx_v);
 
-		soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+		soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
 	}
 
 	ls->ea += sizeof(uint32_t);
@@ -579,7 +579,7 @@ static void arm_inst_ldstm(soc_core_p core)
 			{
 				rxx_v = PC_ARM;
 				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, 15, rxx_v);
-				soc_core_write(core, ea, rxx_v, sizeof(uint32_t));
+				soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
 			}
 		}
 

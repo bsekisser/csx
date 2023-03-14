@@ -35,7 +35,7 @@
 #define ARM_RSTCT2			_MPU(0x014)
 #define ARM_SYSST			_MPU(0x018)
 
-static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value)
 {
 	const soc_mmio_mpu_p mpu = param;
 	const csx_p csx = mpu->csx;
@@ -96,7 +96,7 @@ static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, uint32_t 
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

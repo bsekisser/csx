@@ -48,7 +48,7 @@ csx_data_bit_t SYSS_ResetDone = { SYSS, 0 , sizeof(uint8_t) };
 
 /* **** */
 
-static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size);
+static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value);
 
 static soc_mmio_peripheral_t uart_peripheral[3] = {
 	{
@@ -100,7 +100,7 @@ int soc_mmio_uart_init(csx_p csx, soc_mmio_p mmio, soc_mmio_uart_h h2uart)
 	return(0);
 }
 
-static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value)
 {
 	const soc_mmio_uart_p uart = param;
 	const csx_p csx = uart->csx;
@@ -166,7 +166,7 @@ static void soc_mmio_uart_write(void* param, void* data, uint32_t addr, uint32_t
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

@@ -25,7 +25,7 @@
 	#include "soc_mmio_trace.h"
 #undef TRACE_LIST
 
-static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, uint8_t size)
+static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, size_t size)
 {
 	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
@@ -49,7 +49,7 @@ static uint32_t soc_mmio_os_timer_read(void* param, void* data, uint32_t addr, u
 	return(value);
 }
 
-static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value)
 {
 	const soc_mmio_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
@@ -64,7 +64,7 @@ static void soc_mmio_os_timer_write(void* param, void* data, uint32_t addr, uint
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), value, size);
+		csx_data_write(data + (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

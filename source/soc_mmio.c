@@ -128,7 +128,7 @@ static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 static uint32_t _soc_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	if(write)
-		soc_mmio_write(param, ppa, *write, size);
+		soc_mmio_write(param, ppa, size, *write);
 	else
 		return(soc_mmio_read(param, ppa, size));
 	
@@ -259,7 +259,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		if(value)
 		{
 			const uint32_t addr = tle->address;
-			csx_data_write(&mpt.data[addr & 0xff], value, tle->size);
+			csx_data_write(&mpt.data[addr & 0xff], tle->size, value);
 		}
 	}
 
@@ -267,7 +267,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		mp->reset(mpt.param, mpt.data, mp);
 }
 
-uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, uint8_t size)
+uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, size_t size)
 {
 	CSX_COUNTER_INC(mmio.read);
 
@@ -378,18 +378,18 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
 			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
-		csx_data_write(&mpt.data[mpt.offset], tle->reset_value, tle->size);
+		csx_data_write(&mpt.data[mpt.offset], tle->size, tle->reset_value);
 	}while(tl[i].address);
 }
 
-void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t size)
+void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, size_t size, uint32_t value)
 {
 	CSX_COUNTER_INC(mmio.write);
 
 	csx_p csx = mmio->csx;
 
 	if(csx_mmio_has_callback_write(csx, vaddr))
-		return(csx_mmio_write(csx, vaddr, value, size));
+		return(csx_mmio_write(csx, vaddr, size, value));
 
 	__mpt_t mpt; _soc_mmio_peripheral(mmio, vaddr, &mpt);
 	const soc_mmio_peripheral_p mp = mpt.mp;
@@ -421,7 +421,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, uint32_t value, uint8_t siz
 		{
 		}
 
-		csx_data_write(&mpt.data[mpt.offset], value, size);
+		csx_data_write(&mpt.data[mpt.offset], size, value);
 	} else {
 		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
 		LOG_ACTION(exit(1));

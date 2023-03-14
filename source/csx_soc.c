@@ -134,7 +134,7 @@ static void _csx_soc_write_ppa(uint32_t ppa, uint32_t data, size_t size, void** 
 	if(dst)
 		*dst = ddpao;
 
-	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), data, size));
+	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), size, data));
 }
 
 /* **** */
@@ -312,14 +312,14 @@ void csx_soc_reset(csx_p csx)
 	_csx_soc_reset(csx->soc);
 }
 
-void csx_soc_write(csx_p csx, uint32_t ppa, uint32_t data, size_t size)
+void csx_soc_write(csx_p csx, uint32_t ppa, size_t size, uint32_t data)
 {
 	CSX_COUNTER_INC(csx_soc.write);
 
-	return(csx_soc_write_ppa(csx, ppa, data, size, 0));
+	return(csx_soc_write_ppa(csx, ppa, size, data, 0));
 }
 
-void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void** dst)
+void csx_soc_write_ppa(csx_p csx, uint32_t ppa, size_t size, uint32_t data, void** dst)
 {
 	CSX_COUNTER_INC(csx_soc.write_ppa.count);
 
@@ -344,20 +344,20 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 		case 0x0c000000 ... 0x0fffffff: /* CS3 -- 64M */
 			CSX_COUNTER_INC(csx_soc.write_ppa.flash);
 
-			return(soc_nnd_flash_write(csx->nnd, ppa, data, size));
+			return(soc_nnd_flash_write(csx->nnd, ppa, size, data));
 			break;
 		/* EMIFF */
 		case 0x10000000 ... 0x13ffffff: /* SDRAM -- 64M -- external */
 			CSX_COUNTER_INC(csx_soc.write_ppa.sdram);
 
-			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->sdram, CSX_SDRAM_BASE));
+			return(_csx_soc_write_ppa(ppa, size, data, dst, csx->sdram, CSX_SDRAM_BASE));
 			break;
 		case 0x14000000 ... 0x1fffffff: /* reserved */
 			break;
 		/* L3 OCP T1 */
 		case 0x20000000 ... 0x2003e7ff: /* Framebuffer -- 250K */
 			CSX_COUNTER_INC(csx_soc.write_ppa.framebuffer);
-			return(_csx_soc_write_ppa(ppa, data, size, dst, csx->csx_soc->sram, CSX_SRAM_BASE));
+			return(_csx_soc_write_ppa(ppa, size, data, dst, csx->csx_soc->sram, CSX_SRAM_BASE));
 			break;
 		case 0x2003e800 ... 0x2007cfff: /* reserved */
 		case 0x2007d000 ... 0x2007d3ff: /* reserved */
@@ -379,7 +379,7 @@ void csx_soc_write_ppa(csx_p csx, uint32_t ppa, uint32_t data, size_t size, void
 		case 0xf0000000 ... 0xfffaffff: /* reserved */
 			break;
 		case 0xfffb0000 ... 0xfffeffff: /* OMAP 5912 peripherals */
-			return(soc_mmio_write(csx->mmio, ppa, data, size));
+			return(soc_mmio_write(csx->mmio, ppa, size, data));
 			break;
 		case 0xffff0000 ... 0xffffffff: /* reserved */
 			break;

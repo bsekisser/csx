@@ -29,7 +29,7 @@
 
 #define DPLL1_CTL_REG		_DPLL(0x000)
 
-void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, uint32_t value, uint8_t size)
+static void soc_mmio_dpll_write(void* param, void* data, uint32_t addr, size_t size, uint32_t value)
 {
 	const soc_mmio_dpll_p dpll = param;
 	const csx_p csx = dpll->csx;

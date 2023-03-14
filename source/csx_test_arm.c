@@ -619,7 +619,7 @@ static void csx_test_arm_ldstm_setup_stack(csx_test_p t, ldstm_p l, uint spat)
 		
 		l->stack[i] = tvi;
 
-		csx_soc_write(t->csx, 0x10001000 + (i << 2), tvi, sizeof(uint32_t));
+		csx_soc_write(t->csx, 0x10001000 + (i << 2), sizeof(uint32_t), tvi);
 	}
 	
 	l->asp[0] = &l->stack[spat];

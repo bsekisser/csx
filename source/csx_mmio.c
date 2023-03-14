@@ -220,7 +220,7 @@ int csx_mmio_register_write(csx_p csx, csx_mmio_write_fn fn, uint32_t mpa, void*
 	return(0);
 }
 
-void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
+void csx_mmio_write(csx_p csx, uint32_t mpa, size_t size, uint32_t data)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 
@@ -228,7 +228,7 @@ void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
 
 	if(cb->wfn) {
 		void* dst = _mmio_data_page(mmio, mpa);
-		return(cb->wfn(cb->param, dst, mpa, data, size));
+		return(cb->wfn(cb->param, dst, mpa, size, data));
 	}
 
 	if(cb->name) {
@@ -240,5 +240,5 @@ void csx_mmio_write(csx_p csx, uint32_t mpa, uint32_t data, uint8_t size)
 	}
 
 	void* dst = _mmio_data_offset(mmio, mpa);
-	return(csx_data_write(dst, data, size));
+	return(csx_data_write(dst, size, data));
 }
