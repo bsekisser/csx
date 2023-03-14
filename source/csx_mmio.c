@@ -129,7 +129,7 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio, void** mmio_data)
 	return(err);
 }
 
-uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, uint8_t size)
+uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size)
 {
 	csx_mmio_p mmio = CSX_MMIO;
 

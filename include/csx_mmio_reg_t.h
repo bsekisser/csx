@@ -33,7 +33,7 @@ typedef struct csx_mmio_regbit_t* csx_mmio_regbit_p;
 
 #define CSX_MMIO_DATAREG_RMW(_name, _type) \
 	static inline _type _name ## _RMW(void* dst, uint32_t value, uint8_t action) { \
-		return(csx_mmio_datareg_rmw(dst, _ ## _name, sizeof(type), value, action)); \
+		return(csx_mmio_datareg_rmw(dst, _ ## _name, sizeof(_type), value, action)); \
 	}
 
 #define CSX_MMIO_DATAREG_SET(_name, _type) \
