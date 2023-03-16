@@ -9,9 +9,9 @@ typedef struct soc_mmio_t* soc_mmio_p;
 
 typedef struct soc_mmio_peripheral_t* soc_mmio_peripheral_p;
 
-#define CSX_MMIO_BASE 0xfffb0000
-#define CSX_MMIO_STOP 0xfffeffff
-#define CSX_MMIO_SIZE (CSX_MMIO_STOP - CSX_MMIO_BASE + 1)
+#define CSX_MMIO_BASE 0xfffb0000UL
+#define CSX_MMIO_STOP 0xfffeffffUL
+#define CSX_MMIO_SIZE (CSX_MMIO_STOP - CSX_MMIO_BASE + 1U)
 
 /* **** */
 

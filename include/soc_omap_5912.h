@@ -5,23 +5,21 @@
 typedef struct soc_t** soc_h;
 typedef struct soc_t* soc_p;
 
-#define MPU_TIMERt_BASE(_t)     (0xfffec500UL + ((_t - 1) << 8))
+#define MPU_TIMERt_BASE(_t)     (0xfffec500UL + ((((unsigned int)(_t)) - 1U) << 8U))
 #define MPU_TIMER_(_t, _x)      (MPU_TIMERt_BASE(_t) + _MPU_TIMER_NAME(_t, _x))
 #define MPU_TIMER_ENUM(_t, _x)  MPU_TIMER_NAME(_t, _x) = MPU_TIMER_(_t, _x)
 
 #define MPU_TIMER_NAME(_t, _x)  MPU_ ## _x ## _TIMER ## _t
 #define _MPU_TIMER_NAME(_t, _x)  _MPU_ ## _x ## _TIMER
 
-enum {
-	SOC_MMIO_START =			0xfffb0000UL,
-	SOC_MPU_TIMER1_BASE =		MPU_TIMERt_BASE(1), /* 0xfffec500 */
-	SOC_MPU_TIMER2_BASE =		MPU_TIMERt_BASE(2), /* 0xfffec600 */
-	SOC_MPU_TIMER3_BASE =		MPU_TIMERt_BASE(3), /* 0xfffec700 */
-	SOC_MPU_WDT_TIMER_BASE =	0xfffec800, /* MPU_TIMERt_BASE(4) */
-	SOC_MMIO_END =				0xfffeffffUL,
-};
+#define SOC_MMIO_START				0xfffb0000UL
+#define SOC_MPU_TIMER1_BASE			MPU_TIMERt_BASE(1U) /* 0xfffec500 */
+#define SOC_MPU_TIMER2_BASE			MPU_TIMERt_BASE(2U) /* 0xfffec600 */
+#define SOC_MPU_TIMER3_BASE			MPU_TIMERt_BASE(3U) /* 0xfffec700 */
+#define SOC_MPU_WDT_TIMER_BASE		0xfffec800UL /* MPU_TIMERt_BASE(4) */
+#define SOC_MMIO_END				0xfffeffffUL
 
-#define SOC_MMIO_SIZE (1 + (SOC_MMIO_END - SOC_MMIO_START))
+#define SOC_MMIO_SIZE (1U + (SOC_MMIO_END - SOC_MMIO_START))
 
 /* **** soc includes */
 

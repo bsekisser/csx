@@ -73,12 +73,12 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	struct stat sb;
 	ERR(fstat(fd, &sb));
 
-	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	void *data = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	ERR_NULL(data);
 
 	csx->cdp = cdp;
 	cdp->data = data;
-	cdp->size = sb.st_size;
+	cdp->size = (size_t)sb.st_size;
 
 	if(1) {
 		cdp->base = 0x10020000; /* ? thoretical load address in sdram */
@@ -100,12 +100,12 @@ static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* d
 {
 	uint32_t ppo = ppa - base;
 
-	void* dspao = data_src + (ppo & PAGE_MASK);
+	void* dspao = (char*)data_src + (ppo & PAGE_MASK);
 
 	if(src)
 		*src = dspao;
 
-	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
+	return(csx_data_read_offset(dspao, PAGE_OFFSET(ppa), size));
 }
 
 static int _csx_soc_reset(void* param)
@@ -129,12 +129,12 @@ static void _csx_soc_write_ppa(uint32_t ppa, size_t size, uint32_t data, void** 
 {
 	uint32_t ppo = ppa - base;
 
-	void* ddpao = data_dst + (ppo & PAGE_MASK);
+	void* ddpao = (char*)data_dst + (ppo & PAGE_MASK);
 
 	if(dst)
 		*dst = ddpao;
 
-	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), size, data));
+	return(csx_data_write_offset(ddpao, PAGE_OFFSET(ppa), size, data));
 }
 
 /* **** */
@@ -195,7 +195,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	const soc_core_p core = csx->core;
 
-	core->trace = core_trace;
+	core->trace = !!core_trace;
 
 	if(!err)
 	{

@@ -27,22 +27,23 @@
 /* **** */
 
 static uint32_t _csx_sdram_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write) {
-	void* p2rw = param + (ppa - CSX_SDRAM_BASE);
+	uint32_t offset = ppa - CSX_SDRAM_BASE;
 	
 	if(write)
-		csx_data_write(p2rw, size, *write);
+		csx_data_write_offset(param, offset, size, *write);
 	else
-		return(csx_data_read(p2rw, size));
+		return(csx_data_read_offset(param, offset, size));
 	
 	return(0);
 }
 
 static uint32_t _csx_sdram_mem_access_counted(void* param, uint32_t ppa, size_t size, uint32_t* write) {
-	if(write)
+	if(write) {
 		CSX_COUNTER_INC(csx_mem_access.sdram.write);
-	else
+	} else {
 		CSX_COUNTER_INC(csx_mem_access.sdram.read);
-	
+	}
+
 	return(_csx_sdram_mem_access(param, ppa, size, write));
 }
 

@@ -40,7 +40,7 @@ typedef struct csx_mmio_callback_t {
 		csx_mmio_read_fn rfn;
 		csx_mmio_write_fn wfn;
 	};
-	uint8_t size;
+	size_t size;
 }csx_mmio_callback_t;
 
 typedef struct csx_mmio_trace_t {
@@ -76,9 +76,7 @@ void* csx_mmio_data_offset(csx_p csx, uint32_t mpa);
 
 static inline uint32_t csx_mmio_datareg_get(void* pat, uint32_t mpao, size_t size)
 {
-	void* sdmpao = pat + mpao;
-
-	return(csx_data_read(sdmpao, size));
+	return(csx_data_read_offset(pat, mpao, size));
 }
 
 enum {
@@ -93,14 +91,13 @@ enum {
 static inline uint32_t csx_mmio_datareg_rmw(
 	void* pat,
 	uint32_t mpao,
-	uint32_t value,
 	size_t size,
+	uint32_t value,
 	uint8_t action)
 {
-	void* sdmpao = pat + mpao;
 	int wb = 1;
 
-	uint32_t data = csx_data_read(sdmpao, size);
+	uint32_t data = csx_data_read_offset(pat, mpao, size);
 
 	switch(action) {
 		case _MMIO_AND:
@@ -122,7 +119,7 @@ static inline uint32_t csx_mmio_datareg_rmw(
 	}
 
 	if(wb)
-		csx_data_write(sdmpao, size, data);
+		csx_data_write_offset(pat, mpao, size, data);
 
 	return(data);
 }
@@ -130,9 +127,7 @@ static inline uint32_t csx_mmio_datareg_rmw(
 
 static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, size_t size, uint32_t value)
 {
-	void* sdmpao = pat + mpao;
-
-	csx_data_write(sdmpao, size, value);
+	csx_data_write_offset(pat, mpao, size, value);
 }
 
 __attribute__((unused))

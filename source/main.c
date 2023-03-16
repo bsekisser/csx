@@ -19,14 +19,14 @@
 
 static void _preflight_tests(void)
 {
-	assert(0x01 == sizeof(uint8_t));
-	assert(0x02 == sizeof(uint16_t));
-	assert(0x04 == sizeof(uint32_t));
-	assert(0x08 == sizeof(uint64_t));
+	assert(0x01U == sizeof(uint8_t));
+	assert(0x02U == sizeof(uint16_t));
+	assert(0x04U == sizeof(uint32_t));
+	assert(0x08U == sizeof(uint64_t));
 
-	for(int i = 1; i < 32; i++) {
-		uint32_t check1 = (32 - i);
-		uint32_t check2 = (-i & 31);
+	for(uint i = 1; i < 32; i++) {
+		uint32_t check1 = (32U - i);
+		uint32_t check2 = (-i & 31U);
 		if(0) LOG("((32 - i) == (-i & 31)) -- (0x%08x, 0x%08x)",
 			check1, check2);
 		assert(check1 == check2);

@@ -4,8 +4,13 @@
 
 typedef struct csx_data_bit_t* csx_data_bit_p;
 
+/* **** */
+
+#include "config.h"
+
 /* **** system includes */
 
+#include <assert.h>
 #include <endian.h>
 #include <stdint.h>
 
@@ -50,6 +55,10 @@ static inline uint32_t csx_data_read(void* p2src, size_t size) {
 	return(csx_data_read_x(p2src, size));
 }
 
+static inline uint32_t csx_data_read_offset(char* p2src, uint32_t offset, size_t size) {
+	return(csx_data_read(p2src + offset, size));
+}
+
 static inline void csx_data_write(void* p2dst, size_t size, uint32_t value) {
 	switch(size) {
 		case 4:
@@ -64,6 +73,15 @@ static inline void csx_data_write(void* p2dst, size_t size, uint32_t value) {
 	}
 
 	csx_data_write_x(p2dst, size, value);
+}
+
+static inline void csx_data_write_offset(
+	char* p2dst,
+	uint32_t offset,
+	size_t size,
+	uint32_t value)
+{
+	csx_data_write(p2dst + offset, size, value);
 }
 
 static inline void csx_data_bit_clear(void* p2data, csx_data_bit_p sdbp) {

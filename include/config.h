@@ -6,7 +6,7 @@
 #define _check_pedantic_mmio 0
 #define _check_pedantic_pc 0
 #define _check_pedantic_rname 0
-#define _check_pedantic_size 0
+#define _check_pedantic_size 1
 
 #define _csx_statistics 0
 

@@ -62,7 +62,7 @@ int csx_test_main(csx_p csx, int core_trace)
 
 	t->csx = csx;
 
-	csx->core->trace = core_trace;
+	csx->core->trace = !!core_trace;
 
 	t->start_pc = CSX_SDRAM_BASE;
 	csx->state = CSX_STATE_HALT;

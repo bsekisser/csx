@@ -199,7 +199,8 @@ int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p tl)
 			cb->size = tle->size;
 		}
 		
-		mmio->reset_value[_CALLBACK(tle->mpa)] = tle->reset_value;
+		void* dst = &mmio->reset_value[_CALLBACK(tle->mpa)];
+		*(uint32_t*)dst = tle->reset_value;
 	}
 	
 	return(0);

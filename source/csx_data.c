@@ -17,19 +17,15 @@
 
 void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, uint set)
 {
-	const void* p2data = p2dst + sdbp->offset;
-
-	uint value = csx_data_bit_read((void*)p2data, sdbp);
+	uint value = csx_data_read_offset(p2dst, sdbp->offset, sdbp->size);
 	BMAS(value, sdbp->bit, set);
 
-	csx_data_write((void*)p2data, sdbp->size, value);
+	csx_data_write_offset(p2dst, sdbp->offset, sdbp->size, value);
 }
 
 uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
 {
-	const void* p2data = p2src + sdbp->offset;
-
-	const uint value = csx_data_read((void*)p2data, sdbp->size);
+	const uint value = csx_data_read_offset(p2src, sdbp->offset, sdbp->size);
 
 	return(BEXT(value, sdbp->bit));
 }
@@ -38,7 +34,7 @@ uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
 #define _assert(_test) \
 	{ \
 		if((_test)) { \
-			printf("%s -- size = 0x%08x", STRINGIFY(_test), size); \
+			printf("%s -- size = 0x%08x\n", STRINGIFY(_test), size); \
 			assert((_test)); \
 		} \
 	}

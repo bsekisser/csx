@@ -126,20 +126,20 @@ static inline void csx_counter_hit_if(csx_counter_hit_p c, uint test) {
 
 /* **** */
 
-#ifndef CSX_COUNTERS
-	#define CSX_COUNTERS(_x) _x
+#ifndef CSX_COUNTER
+	#define CSX_COUNTER(_x) _x
 #endif
 
 #define CSX_COUNTER_MEMBER(_member) statistics->counters._member
 
 #define CSX_COUNTER_ADD(_c, _add) \
-	({ CSX_COUNTERS(csx_counter_add(&CSX_COUNTER_MEMBER(_c), _add)); )}
+	CSX_COUNTER(csx_counter_add(&CSX_COUNTER_MEMBER(_c), _add));
 
 #define CSX_COUNTER_INC(_c) \
-	({ CSX_COUNTERS(csx_counter_inc(&CSX_COUNTER_MEMBER(_c))); })
+	CSX_COUNTER(csx_counter_inc(&CSX_COUNTER_MEMBER(_c)));
 
 #define CSX_COUNTER_HIT_IF(_c, _test) \
-	({ CSX_COUNTERS(csx_counter_hit_if(&CSX_COUNTER_MEMBER(_c), _test)); })
+	CSX_COUNTER(csx_counter_hit_if(&CSX_COUNTER_MEMBER(_c), _test));
 
 /* **** */
 
@@ -157,4 +157,4 @@ static inline void csx_profile_stat_count(csx_profile_stat_p s, uint64_t dtime) 
 #define CSX_PROFILE_MEMBER(_member) statistics->profile._member
 
 #define CSX_PROFILE_STAT_COUNT(_member, _dtime) \
-	({ CSX_PROFILE(csx_profile_stat_count(&CSX_PROFILE_MEMBER(_member), dtime)); })
+	CSX_PROFILE(csx_profile_stat_count(&CSX_PROFILE_MEMBER(_member), dtime));

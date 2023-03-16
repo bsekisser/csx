@@ -78,7 +78,7 @@ static int _soc_mmu_reset(void* param)
 	return(0);
 }
 
-soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
+static soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 {
 	const csx_p csx = mmu->csx;
 
@@ -149,7 +149,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(csx_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_read_offset(src, PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -164,7 +164,6 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 
 uint32_t csx_mmu_ifetch_ma(csx_p csx, uint32_t va, size_t size)
 {
-	uint32_t data = 0;
 	uint32_t ppa = va;
 	csx_mem_callback_p src = 0;
 	int tlb = 0;
@@ -174,19 +173,15 @@ uint32_t csx_mmu_ifetch_ma(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_ifetch_ma(csx->tlb, va, &tlbe);
 
 		if(src)
-;//			return(src->fn(src->param, va, size, 0));
+			return(csx_mem_callback_read(src, va, size));
 		else
 			tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	} 
 
-	if(!src)
-		src = csx_mem_access(csx, ppa);
+	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
 	if(tlb && src)
 		soc_tlb_fill_instruction_tlbe_ma(tlbe, va, src);
-
-	if(src)
-		data = src->fn(src->param, va, size, 0);
 
 	return(data);
 }
@@ -202,7 +197,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_read(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(csx_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_read_offset(src, PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -217,7 +212,6 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 
 uint32_t csx_mmu_read_ma(csx_p csx, uint32_t va, size_t size)
 {
-	uint32_t data = 0;
 	uint32_t ppa = va;
 	csx_mem_callback_p src = 0;
 	int tlb = 0;
@@ -227,19 +221,15 @@ uint32_t csx_mmu_read_ma(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_read_ma(csx->tlb, va, &tlbe);
 
 		if(src)
-;//			return(src->fn(src->param, va, size, 0));
+			return(csx_mem_callback_read(src, va, size));
 		else
 			tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	} 
 
-	if(!src)
-		src = csx_mem_access(csx, ppa);
+	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
 	if(tlb && src)
 		soc_tlb_fill_data_tlbe_read_ma(tlbe, va, src);
-
-	if(src)
-		data = src->fn(src->param, va, size, 0);
 
 	return(data);
 }
@@ -255,7 +245,7 @@ void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 		dst = soc_tlb_write(csx->tlb, va, &tlbe);
 
 		if(dst)
-			return(csx_data_write(dst + PAGE_OFFSET(va), size, data));
+			return(csx_data_write_offset(dst, PAGE_OFFSET(va), size, data));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -276,21 +266,16 @@ void csx_mmu_write_ma(csx_p csx, uint32_t va, size_t size, uint32_t data)
 	if(CP15_reg1_Mbit) {
 		dst = soc_tlb_write_ma(csx->tlb, va, &tlbe);
 
-		if(dst) {
-				dst->fn(dst->param, va, size, &data);
-				return;
-		} else
+		if(dst)
+			return(csx_mem_callback_write(dst, va, size, &data));
+		else
 			tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
 
-	if(!dst)
-		dst = csx_mem_access(csx, ppa);
+	dst = csx_mem_access_write(csx, ppa, size, &data);
 
 	if(tlb && dst)
 		soc_tlb_fill_data_tlbe_write_ma(tlbe, va, dst);
-
-	if(dst)
-		dst->fn(dst->param, va, size, &data);
 }
 
 int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
