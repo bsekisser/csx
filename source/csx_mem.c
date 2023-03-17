@@ -262,6 +262,25 @@ csx_mem_callback_p csx_mem_access(csx_p csx, uint32_t ppa)
 	return(_csx_mem_access(csx->mem, ppa, 0));
 }
 
+uint32_t csx_mem_access_read(csx_p csx, uint32_t ppa, size_t size, csx_mem_callback_h h2cb)
+{
+	csx_mem_callback_p cb = _csx_mem_access(csx->mem, ppa, 0);
+	
+	if(h2cb)
+		*h2cb = cb;
+	
+	return(csx_mem_callback_read(cb, ppa, size));
+}
+
+csx_mem_callback_p csx_mem_access_write(csx_p csx, uint32_t ppa, size_t size, uint32_t* write)
+{
+	csx_mem_callback_p cb = _csx_mem_access(csx->mem, ppa, 0);
+	
+	csx_mem_callback_write(cb, ppa, size, write);
+	
+	return(cb);
+}
+
 int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 {
 	assert(0 != csx);

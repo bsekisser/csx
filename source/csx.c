@@ -27,6 +27,8 @@
 /* **** */
 
 static uint32_t _csx_sdram_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write) {
+	ppa -= CSX_SDRAM_BASE;
+
 	if(write)
 		csx_data_offset_write(param, ppa, size, *write);
 	else
