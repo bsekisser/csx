@@ -105,7 +105,7 @@ static uint32_t _csx_soc_read_ppa(uint32_t ppa, size_t size, void** src, void* d
 	if(src)
 		*src = dspao;
 
-	return(csx_data_read(dspao + PAGE_OFFSET(ppa), size));
+	return(csx_data_offset_read(dspao, PAGE_OFFSET(ppa), size));
 }
 
 static int _csx_soc_reset(void* param)
@@ -134,7 +134,7 @@ static void _csx_soc_write_ppa(uint32_t ppa, size_t size, uint32_t data, void** 
 	if(dst)
 		*dst = ddpao;
 
-	return(csx_data_write(ddpao + PAGE_OFFSET(ppa), size, data));
+	return(csx_data_offset_write(ddpao, PAGE_OFFSET(ppa), size, data));
 }
 
 /* **** */

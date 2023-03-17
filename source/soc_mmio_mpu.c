@@ -96,7 +96,7 @@ static void soc_mmio_mpu_write(void* param, void* data, uint32_t addr, size_t si
 				break;
 		}
 
-		csx_data_write(data + (addr & 0xff), size, value);
+		csx_data_offset_write(data, (addr & 0xff), size, value);
 	} else {
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_WRITE));
 	}

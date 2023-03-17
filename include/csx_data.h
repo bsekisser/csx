@@ -50,20 +50,29 @@ static inline uint32_t csx_data_read(void* p2src, size_t size) {
 	return(csx_data_read_x(p2src, size));
 }
 
+static inline uint32_t csx_data_offset_read(void* p2src, uint32_t offset, size_t size) {
+	return(csx_data_read((char*)p2src + offset, size));
+}
+
 static inline void csx_data_write(void* p2dst, size_t size, uint32_t value) {
 	switch(size) {
 		case 4:
 			*(uint32_t*)p2dst = htole32((uint32_t)value);
-			return;
+			break;
 		case 2:
 			*(uint16_t*)p2dst = htole16((uint16_t)value);
-			return;
+			break;
 		case 1:
 			*(uint8_t*)p2dst = (uint8_t)value;
-			return;
+			break;
+		default:
+			csx_data_write_x(p2dst, size, value);
+			break;
 	}
+}
 
-	csx_data_write_x(p2dst, size, value);
+static inline void csx_data_offset_write(void* p2src, uint32_t offset, size_t size, uint32_t value) {
+	csx_data_write((char*)p2src + offset, size, value);
 }
 
 static inline void csx_data_bit_clear(void* p2data, csx_data_bit_p sdbp) {

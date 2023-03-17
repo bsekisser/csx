@@ -259,7 +259,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		if(value)
 		{
 			const uint32_t addr = tle->address;
-			csx_data_write(&mpt.data[addr & 0xff], tle->size, value);
+			csx_data_offset_write(mpt.data, addr & 0xff, tle->size, value);
 		}
 	}
 
@@ -295,7 +295,7 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, size_t size)
 	const ea_trace_p eat = soc_mmio_trace(mmio, tl, vaddr);
 	if(eat)
 	{
-		uint32_t value = csx_data_read(&mpt.data[mpt.offset], size);
+		uint32_t value = csx_data_offset_read(mpt.data, mpt.offset, size);
 		switch(vaddr)
 		{
 			case	x0xfffe_0x6014:
@@ -378,7 +378,7 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 
 		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
 			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
-		csx_data_write(&mpt.data[mpt.offset], tle->size, tle->reset_value);
+		csx_data_offset_write(mpt.data, mpt.offset, tle->size, tle->reset_value);
 	}while(tl[i].address);
 }
 
@@ -421,7 +421,7 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, size_t size, uint32_t value
 		{
 		}
 
-		csx_data_write(&mpt.data[mpt.offset], size, value);
+		csx_data_offset_write(mpt.data, mpt.offset, size, value);
 	} else {
 		LOG("vaddr = 0x%08x, module = 0x%08x", vaddr, mpt.module);
 		LOG_ACTION(exit(1));

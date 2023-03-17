@@ -149,7 +149,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(csx_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_offset_read(src, PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -202,7 +202,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 		src = soc_tlb_read(csx->tlb, va, &tlbe);
 
 		if(src)
-			return(csx_data_read(src + PAGE_OFFSET(va), size));
+			return(csx_data_offset_read(src, PAGE_OFFSET(va), size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}
@@ -255,7 +255,7 @@ void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 		dst = soc_tlb_write(csx->tlb, va, &tlbe);
 
 		if(dst)
-			return(csx_data_write(dst + PAGE_OFFSET(va), size, data));
+			return(csx_data_offset_write(dst, PAGE_OFFSET(va), size, data));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
 	}

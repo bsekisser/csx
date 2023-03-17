@@ -76,9 +76,12 @@ void* csx_mmio_data_offset(csx_p csx, uint32_t mpa);
 
 static inline uint32_t csx_mmio_datareg_get(void* pat, uint32_t mpao, size_t size)
 {
-	void* sdmpao = pat + mpao;
+	return(csx_data_offset_read(pat, mpao, size));
+}
 
-	return(csx_data_read(sdmpao, size));
+static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, size_t size, uint32_t value)
+{
+	csx_data_offset_write(pat, mpao, size, value);
 }
 
 enum {
@@ -97,10 +100,9 @@ static inline uint32_t csx_mmio_datareg_rmw(
 	size_t size,
 	uint8_t action)
 {
-	void* sdmpao = pat + mpao;
 	int wb = 1;
 
-	uint32_t data = csx_data_read(sdmpao, size);
+	uint32_t data = csx_mmio_datareg_get(pat, mpao, size);
 
 	switch(action) {
 		case _MMIO_AND:
@@ -122,17 +124,9 @@ static inline uint32_t csx_mmio_datareg_rmw(
 	}
 
 	if(wb)
-		csx_data_write(sdmpao, size, data);
+		csx_mmio_datareg_set(pat, mpao, size, data);
 
 	return(data);
-}
-
-
-static inline void csx_mmio_datareg_set(void* pat, uint32_t mpao, size_t size, uint32_t value)
-{
-	void* sdmpao = pat + mpao;
-
-	csx_data_write(sdmpao, size, value);
 }
 
 __attribute__((unused))
