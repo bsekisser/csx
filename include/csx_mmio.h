@@ -96,8 +96,8 @@ enum {
 static inline uint32_t csx_mmio_datareg_rmw(
 	void* pat,
 	uint32_t mpao,
-	uint32_t value,
 	size_t size,
+	uint32_t value,
 	uint8_t action)
 {
 	int wb = 1;
