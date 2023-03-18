@@ -84,6 +84,15 @@ static int _soc_nnd_flash_atexit(void* param)
 	return(0);
 }
 
+static uint32_t _soc_nnd_flash_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write) {
+	if(write)
+		soc_nnd_flash_write(param, ppa, size, *write);
+	else
+		return(soc_nnd_flash_read(param, ppa, size));
+
+	return(0);
+}
+
 static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 {
 //	const uint cs = addr >> CSx_LSB;
@@ -118,6 +127,11 @@ int soc_nnd_flash_init(csx_p csx, soc_nnd_h h2nnd)
 	/* **** */
 
 	csx_callback_atexit(csx, _soc_nnd_flash_atexit, h2nnd);
+
+	csx_mem_mmap(csx, 0x02000000, 0x03ffffff, _soc_nnd_flash_mem_access, nnd);
+	csx_mem_mmap(csx, 0x04000000, 0x07ffffff, _soc_nnd_flash_mem_access, nnd);
+	csx_mem_mmap(csx, 0x08000000, 0x0bffffff, _soc_nnd_flash_mem_access, nnd);
+	csx_mem_mmap(csx, 0x0c000000, 0x0fffffff, _soc_nnd_flash_mem_access, nnd);
 
 	/* **** */
 

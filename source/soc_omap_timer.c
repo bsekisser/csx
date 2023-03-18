@@ -56,16 +56,28 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
 {
 	csx_p csx = sot->csx;
 
+#if 0
+	assert(0 != data);
+	assert(0 != sot);
+	
+	if(0) LOG("csx = 0x%08" PRIxPTR ", data = 0x%08" PRIxPTR ", sot = 0x%08" PRIxPTR,
+		csx, data, sot);
+#endif
+
 	if(!MPU_CNTL_TIMER_ST(data))
 		return(0);
 
 	if(!MPU_CNTL_TIMER_CLOCK_ENABLE(data))
 		return(0);
 
-	if(0) LOG("csx->cycle = 0x%016" PRIx64 ", sot->cycle = 0x%016" PRIx64,
-		csx->cycle, sot->cycle);
+	if(0) {
+		LOG_START("csx->cycle = 0x%016" PRIx64, csx->cycle);
+		_LOG_(", sot->cycle = 0x%016" PRIx64, (uint64_t)sot->cycle);
+		_LOG_(", sot->count = 0x%016" PRIx64, (uint64_t)sot->count);
+		LOG_END();
+	}
 
-	int elapsed_cycles = csx->cycle - sot->cycle;
+	const uint elapsed_cycles = csx->cycle - sot->cycle;
 	sot->cycle = csx->cycle;
 
 /*
@@ -77,32 +89,24 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
  * int64_t delta64_count = sot->count - elapsed_cycles;
  */
 
-	int delta_count = (int)sot->count - elapsed_cycles;
+	const uint delta_count = sot->count - elapsed_cycles;
 
 	if(0) {
-		LOG_START("elapsed_cycles = 0x%016" PRIx64, elapsed_cycles)
-		if(sizeof(uint64_t) == sizeof(delta_count)) {
-			_LOG_(", delta_count = 0x%016" PRIx64, delta_count);
-		} else {
-			_LOG_(", delta_count = 0x%08x", delta_count);
-		}
-		if(sizeof(uint64_t) == sizeof(sot->count)) {
-			_LOG_(", count = 0x%016" PRIx64, sot->count);
-		} else {
-			_LOG_(", count = 0x%08x", sot->count);
-		}
+		LOG_START("elapsed_cycles = 0x%016" PRIx64, (uint64_t)elapsed_cycles)
+		_LOG_(", delta_count = 0x%016" PRIx64, (uint64_t)delta_count);
 		LOG_END();
 	}
 
-	if(0 >= delta_count) {
+	if(elapsed_cycles >= sot->count) {
+		uint cycles_remain = elapsed_cycles - sot->count;
 		if(MPU_CNTL_TIMER_AR(data)) {
-			sot->count = delta_count + MPU_LOAD_TIMER(data, 0);
+			sot->count = MPU_LOAD_TIMER(data, 0) - cycles_remain;
 		} else {
 			MPU_CNTL_TIMER_RMW(data, _MPU_CNTL_TIMER_ST, _MMIO_BIC);
 			sot->count = 0;
 		}
 	} else
-		sot->count -= delta_count;
+		sot->count -= elapsed_cycles;
 
 	return(sot->count);
 }
