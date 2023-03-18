@@ -91,7 +91,8 @@ static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 	
 	const soc_nnd_unit_p unit = &nnd->unit[cs];
 
-	LOG("nnd = 0x%08x, addr = 0x%08x, cs = 0x%02x, unit = 0x%08x", (uint)nnd, addr, cs, (uint)unit);
+	LOG("nnd = 0x%08" PRIxPTR ", addr = 0x%08x, cs = 0x%02x, unit = 0x%08" PRIxPTR,
+	    (uintptr_t)nnd, addr, cs, (uintptr_t)unit);
 
 	assert(cs < 16);
 
@@ -127,7 +128,7 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
-	if(0) LOG("addr = 0x%08x, offset = 0x%08x, size = 0x%08x",
+	if(0) LOG("addr = 0x%08x, offset = 0x%08x, size = 0x%08zx",
 		addr, offset, size);
 
 	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr);
@@ -146,7 +147,7 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 			}
 			break;
 		default:
-			LOG("addr = 0x%08x, value = 0x%08x, size = 0x%08x, cl = 0x%08x",
+			LOG("addr = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x",
 				addr, value, size, unit->cl);
 			break;
 	}
@@ -157,7 +158,7 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 
 static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, size_t size, uint32_t value)
 {
-	LOG("value = 0x%08x, size = 0x%08x, cl = 0x%08x", value, size, unit->cl);
+	LOG("value = 0x%08x, size = 0x%08zx, cl = 0x%08x", value, size, unit->cl);
 
 	if(0xff == value) { /* reset */
 		unit->cl = 0;
@@ -169,7 +170,7 @@ static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, size_t s
 		unit->cl |= (value & 0xff);
 	}
 
-	LOG("value = 0x%08x, size = 0x%08x, cl = 0x%08x", value, size, unit->cl);
+	LOG("value = 0x%08x, size = 0x%08zx, cl = 0x%08x", value, size, unit->cl);
 
 	UNUSED(nnd);
 }
@@ -182,11 +183,11 @@ void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, size_t size, uint32_t val
 
 	switch(offset) {
 		case CLE:
-			LOG("CLE: value = 0x%08x, size = 0x%08x", value, size);
+			LOG("CLE: value = 0x%08x, size = 0x%08zx", value, size);
 			soc_nnd_flash_write_cle(nnd, unit, size, value);
 			break;
 		default:
-			LOG("addr = 0x%08x, offset = 0x%08x, value = 0x%08x, size = 0x%08x",
+			LOG("addr = 0x%08x, offset = 0x%08x, value = 0x%08x, size = 0x%08zx",
 				addr, offset, value, size);
 			break;
 	}

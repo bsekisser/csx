@@ -41,7 +41,7 @@ static inline void _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const ui
 {
 #ifndef rRvRvPC
 	#define rRvRvPC soc_core_reg_get(core, rPC)
-	#warning rRvRvPC undefined, using default
+//	#warning rRvRvPC undefined, using default
 #endif
 
 	if(rPC == rr) 

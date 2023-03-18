@@ -21,6 +21,7 @@
 
 /* **** */
 
+#if 0
 static uint32_t _mmap_unmapped(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	LOG("param = 0x%08" PRIxPTR" , ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
@@ -32,6 +33,7 @@ static uint32_t _mmap_unmapped(void* param, uint32_t ppa, size_t size, uint32_t*
 static csx_mem_callback_t _mmap_unmapped_callback = {
 	.fn = _mmap_unmapped,
 };
+#endif
 
 /* **** */
 
@@ -173,7 +175,7 @@ static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint
 
 	uint8_t* ppat = &cb->data[PAGE_OFFSET(ppa)];
 
-	if(0) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+	if(0) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 	
 	if(write)
@@ -214,7 +216,7 @@ static uint32_t _mem_access_generic_pedantic(void* param, uint32_t ppa, size_t s
 			return(_mem_access_generic(param, ppa, size, write));
 	}
 	
-	LOG("generic access failure -- param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+	LOG("generic access failure -- param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
 	LOG_ACTION(abort());
@@ -226,7 +228,7 @@ static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, u
 
 	uint8_t* ppat = &cb->data[PAGE_OFFSET(ppa)];
 	
-	if(1) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08x, write = 0x%08" PRIxPTR "(0x%08x)",
+	if(1) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
 	if(write)

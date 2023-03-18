@@ -29,13 +29,13 @@ static void _soc_core_disasm(soc_core_p core, uint32_t address, uint32_t opcode,
 
 	if (count > 0) {
 		const uint64_t insn_address = insn.address;
-		printf("0x%08llx:\t", insn_address);
+		printf("0x%08" PRIx64 ":\t", insn_address);
 		for(unsigned int k = 0; k < size; k++)
 			printf(" 0x%02x", insn_data[k]);
 		printf("\t\t%s\t\t%s\n", insn.mnemonic,
 				insn.op_str);
 	} else
-		printf("0x%08x:(0x%02x): Failed to disassemble given code!\n", address, size);
+		printf("0x%08x:(0x%02zx): Failed to disassemble given code!\n", address, size);
 
 	cs_close(&handle);
 

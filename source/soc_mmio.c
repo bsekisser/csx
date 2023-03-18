@@ -115,8 +115,8 @@ static void _soc_mmio_peripheral(soc_mmio_p mmio, uint32_t va, __mpt_p p2mpt)
 	p2mpt->mp = mmio->peripheral[p2mpt->module];
 
 	if(p2mpt->mp) {
-		if(0) LOG("param = 0x%08x, data = 0x%08x, va = 0x%08x, module = 0x%05x",
-			(uint)p2mpt->param, (uint)p2mpt->data, va, p2mpt->module);
+		if(0) LOG("param = 0x%08" PRIxPTR ", data = 0x%08" PRIxPTR ", va = 0x%08x, module = 0x%05x",
+			(uintptr_t)p2mpt->param, (uintptr_t)p2mpt->data, va, p2mpt->module);
 
 		if(_check_pedantic_mmio) {
 			assert(0 != p2mpt->data);
@@ -158,7 +158,7 @@ DECL_CALLBACK_REGISTER_FN(soc_mmio, soc_mmio_p, mmio, atreset)
 
 ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 {
-	if(0) LOG("tl = 0x%08x, address = 0x%08x", (uint32_t)tl, address);
+	if(0) LOG("tl = 0x%08" PRIxPTR ", address = 0x%08x", (uintptr_t)tl, address);
 
 	if(!tl)
 		return(0);
@@ -167,7 +167,7 @@ ea_trace_p soc_mmio_get_trace(ea_trace_p tl, uint32_t address)
 	do {
 		const ea_trace_p tle = &tl[i++];
 
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+		if(0) LOG("tle = 0x%08" PRIxPTR ", name = %s", (uintptr_t)tle, tle->name);
 
 		if(tle->address == address)
 			return(tle);
@@ -235,8 +235,8 @@ void soc_mmio_peripheral(soc_mmio_p mmio, soc_mmio_peripheral_p p, void* param)
 	mmio->param[module] = param;
 	mmio->peripheral[module] = p;
 
-	if(0) LOG("base = 0x%08x, module = 0x%05x, param = 0x%08x, reset = 0x%08x",
-		p->base, module, (uint32_t)param, (uint32_t)p->reset);
+	if(0) LOG("base = 0x%08x, module = 0x%05x, param = 0x%08" PRIxPTR ", reset = 0x%08" PRIxPTR,
+		p->base, module, (uintptr_t)param, (uintptr_t)p->reset);
 }
 
 void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
@@ -253,7 +253,7 @@ void soc_mmio_peripheral_reset(soc_mmio_p mmio, soc_mmio_peripheral_p mp)
 		if(!tle->address)
 			break;
 
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+		if(0) LOG("tle = 0x%08" PRIxPTR ", name = %s", (uintptr_t)tle, tle->name);
 
 		const uint32_t value = tle->reset_value;
 		if(value)
@@ -308,8 +308,8 @@ uint32_t soc_mmio_read(soc_mmio_p mmio, uint32_t vaddr, size_t size)
 
 		return(value);
 	} else {
-		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08x, eat = 0x%08x",
-			vaddr, mpt.module, (uint)mp, (uint)eat);
+		LOG("vaddr = 0x%08x, module = 0x%05x, mp = 0x%08" PRIxPTR ", eat = 0x%08" PRIxPTR,
+			vaddr, mpt.module, (uintptr_t)mp, (uintptr_t)eat);
 		LOG_ACTION(exit(1));
 	}
 
@@ -338,8 +338,8 @@ void soc_mmio_reset(soc_mmio_p mmio)
 		if(mp->reset) {
 			uint8_t* data = &mmio->data[i << 8];
 			void* param = mmio->param[i];
-			if(0) LOG("reset->fn = 0x%08x, param = 0x%08x, data = 0x%08x",
-				(uint32_t)mp->reset, (uint)param, (uint32_t)data);
+			if(0) LOG("reset->fn = 0x%08" PRIxPTR ", param = 0x%08" PRIxPTR ", data = 0x%08" PRIxPTR,
+				(uintptr_t)mp->reset, (uintptr_t)param, (uintptr_t)data);
 			mp->reset(param, data, mp);
 		}
 	}
@@ -367,7 +367,7 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 	do {
 		const ea_trace_p tle = &tl[i++];
 
-		if(0) LOG("tle = 0x%08x, name = %s", (uint32_t)tle, tle->name);
+		if(0) LOG("tle = 0x%08" PRIxPTR ", name = %s", (uintptr_t)tle, tle->name);
 
 		__mpt_t mpt; _soc_mmio_peripheral(mmio, tle->address, &mpt);
 
@@ -376,8 +376,8 @@ void soc_mmio_trace_reset(soc_mmio_p mmio, ea_trace_p tl, uint module)
 			continue;
 		}
 
-		if(0) LOG("tle = 0x%08x, module = 0x%08x, offset = 0x%03x, name = %s",
-			(uint32_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
+		if(0) LOG("tle = 0x%08" PRIxPTR ", module = 0x%08x, offset = 0x%03x, name = %s",
+			(uintptr_t)tle, mpt.module, mpt.offset, tle->name ? tle->name : "");
 		csx_data_offset_write(mpt.data, mpt.offset, tle->size, tle->reset_value);
 	}while(tl[i].address);
 }
@@ -397,8 +397,8 @@ void soc_mmio_write(soc_mmio_p mmio, uint32_t vaddr, size_t size, uint32_t value
 	ea_trace_p tl = mp ? mp->trace_list : trace_list;
 
 	if(0 && mp)
-		LOG("param = 0x%08x, data = 0x%08x, va = 0x%08x, module = 0x%05x",
-			(uint)mpt.param, (uint)mpt.data, vaddr, mpt.module);
+		LOG("param = 0x%08" PRIxPTR ", data = 0x%08" PRIxPTR ", va = 0x%08x, module = 0x%05x",
+			(uintptr_t)mpt.param, (uintptr_t)mpt.data, vaddr, mpt.module);
 
 	assert(0 != ((mpt.offset + size) & 0xff));
 

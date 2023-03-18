@@ -34,7 +34,7 @@ uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
 #define _assert(_test) \
 	{ \
 		if((_test)) { \
-			printf("%s -- size = 0x%08x", STRINGIFY(_test), size); \
+			printf("%s -- size = 0x%08zx", STRINGIFY(_test), size); \
 			assert((_test)); \
 		} \
 	}

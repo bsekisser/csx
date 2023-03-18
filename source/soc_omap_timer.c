@@ -62,7 +62,10 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
 	if(!MPU_CNTL_TIMER_CLOCK_ENABLE(data))
 		return(0);
 
-	uint64_t elapsed_cycles = csx->cycle - sot->cycle;
+	if(0) LOG("csx->cycle = 0x%016" PRIx64 ", sot->cycle = 0x%016" PRIx64,
+		csx->cycle, sot->cycle);
+
+	int elapsed_cycles = csx->cycle - sot->cycle;
 	sot->cycle = csx->cycle;
 
 /*
@@ -74,10 +77,22 @@ static uint32_t __timer_update_count(soc_omap_timer_p sot, void* data)
  * int64_t delta64_count = sot->count - elapsed_cycles;
  */
 
-	int32_t delta_count = sot->count - elapsed_cycles;
+	int delta_count = (int)sot->count - elapsed_cycles;
 
-//	LOG("elapsed_cycles = 0x%016" PRIx64 ", delta_count = 0x%08x, count = 0x%08x",
-//		elapsed_cycles, delta_count, sot->count);
+	if(0) {
+		LOG_START("elapsed_cycles = 0x%016" PRIx64, elapsed_cycles)
+		if(sizeof(uint64_t) == sizeof(delta_count)) {
+			_LOG_(", delta_count = 0x%016" PRIx64, delta_count);
+		} else {
+			_LOG_(", delta_count = 0x%08x", delta_count);
+		}
+		if(sizeof(uint64_t) == sizeof(sot->count)) {
+			_LOG_(", count = 0x%016" PRIx64, sot->count);
+		} else {
+			_LOG_(", count = 0x%08x", sot->count);
+		}
+		LOG_END();
+	}
 
 	if(0 >= delta_count) {
 		if(MPU_CNTL_TIMER_AR(data)) {
@@ -102,7 +117,7 @@ static void _mpu_cntl_timer_w(void* param, void* data, uint32_t mpa, size_t size
 	if(!MPU_CNTL_TIMER_RMW(data, value, _MMIO_TEQ))
 		return;
 
-	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
+	LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
 		csx->cycle, size, mpa, value);
 
 	LOG_START("\n\tRESERVED[31:7] = 0x%08x", mlBFEXT(value, 31, 7));
@@ -132,7 +147,7 @@ static void _mpu_load_timer_w(void* param, void* data, uint32_t mpa, size_t size
 	const soc_omap_timer_p sot = param;
 	const csx_p csx = sot->csx;
 
-	LOG_START("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
+	LOG_START("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
 		csx->cycle, size, mpa, value);
 	LOG_END(", count = 0x%08x", sot->count);
 
@@ -148,7 +163,7 @@ static uint32_t _mpu_read_timer_r(void* param, void* data, uint32_t mpa, size_t 
 
 	uint32_t count = __timer_update_count(sot, data);
 
-	LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x",
+	LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] >> 0x%08x",
 		csx->cycle, size, mpa, count);
 
 	return(count);

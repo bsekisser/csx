@@ -84,8 +84,8 @@ static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 	uint32_t va,
 	soc_tlbe_h h2tlbe)
 {
-	if(0) LOG("tlbe_table = 0x%08x, tlb_bits = %02u, va = 0x%08x, h2tlbe = 0x%08x",
-		(uint)tlbe_table, tlb_bits, va, (uint)h2tlbe);
+	if(0) LOG("tlbe_table = 0x%08" PRIxPTR ", tlb_bits = %02u, va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlbe_table, tlb_bits, va, (uintptr_t)h2tlbe);
 
 	const uint vp = PAGE(va);
 	const uint vp_tlbe = vp & _BM(tlb_bits);
@@ -97,11 +97,11 @@ static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 	if(h2tlbe)
 		*h2tlbe = tlbe;
 
-	if(0) LOG("tlbe = 0x%08x", (uint)tlbe);
+	if(0) LOG("tlbe = 0x%08" PRIxPTR, (uintptr_t)tlbe);
 
 	if(!tlbe->i || (vp != tlbe->vp)) {
-		if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x, tlbe = 0x%08x, i = %01u, tlbe->vp = 0x%08x",
-			vp, vp_tlbe, (uint)tlbe, tlbe->i, tlbe->vp);
+		if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x, tlbe = 0x%08" PRIxPTR ", i = %01u, tlbe->vp = 0x%08x",
+			vp, vp_tlbe, (uintptr_t)tlbe, tlbe->i, tlbe->vp);
 		return(0);
 	}
 
@@ -126,7 +126,8 @@ static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va) {
 
 static void _tlb_fill_tlbe_read(soc_tlbe_p tlbe, uint32_t va, void** src)
 {
-	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)src);
+	if(0) LOG("tlbe = 0x%08" PRIxPTR ", va = 0x%08x, data = 0x%08" PRIxPTR,
+		(uintptr_t)tlbe, va, (uintptr_t)src);
 
 	_tlb_fill_tlbe(tlbe, va);
 
@@ -153,7 +154,8 @@ static void _tlb_fill_tlbe_read_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_callbac
 
 static void _tlb_fill_tlbe_write(soc_tlbe_p tlbe, uint32_t va, void** dst)
 {
-	if(0) LOG("tlbe = 0x%08x, va = 0x%08x, data = 0x%08x", (uint)tlbe, va, (uint)dst);
+	if(0) LOG("tlbe = 0x%08" PRIxPTR ", va = 0x%08x, data = 0x%08" PRIxPTR,
+		(uintptr_t)tlbe, va, (uintptr_t)dst);
 
 	_tlb_fill_tlbe(tlbe, va);
 
@@ -302,7 +304,8 @@ void soc_tlb_fill_instruction_tlbe_ma(soc_tlbe_p tlbe, uint32_t va, csx_mem_call
 
 void* soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
-	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
 
 	soc_tlbe_p tlbe = 0;
 	void* src = _tlb_read(tlb->itlb, iTLB_BITS, va, &tlbe);
@@ -383,7 +386,8 @@ void soc_tlb_invalidate_instruction(soc_tlb_p tlb)
 
 void* soc_tlb_read(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
-	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
 
 	void* src = _tlb_read(tlb->dtlb, dTLB_BITS, va, h2tlbe);
 
@@ -407,7 +411,8 @@ void soc_tlb_reset(soc_tlb_p tlb)
 
 void* soc_tlb_write(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 {
-	if(0) LOG("tlb = 0x%08x, va = 0x%08x, h2tlbe = 0x%08x", (uint)tlb, va, (uint)h2tlbe);
+	if(0) LOG("tlb = 0x%08" PRIxPTR ", va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
+		(uintptr_t)tlb, va, (uintptr_t)h2tlbe);
 
 	void* dst = _tlb_write(tlb->dtlb, dTLB_BITS, va, h2tlbe);
 

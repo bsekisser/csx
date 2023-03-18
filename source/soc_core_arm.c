@@ -107,7 +107,7 @@ static void _arm_inst_dp(soc_core_p core)
 	_arm_inst_dpi_final(core);
 }
 
-unsigned long int _arm_ror_c(unsigned long int v,
+static unsigned long int _arm_ror_c(unsigned long int v,
 	unsigned long int shift,
 	unsigned long int* carry)
 {

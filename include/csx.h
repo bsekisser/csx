@@ -62,7 +62,7 @@ typedef struct csx_data_t* csx_data_p;
 typedef struct csx_data_t {
 		uint32_t					base;
 		void*						data;
-		uint32_t					size;
+		size_t						size;
 }csx_data_t;
 
 typedef struct csx_t {

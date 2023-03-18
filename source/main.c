@@ -75,11 +75,11 @@ int main(int argc, char **argv)
 	uint64_t dtime_cycle = dtime_run / csx->cycle;
 	uint64_t dtime_insn = dtime_run / csx->insns;
 
-	LOG_ERR("cycles = 0x%016llx, insns = 0x%016llx",
+	LOG_ERR("cycles = 0x%016" PRIx64 ", insns = 0x%016" PRIx64,
 		csx->cycle, csx->insns);
-	LOG_ERR("dtime_start = 0x%016llx, dtime_end = 0x%016llx, dtime_run = 0x%016llx",
+	LOG_ERR("dtime_start = 0x%016" PRIx64 ", dtime_end = 0x%016" PRIx64 ", dtime_run = 0x%016" PRIx64,
 		dtime_start, dtime_end, dtime_run);
-	LOG_ERR("dtime/cycle = 0x%016llx, dtime/insn = 0x%016llx",
+	LOG_ERR("dtime/cycle = 0x%016" PRIx64 ", dtime/insn = 0x%016" PRIx64,
 		dtime_cycle, dtime_insn);
 
 	double ratio = 1.0 / est_host_cps;

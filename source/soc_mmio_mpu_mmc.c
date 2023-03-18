@@ -52,7 +52,7 @@ UNUSED_FN static uint32_t soc_mmio_mpu_mmc_read(void* param, void* data, uint32_
 		{
 		}
 	} else {
-		LOG("addr = 0x%08x, size = 0x%02x", addr, size);
+		LOG("addr = 0x%08x, size = 0x%02zx", addr, size);
 		LOG_ACTION(csx->state |= (CSX_STATE_HALT | CSX_STATE_INVALID_READ));
 	}
 

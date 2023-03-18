@@ -12,22 +12,22 @@
 	#define THUMB
 #endif
 
-uint32_t THUMB
-	_test_thumb_adds_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+extern inline THUMB
+uint32_t _test_thumb_adds_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 1);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t THUMB
-	_test_thumb_adds_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+extern inline THUMB
+uint32_t _test_thumb_adds_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + 7);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t THUMB
-	_test_thumb_adds_rn_x_asm(uint32_t n, const uint32_t rn, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_adds_rn_x_asm(uint32_t n, const uint32_t rn, const uint32_t rm) {
 
 	switch(n) {
 		case 0x01:
@@ -51,8 +51,8 @@ uint32_t THUMB
 	UNUSED(rm);
 }
 
-uint32_t THUMB
-	_test_thumb_adds_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_adds_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn + rm);
 
 	UNUSED(p2rd);
@@ -60,43 +60,43 @@ uint32_t THUMB
 
 /* **** */
 
-uint32_t THUMB
-	_test_thumb_ands_rn_rm_asm(uint32_t rd, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_ands_rn_rm_asm(uint32_t rd, const uint32_t rm) {
 		return(rd & rm);
 }
 
 /* **** */
 
-uint32_t THUMB
-	_test_thumb_asrs_rn_rm_asm(int32_t rd, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_asrs_rn_rm_asm(int32_t rd, const uint32_t rm) {
 		return(rd >> rm);
 }
 
 /* **** */
 
-uint32_t THUMB
-	_test_thumb_bics_rn_rm_asm(uint32_t rd, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_bics_rn_rm_asm(uint32_t rd, const uint32_t rm) {
 		return(rd & ~rm);
 }
 
 /* **** */
 
-uint32_t THUMB
-	_test_thumb_subs_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_subs_rn_1_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 1);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t THUMB
-	_test_thumb_subs_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_subs_rn_7_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - 7);
 
 	UNUSED(p2rd, rm);
 }
 
-uint32_t THUMB
-	_test_thumb_subs_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
+static inline THUMB
+uint32_t _test_thumb_subs_rn_rm_asm(uint32_t* p2rd, const uint32_t rn, const uint32_t rm) {
 		return(rn - rm);
 
 	UNUSED(p2rd);

@@ -144,10 +144,10 @@ uint32_t csx_mmio_read(csx_p csx, uint32_t mpa, size_t size)
 	uint32_t data = csx_data_read(src, size);
 
 	if(cb->name) {
-		LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x: %s",
+		LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] >> 0x%08x: %s",
 			csx->cycle, size, mpa, data, cb->name);
 	} else {
-		LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] >> 0x%08x",
+		LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] >> 0x%08x",
 			csx->cycle, size, mpa, data);
 	}
 
@@ -177,14 +177,14 @@ int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p tl)
 		csx_mmio_trace_p tle = &tl[i];
 		
 		if(0) {
-			LOG("tle = 0x%08x, mpa = 0x%08x, name = %s",
-				(uint32_t)tle, tle->mpa, tle->name);
+			LOG("tle = 0x%08" PRIxPTR ", mpa = 0x%08x, name = %s",
+				(uintptr_t)tle, tle->mpa, tle->name);
 		}
 		
 		if(_Rw & tle->access) {
 			csx_mmio_callback_p cb = &mmio->read[_CALLBACK(tle->mpa)];
 			
-			LOG("cb = %p", cb);
+			LOG("cb = 0x%08" PRIxPTR, (uintptr_t)cb);
 
 			cb->name = tle->name;
 			cb->size = tle->size;
@@ -193,7 +193,7 @@ int csx_mmio_register_trace_list(csx_p csx, csx_mmio_trace_p tl)
 		if(_rW & tle->access) {
 			csx_mmio_callback_p cb = &mmio->write[_CALLBACK(tle->mpa)];
 			
-			LOG("cb = %p", cb);
+			LOG("cb = 0x%08" PRIxPTR, (uintptr_t)cb);
 			
 			cb->name = tle->name;
 			cb->size = tle->size;
@@ -232,10 +232,10 @@ void csx_mmio_write(csx_p csx, uint32_t mpa, size_t size, uint32_t data)
 	}
 
 	if(cb->name) {
-		LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x: %s",
+		LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x: %s",
 			csx->cycle, size, mpa, data, cb->name);
 	} else {
-		LOG("cycle = 0x%016" PRIx64 ", %02u:[0x%08x] << 0x%08x",
+		LOG("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
 			csx->cycle, size, mpa, data);
 	}
 

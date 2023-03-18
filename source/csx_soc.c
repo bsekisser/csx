@@ -90,8 +90,8 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	} else
 		cdp->base = 0x14000000; /* ? safer as unknown load address */
 
-	LOG("base = 0x%08x, data = 0x%08x, size = 0x%08x",
-		cdp->base, (uint)cdp->data, cdp->size);
+	LOG("base = 0x%08x, data = 0x%08" PRIxPTR ", size = 0x%08zx",
+		cdp->base, (uintptr_t)cdp->data, cdp->size);
 
 	close(fd);
 }
@@ -217,7 +217,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 		}
 	}
 
-	LOG("CYCLE = 0x%016llx, IP = 0x%08x", csx->cycle, IP);
+	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x", csx->cycle, IP);
 
 	return(err);
 }
