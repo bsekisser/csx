@@ -1,5 +1,5 @@
 #include "csx_test_arm.h"
-#include "csx_test_arm_a32.h"
+#include "csx_test_arm_asm.h"
 #include "csx_test_arm_inst.h"
 
 /* **** */
@@ -17,6 +17,45 @@
 #include "log.h"
 
 /* **** */
+
+typedef uint32_t (*csx_test_set_fn)(csx_test_p t, uint32_t* psr, uint j, uint k);
+
+static int _csx_test_set(csx_test_p t, csx_test_set_fn asm_fn, csx_test_set_fn inst_fn, uint32_t mask)
+{
+	uint32_t xres = 0, tres = 0;
+	uint32_t xpsr = 0, tpsr = 0;
+
+	uint j = 0, k = 0, jk_limit = 16;
+	for(j = 0; j < jk_limit; j++) {
+		uint jj = _test_value(j);
+		for(k = 0; k < jk_limit; k++) {
+			uint kk = _test_value(k);
+
+			xres = asm_fn(t, &xpsr, jj, kk);
+			tres = inst_fn(t, &tpsr, jj, kk);
+
+			if(xres != tres)
+				goto _csx_test_set_fail;
+
+			if(mask) {
+				if(!_test_cpsr_xpsr_mask(t, tpsr, xpsr, mask))
+					goto _csx_test_set_fail;
+			} else {
+				if(!_test_cpsr_xpsr(t, tpsr, xpsr))
+						goto _csx_test_set_fail;
+			}
+				
+		}
+	}
+
+	return(1);
+
+_csx_test_set_fail:
+	LOG("j = 0x%03x, k = 0x%03x, xres = 0x%08x, tres = 0x%08x\n",
+		j, k, xres, tres);
+
+	return(0);
+}
 
 static inline uint32_t epc(csx_test_p t)
 {
@@ -74,35 +113,19 @@ static void csx_test_arm_adcs(csx_test_p t)
 //	LOG("xres = 0x%08x, res = 0x%08x", xres, res);
 	
 	assert(xres == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 //	_assert_nzcv(t, 0, 1, 1, 0);
 	
 	xres = csx_test_arm_adcs_asm(t, &xpsr, 12, 1);
 	res = csx_test_arm_adcs_inst(t, &cpsr, 12, 1);
 
 	assert(xres == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 //	_assert_nzcv(t, 0, 0, 0, 0);
 
-	int jk_limit = 256;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = j << 24;
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = k << 24;
-			xres = csx_test_arm_adcs_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_adcs_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_adcs_asm,
+			csx_test_arm_adcs_inst, 0));
 }
 
 /* **** */
@@ -137,35 +160,19 @@ static void csx_test_arm_adds(csx_test_p t)
 	res = csx_test_arm_adds_inst(t, &cpsr, ~0, 1);
 	
 	assert(xres == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 0, 1, 1, 0);
 	
 	xres = csx_test_arm_adds_asm(t, &xpsr, 12, 1);
 	res = csx_test_arm_adds_inst(t, &cpsr, 12, 1);
 
 	assert(xres == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 0, 0, 0, 0);
 
-	int jk_limit = 256;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = j << 24;
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = k << 24;
-			xres = csx_test_arm_adds_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_adds_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_adds_asm,
+			csx_test_arm_adds_inst, 0));
 }
 
 /* **** */
@@ -194,30 +201,11 @@ static void csx_test_arm_ands(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
 
-	uint32_t res = 0, xres = 0;
-	uint32_t xpsr = 0, cpsr = 0;
-	
 //	t->csx->core->trace = 1;
 	
-	int jk_limit = 16;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = _test_value(j);
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = _test_value(k);
-			xres = csx_test_arm_ands_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_ands_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_ands_asm,
+			csx_test_arm_ands_inst,	0));
 }
 
 /* **** */
@@ -307,30 +295,14 @@ static void csx_test_arm_bics(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
 
-	uint32_t res = 0, xres = 0;
-	uint32_t xpsr = 0, cpsr = 0;
+//	uint32_t res = 0, xres = 0;
+//	uint32_t xpsr = 0, cpsr = 0;
 	
 //	t->csx->core->trace = 1;
 	
-	int jk_limit = 16;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = _test_value(j);
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = _test_value(k);
-			xres = csx_test_arm_bics_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_bics_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_bics_asm,
+			csx_test_arm_bics_inst, 0));
 
 //	t->csx->core->trace = 0;
 }
@@ -399,7 +371,7 @@ static void csx_test_arm_cmp(csx_test_p t)
 		res = csx_test_arm_cmp_inst(t, &cpsr, r[0], r[6]);
 		
 		assert(xres == res);
-		_assert_cpsr_xpsr(t, cpsr, xpsr);
+		assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 		
 /*		asm("cmp %[r0], #0x1c\n\t"
 			"mrs %[psr], CPSR\n\t"
@@ -439,30 +411,14 @@ static void csx_test_arm_eors(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
 
-	uint32_t res = 0, xres = 0;
-	uint32_t xpsr = 0, cpsr = 0;
+//	uint32_t res = 0, xres = 0;
+//	uint32_t xpsr = 0, cpsr = 0;
 	
 //	t->csx->core->trace = 1;
 	
-	int jk_limit = 16;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = _test_value(j);
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = _test_value(k);
-			xres = csx_test_arm_eors_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_eors_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x\n",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_eors_asm,
+			csx_test_arm_eors_inst, 0));
 
 //	t->csx->core->trace = 0;
 }
@@ -567,7 +523,7 @@ static void csx_test_arm_dpi(csx_test_p t)
 	t->start_pc = t->pc = csx_test_run(t, 1);
 
 	if(trace)
-		t->csx->core->trace = savedTrace;
+		t->csx->core->trace = !!savedTrace;
 }		
 
 /* **** */
@@ -599,7 +555,7 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	for(int i = 0; i < 16; i++)
 	{
 		const uint32_t espv = 0x10001000 + (i << 2);
-		const uint32_t esiv = csx_soc_read(t->csx, espv, sizeof(uint32_t)); 
+		const uint32_t esiv = csx_read(t->csx, espv, sizeof(uint32_t)); 
 		assert(l->stack[i] == esiv);
 	}
 	
@@ -621,7 +577,7 @@ static void csx_test_arm_ldstm_setup_stack(csx_test_p t, ldstm_p l, uint spat)
 		
 		l->stack[i] = tvi;
 
-		csx_soc_write(t->csx, 0x10001000 + (i << 2), sizeof(uint32_t), tvi);
+		csx_write(t->csx, 0x10001000 + (i << 2), sizeof(uint32_t), tvi);
 	}
 	
 	l->asp[0] = &l->stack[spat];
@@ -887,7 +843,7 @@ static void csx_test_arm_mov(csx_test_p t)
 	assert(0x000003f0 == soc_core_reg_get(core, 0));
 
 	if(trace)
-		t->csx->core->trace = savedTrace;
+		t->csx->core->trace = !!savedTrace;
 }
 
 /* **** */
@@ -922,7 +878,7 @@ static void csx_test_arm_subs(csx_test_p t)
 	res = csx_test_arm_subs_inst(t, &cpsr, 13, 12);
 
 	assert(1 == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 0, 0, 1, 0);
 
 	xres = csx_test_arm_subs_asm(t, &xpsr, 12, 13);
@@ -933,42 +889,26 @@ static void csx_test_arm_subs(csx_test_p t)
 
 //	assert(-1UL == res);
 	assert(res == xres);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 1, 0, 0, 0);
 	
 	xres = csx_test_arm_subs_asm(t, &xpsr, 0x1c, 0x1c);
 	res = csx_test_arm_subs_inst(t, &cpsr, 0x1c, 0x1c);
 
 	assert(0 == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 0, 1, 1, 0);
 
 	xres = csx_test_arm_subs_asm(t, &xpsr, 0x1d, 0x1c);
 	res = csx_test_arm_subs_inst(t, &cpsr, 0x1d, 0x1c);
 
 	assert(1 == res);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	_assert_nzcv(t, 0, 0, 1, 0);
 
-	int jk_limit = 256;
-	for(int j = 0; j < jk_limit; j++) {
-		int jj = j < 24;
-		for(int k = 0; k < jk_limit; k++) {
-			int kk = k << 24;
-			xres = csx_test_arm_subs_asm(t, &xpsr, jj, kk);
-			res = csx_test_arm_subs_inst(t, &cpsr, jj, kk);
-
-			ASSERT_LOG(xres == res,
-				"j = 0x%03x, k = 0x%03x, xres = 0x%08x, res = 0x%08x",
-				j, k, xres, res);
-
-			if((cpsr & SOC_CORE_PSR_NZCV) != (xpsr & SOC_CORE_PSR_NZCV))
-				LOG("j = 0x%03x, k = 0x%03x, xpsr = 0x%08x, cpsr = 0x%08x",
-					j, k, xpsr, cpsr);
-
-			_assert_cpsr_xpsr(t, cpsr, xpsr);
-		}
-	}
+	assert(_csx_test_set(t,
+		csx_test_arm_subs_asm,
+			csx_test_arm_subs_inst, 0));
 }
 
 /* **** */

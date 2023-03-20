@@ -9,12 +9,12 @@
 
 /* **** */
 
-void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
+int _test_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
 {
-	_assert_cpsr_xpsr_mask(t, cpsr, xpsr, SOC_CORE_PSR_NZCV);
+	return(_test_cpsr_xpsr_mask(t, cpsr, xpsr, SOC_CORE_PSR_NZCV));
 }
 
-void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
+int _test_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
 {
 	uint test_cpsr = cpsr & mask;
 	uint test_xpsr = xpsr & mask;
@@ -22,11 +22,23 @@ void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
 	if(test_cpsr != test_xpsr) {
 		TRACE_PSR(cpsr);
 		TRACE_PSR(xpsr);
+
+		return(0);
 	}
 
-	assert(test_cpsr == test_xpsr);
+	return(1);
 
 	UNUSED(t);
+}
+
+void _assert_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
+{
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
+}
+
+void _assert_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
+{
+	assert(_test_cpsr_xpsr_mask(t, cpsr, xpsr, mask));
 }
 
 void _assert_nzc(csx_test_p t, int n, int z, int c)
@@ -54,7 +66,7 @@ void _assert_nzcv(csx_test_p t, int n, int z, int c, int v)
 
 void _cxx(csx_test_p t, uint32_t value, size_t size)
 {
-	csx_soc_write(t->csx, pc(t), size, value);
+	csx_write(t->csx, pc(t), size, value);
 	t->pc += size;
 }
 
