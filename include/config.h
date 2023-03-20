@@ -15,7 +15,6 @@
 #define _csx_statistical_profile IF_STATISTICS(0)
 
 #define IF_COUNTERS(_x) (_csx_statistical_counters ? (_x) : 0)
-#define _csx_counter_sdram IF_COUNTERS(1)
 
 #define IF_PROFILING(_x) (_csx_statistical_profile ? (_x) : 0)
 #define _profile_csx_mem_access IF_PROFILING(1)
@@ -38,5 +37,4 @@
 
 #define _trace_mmio 0
 
-#define _use_csx_mem_access 0
 #define _use_csx_sdram_mem_access 0

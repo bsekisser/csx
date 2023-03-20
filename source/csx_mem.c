@@ -21,22 +21,6 @@
 
 /* **** */
 
-#if 0
-static uint32_t _mmap_unmapped(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	LOG("param = 0x%08" PRIxPTR" , ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
-		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
-
-	return(0);
-}
-
-static csx_mem_callback_t _mmap_unmapped_callback = {
-	.fn = _mmap_unmapped,
-};
-#endif
-
-/* **** */
-
 static int _csx_mem_atexit(void* param)
 {
 	if(_trace_atexit) {

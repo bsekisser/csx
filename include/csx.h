@@ -105,4 +105,7 @@ void csx_atexit(csx_h h2csx);
 void csx_callback_atexit(csx_p csx, callback_fn fn, void* param);
 void csx_callback_atreset(csx_p csx, callback_fn fn, void* param);
 csx_p csx_init(void);
+uint32_t csx_read(csx_p csx, uint32_t ppa, size_t size);
 void csx_reset(csx_p csx);
+void csx_write(csx_p csx, uint32_t ppa, size_t size, uint32_t write);
+

@@ -7,6 +7,7 @@
 
 /* **** csx includes */
 
+#include "csx_mem.h"
 #include "csx_mmio.h"
 #include "csx_statistics.h"
 //#include "csx_test.h"
@@ -25,34 +26,6 @@
 #include <string.h>
 
 /* **** */
-
-static uint32_t _csx_sdram_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write) {
-	ppa -= CSX_SDRAM_BASE;
-
-	if(write)
-		csx_data_offset_write(param, ppa, size, *write);
-	else
-		return(csx_data_offset_read(param, ppa, size));
-	
-	return(0);
-}
-
-static uint32_t _csx_sdram_mem_access_counted(void* param, uint32_t ppa, size_t size, uint32_t* write) {
-	if(write)
-		CSX_COUNTER_INC(csx_mem_access.sdram.write);
-	else
-		CSX_COUNTER_INC(csx_mem_access.sdram.read);
-	
-	return(_csx_sdram_mem_access(param, ppa, size, write));
-}
-
-static uint32_t _csx_sdram_mem_access_profiled(void* param, uint32_t ppa, size_t size, uint32_t* write) {
-	volatile const uint64_t dtime = get_dtime();
-	volatile const uint32_t data = _csx_sdram_mem_access(param, ppa, size, write);
-	CSX_PROFILE_STAT_COUNT(csx_mem_access.sdram, dtime);
-	return(data);
-	UNUSED(dtime);
-}
 
 void csx_atexit(csx_h h2csx)
 {
@@ -99,18 +72,7 @@ csx_p csx_init(void)
 
 	ERR(err = csx_mem_init(csx, &csx->mem));
 
-	csx_mem_fn fn = 0;
-
-	if(_use_csx_sdram_mem_access) {
-		fn = _csx_sdram_mem_access;
-
-		if(_profile_csx_mem_access)
-			fn = _csx_sdram_mem_access_profiled;
-		else if(_csx_counter_sdram)
-			fn = _csx_sdram_mem_access_counted;
-	}
-
-	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, fn, csx->sdram);
+	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, 0, csx->sdram);
 
 	/* **** */
 	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
@@ -122,6 +84,11 @@ csx_p csx_init(void)
 	return(csx);
 }
 
+uint32_t csx_read(csx_p csx, uint32_t ppa, size_t size)
+{
+	return(csx_mem_access_read(csx, ppa, size, 0));
+}
+
 void csx_reset(csx_p csx)
 {
 	if(_trace_atreset) {
@@ -129,4 +96,9 @@ void csx_reset(csx_p csx)
 	}
 
 	callback_list_process(&csx->atreset_list);
+}
+
+void csx_write(csx_p csx, uint32_t ppa, size_t size, uint32_t write)
+{
+	(void)csx_mem_access_write(csx, ppa, size, &write);
 }

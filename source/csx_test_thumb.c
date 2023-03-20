@@ -177,7 +177,7 @@ static void csx_test_thumb_ldstm(csx_test_p t)
 	soc_core_reg_set(core, 0, 0x10001004);
 
 	for(int i = 0; i < 8; i++)
-		csx_soc_write(csx, 0x10001000 + (i << 2), sizeof(uint32_t), _test_value(i));
+		csx_write(csx, 0x10001000 + (i << 2), sizeof(uint32_t), _test_value(i));
 
 	thumb_ldmia_rd_reglist(t, 0, 0xcc);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);

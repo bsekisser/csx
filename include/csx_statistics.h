@@ -41,31 +41,15 @@ typedef struct csx_statistic_counters_t {
 	}csx_mem_access;
 	struct {
 		uint32_t read;
-		struct {
-			uint32_t cdp;
-			uint32_t count;
-			uint32_t flash;
-			uint32_t framebuffer;
-			uint32_t sdram;
-		}read_ppa;
-		uint32_t write;
-		struct {
-			uint32_t cdp;
-			uint32_t count;
-			uint32_t flash;
-			uint32_t framebuffer;
-			uint32_t sdram;
-		}write_ppa;
-	}csx_soc;
-	struct {
-		uint32_t read;
 		uint32_t write;
 	}mmio;
 	struct {
-		csx_counter_hit_t ifetch;
-		csx_counter_hit_t read;
-		csx_counter_hit_t write;
-	}soc_tlb;
+		struct {
+			csx_counter_hit_t ifetch;
+			csx_counter_hit_t read;
+			csx_counter_hit_t write;
+		}tlb;
+	}soc;
 }csx_statistic_counters_t;
 
 /* **** */

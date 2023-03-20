@@ -58,19 +58,6 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 }
 
 static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
-	if(_use_csx_mem_access) {
-		const uint32_t expect = csx_mmu_ifetch(core->csx, va, size);
-		const uint32_t got = csx_mmu_ifetch_ma(core->csx, va, size);
-		
-		if(!(got == expect)) {
-			LOG("got = 0x%08x, expect = 0x%08x", got, expect);
-			LOG_ACTION(exit(-1));
-		}
-
-		return(got);
-//		return(csx_mmu_ifetch_ma(core->csx, va, size));
-	}
-
 	return(csx_mmu_ifetch(core->csx, va, size));
 }
 
@@ -93,19 +80,6 @@ static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size
 }
 
 static inline uint32_t _soc_core_read(soc_core_p core, uint32_t va, size_t size) {
-	if(_use_csx_mem_access) {
-		const uint32_t expect = csx_mmu_read(core->csx, va, size);
-		const uint32_t got = csx_mmu_read_ma(core->csx, va, size);
-		
-		if(!(got == expect)) {
-			LOG("got = 0x%08x, expect = 0x%08x", got, expect);
-			LOG_ACTION(exit(-1));
-		}
-
-		return(got);
-//		return(csx_mmu_read_ma(core->csx, va, size));
-	}
-
 	return(csx_mmu_read(core->csx, va, size));
 }
 
@@ -130,10 +104,7 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 
 static inline void _soc_core_write(soc_core_p core, uint32_t va, size_t size, uint32_t data)
 {
-	if(_use_csx_mem_access)
-		csx_mmu_write_ma(core->csx, va, size, data);
-	else
-		csx_mmu_write(core->csx, va, size, data);
+	csx_mmu_write(core->csx, va, size, data);
 }
 
 static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, size_t size, uint32_t data)

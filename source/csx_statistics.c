@@ -96,26 +96,12 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro) \
 	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro_write) \
 	\
-	COUNTER_LIST_ ## _action(csx_soc.read) \
-	COUNTER_LIST_ ## _action(csx_soc.read_ppa.cdp) \
-	COUNTER_LIST_ ## _action(csx_soc.read_ppa.count) \
-	COUNTER_LIST_ ## _action(csx_soc.read_ppa.flash) \
-	COUNTER_LIST_ ## _action(csx_soc.read_ppa.framebuffer) \
-	COUNTER_LIST_ ## _action(csx_soc.read_ppa.sdram) \
-	\
-	COUNTER_LIST_ ## _action(csx_soc.write) \
-	COUNTER_LIST_ ## _action(csx_soc.write_ppa.cdp) \
-	COUNTER_LIST_ ## _action(csx_soc.write_ppa.count) \
-	COUNTER_LIST_ ## _action(csx_soc.write_ppa.flash) \
-	COUNTER_LIST_ ## _action(csx_soc.write_ppa.framebuffer) \
-	COUNTER_LIST_ ## _action(csx_soc.write_ppa.sdram) \
-	\
 	COUNTER_LIST_ ## _action(mmio.read) \
 	COUNTER_LIST_ ## _action(mmio.write) \
 	\
-	COUNTER_LIST_ ## _action ## _HIT(soc_tlb.ifetch) \
-	COUNTER_LIST_ ## _action ## _HIT(soc_tlb.read) \
-	COUNTER_LIST_ ## _action ## _HIT(soc_tlb.write) \
+	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.ifetch) \
+	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.read) \
+	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.write) \
 
 /* **** */
 
