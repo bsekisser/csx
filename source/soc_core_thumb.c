@@ -263,6 +263,11 @@ static void soc_core_thumb_bxx(soc_core_p core)
 	}
 }
 
+#define _alubox_asrs _alubox_movs_asr
+#define _alubox_lsls _alubox_movs_lsl
+#define _alubox_lsrs _alubox_movs_lsr
+#define _alubox_rors _alubox_movs_ror
+
 static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 {
 	const uint8_t operation = mlBFEXT(IR, 9, 6);

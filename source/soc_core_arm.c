@@ -107,33 +107,13 @@ static void _arm_inst_dp(soc_core_p core)
 	_arm_inst_dpi_final(core);
 }
 
-static unsigned long int _arm_ror_c(unsigned long int v,
-	unsigned long int shift,
-	unsigned long int* carry)
-{
-	uint32_t result = _ror(v, shift);
-	*carry = _lsr(v, 32 - shift);
-
-	return(result);
-}
-
-typedef unsigned long int (*sop_fn_t)(unsigned long int v,
-	unsigned long int shift,
-	unsigned long int* carry);
-
 static void _arm_inst_dp_shift_operand(soc_core_p core) {
-	sop_fn_t sop_fn_list[4] = {
-		_lsl_c, _lsr_c, (sop_fn_t)_asr_c, _arm_ror_c
+	alubox_fn sop_fn_list[4] = {
+		__alubox_lsl_sop_c, __alubox_lsr_sop_c,
+			__alubox_asr_sop_c, __alubox_ror_sop_c
 		};
 
-	if(vR(S)) {
-		unsigned long int carry_out;
-		vR(SOP_V) = sop_fn_list[DPI_SHIFT_OP](vR(M), vR(S), &carry_out);
-		vR(SOP_C) = carry_out;
-	} else {
-		vR(SOP_V) = vR(M);
-		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-	}
+	sop_fn_list[DPI_SHIFT_OP](core, vR(M), vR(S));
 }
 
 static void _arm_inst_ldst(soc_core_p core,

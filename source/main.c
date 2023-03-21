@@ -19,10 +19,26 @@
 
 static void _preflight_tests(void)
 {
+	assert(-1U == ~0U);
 	assert(0x01 == sizeof(uint8_t));
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));
 	assert(0x08 == sizeof(uint64_t));
+
+#if 0
+	/*
+	 * https://stackoverflow.com/a/60023331
+	 * 
+	 * >> x promoted to signed int
+	 */
+
+	uint16_t x = 0xf123;
+	uint32_t y = (x << 16) >> 16;
+
+	LOG("x = 0x%08x, y = 0x%08x", x, y);
+
+	assert(x == y);
+#endif
 
 	for(int i = 1; i < 32; i++) {
 		uint32_t check1 = (32 - i);
