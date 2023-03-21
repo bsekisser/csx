@@ -34,11 +34,16 @@ void arm_lsl_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint s
 void arm_lsls_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift);
 void arm_lsr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift);
 void arm_lsrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift);
+void arm_mov_rd_imm(csx_test_p t, soc_core_reg_t rd, uint8_t imm);
 void arm_mov_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt);
+void arm_movs_rd_imm(csx_test_p t, soc_core_reg_t rd, uint8_t imm);
 void arm_movs_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_ror_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, uint shift);
+void arm_rors_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, uint shift);
 void arm_rsb_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset);
 void arm_sub_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_subs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_swi(csx_test_p t, uint32_t i24);
+
+//#define arm_movs(_rd, _shopt) arm_movs_rd_ ## typeof(_shopt)(t, _rd, _shopt);

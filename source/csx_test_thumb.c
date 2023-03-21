@@ -75,7 +75,7 @@ static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
 //	TRACE_PSR(cpsr);
 	
 	assert(cres == xres);
-	_assert_cpsr_xpsr(t, cpsr, xpsr);
+	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 }
 
 #define csx_test_thumb_adds_rn_1(_t, _rn) \
