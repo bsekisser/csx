@@ -58,7 +58,19 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 }
 
 static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
-	return(csx_mmu_ifetch(core->csx, va, size));
+	static uint32_t splat = 0;
+	
+	const uint32_t data = csx_mmu_ifetch(core->csx, va, size);
+	
+	if(0 == data) {
+		splat++;
+		if(16 <= splat) {
+			LOG_ACTION(exit(-1));
+		}
+	} else
+		splat = 0;
+
+	return(data);
 }
 
 
