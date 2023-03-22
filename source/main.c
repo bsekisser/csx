@@ -20,6 +20,13 @@
 static void _preflight_tests(void)
 {
 	assert(-1U == ~0U);
+	assert(1 == (0 == 0));
+	assert(0 == (0 != 0));
+	assert(1 == !!1);
+	assert(0 == !!0);
+	assert(1 == !!-1);
+	assert(1 == !!0x12345678);
+	assert(1 == !!0x87654321);
 	assert(0x01 == sizeof(uint8_t));
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));

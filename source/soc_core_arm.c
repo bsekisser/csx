@@ -113,7 +113,12 @@ static void _arm_inst_dp_shift_operand(soc_core_p core) {
 			__alubox_asr_sop_c, __alubox_ror_sop_c
 		};
 
-	sop_fn_list[DPI_SHIFT_OP](core, vR(M), vR(S));
+	if(vR(S)) {
+		vR(SOP_V) = sop_fn_list[DPI_SHIFT_OP](core, vR(M), vR(S));
+	} else {
+		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+		vR(SOP_V) = vR(M);
+	}
 }
 
 static void _arm_inst_ldst(soc_core_p core,
@@ -349,10 +354,17 @@ static void arm_inst_dp_immediate_shift(soc_core_p core)
 		case	SOC_CORE_SHIFTER_OP_LSR:
 			if(!vR(S))
 				vR(S) = 32;
+			__attribute__((fallthrough));
+		case	SOC_CORE_SHIFTER_OP_LSL:
+			_arm_inst_dp_shift_operand(core);
+			break;
+		case	SOC_CORE_SHIFTER_OP_ROR:
+			// TODO: untested!!
+			LOG_ACTION(exit(-1));
+			vR(SOP_V) = __alubox_rrx_sop_c(core, vR(M), vR(S));
 			break;
 	}
 
-	_arm_inst_dp_shift_operand(core);
 	_arm_inst_dp(core);
 }
 
@@ -402,6 +414,7 @@ static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 
 static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 {
+	LOG_ACTION(exit(-1));
 	soc_core_ldst_t ls; /* TODO: not tested/verified! */
 
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
