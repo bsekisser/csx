@@ -1,7 +1,8 @@
 #include "soc_mmu.h"
 
 #include "soc_core_cp15.h"
-//#include "csx_data.h"
+#include "soc_core_disasm.h"
+#include "soc_core.h"
 #include "soc.h"
 
 /* **** */
@@ -157,6 +158,11 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 
 	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
+	if(!src) {
+		soc_core_p core = csx->core;
+		PrefetchAbort();
+	}
+
 	if(tlb && src)
 		soc_tlb_fill_instruction_tlbe(tlbe, va, src);
 
@@ -181,6 +187,11 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 
 	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
+	if(!src) {
+		soc_core_p core = csx->core;
+		DataAbort();
+	}
+	
 	if(tlb && src)
 		soc_tlb_fill_data_tlbe_read(tlbe, va, src);
 
@@ -204,6 +215,11 @@ void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 	}
 
 	dst = csx_mem_access_write(csx, ppa, size, &data);
+
+	if(!dst) {
+		soc_core_p core = csx->core;
+		DataAbort();
+	}
 
 	if(tlb && dst)
 		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
