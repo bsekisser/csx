@@ -60,12 +60,10 @@ static int _soc_core_reset(void* param)
 	if(core->csx->cdp)
 		reset_pc = core->csx->cdp->base;
 
+	soc_core_psr_mode_switch(core, CPSR);
 	soc_core_reg_set_pcx(core, reset_pc);
 
 	soc_core_trace_psr(core, __FUNCTION__, CPSR);
-
-	soc_core_psr_mode_switch(core, CPSR);
-
 	return(0);
 }
 
@@ -89,8 +87,8 @@ int soc_core_init(csx_p csx, soc_core_h h2core)
 
 	core->csx = csx;
 
-	csx_soc_callback_atexit(csx->csx_soc, _soc_core_atexit, h2core);
-	csx_soc_callback_atreset(csx->csx_soc, _soc_core_reset, core);
+	csx_soc_callback_atexit(csx->soc, _soc_core_atexit, h2core);
+	csx_soc_callback_atreset(csx->soc, _soc_core_reset, core);
 
 	/* **** */
 

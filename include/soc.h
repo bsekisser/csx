@@ -8,6 +8,10 @@ typedef struct csx_soc_t* csx_soc_p;
 
 /* **** */
 
+#include "callback_list.h"
+
+/* **** */
+
 #include "csx.h"
 
 /* **** */

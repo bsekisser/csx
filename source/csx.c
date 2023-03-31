@@ -64,8 +64,6 @@ csx_p csx_init(void)
 	callback_list_init(&csx->atexit_list, 0, LIST_LIFO);
 	callback_list_init(&csx->atreset_list, 0, LIST_FIFO);
 
-	void* mmio_data = 0;
-
 	ERR(err = csx_statistics_init(csx));
 
 	/* **** csx_mem module needs to be initialized first as others depend */
@@ -75,10 +73,9 @@ csx_p csx_init(void)
 	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, 0, csx->sdram);
 
 	/* **** */
-	ERR(err = csx_mmio_init(csx, &csx->csx_mmio, &mmio_data));
-	ERR(err = csx_soc_init(csx, &csx->csx_soc));
+	ERR(err = csx_mmio_init(csx, &csx->mmio));
+	ERR(err = csx_soc_init(csx, &csx->soc));
 
-	ERR(err = soc_mmio_init(csx, &csx->mmio, mmio_data));
 	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 
 	return(csx);

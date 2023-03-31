@@ -248,7 +248,7 @@ int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
 	
 	/* **** */
 	
-	csx_soc_p soc = csx->csx_soc;
+	csx_soc_p soc = csx->soc;
 	
 	tlb->csx = csx;
 	tlb->soc = soc;

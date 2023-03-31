@@ -28,11 +28,11 @@ typedef struct csx_data_t* csx_data_p;
 #include "soc_core.h"
 //#include "soc_core_coprocessor.h"
 #include "soc_mmu.h"
-#include "soc_mmio.h"
 #include "soc_nnd_flash.h"
 #include "soc_tlb.h"
-#include "soc_omap_5912.h"
 #include "soc.h" // TODO: move soc to csx_soc
+
+/* **** */
 
 #include "csx_mem.h"
 #include "csx_mmio.h"
@@ -67,16 +67,14 @@ typedef struct csx_data_t {
 
 typedef struct csx_t {
 	csx_mem_p						mem;
-	csx_mmio_p						csx_mmio;
-	csx_soc_p						csx_soc;
+	csx_mmio_p						mmio;
+	csx_soc_p						soc;
 
 	soc_core_p						core;
 //	soc_coprocessor_p				cp;
 	soc_mmu_p						mmu;
-	soc_mmio_p						mmio;
 	soc_nnd_p						nnd;
 	soc_tlb_p						tlb;
-	soc_p							soc; // TODO: csx_soc
 
 	uint64_t						cycle;
 	uint64_t						insns;

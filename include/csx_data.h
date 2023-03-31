@@ -7,6 +7,7 @@ typedef struct csx_data_bit_t* csx_data_bit_p;
 /* **** system includes */
 
 #include <endian.h>
+#include <stddef.h>
 #include <stdint.h>
 
 /* **** */
@@ -81,4 +82,28 @@ static inline void csx_data_bit_clear(void* p2data, csx_data_bit_p sdbp) {
 
 static inline void csx_data_bit_set(void* p2data, csx_data_bit_p sdbp) {
 	csx_data_bit_bmas(p2data, sdbp, 1);
+}
+
+/* **** */
+
+static inline uint32_t csx_data_mem_access(void* p2sd, size_t size, uint32_t* write) {
+	uint32_t data = write ? *write : 0;
+
+	if(write)
+		csx_data_write(p2sd, size, data);
+	else
+		data = csx_data_read(p2sd, size);
+
+	return(data);
+}
+
+static inline uint32_t csx_data_offset_mem_access(void* p2sd, uint32_t offset, size_t size, uint32_t* write) {
+	uint32_t data = write ? *write : 0;
+
+	if(write)
+		csx_data_offset_write(p2sd, offset, size, data);
+	else
+		data = csx_data_offset_read(p2sd, offset, size);
+
+	return(data);
 }

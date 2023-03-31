@@ -4,7 +4,7 @@
 
 #include "soc_core.h"
 #include "soc_core_cp15.h"
-#include "soc_omap_5912.h"
+//#include "soc_omap_5912.h"
 #include "soc.h"
 
 /* **** csx includes */
@@ -103,12 +103,9 @@ static int _csx_soc_reset(void* param)
 	}
 
 	csx_soc_p soc = param;
-	csx_p csx = soc->csx;
+//	csx_p csx = soc->csx;
 
-	// TODO: move soc modules to soc
-	soc_core_reset(csx->core);
-	soc_mmio_reset(csx->mmio);
-	soc_tlb_reset(csx->tlb);
+	callback_list_process(&soc->atreset_list);
 
 	return(0);
 }
@@ -153,7 +150,7 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 //	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 	ERR(err = soc_tlb_init(csx, &csx->tlb));
 
-	soc_omap5912_init(csx, &csx->soc);
+//	soc_omap5912_init(csx, &csx->soc);
 
 	return(err);
 }
@@ -178,6 +175,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 		csx->state = CSX_STATE_RUN;
 
 		int limit = Mb(4) + Kb(0) + Kb(0);
+//		int limit = Mb(18) + Kb(0) + Kb(0);
 		for(int i = 0; i < limit; i++)
 		{
 			csx->cycle++;

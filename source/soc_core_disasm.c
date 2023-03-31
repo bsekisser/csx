@@ -3,6 +3,7 @@
 
 /* **** */
 
+#include "bitfield.h"
 #include "capstone_assert_test.h"
 #include "log.h"
 

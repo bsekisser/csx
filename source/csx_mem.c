@@ -3,6 +3,7 @@
 /* **** csx project includes */
 
 #include "csx_statistics.h"
+#include "csx_data.h"
 #include "csx.h"
 
 /* **** local library includes */
@@ -251,7 +252,7 @@ csx_mem_callback_p csx_mem_access(csx_p csx, uint32_t ppa)
 uint32_t csx_mem_access_read(csx_p csx, uint32_t ppa, size_t size, csx_mem_callback_h h2cb)
 {
 	csx_mem_callback_p cb = _csx_mem_access(csx->mem, ppa, 0);
-	
+
 	if(h2cb)
 		*h2cb = cb;
 	
@@ -261,7 +262,7 @@ uint32_t csx_mem_access_read(csx_p csx, uint32_t ppa, size_t size, csx_mem_callb
 csx_mem_callback_p csx_mem_access_write(csx_p csx, uint32_t ppa, size_t size, uint32_t* write)
 {
 	csx_mem_callback_p cb = _csx_mem_access(csx->mem, ppa, 0);
-	
+
 	csx_mem_callback_write(cb, ppa, size, write);
 	
 	return(cb);
