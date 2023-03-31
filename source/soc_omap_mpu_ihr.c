@@ -158,7 +158,7 @@ static int __soc_omap_mpu_ihr_atreset(void* param)
 		else \
 			data = ihr->_var; \
 		\
-		if(_trace_mmio_ihr) { \
+		if(_trace_mmio_mpu_ihr) { \
 			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
 		} \
 		\

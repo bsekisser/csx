@@ -52,29 +52,25 @@ UNUSED_FN int __soc_omap_usb_atreset(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_usb_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_usb_client_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	const soc_omap_usb_p usb = param;
 	const csx_p csx = usb->csx;
 
-	uint32_t data = write ? *write : 0;
 	const uint8_t offset = ppa & 0xff;
 
-	if(write) {
-		CSX_MMIO_TRACE_WRITE(csx, ppa, size, *write);
-		csx_data_offset_write(usb->data, offset, size, *write);
-	} else {
-		data = csx_data_offset_read(usb->data, offset, size);
-		CSX_MMIO_TRACE_READ(csx, ppa, size, data);
-	}
+	const uint32_t data = csx_data_offset_mem_access(usb->data, offset, size, write);
+
+	if(_trace_mmio_usb_client)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	return(data);
 }
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_usb_acl[] = {
-	MMIO_TRACE_FN(0xfffb, 0x4018, 0x0000, 0x0000, USB_CLNT_SYSCON1, _soc_omap_usb_mem_access)
+static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
+	MMIO_TRACE_FN(0xfffb, 0x4018, 0x0000, 0x0000, USB_CLNT_SYSCON1, _soc_omap_usb_client_mem_access)
 	{ .ppa = ~0U, },
 };
 
@@ -96,7 +92,7 @@ int soc_omap_usb_init(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
 	csx_mmio_callback_atexit(mmio, __soc_omap_usb_atexit, h2usb);
 //	csx_mmio_callback_atreset(mmio, __soc_omap_usb_atreset, usb);
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_usb_acl, usb);
+	csx_mmio_register_access_list(mmio, 0, _soc_omap_usb_client_acl, usb);
 
 	return(0);
 }

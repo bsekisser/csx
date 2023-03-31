@@ -27,6 +27,7 @@ typedef struct soc_omap_cfg_t {
 	csx_mmio_p mmio;
 
 	uint8_t data[0x0200];
+	uint8_t reset;
 }soc_omap_cfg_t;
 
 #define SOC_OMAP_CFG_ACL_LIST_ACLE(_ahi, _alo, _dhi, _dlo, _name) \
@@ -69,12 +70,10 @@ typedef struct soc_omap_cfg_t {
 	_acl(0xfffe, 0x1140, 0x0000, 0x007f, RESET_CTL) \
 	_acl(0xfffe, 0x1160, 0x0000, 0x0000, x0xfffe_0x1160)
 
-#if 0
 enum {
 	SOC_OMAP_CFG_ACL_LIST_0(MMIO_ENUM)
 	SOC_OMAP_CFG_ACL_LIST_1(MMIO_ENUM)
 };
-#endif
 
 /* **** */
 
@@ -100,18 +99,90 @@ static int __soc_omap_cfg_atreset(void* param)
 
 	const soc_omap_cfg_p cfg = param;
 
-	csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_0, sizeof(uint32_t), cfg->data);
-	csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_1, sizeof(uint32_t), &cfg->data[0x100]);
+	if(!cfg->reset) {
+		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_0, sizeof(uint32_t), cfg->data);
+		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_1, sizeof(uint32_t), &cfg->data[0x100]);
+		cfg->reset = 1;
+	}
 
 	return(0);
-	UNUSED(param);
 }
 
 /* **** */
 
+static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	const soc_omap_cfg_p cfg = param;
+
+	const uint16_t offset = ppa & 0x1ff;
+
+	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
+
+	CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_cfg) {
+		LOG_START("CFG: Mondule Configuration Control 1\n\t");
+		_LOG_("CONF_CAM_CLKMUX_R: %01u", BEXT(data, 31));
+		_LOG_(", CONF_PMT_DCB_SELECT_R: %01u", mlBFEXT(data, 30, 29));
+		_LOG_(", CONF_OSC1_GZ_R: %01u\n\t", BEXT(data, 28));
+		_LOG_("CONF_OSC1_PWRDN_R: %01u", BEXT(data, 27));
+		_LOG_(", RESERVED[26]: %01u", BEXT(data, 26));
+		_LOG_(", OCP_INTERCON_GATE_EN_R: %01u\n\t", BEXT(data, 25));
+		_LOG_("CONF_MMC2_CLKFB_SEL_R: %01u", BEXT(data, 24));
+		_LOG_(", RESERVED[23]: %01u", BEXT(data, 23));
+		_LOG_(", CONF_MCBSP3_CLK_DIS_R: %01u\n\t", BEXT(data, 22));
+		_LOG_("CONF_MCBSP2_CLK_DIS_R: %01u", BEXT(data, 21));
+		_LOG_(", CONF_MCBSP1_CLK_DIS_R: %01u", BEXT(data, 20));
+		_LOG_(", RESERVED[19:17]: %01u\n\t", mlBFEXT(data, 19, 17));
+		_LOG_("RESERVED[16]: %01u", BEXT(data, 16));
+		_LOG_(", CONF_MOD_GPTIMER8_CLK_SEL_R: %1u", mlBFEXT(data, 15, 14));
+		_LOG_(", CONF_MOD_GPTIMER7_CLK_SEL_R: %1u\n\t", mlBFEXT(data, 13, 12));
+		_LOG_("CONF_MOD_GPTIMER6_CLK_SEL_R: %1u", mlBFEXT(data, 11, 10));
+		_LOG_(", CONF_MOD_GPTIMER5_CLK_SEL_R: %1u", mlBFEXT(data, 9, 8));
+		_LOG_(", CONF_MOD_GPTIMER4_CLK_SEL_R: %1u\n\t", mlBFEXT(data, 7, 6));
+		_LOG_("CONF_MOD_GPTIMER3_CLK_SEL_R: %1u", mlBFEXT(data, 5, 4));
+		_LOG_(", CONF_MOD_GPTIMER2_CLK_SEL_R: %1u", mlBFEXT(data, 3, 2));
+		LOG_END(", CONF_MOD_GPTIMER1_CLK_SEL_R: %1u", mlBFEXT(data, 1, 0));
+	}
+
+	return(data);
+}
+
+static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	const soc_omap_cfg_p cfg = param;
+
+	const uint16_t offset = ppa & 0x1ff;
+
+	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
+
+	CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_cfg) {
+		LOG_START("CFG: Reset Control Register\n\t");
+		_LOG_("UNUSED[31:7]: 0x%03x", mlBFEXT(data, 31, 7));
+		_LOG_(", CONF_RNG_IDLE_MODE: %01u", BEXT(data, 6));
+		_LOG_(", CONF_CAMERAIF_RESET_R: %01u\n\t", BEXT(data, 5));
+		_LOG_("CONF_UWIRE_RESET_R: %01u", BEXT(data, 4));
+		_LOG_(", CONF_OSTIMER_RESET_R: %01u", BEXT(data, 3));
+		_LOG_(", CONF_ARMIO_RESET_R: %01u\n\t", BEXT(data, 2));
+		_LOG_("RESERVED[1]: %01u", BEXT(data, 1));
+		LOG_END(", CONF_OCP_RESET_R: %01u", BEXT(data, 0));
+	}
+
+	return(data);
+}
+
 static uint32_t _soc_omap_cfg_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	const soc_omap_cfg_p cfg = param;
+
+	switch(ppa) {
+		case MOD_CONF_CTRL_1:
+			return(_soc_omap_cfg_mod_conf_ctrl_1(param, ppa, size, write));
+		case RESET_CTL:
+			return(_soc_omap_cfg_reset_ctl(param, ppa, size, write));
+	}
 
 	const uint16_t offset = ppa & 0x1ff;
 

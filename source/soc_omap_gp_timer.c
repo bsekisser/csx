@@ -81,7 +81,8 @@ static int __soc_omap_gp_timer_atexit(void* param)
 	\
 		const uint32_t data = csx_data_mem_access(&gpt->_name, size, write); \
 	\
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
+		if(_trace_mmio_gp_timer) \
+			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
 	\
 		return(data); \
 	}

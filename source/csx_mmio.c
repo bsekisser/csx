@@ -101,8 +101,8 @@ static int _csx_mmio_atexit(void* param) {
 
 	callback_list_process(mmio->atexit_list);
 
-	handle_free(&mmio->atexit_list);
-	handle_free(&mmio->atreset_list);
+	handle_free((void**)&mmio->atexit_list);
+	handle_free((void**)&mmio->atreset_list);
 	
 	handle_free(param);
 	return(0);
