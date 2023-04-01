@@ -118,7 +118,8 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t 
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
-	CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+	if(_trace_mmio_cfg)
+		CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Mondule Configuration Control 1\n\t");
@@ -156,7 +157,8 @@ static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, 
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
-	CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+	if(_trace_mmio_cfg)
+		CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Reset Control Register\n\t");

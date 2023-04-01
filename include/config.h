@@ -3,8 +3,8 @@
 #define _arm_version arm_v5tej
 
 #define _check_pedantic_arm_decode_fault 0
-#define _check_pedantic_mmio 1
-#define _check_pedantic_mmio_size 1
+#define _check_pedantic_mmio 0
+#define _check_pedantic_mmio_size 0
 #define _check_pedantic_pc 0
 #define _check_pedantic_rname 0
 #define _check_pedantic_size 0
@@ -28,15 +28,15 @@
 #define _profile_soc_core_step_arm IF_PROFILING_SOC_CORE_STEP(1)
 #define _profile_soc_core_step_thumb IF_PROFILING_SOC_CORE_STEP(1)
 
-#define _trace_atexit 1
-#define _trace_atreset 1
-#define _trace_init 1
+#define _trace_atexit 0
+#define _trace_atreset 0
+#define _trace_init 0
 #define _trace_mem_mmap 0
 #define _trace_mem_mmap_alloc 0
 #define _trace_mem_mmap_alloc_free 0
 #define _trace_mem_mmap_alloc_malloc 0
 
-#define _trace_mmio 1
+#define _trace_mmio 0
 
 #define IF_TRACE_MMIO(_x) (_trace_mmio ? (_x) : 0)
 #define _trace_mmio_cfg IF_TRACE_MMIO(1)
@@ -49,6 +49,7 @@
 #define _trace_mmio_mpu_gpio IF_TRACE_MMIO(1)
 #define _trace_mmio_mpu_ihr IF_TRACE_MMIO(1)
 #define _trace_mmio_mpu_timer IF_TRACE_MMIO(1)
+#define _trace_mmio_os_timer IF_TRACE_MMIO(1)
 #define _trace_mmio_tc_emiff IF_TRACE_MMIO(1)
 #define _trace_mmio_tc_emifs IF_TRACE_MMIO(1)
 #define _trace_mmio_tc_ocp IF_TRACE_MMIO(1)

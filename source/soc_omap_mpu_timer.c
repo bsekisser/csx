@@ -226,9 +226,11 @@ static uint32_t _soc_omap_mpu_timer_load(void* param, uint32_t ppa, size_t size,
 	const soc_omap_mpu_timer_unit_p sotu = __mpu_timer_unit(sot, ppa);
 	const csx_p csx = sot->csx;
 
-	LOG_START("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
-		csx->cycle, size, ppa, *write);
-	LOG_END(", count = 0x%08x", sotu->count);
+	if(_trace_mmio_mpu_timer) {
+		LOG_START("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
+			csx->cycle, size, ppa, *write);
+		LOG_END(", count = 0x%08x", sotu->count);
+	}
 
 	__timer_update_count(sot, sotu);
 
@@ -245,7 +247,8 @@ static uint32_t _soc_omap_mpu_timer_read(void* param, uint32_t ppa, size_t size,
 
 	uint32_t count = __timer_update_count(sot, sotu);
 
-	CSX_MMIO_TRACE_READ(csx, ppa, size, count);
+	if(_trace_mmio_mpu_timer)
+		CSX_MMIO_TRACE_READ(csx, ppa, size, count);
 
 	return(count);
 	

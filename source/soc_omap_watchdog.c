@@ -103,7 +103,8 @@ static uint32_t _soc_omap_watchdog_wspr(void* param,
 
 	uint32_t data = write ? *write : 0;
 
-	CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
+	if(_trace_mmio_watchdog)
+		CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
 
 	return(data);
 }
@@ -119,7 +120,8 @@ static uint32_t _soc_omap_watchdog_wwps(void* param,
 
 	uint32_t data = write ? *write : 0;
 
-	CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
+	if(_trace_mmio_watchdog)
+		CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
 
 	return(data);
 }

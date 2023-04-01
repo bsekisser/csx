@@ -89,7 +89,8 @@ static uint32_t _soc_omap_os_timer_ctrl(void* param, uint32_t ppa, size_t size, 
 	else
 		data = _BCLR(ost->ctrl, 1);
 
-	CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+	if(_trace_mmio_os_timer)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	return(data);
 }
@@ -106,7 +107,8 @@ static uint32_t _soc_omap_os_timer_tick_val(void* param, uint32_t ppa, size_t si
 	else
 		data = ost->tick.val;
 
-	CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+	if(_trace_mmio_os_timer)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	return(data);
 }
