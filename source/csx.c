@@ -73,9 +73,11 @@ csx_p csx_init(void)
 	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, 0, csx->sdram);
 
 	/* **** */
+
 	ERR(err = csx_mmio_init(csx, &csx->mmio));
 	ERR(err = csx_soc_init(csx, &csx->soc));
 
+	// TODO: soc_nnd to csx_nnd
 	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 
 	return(csx);

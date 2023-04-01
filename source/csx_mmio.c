@@ -11,6 +11,7 @@
 #include "soc_omap_mpu.h"
 #include "soc_omap_mpu_gpio.h"
 #include "soc_omap_mpu_ihr.h"
+#include "soc_omap_mpu_mmc.h"
 #include "soc_omap_mpu_timer.h"
 #include "soc_omap_os_timer.h"
 #include "soc_omap_tc.h"
@@ -66,6 +67,7 @@ typedef struct csx_mmio_t {
 	soc_omap_mpu_p mpu;
 	soc_omap_mpu_gpio_p mpu_gpio;
 	soc_omap_mpu_ihr_p mpu_ihr;
+	soc_omap_mpu_mmc_p mpu_mmc;
 	soc_omap_mpu_timer_p mpu_timer;
 	soc_omap_os_timer_p os_timer;
 	soc_omap_tc_p tc;
@@ -197,6 +199,7 @@ int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
 	soc_omap_mpu_init(csx, mmio, &mmio->mpu);
 	soc_omap_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio);
 	soc_omap_mpu_ihr_init(csx, mmio, &mmio->mpu_ihr);
+	soc_omap_mpu_mmc_init(csx, mmio, &mmio->mpu_mmc);
 	soc_omap_mpu_timer_init(csx, mmio, &mmio->mpu_timer);
 	soc_omap_os_timer_init(csx, mmio, &mmio->os_timer);
 	soc_omap_tc_init(csx, mmio, &mmio->tc);

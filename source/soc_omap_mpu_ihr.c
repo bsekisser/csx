@@ -204,7 +204,7 @@ int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 	ihr->mmio = mmio;
 
 	csx_mmio_callback_atexit(mmio, __soc_omap_mpu_ihr_atexit, h2ihr);
-	csx_mmio_callback_atreset(mmio, __soc_omap_mpu_ihr_atreset, h2ihr);
+	csx_mmio_callback_atreset(mmio, __soc_omap_mpu_ihr_atreset, ihr);
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L1, __soc_omap_mpu_ihr_l1_acl, ihr);
 

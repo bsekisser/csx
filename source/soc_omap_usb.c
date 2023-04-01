@@ -29,7 +29,7 @@ typedef struct soc_omap_usb_t {
 
 /* **** */
 
-int __soc_omap_usb_atexit(void* param)
+static int __soc_omap_usb_atexit(void* param)
 {
 	if(_trace_atexit)
 		LOG();
@@ -76,12 +76,12 @@ static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
 
 int soc_omap_usb_init(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
 {
-	if(_trace_init)
-		LOG();
-
 	assert(0 != csx);
 	assert(0 != mmio);
 	assert(0 != h2usb);
+
+	if(_trace_init)
+		LOG();
 
 	soc_omap_usb_p usb = handle_calloc((void**)h2usb, 1, sizeof(soc_omap_usb_t));
 	ERR_NULL(usb);
