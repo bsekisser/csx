@@ -52,14 +52,14 @@ typedef struct csx_mem_t {
 /* **** */
 
 static inline uint32_t csx_mem_callback_read(csx_mem_callback_p cb, uint32_t ppa, size_t size) {
-	if(cb)
+	if(cb && cb->fn)
 		return(cb->fn(cb->param, ppa, size, 0));
 
 	return(0);
 }
 
 static inline void csx_mem_callback_write(csx_mem_callback_p cb, uint32_t ppa, size_t size, uint32_t* write) {
-	if(cb)
+	if(cb && cb->fn)
 		cb->fn(cb->param, ppa, size, write);
 }
 
