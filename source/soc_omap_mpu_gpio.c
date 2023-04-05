@@ -32,6 +32,7 @@ typedef struct soc_omap_mpu_gpio_unit_t {
 	uint32_t irqenable1;
 	uint32_t set_dataout;
 	uint32_t sysconfig;
+	uint32_t xxxx_xxc0;
 }soc_omap_mpu_gpio_unit_t;
 
 typedef struct soc_omap_mpu_gpio_t {
@@ -86,131 +87,38 @@ static soc_omap_mpu_gpio_unit_p __soc_omap_mpu_gpio_unit(
 
 /* **** */
 
-static uint32_t _soc_omap_mpu_gpio_clear_dataout(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
+#define SOC_OMAP_MPU_GPIO_VAR(_x) \
+	static uint32_t _soc_omap_mpu_gpio_##_x(void* param, \
+		uint32_t ppa, size_t size, uint32_t* write) \
+	{ \
+		if(_check_pedantic_mmio_size) \
+			assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size)); \
+	\
+		const soc_omap_mpu_gpio_p gpio = param; \
+		const csx_p csx = gpio->csx; \
+	\
+		const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa); \
+	\
+		const uint32_t data = write ? *write : unit->_x;	\
+	\
+		if(write) \
+			unit->_x = data; \
+	\
+		if(_trace_mmio_mpu_gpio) \
+			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
+	\
+		return(data); \
+	}
 
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
 
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->clear_dataout, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_dataout(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->dataout, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_direction(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->direction, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_edge_control2(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->edge_control2, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_irqenable1(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->irqenable1, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_set_dataout(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->set_dataout, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
-
-static uint32_t _soc_omap_mpu_gpio_sysconfig(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size));
-
-	const soc_omap_mpu_gpio_p gpio = param;
-	const csx_p csx = gpio->csx;
-
-	const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa);
-
-	const uint32_t data = csx_data_mem_access(&unit->sysconfig, size, write);
-
-	if(_trace_mmio_mpu_gpio)
-		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-
-	return(data);
-}
+SOC_OMAP_MPU_GPIO_VAR(clear_dataout)
+SOC_OMAP_MPU_GPIO_VAR(dataout)
+SOC_OMAP_MPU_GPIO_VAR(direction)
+SOC_OMAP_MPU_GPIO_VAR(edge_control2)
+SOC_OMAP_MPU_GPIO_VAR(irqenable1)
+SOC_OMAP_MPU_GPIO_VAR(set_dataout)
+SOC_OMAP_MPU_GPIO_VAR(sysconfig)
+SOC_OMAP_MPU_GPIO_VAR(xxxx_xxc0)
 
 /* **** */
 
@@ -224,6 +132,7 @@ static csx_mmio_access_list_t __soc_omap_mpu_gpio_acl[] = {
 	GPIO_ACLE(0x34, DIRECTION, _soc_omap_mpu_gpio_direction)
 	GPIO_ACLE(0x3c, EDGE_CTRL2, _soc_omap_mpu_gpio_edge_control2)
 	GPIO_ACLE(0xb0, CLEAR_DATAOUT, _soc_omap_mpu_gpio_clear_dataout)
+	GPIO_ACLE(0xc0, xxxx_xxc0, _soc_omap_mpu_gpio_xxxx_xxc0)
 	GPIO_ACLE(0xf0, SET_DATAOUT, _soc_omap_mpu_gpio_set_dataout)
 	{ .ppa = ~0U, },
 };
