@@ -610,15 +610,14 @@ static void arm_inst_mcr_mrc(soc_core_p core)
 
 	if(CCx.e)
 	{
+		uint32_t rval = soc_core_cp15(core, MCRC_L ? 0 : &vR(D));
 		if(MCRC_L) {
-			uint32_t rval = soc_core_cp15_read(core);
 			if(rPC == rR(D)) {
 				CPSR &= ~SOC_CORE_PSR_NZCV;
 				CPSR |= rval & SOC_CORE_PSR_NZCV;
 			} else
 				vR(D) = rval;
-		} else
-			soc_core_cp15_write(core);
+		}
 	}
 }
 

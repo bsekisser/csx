@@ -34,6 +34,9 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 #define UNDEFINED \
 	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
 
+#define UNDEFINED_INSTRUCTION \
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+
 #define UNPREDICTABLE \
 	{ LOG("UNPREDICTABLE"); }
 
