@@ -57,9 +57,6 @@ static int _soc_core_reset(void* param)
 	const int high_vectors = 0;
 	uint32_t reset_pc = !high_vectors ? 0 : 0xffff0000;	/* if high vectors */
 
-	if(core->csx->cdp)
-		reset_pc = core->csx->cdp->base;
-
 	soc_core_psr_mode_switch(core, CPSR);
 	soc_core_reg_set_pcx(core, reset_pc);
 

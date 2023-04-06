@@ -59,6 +59,18 @@ static int _csx_soc_atexit(void* param)
 	return(0);
 }	
 
+static void __csx_soc_init_load_rgn_file(void* dst, csx_data_p cdp, uint32_t start, uint32_t end)
+{
+	void* src = cdp->data;
+	void* dst_start = dst + (cdp->base - start);
+	void* dst_limit = dst + (end - start);
+	void* dst_end = dst_start + cdp->size;
+
+	if(dst_end < dst_limit)
+		memcpy(dst_start, src, cdp->size);
+}
+
+
 static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* file_name)
 {
 	int fd;
@@ -80,15 +92,17 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	cdp->data = data;
 	cdp->size = sb.st_size;
 
-	if(1) {
-		cdp->base = 0x10020000; /* ? thoretical load address in sdram */
-
-		void* src = cdp->data;
-		void* dst = &csx->sdram[cdp->base - CSX_SDRAM_START];
-		
-		memcpy(dst, src, cdp->size);
-	} else
-		cdp->base = 0x14000000; /* ? safer as unknown load address */
+	if((cdp->base >= CSX_SDRAM_START)
+		&& (cdp->base < CSX_SDRAM_END))
+	{
+		__csx_soc_init_load_rgn_file(csx->sdram,
+			cdp, CSX_SDRAM_START, CSX_SDRAM_END);
+	} else if((cdp->base >= SOC_SRAM_START)
+		&& (cdp->base < SOC_SRAM_END))
+	{
+		__csx_soc_init_load_rgn_file(csx->soc->sram,
+			cdp, SOC_SRAM_START, SOC_SRAM_END);
+	}
 
 	LOG("base = 0x%08x, data = 0x%08" PRIxPTR ", size = 0x%08zx",
 		cdp->base, (uintptr_t)cdp->data, cdp->size);
@@ -159,16 +173,27 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 {
 	int err = 0;
 
-	if(loader_firmware)
-		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
-	else
-		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
+	const soc_core_p core = csx->core;
+
+	core->trace = !!core_trace;
 
 	csx_soc_reset(csx);
 
-	const soc_core_p core = csx->core;
+	if(loader_firmware) {
+		csx->firmware.base = 0x10020000;
+	} else {
+		csx->loader.base = 0x10020000;
+		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 
-	core->trace = core_trace;
+		csx->firmware.base = csx->loader.base + csx->loader.size;
+	}
+
+	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
+
+	soc_core_psr_mode_switch(core, (CPSR & ~0x1f) | (0x18 + 7));
+
+	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
+	soc_core_reg_set_pcx(core, cdp->base);
 
 	if(!err)
 	{
