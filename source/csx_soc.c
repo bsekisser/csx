@@ -88,7 +88,6 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	ERR_NULL(data);
 
-	csx->cdp = cdp;
 	cdp->data = data;
 	cdp->size = sb.st_size;
 
