@@ -83,7 +83,6 @@ typedef struct csx_t {
 
 	csh								cs_handle;
 
-	csx_data_p						cdp;
 	csx_data_t						loader;
 	csx_data_t						firmware;
 
