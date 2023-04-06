@@ -4,13 +4,13 @@
 
 #include "soc_core.h"
 #include "soc_core_cp15.h"
-//#include "soc_omap_5912.h"
 #include "soc.h"
 
 /* **** csx includes */
 
 #include "csx_data.h"
 #include "csx_mem.h"
+#include "csx_soc_omap.h"
 #include "csx_statistics.h"
 #include "csx.h"
 #include "csx_state.h"
@@ -84,7 +84,7 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 		cdp->base = 0x10020000; /* ? thoretical load address in sdram */
 
 		void* src = cdp->data;
-		void* dst = &csx->sdram[cdp->base - CSX_SDRAM_BASE];
+		void* dst = &csx->sdram[cdp->base - CSX_SDRAM_START];
 		
 		memcpy(dst, src, cdp->size);
 	} else
@@ -135,7 +135,7 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
 	csx_callback_atreset(csx, _csx_soc_reset, soc);
 
-	csx_mem_mmap(csx, CSX_SRAM_BASE, CSX_SRAM_END, 0, soc->sram);
+	csx_mem_mmap(csx, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
 
 	int err = 0;
 

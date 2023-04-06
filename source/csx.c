@@ -9,6 +9,7 @@
 
 #include "csx_mem.h"
 #include "csx_mmio.h"
+#include "csx_soc_omap.h"
 #include "csx_statistics.h"
 //#include "csx_test.h"
 
@@ -70,7 +71,7 @@ csx_p csx_init(void)
 
 	ERR(err = csx_mem_init(csx, &csx->mem));
 
-	csx_mem_mmap(csx, CSX_SDRAM_BASE, CSX_SDRAM_STOP, 0, csx->sdram);
+	csx_mem_mmap(csx, CSX_SDRAM_START, CSX_SDRAM_END, 0, csx->sdram);
 
 	/* **** */
 

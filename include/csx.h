@@ -37,6 +37,7 @@ typedef struct csx_data_t* csx_data_p;
 #include "csx_mem.h"
 #include "csx_mmio.h"
 #include "csx_state.h"
+#include "csx_soc_omap.h"
 
 /* **** */
 
@@ -44,10 +45,6 @@ typedef struct csx_data_t* csx_data_p;
 #include "unused.h"
 
 /* **** */
-
-#define CSX_SDRAM_BASE			0x10000000
-#define CSX_SDRAM_SIZE			Mb(16)
-#define CSX_SDRAM_STOP			((CSX_SDRAM_BASE + CSX_SDRAM_SIZE) - 1)
 
 #ifndef Kb
 	#define Kb(_x)						((_x) * 1024)
@@ -90,7 +87,7 @@ typedef struct csx_t {
 	csx_data_t						loader;
 	csx_data_t						firmware;
 
-	uint8_t							sdram[CSX_SDRAM_SIZE];
+	uint8_t							sdram[CSX_SDRAM_ALLOC];
 
 	callback_list_t					atexit_list;
 	callback_list_t					atreset_list;

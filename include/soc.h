@@ -12,18 +12,12 @@ typedef struct csx_soc_t* csx_soc_p;
 
 /* **** */
 
+#include "csx_soc_omap.h"
 #include "csx.h"
 
 /* **** */
 
 // TODO: soc_t from soc_omap_5912.h
-
-enum {
-	CSX_SRAM_BASE = 0x20000000UL,
-//	CSX_SRAM_END = 0x2003e7ffUL, /* TODO: actual on chip sram listed as 250Kb */
-	CSX_SRAM_END = 0x2003efffUL,
-	CSX_SRAM_ALLOC,
-};
 
 typedef struct csx_soc_t {
 	// TODO: sram
@@ -31,7 +25,7 @@ typedef struct csx_soc_t {
 
 	csx_p csx;
 	
-	uint8_t sram[CSX_SRAM_ALLOC]; /* aka framebuffer */
+	uint8_t sram[SOC_SRAM_ALLOC]; /* aka framebuffer */
 	
 	callback_list_t atexit_list;
 	callback_list_t atreset_list;
