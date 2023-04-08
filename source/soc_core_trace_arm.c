@@ -156,25 +156,32 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 	else
 	{
 		const char* rws = "";
-		switch(rR(EA))
-		{
-			case sizeof(uint8_t):
+		if(BTST(IR, 26)) {
+			if(LDST_BIT(b22))
 				rws = "b";
-				break;
-			case sizeof(uint16_t):
-				rws = "h";
-				break;
-			case sizeof(uint32_t):
-				break;
-			case sizeof(uint64_t):
-				rws = "d";
-				break;
-			default:
-				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
-				break;
+		} else {
+			switch(BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5)) {
+				case 0x01: /* strh */
+				case 0x05: /* ldrh*/
+					rws = "h";
+					break;
+				case 0x02: /* strd */
+				case 0x03: /* ldrd */
+					rws = "d";
+					break;
+				case 0x06: /* ldrsb */
+					rws = "sb";
+					break;
+				case 0x07: /* ldrsh */
+					rws = "sh";
+					break;
+				default:
+					LOG_ACTION(core->csx->state = CSX_STATE_HALT);
+					break;
+			}
 		}
 
-		_CORE_TRACE_("%s%s", LDST_FLAG_S ? "s" : "", rws);
+		_CORE_TRACE_("%s", rws);
 	}
 
 	_CORE_TRACE_("(%s, %s", rR_NAME(D), rR_NAME(N));

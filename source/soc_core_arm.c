@@ -131,49 +131,15 @@ static void _arm_inst_ldst(soc_core_p core)
 	else
 		_setup_rR_vR_src(core, rRD, ARM_IR_RD);
 
-	int wb = CCx.e;
-	wb = wb ? (!LDST_BIT(p24) || LDST_BIT(w21)) : 0;
-
-	uint32_t ea = _arm_ldst_ea(core, wb);
+	uint32_t ea = _arm_ldst_ea(core);
 
 	soc_core_trace_inst_ldst(core);
 
-	_arm_ldst(core, ea);
-}
 
-static void _arm_inst_ldst_iro_sro(soc_core_p core)
-{
-	rR(EA) = LDST_BIT(b22) ? sizeof(uint8_t) : sizeof(uint32_t);
-
-	return(_arm_inst_ldst(core));
-}
-
-static void _arm_inst_ldst_sh(soc_core_p core)
-{
-	switch(BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5)) {
-		case 0x01:
-		case 0x05:
-			rR(EA) = sizeof(uint16_t);
-			break;
-		case 0x02:
-		case 0x03:
-			rR(EA) = sizeof(uint64_t);
-			break;
-		case 0x06:
-			rR(EA) = sizeof(int8_t);
-			break;
-		case 0x07:
-			rR(EA) = sizeof(int16_t);
-			break;
-		default:
-			soc_core_disasm_arm(core, PC, IR);
-			LOG_ACTION(exit(-1));
-			break;
-	}
-
-	vR(N_OFFSET) = vR(M);
-
-	return(_arm_inst_ldst(core));
+	if(BTST(IR, 26))
+		_arm_ldst(core, ea);
+	else
+		_arm_ldst_sh(core, ea);
 }
 
 static void _arm_inst_ldstm(soc_core_p core,
@@ -335,21 +301,23 @@ static void arm_inst_ldst_immediate_offset(soc_core_p core)
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 11, 0));
 	vR(N_OFFSET) = vR(M);
 
-	return(_arm_inst_ldst_iro_sro(core));
+	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldst_immediate_offset_sh(soc_core_p core)
 {
 	_setup_rR_vR(M, ~0, mlBFMOV(IR, 11, 8, 4) | mlBFEXT(IR, 3, 0));
+	vR(N_OFFSET) = vR(M);
 
-	return(_arm_inst_ldst_sh(core));
+	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+	vR(N_OFFSET) = vR(M);
 
-	return(_arm_inst_ldst_sh(core));
+	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
@@ -393,7 +361,7 @@ static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 
 	vR(N_OFFSET) = index;
 
-	return(_arm_inst_ldst_iro_sro(core));
+	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldstm(soc_core_p core)
