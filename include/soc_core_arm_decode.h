@@ -58,13 +58,6 @@ enum {
 #define MCRC_OP2					mlBFEXT(IR, 7, 5)
 #define MCRC_Rd						mlBFEXT(IR, 15, 12)
 
-typedef struct soc_core_ldst_t {
-	uint32_t	ea;
-	uint32_t	index;
-
-	size_t		rw_size;
-}soc_core_ldst_t;
-
 /* **** */
 
 void soc_core_arm_decode_coproc(soc_core_p core);

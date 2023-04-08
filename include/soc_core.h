@@ -50,7 +50,10 @@ enum	{
 	rRS,
 	rRSOP_C,
 	rRSOP_V,
-	rR_COUNT
+	rR_COUNT,
+//
+	rREA = rRSOP_V,
+	rRN_OFFSET = rRSOP_C,
 };
 
 typedef struct soc_core_inst_t {

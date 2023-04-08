@@ -138,7 +138,7 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 	CORE_TRACE_END();
 }
 
-void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
+void soc_core_trace_inst_ldst(soc_core_p core)
 {
 	CORE_TRACE_START();
 
@@ -156,7 +156,7 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 	else
 	{
 		const char* rws = "";
-		switch(ls->rw_size)
+		switch(rR(EA))
 		{
 			case sizeof(uint8_t):
 				rws = "b";
@@ -186,7 +186,10 @@ void soc_core_trace_inst_ldst(soc_core_p core, soc_core_ldst_p ls)
 	else
 		_CORE_TRACE_("[0]");
 
-	_CORE_TRACE_(") /* 0x%08x: 0x%08x */", ls->ea, vR(D));
+	_CORE_TRACE_(")");
+	
+	if(CCx.e)
+		_CORE_TRACE_(" /* 0x%08x: 0x%08x */", vR(EA), vR(D));
 
 	CORE_TRACE_END();
 }
