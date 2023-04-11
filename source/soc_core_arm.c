@@ -133,13 +133,12 @@ static void _arm_inst_ldst(soc_core_p core)
 
 	uint32_t ea = _arm_ldst_ea(core);
 
-	soc_core_trace_inst_ldst(core);
-
-
 	if(BTST(IR, 26))
 		_arm_ldst(core, ea);
 	else
 		_arm_ldst_sh(core, ea);
+
+	soc_core_trace_inst_ldst(core);
 }
 
 static void _arm_inst_ldstm(soc_core_p core,
@@ -198,8 +197,9 @@ static void arm_inst_b(soc_core_p core)
 		CCx.e = 1;
 	}
 
-	CORE_TRACE("b%s%s(0x%08x) /* %c(0x%08x) hl = %01u */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', offset, hl);
+	int splat = _trace_bx_0 && blx && (0 == offset);
+	CORE_TRACE("b%s%s(0x%08x) /* %c(%s0x%08x) hl = %01u */",
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', splat ? "x" : "", offset, hl);
 
 	if(link)
 		CORE_TRACE_LINK(PC);

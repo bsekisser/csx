@@ -148,6 +148,7 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
 	csx_callback_atreset(csx, _csx_soc_reset, soc);
 
+	csx_mem_mmap(csx, 0, 0x0003ffff, 0, soc->brom);
 	csx_mem_mmap(csx, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
 
 	int err = 0;
@@ -198,20 +199,18 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		int limit = Mb(4) + Kb(0) + Kb(0);
-//		int limit = Mb(18) + Kb(0) + Kb(0);
-		for(int i = 0; i < limit; i++)
-		{
+		for(;;) {
 			csx->cycle++;
 			core->step(core);
 
 			if((csx->state & CSX_STATE_HALT) || (0 == PC))
 			{
-				i = limit;
 				LOG_ACTION(break);
 			}
 
 			csx->insns++;
+			if(csx->insns > 0x100000)
+				break;
 		}
 	}
 

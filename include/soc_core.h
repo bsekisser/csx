@@ -20,28 +20,28 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 /* **** */
 
 #define DataAbort() \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define DECODE_FAULT \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define ILLEGAL_INSTRUCTION \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define PrefetchAbort() \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define UNDEFINED \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define UNDEFINED_INSTRUCTION \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define UNPREDICTABLE \
-	{ LOG("UNPREDICTABLE"); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 #define UNIMPLIMENTED \
-	{ soc_core_disasm(core, IP, IR); LOG_ACTION(exit(-1)); }
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
 enum	{
 	rRD,

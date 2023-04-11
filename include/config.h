@@ -30,6 +30,7 @@
 
 #define _trace_atexit 0
 #define _trace_atreset 0
+#define _trace_bx_0 1
 #define _trace_init 0
 #define _trace_mem_mmap 0
 #define _trace_mem_mmap_alloc 0

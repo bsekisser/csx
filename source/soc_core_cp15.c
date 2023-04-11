@@ -59,6 +59,7 @@ static uint32_t __soc_core_cp15_fault(soc_core_p core, uint32_t opcode, uint32_t
 	LOG_END(", write = %01u(%08x)", write ? 1 : 0, data);
 
 	DECODE_FAULT;
+	return(0);
 }
 
 /* **** */

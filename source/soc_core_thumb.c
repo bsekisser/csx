@@ -196,7 +196,9 @@ static void soc_core_thumb_bxx_b(soc_core_p core, int32_t eao)
 {
 	const uint32_t new_pc = PC + eao;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x*/", new_pc & ~1, PC, eao);
+	int splat = _trace_bx_0 && (0 == eao);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + %s0x%03x*/",
+		new_pc & ~1, PC, splat ? "x" : "", eao);
 
 	PC = new_pc;
 }
@@ -216,8 +218,9 @@ static void soc_core_thumb_bxx_blx(
 	if(blx)
 		new_pc &= ~3;
 
-	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + 0x%08x, LR = 0x%08x */",
-		blx ? "x" : "", new_pc & ~1, PC, eao, LR & ~1);
+	int splat = _trace_bx_0 && (0 == eao);
+	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
+		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
 
 	if(blx)
 		soc_core_reg_set_pcx(core, new_pc);
