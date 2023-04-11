@@ -153,11 +153,11 @@ void symbol_log(cracker_p cj, symbol_p cjs)
 
 		_LOG_(" size: 0x%04x", size);
 
-		if(BXCG(size, sizeof(uint32_t), 0)) {
+		if(BXCG(&size, sizeof(uint32_t), 0)) {
 			_LOG_(" (uint32_t (0x%08x))%s", data, size ? " |" : "");
 		}
 
-		if(BXCG(size, sizeof(uint16_t), 0)) {
+		if(BXCG(&size, sizeof(uint16_t), 0)) {
 			_LOG_(" (uint16_t (0x%04x))%s", (uint16_t)data, size ? " |" : "");
 //			_LOG_(" uint16_t%s", size ? " |" : "");
 		}
@@ -304,7 +304,8 @@ symbol_p cracker_text(cracker_p cj, uint32_t pat)
 int main(void)
 {
 	int fd;
-	ERR(fd = open(RGNDirPath RGNFileName "_loader.bin", O_RDONLY));
+//	ERR(fd = open(RGNDirPath RGNFileName "_loader.bin", O_RDONLY));
+	ERR(fd = open(RGNDirPath RGNFileName "_firmware.bin", O_RDONLY));
 
 	struct stat sb;
 
