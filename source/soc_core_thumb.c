@@ -25,7 +25,7 @@
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
 	const int pcsp = BEXT(IR, 11);
-	
+
 	if(pcsp)
 		_setup_rR_vR(N, rSP, SP);
 	else
@@ -148,7 +148,7 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 static void soc_core_thumb_bcc(soc_core_p core)
 {
 	const uint8_t cond = mlBFEXT(IR, 11, 8);
-	const int32_t imm8 = mlBFEXTs(IR, 7, 0) << 1;
+	const int32_t imm8 = mlBFMOVs(IR, 7, 0, 1);
 
 	CCx.e = soc_core_check_cc(core, cond);
 
@@ -192,8 +192,9 @@ static void soc_core_thumb_bx(soc_core_p core)
 	if(0) LOG("PC(0x%08x)", PC);
 }
 
-static void soc_core_thumb_bxx_b(soc_core_p core, int32_t eao)
+static void soc_core_thumb_bxx_b(soc_core_p core)
 {
+	const int16_t eao = mlBFMOVs(IR, 10, 0, 1);
 	const uint32_t new_pc = PC + eao;
 
 	int splat = _trace_bx_0 && (0 == eao);
@@ -203,66 +204,68 @@ static void soc_core_thumb_bxx_b(soc_core_p core, int32_t eao)
 	PC = new_pc;
 }
 
-static void soc_core_thumb_bxx_blx(
-	soc_core_p core,
-	int32_t eao)
+static void soc_core_thumb_bxx_bl_blx(soc_core_p core, uint32_t eao, int blx)
 {
-	uint32_t new_pc = (LR + eao);
+	const uint32_t new_pc = LR + eao;
 
 	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 
 	LR = PC | 1;
-
-	int blx = (0 == BEXT(IR, 12));
-
-	if(blx)
-		new_pc &= ~3;
 
 	int splat = _trace_bx_0 && (0 == eao);
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
 		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
 
 	if(blx)
-		soc_core_reg_set_pcx(core, new_pc);
+		soc_core_reg_set_pcx(core, new_pc & ~3);
 	else
 		PC = new_pc & ~1;
 
 	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 }
 
-static void soc_core_thumb_bxx(soc_core_p core)
+static void soc_core_thumb_bxx_bl(soc_core_p core)
 {
-	for(int i = 0; i < 2; i++) {
-		int32_t eao = mlBFEXTs(IR, 10, 0);
-		const uint8_t h = mlBFEXT(IR, 12, 11);
+	const uint32_t eao = mlBFMOV(IR, 10, 0, 1);
 
-		if(0) CORE_TRACE("H = 0x%02x, LR = 0x%08x, PC = 0x%08x, EAO = 0x%08x",
-			h, LR, PC, eao);
+	return(soc_core_thumb_bxx_bl_blx(core, eao, 0));
+}
 
-		switch(h) {
-			case 0x00:
-				/* branch offset is from PC + 4, ie.. lr */
-				return(soc_core_thumb_bxx_b(core, eao << 1));
-			case 0x01:
-			case 0x03:
-				eao = mlBFMOV(IR, 10, 0, 1);
-				return(soc_core_thumb_bxx_blx(core, eao));
-			case 0x02:
-				eao <<= 12;
-				LR = 2 + PC + eao;
+static void soc_core_thumb_bxx_blx(soc_core_p core)
+{
+	const uint32_t eao = mlBFMOV(IR, 10, 0, 1);
 
-				IR <<= 16;
-				IR += soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
+	return(soc_core_thumb_bxx_bl_blx(core, eao, 1));
+}
 
-				if((0x7 != mlBFEXT(IR, 15, 13)) && !BEXT(IR, 11)) {
-					CORE_TRACE("/* xxx -- LR = 0x%08x + 0x%03x = 0x%08x */", PC, eao, LR);
-					return;
-				}
+static void soc_core_thumb_bxx_prefix(soc_core_p core)
+{
+	const int32_t eao_prefix = mlBFMOVs(IR, 10, 0, 12);
+	const uint8_t h_prefix = mlBFEXT(IR, 12, 11);
 
-				PC += 2;
+	switch(h_prefix) {
+		case 0x02:
+			LR = 2 + PC + eao_prefix;
 
-				break;
-		}
+			IR <<= 16;
+			IR += soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
+			break;
+		default:
+			DECODE_FAULT
+	}
+
+	const uint32_t eao_suffix = mlBFMOV(IR, 10, 0, 1);
+
+	switch(IR & 0xf800) {
+		case 0xe800:
+			PC += 2;
+			return(soc_core_thumb_bxx_bl_blx(core, eao_suffix, 1));
+		case 0xf800:
+			PC += 2;
+			return(soc_core_thumb_bxx_bl_blx(core, eao_suffix, 0));
+		default:
+			CORE_TRACE("/* xxx -- LR = 0x%08x + 0x%03x = 0x%08x */", PC, eao_prefix, LR);
+			return;
 	}
 }
 
@@ -728,7 +731,7 @@ static void soc_core_thumb_step_0xe800(soc_core_p core)
 	if(IR & 1)
 		UNDEFINED;
 
-	return(soc_core_thumb_bxx(core));
+	return(soc_core_thumb_bxx_blx(core));
 }
 
 static void soc_core_thumb_step_fail_decode(soc_core_p core)
@@ -826,10 +829,10 @@ static thumb_fn thumb_fn_list_x000[0x100] = {
 	[0xd0 ... 0xdd] = soc_core_thumb_bcc,
 	[0xde ... 0xde] = soc_core_thumb_step_undefined, /* undefined instruction */
 	[0xdf ... 0xdf] = soc_core_thumb_step_unimplimented, /* swi */
-	[0xe0 ... 0xe7] = soc_core_thumb_bxx,
+	[0xe0 ... 0xe7] = soc_core_thumb_bxx_b,
 	[0xe8 ... 0xef] = soc_core_thumb_step_0xe800,
-	[0xf0 ... 0xf7] = soc_core_thumb_bxx,
-	[0xf8 ... 0xff] = soc_core_thumb_bxx,
+	[0xf0 ... 0xf7] = soc_core_thumb_bxx_prefix,
+	[0xf8 ... 0xff] = soc_core_thumb_bxx_bl,
 };
 
 void soc_core_thumb_step(soc_core_p core)
@@ -843,118 +846,9 @@ void soc_core_thumb_step(soc_core_p core)
 
 	if(fn) {
 		return(fn(core));
-	} else
-		goto fail_decode;
-
-	switch(IR)
-	{
-	/* **** */
-		case 0x0000 ... (0x1000 | mlBF(10, 0)):
-			if(SOC_CORE_THUMB_SBI_IMM5_RM_RD == (IR & SOC_CORE_THUMB_SBI_IMM5_RM_RD_MASK))
-				return(soc_core_thumb_sbi_imm5_rm_rd(core));
-			break;
-		case 0x1800 ... (0x1800 | mlBF(9, 0)):
-		case 0x1c00 ... (0x1c00 | mlBF(9, 0)):
-			if(SOC_CORE_THUMB_ADD_SUB_RN_RD == (IR & SOC_CORE_THUMB_ADD_SUB_RN_RD_MASK))
-				return(soc_core_thumb_add_sub_rn_rd(core));
-			break;
-		case 0x2000 ... (0x2000 | mlBF(12, 0)):
-			if(SOC_CORE_THUMB_ASCM_RD_I8(0) == (IR & SOC_CORE_THUMB_ASCM_RD_I8_MASK))
-				return(soc_core_thumb_ascm_rd_i(core));
-			break;
-		case 0x4000 ... (0x4000 | mlBF(9, 0)):
-			if(SOC_CORE_THUMB_DP_RMS_RDN == (IR & SOC_CORE_THUMB_DP_RMS_RDN_MASK))
-				return(soc_core_thumb_dp_rms_rdn(core));
-			break;
-		case 0x4400 ... (0x4600 | mlBF(7, 0)):
-			if(SOC_CORE_THUMB_SDP_RMS_RDN(0) == (IR & SOC_CORE_THUMB_SDP_RMS_RDN_MASK))
-				return(soc_core_thumb_sdp_rms_rdn(core));
-			break;
-		case 0x4700 ... (0x4700 | mlBF(7, 0)): /* bx_blx */
-			if(SOC_CORE_THUMB_BX == (IR & SOC_CORE_THUMB_BX_MASK))
-				return(soc_core_thumb_bx(core));
-			break;
-		case 0x4800 ... (0x4800 | mlBF(10, 0)): /* ldr rd, pc[offset8] */
-		case 0x9000 ... (0x9000 | mlBF(11, 0)): /* str rd, sp[offset8] */
-			if((SOC_CORE_THUMB_LDST_PC_RD_I == (IR & SOC_CORE_THUMB_LDST_PC_RD_I_MASK))
-				|| (SOC_CORE_THUMB_LDST_SP_RD_I == (IR & SOC_CORE_THUMB_LDST_SP_RD_I_MASK)))
-					return(soc_core_thumb_ldst_rd_i(core));
-			break;
-		case 0x5000 ... (0x5000 | mlBF(11, 0)): /* [ld|st]r[b|h|sb|sh] rd, [rn, rm] */
-			if(SOC_CORE_THUMB_LDST_RM_RN_RD == (IR & SOC_CORE_THUMB_LDST_RM_RN_RD_MASK))
-				return(soc_core_thumb_ldst_rm_rn_rd(core));
-			break;
-		case 0x6000 ... (0x6000 | mlBF(12, 0)): /* str */
-		case 0x8000 ... (0x8000 | mlBF(11, 0)): /* strh */
-			if((SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
-				|| (SOC_CORE_THUMB_LDST_H_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_H_O_RN_RD_MASK)))
-					return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
-			break;
-		case 0xa000 ... (0xa000 | mlBF(11, 0)):
-			if(SOC_CORE_THUMB_ADD_RD_PCSP_I == (IR & SOC_CORE_THUMB_ADD_RD_PCSP_I_MASK))
-				return(soc_core_thumb_add_rd_pcsp_i(core));
-			break;
-		case 0xb000 ... (0xb000 | mlBF(11, 0)): /* miscelaneous */
-		{	switch(IR) {
-				case 0xb000 ... (0xb000 | mlBF(7, 0)): /* adjust stack pointer */
-					if(SOC_CORE_THUMB_ADD_SUB_SP_I7 == (IR & SOC_CORE_THUMB_ADD_SUB_SP_I7_MASK))
-						return(soc_core_thumb_add_sub_sp_i7(core));
-					break;
-				case 0xb100 ... 0xb1ff:
-				case 0xb300 ... 0xb3ff:
-				case 0xb700 ... 0xb7ff:
-				case 0xb800 ... 0xb9ff:
-//				case 0xba80 ... (0xba80 | mlBF(5, 0)):
-				case 0xbb00 ... 0xbbff:
-				case 0xbf00 ... 0xbfff:
-					UNDEFINED;
-					break;
-				case 0xb200 ... (0xb200 | mlBF(7, 0)): /* sign / zero extend */
-				case 0xb650 ... 0xb65f: /* set endianness */
-				case 0xb660 ... 0xb667: /* change processor state */
-				case 0xb670 ... 0xb677: /* change processor state */
-				case 0xba00 ... (0xba00 | mlBF(7, 0)): /* reverse bytes */
-				case 0xbe00 ... (0xbe00 | mlBF(7, 0)): /* software breakpoint */
-					UNIMPLIMENTED;
-					break;
-				case 0xb640 ... 0xb64f: /* unpredictable */
-				case 0xb668 ... 0xb66f: /* unpredictable */
-				case 0xb678 ... 0xb67f: /* unpredictable */
-					UNPREDICTABLE;
-					break;
-				case 0xb400 ... (0xb400 | mlBF(8, 0)):
-				case 0xbc00 ... (0xbc00 | mlBF(8, 0)):
-					if(SOC_CORE_THUMB_POP_PUSH(0) == (IR & SOC_CORE_THUMB_POP_PUSH_MASK))
-						return(soc_core_thumb_pop_push(core));
-					break;
-				}
-		}	break;
-		case 0xc000 ... (0xc000 | mlBF(11, 0)):
-			if(SOC_CORE_THUMB_LDSTM_RN_RXX(0) == (IR & SOC_CORE_THUMB_LDSTM_RN_RXX_MASK))
-				return(soc_core_thumb_ldstm_rn_rxx(core));
-			break;
-		case 0xd000 ... (0xdd00 | mlBF(7, 0)): /* bcc */
-			return(soc_core_thumb_bcc(core));
-			break;
-		case 0xde00 ... (0xde00 | mlBF(7, 0)): /* undefined instruction */
-			UNDEFINED;
-			break;
-		case 0xdf00 ... (0xdf00 | mlBF(7, 0)): /* swi */
-			UNIMPLIMENTED;
-			break;
-		case 0xe800 ... (0xe800 | mlBF(10, 0)): /* blx suffix / undefined instruction */
-			if(IR & 1)
-				UNDEFINED;
-			__attribute__((fallthrough));
-		case 0xe000 ... (0xe000 | mlBF(10, 0)): /* unconditional branch */
-		case 0xf000 ... (0xf000 | mlBF(10, 0)): /* bl/blx prefix */
-		case 0xf800 ... (0xf800 | mlBF(10, 0)): /* bl suffix */
-				return(soc_core_thumb_bxx(core));
-			break;
-	/* **** */
 	}
 
-fail_decode:
+//fail_decode:
 	LOG("IR = 0x%04x, IR[15:8] = 0x%04x", IR, mlBFTST(IR, 15, 8));
 
 	soc_core_disasm_thumb(core, IP, IR);

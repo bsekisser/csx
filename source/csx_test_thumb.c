@@ -3,6 +3,7 @@
 #include "csx_test_thumb_inst.h"
 
 #include "csx_test_utility.h"
+#include "soc_core_test.h"
 #include "soc.h"
 
 /* **** */
@@ -50,12 +51,12 @@ static uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t r
 }
 
 static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
-	
+
 	uint32_t xpsr = 0, xres = 0;
 	uint32_t cpsr = 0, cres = 0;
-	
+
 	thumb_fn fn = 0;
-	
+
 	switch (rm) {
 		case 1:
 			fn = _test_thumb_adds_rn_1_asm;
@@ -67,13 +68,13 @@ static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
 			LOG_ACTION(exit(-1));
 			break;
 	}
-	
+
 	xres = _test_thumb_asm(t, fn, rn, rm, &xpsr);
 	cres = _test_thumb_adds_rn_i_inst(t, rn, rm, &cpsr);
 
 //	TRACE_PSR(xpsr);
 //	TRACE_PSR(cpsr);
-	
+
 	assert(cres == xres);
 	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 }
@@ -88,17 +89,17 @@ static void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 {
 	csx_p csx = t->csx;
 	soc_core_p core = csx->core;
-	
+
 	t->start_pc = t->pc = 0x10000000;
-	
+
 	thumb_mov_rd_i(t, 1, 64);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
-	
+
 	thumb_add_sub_i3_rn_rd(t, _ADD, 1, 1, 0);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	assert(soc_core_reg_get(core, 0) > soc_core_reg_get(core, 1));
 	assert(65 == soc_core_reg_get(core, 0));
-	
+
 	thumb_add_sub_i3_rn_rd(t, _SUB, 1, 1, 0);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 	assert(soc_core_reg_get(core, 0) < soc_core_reg_get(core, 1));
@@ -124,9 +125,12 @@ static void csx_test_thumb_b(csx_test_p t)
 	csx_p csx = t->csx;
 	soc_core_p core = csx->core;
 
+	int savedTrace = _soc_core_test_trace(core, 0, 0);
+
 	if(1) {
 		t->start_pc = t->pc = 0x100002b8;
-	
+
+		/* bl/blx prefix */
 		_cxx(t, 0xf013, sizeof(uint16_t)); /* theoretical test */
 		t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
@@ -135,6 +139,7 @@ static void csx_test_thumb_b(csx_test_p t)
 		assert(0x100132bc == LR);
 		assert(0x100002ba == pc(t));
 
+		/* bl suffix */
 		_cxx(t, 0xfccc, sizeof(uint16_t)); /* theoretical test */
 		t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
@@ -142,6 +147,34 @@ static void csx_test_thumb_b(csx_test_p t)
 
 		assert(0x100002bd == LR);
 		assert(0x10013c54 == pc(t));
+
+		/* **** */
+
+		t->start_pc = t->pc = 0x100002b8;
+
+		/* bl/blx prefix */
+		_cxx(t, 0xf013, sizeof(uint16_t)); /* theoretical test */
+		thumb_nop(t);
+		thumb_nop(t);
+		thumb_nop(t);
+		thumb_nop(t);
+		thumb_nop(t);
+		t->start_pc = t->pc = csx_test_run_thumb(t, 6);
+
+		if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+
+		assert(0x100132bc == LR);
+		assert(0x100002c4 == pc(t));
+
+		/* bl suffix */
+		_cxx(t, 0xfccc, sizeof(uint16_t)); /* theoretical test */
+		t->start_pc = t->pc = csx_test_run_thumb(t, 1);
+
+		if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
+
+		assert(0x100002c7 == LR);
+		assert(0x10013c54 == pc(t));
+
 	}
 
 	t->start_pc = t->pc = 0x100002b8;
@@ -153,18 +186,22 @@ static void csx_test_thumb_b(csx_test_p t)
 
 	assert(0x100002bd == LR);
 	assert(0x10013c54 == pc(t));
-	
+
 	t->start_pc = t->pc = 0x10013c58 - 2;
-	
+
 	thumb_mov_rd_i(t, 0, 0);
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
-	
+
 	_cxx(t, 0xd00d, sizeof(uint16_t));
 	t->start_pc = t->pc = csx_test_run_thumb(t, 1);
 
 	if(0) LOG("rLR = 0x%08x, rPC = 0x%08x", LR, pc(t));
 
 	assert(0x10013c76 == pc(t));
+
+	/* **** */
+
+	_soc_core_test_trace(core, 0, &savedTrace);
 }
 
 static void csx_test_thumb_ldstm(csx_test_p t)
@@ -173,7 +210,7 @@ static void csx_test_thumb_ldstm(csx_test_p t)
 	soc_core_p core = csx->core;
 
 	t->start_pc = t->pc = 0x10000000;
-	
+
 	soc_core_reg_set(core, 0, 0x10001004);
 
 	for(int i = 0; i < 8; i++)
@@ -184,7 +221,7 @@ static void csx_test_thumb_ldstm(csx_test_p t)
 
 //	for(int i = 0; i < 8; i++)
 //		LOG("r[%02u] = 0x%08x", i, soc_core_reg_get(core, i));
-		
+
 	assert(0x10001014 == soc_core_reg_get(core, 0));
 	assert(_test_value(1) == soc_core_reg_get(core, 2));
 	assert(_test_value(2) == soc_core_reg_get(core, 3));

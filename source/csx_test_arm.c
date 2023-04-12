@@ -5,6 +5,7 @@
 /* **** */
 
 #include "soc_core_psr.h"
+#include "soc_core_test.h"
 #include "soc_core.h"
 #include "soc.h"
 #include "csx_test.h"
@@ -66,19 +67,6 @@ _csx_test_set_fail:
 	return(0);
 }
 
-static int _csx_test_trace(csx_test_p t, int trace, int* restore)
-{
-	int savedTrace = t->csx->core->trace;
-
-	if(restore) {
-		t->csx->core->trace = !!(*restore);
-	} else if(trace) {
-		t->csx->core->trace = 1;
-	}
-	
-	return(savedTrace);
-}
-
 /* **** */
 
 static inline uint32_t epc(csx_test_p t)
@@ -128,7 +116,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
 
-	int savedTrace = _csx_test_trace(t, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
 
 	uint32_t res = 0, xres = 0;
 	uint32_t xpsr = 0, cpsr = 0;
@@ -151,7 +139,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 		csx_test_arm_adcs_asm, csx_test_arm_adcs_inst,
 			256, 0));
 
-	_csx_test_trace(t, 0, &savedTrace);
+	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
 }
 
 /* **** */
@@ -350,7 +338,7 @@ static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 
 static void csx_test_arm_cmp(csx_test_p t)
 {
-	int savedTrace = _csx_test_trace(t, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
 	
 /* **** */
 
@@ -395,7 +383,7 @@ static void csx_test_arm_cmp(csx_test_p t)
 		assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	};
 
-	_csx_test_trace(t, 0, &savedTrace);
+	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
 }
 
 /* **** */
@@ -438,7 +426,7 @@ static void csx_test_arm_dpi(csx_test_p t)
 {
 	const soc_core_p core = t->csx->core;
 
-	int savedTrace = _csx_test_trace(t, 0, 0);
+	int savedTrace = _soc_core_test_trace(core, 0, 0);
 
 	t->start_pc = t->pc = 0x10000000;
 
@@ -524,7 +512,7 @@ static void csx_test_arm_dpi(csx_test_p t)
 	arm_lsl_rd_rm_is(t, 0, 0, 0);
 	t->start_pc = t->pc = csx_test_run(t, 1);
 
-	_csx_test_trace(t, 0, &savedTrace);
+	_soc_core_test_trace(core, 0, &savedTrace);
 }
 
 /* **** */
@@ -811,7 +799,7 @@ static void csx_test_arm_mov(csx_test_p t)
 {
 	const soc_core_p core = t->csx->core;
 
-	int savedTrace = _csx_test_trace(t, 0, 0);
+	int savedTrace = _soc_core_test_trace(core, 0, 0);
 
 	t->start_pc = pc(t);
 
@@ -839,7 +827,7 @@ static void csx_test_arm_mov(csx_test_p t)
 	t->start_pc = t->pc = csx_test_run(t, 1);
 	assert(0x000003f0 == soc_core_reg_get(core, 0));
 
-	_csx_test_trace(t, 0, &savedTrace);
+	_soc_core_test_trace(core, 0, &savedTrace);
 }
 
 /* **** */
@@ -865,7 +853,7 @@ static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 
 static void csx_test_arm_subs(csx_test_p t)
 {
-	int savedTrace = _csx_test_trace(t, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
 
 	t->start_pc = t->pc = 0x10000000;
 
@@ -908,7 +896,7 @@ static void csx_test_arm_subs(csx_test_p t)
 		csx_test_arm_subs_asm, csx_test_arm_subs_inst,
 			256, 0));
 
-	_csx_test_trace(t, 0, &savedTrace);
+	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
 }
 
 /* **** */
