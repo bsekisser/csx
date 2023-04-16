@@ -204,7 +204,7 @@ static void soc_core_thumb_bxx_b(soc_core_p core)
 	PC = new_pc;
 }
 
-static void soc_core_thumb_bxx_bl_blx(soc_core_p core, uint32_t eao, int blx)
+static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, int blx)
 {
 	const uint32_t new_pc = LR + eao;
 
@@ -228,14 +228,14 @@ static void soc_core_thumb_bxx_bl(soc_core_p core)
 {
 	const uint32_t eao = mlBFMOV(IR, 10, 0, 1);
 
-	return(soc_core_thumb_bxx_bl_blx(core, eao, 0));
+	return(soc_core_thumb_bxx__bl_blx(core, eao, 0));
 }
 
 static void soc_core_thumb_bxx_blx(soc_core_p core)
 {
 	const uint32_t eao = mlBFMOV(IR, 10, 0, 1);
 
-	return(soc_core_thumb_bxx_bl_blx(core, eao, 1));
+	return(soc_core_thumb_bxx__bl_blx(core, eao, 1));
 }
 
 static void soc_core_thumb_bxx_prefix(soc_core_p core)
@@ -243,30 +243,30 @@ static void soc_core_thumb_bxx_prefix(soc_core_p core)
 	const int32_t eao_prefix = mlBFMOVs(IR, 10, 0, 12);
 	const uint8_t h_prefix = mlBFEXT(IR, 12, 11);
 
-	switch(h_prefix) {
-		case 0x02:
-			LR = 2 + PC + eao_prefix;
-
-			IR <<= 16;
-			IR += soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
-			break;
-		default:
-			DECODE_FAULT
+	if(2 == h_prefix) {
+		LR = 2 + PC + eao_prefix;
+	} else {
+		DECODE_FAULT;
 	}
 
-	const uint32_t eao_suffix = mlBFMOV(IR, 10, 0, 1);
+	const uint32_t ir_suffix = soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
 
-	switch(IR & 0xf800) {
-		case 0xe800:
-			PC += 2;
-			return(soc_core_thumb_bxx_bl_blx(core, eao_suffix, 1));
-		case 0xf800:
-			PC += 2;
-			return(soc_core_thumb_bxx_bl_blx(core, eao_suffix, 0));
-		default:
-			CORE_TRACE("/* xxx -- LR = 0x%08x + 0x%03x = 0x%08x */", PC, eao_prefix, LR);
-			return;
+	if(0xe800 == (ir_suffix & 0xe800)) {
+		const int blx = 1 ^ BEXT(ir_suffix, 12);
+
+		if(blx && (ir_suffix & 1))
+			goto not_prefix_suffix; /* undefined instruction */
+		
+		IR = (IR << 16) | ir_suffix;
+		PC += 2;
+
+		const uint32_t eao_suffix = mlBFMOV(IR, 10, 0, 1);
+
+		return(soc_core_thumb_bxx__bl_blx(core, eao_suffix, blx));
 	}
+		
+not_prefix_suffix:
+	CORE_TRACE("BL/BLX(0x%08x)  /* LR = 0x%08x */", eao_prefix, LR);
 }
 
 #define _alubox_asrs _alubox_movs_asr
