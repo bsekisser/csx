@@ -185,21 +185,21 @@ static void arm_inst_b(soc_core_p core)
 
 	const int blx = (0x0f == mlBFEXT(IR, 31, 28));
 	const int hl = BEXT(IR, ARM_INST_BIT_LINK);
-	const int32_t offset = mlBFEXTs(IR, 23, 0);
+	const int32_t offset = mlBFMOVs(IR, 23, 0, 2);
 
 	const int link = blx || (!blx && hl);
-	uint32_t new_pc = PC_ARM + (offset << 2);
+	const uint32_t new_pc = (PC_ARM + offset) + (blx ? ((hl << 1) | 1) : 0);
+	const int thumb = new_pc & 1;
 
 	if(blx)
 	{
-		new_pc |= (hl << 1) | 1;
 		CORE_T(CCx.s = "AL");
 		CCx.e = 1;
 	}
 
-	int splat = _trace_bx_0 && blx && (0 == offset);
+	int splat = _trace_bx_0 && blx && (new_pc == PC);
 	CORE_TRACE("b%s%s(0x%08x) /* %c(%s0x%08x) hl = %01u */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, new_pc & 1 ? 'T' : 'A', splat ? "x" : "", offset, hl);
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', splat ? "x" : "", offset, hl);
 
 	if(link)
 		CORE_TRACE_LINK(PC);

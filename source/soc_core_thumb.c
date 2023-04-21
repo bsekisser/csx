@@ -197,7 +197,7 @@ static void soc_core_thumb_bxx_b(soc_core_p core)
 	const int16_t eao = mlBFMOVs(IR, 10, 0, 1);
 	const uint32_t new_pc = PC + eao;
 
-	int splat = _trace_bx_0 && (0 == eao);
+	int splat = _trace_bx_0 && (new_pc == PC);
 	CORE_TRACE("b(0x%08x); /* 0x%08x + %s0x%03x*/",
 		new_pc & ~1, PC, splat ? "x" : "", eao);
 
@@ -212,7 +212,7 @@ static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, int blx)
 
 	LR = PC | 1;
 
-	int splat = _trace_bx_0 && (0 == eao);
+	int splat = _trace_bx_0 && (new_pc == PC);
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
 		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
 
