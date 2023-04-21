@@ -43,15 +43,9 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
+static void soc_core_thumb_add_sub_rn_rd__rm(soc_core_p core, int bit_i)
 {
-	const int bit_i = BEXT(IR, 10);
 	const uint8_t op2 = BEXT(IR, 9);
-
-	if(bit_i)
-		_setup_rR_vR(M, ~0, mlBFEXT(IR, 8, 6));
-	else
-		soc_core_decode_src(core, rRM, 8, 6);
 
 	soc_core_decode_src(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
@@ -84,6 +78,20 @@ static void soc_core_thumb_add_sub_rn_rd(soc_core_p core)
 	}
 
 	soc_core_reg_set(core, rR(D), vR(D));
+}
+
+static void soc_core_thumb_add_sub_rn_rd_imm3(soc_core_p core)
+{
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 8, 6));
+
+	return(soc_core_thumb_add_sub_rn_rd__rm(core, 1));
+}
+
+static void soc_core_thumb_add_sub_rn_rd_rm(soc_core_p core)
+{
+	soc_core_decode_src(core, rRM, 8, 6);
+
+	return(soc_core_thumb_add_sub_rn_rd__rm(core, 0));
 }
 
 static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
@@ -726,17 +734,9 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 
 /* **** */
 
-static void soc_core_thumb_step_0xe800(soc_core_p core)
-{
-	if(IR & 1)
-		UNDEFINED;
-
-	return(soc_core_thumb_bxx_blx(core));
-}
-
 static void soc_core_thumb_step_fail_decode(soc_core_p core)
 {
-	LOG("ir = 0x%04x", IR);
+	LOG("ir = 0x%04x, ir[15, 13] = 0x%02x", IR, mlBFTST(IR, 15, 13));
 
 	soc_core_disasm_thumb(core, IP, IR);
 	LOG_ACTION(exit(1));
@@ -763,77 +763,101 @@ static void soc_core_thumb_step_unpredictable(soc_core_p core)
 	UNUSED(core);
 }
 
-typedef void (*thumb_fn)(soc_core_p core);
+/* **** */
 
-static void soc_core_thumb_step_0xb600(soc_core_p core)
+static void soc_core_thumb_step_group0_0000_1fff(soc_core_p core)
 {
-	thumb_fn xb600[0x100] = {
-		[0x40 ... 0x40] = soc_core_thumb_step_unpredictable, /* unpredictable */
-		[0x50 ... 0x50] = soc_core_thumb_step_unimplimented, /* set endianness */
-		[0x60 ... 0x67] = soc_core_thumb_step_unimplimented, /* change processor state */
-		[0x68 ... 0x6f] = soc_core_thumb_step_unpredictable, /* unpredictable */
-		[0x70 ... 0x77] = soc_core_thumb_step_unimplimented, /* change processor state */
-		[0x78 ... 0x7f] = soc_core_thumb_step_unpredictable, /* unpredictable */
-	};
+	switch(mlBFTST(IR, 15, 10)) {
+		case 0x1800: /* 0001 10xx xxxx xxxx */
+			return(soc_core_thumb_add_sub_rn_rd_rm(core));
+		case 0x1c00: /* 0001 11xx xxxx xxxx */
+			return(soc_core_thumb_add_sub_rn_rd_imm3(core));
+		default:
+			return(soc_core_thumb_sbi_imm5_rm_rd(core));
+	}
 
-	thumb_fn fn = xb600[IR & 0xff];
-	if(fn)
-		return(fn(core));
-
-	return(soc_core_thumb_step_fail_decode(core));
+	LOG_ACTION(soc_core_thumb_step_fail_decode(core));
 }
 
-static void soc_core_thumb_step_0xba00(soc_core_p core)
+static void soc_core_thumb_step_group2_4000_5fff(soc_core_p core)
 {
-	thumb_fn xba00[0x100] = {
-		[0x00 ... 0x70] = soc_core_thumb_step_unimplimented, /* reverse bytes */
-		[0x80 ... 0xb0] = soc_core_thumb_step_undefined,
-		[0xc0 ... 0xf0] = soc_core_thumb_step_unimplimented, /* reverse bytes */
-	};
+	if(0x5000 == mlBFTST(IR, 15, 12)) { /* 0101 xxxx xxxx xxxx */
+		return(soc_core_thumb_ldst_rm_rn_rd(core));
+	} else if(0x4800 == mlBFTST(IR, 15, 11)) { /* 0100 1xxx xxxx xxxx */
+		return(soc_core_thumb_ldst_rd_i(core));
+	} else {
+		switch(mlBFTST(IR, 15, 10)) {
+			case 0x4000: /* 0100 00xx xxxx xxxx */
+				return(soc_core_thumb_dp_rms_rdn(core));
+			case 0x4400: /* 0100 01xx xxxx xxxx */
+				switch(mlBFTST(IR, 15, 8)) {
+					case 0x4700: /* 0100 0111 xxxx xxxx */
+						return(soc_core_thumb_bx(core));
+					default: /* 0100 01xx xxxx xxxx */
+						return(soc_core_thumb_sdp_rms_rdn(core));
+				}
+				break;
+		}
+	}
 
-	thumb_fn fn = xba00[IR & 0xff];
-	if(fn)
-		return(fn(core));
-
-	return(soc_core_thumb_step_fail_decode(core));
+	LOG_ACTION(soc_core_thumb_step_fail_decode(core));
 }
 
-static thumb_fn thumb_fn_list_x000[0x100] = {
-	[0x00 ... 0x17] = soc_core_thumb_sbi_imm5_rm_rd,
-	[0x18 ... 0x1b] = soc_core_thumb_add_sub_rn_rd,
-	[0x1c ... 0x1f] = soc_core_thumb_add_sub_rn_rd,
-	[0x20 ... 0x3f] = soc_core_thumb_ascm_rd_i,
-	[0x40 ... 0x43] = soc_core_thumb_dp_rms_rdn,
-	[0x44 ... 0x46] = soc_core_thumb_sdp_rms_rdn,
-	[0x47 ... 0x47] = soc_core_thumb_bx,
-	[0x48 ... 0x4f] = soc_core_thumb_ldst_rd_i,
-	[0x50 ... 0x5f] = soc_core_thumb_ldst_rm_rn_rd,
-	[0x60 ... 0x7f] = soc_core_thumb_ldst_bwh_o_rn_rd,
-	[0x80 ... 0x8f] = soc_core_thumb_ldst_bwh_o_rn_rd,
-	[0x90 ... 0x9f] = soc_core_thumb_ldst_rd_i,
-	[0xa0 ... 0xaf] = soc_core_thumb_add_rd_pcsp_i,
-	[0xb0 ... 0xb0] = soc_core_thumb_add_sub_sp_i7,
-	[0xb1 ... 0xb1] = soc_core_thumb_step_undefined,
-	[0xb2 ... 0xb2] = soc_core_thumb_step_unimplimented, /* sign / zero extend */
-	[0xb3 ... 0xb3] = soc_core_thumb_step_undefined,
-	[0xb4 ... 0xb5] = soc_core_thumb_pop_push,
-	[0xb6 ... 0xb6] = soc_core_thumb_step_0xb600,
-	[0xb7 ... 0xb7] = soc_core_thumb_step_undefined,
-	[0xb8 ... 0xb9] = soc_core_thumb_step_undefined,
-	[0xba ... 0xba] = soc_core_thumb_step_0xba00,
-	[0xbb ... 0xbb] = soc_core_thumb_step_undefined,
-	[0xbc ... 0xbd] = soc_core_thumb_pop_push,
-	[0xbe ... 0xbe] = soc_core_thumb_step_unimplimented, /* software breakpoint */
-	[0xbf ... 0xbf] = soc_core_thumb_step_undefined,
-	[0xc0 ... 0xcf] = soc_core_thumb_ldstm_rn_rxx,
-	[0xd0 ... 0xdd] = soc_core_thumb_bcc,
-	[0xde ... 0xde] = soc_core_thumb_step_undefined, /* undefined instruction */
-	[0xdf ... 0xdf] = soc_core_thumb_step_unimplimented, /* swi */
-	[0xe0 ... 0xe7] = soc_core_thumb_bxx_b,
-	[0xe8 ... 0xef] = soc_core_thumb_step_0xe800,
-	[0xf0 ... 0xf7] = soc_core_thumb_bxx_prefix,
-	[0xf8 ... 0xff] = soc_core_thumb_bxx_bl,
-};
+static void soc_core_thumb_step_group5_b000_bfff(soc_core_p core)
+{
+	switch(mlBFTST(IR, 15, 8)) {
+		case 0xb000: /* 1011 0000 xxxx xxxx */
+			return(soc_core_thumb_add_sub_sp_i7(core));
+		case 0xb400: /* 1011 0100 xxxx xxxx */
+		case 0xb500: /* 1011 0101 xxxx xxxx */
+		case 0xbc00: /* 1011 1100 xxxx xxxx */
+		case 0xbd00: /* 1011 1101 xxxx xxxx */
+			return(soc_core_thumb_pop_push(core));
+	}
+
+	LOG_ACTION(soc_core_thumb_step_fail_decode(core));
+}
+
+static void soc_core_thumb_step_group6_c000_dfff(soc_core_p core)
+{
+	if(BTST(IR, 12)) {
+		switch(mlBFTST(IR, 15, 8)) {
+			case 0xde00: /* 1101 1110 xxxx xxxx -- undefined */
+				LOG_ACTION(return(soc_core_thumb_step_undefined(core)));
+				return;
+			case 0xdf00: /* 1101 1111 xxxx xxxx -- swi */
+				LOG_ACTION(return(soc_core_thumb_step_unimplimented(core)));
+				return;
+			default: /* 1101 xxxx xxxx xxxx */
+				return(soc_core_thumb_bcc(core));
+		}
+	} else { /* 1100 xxxx xxxx xxxx */
+		return(soc_core_thumb_ldstm_rn_rxx(core));
+	}
+
+	LOG_ACTION(return(soc_core_thumb_step_fail_decode(core)));
+}
+
+static void soc_core_thumb_step_group7_e000_ffff(soc_core_p core)
+{
+	switch(mlBFTST(IR, 15, 11)) {
+		case 0xe000: /* 1110 0xxx xxxx xxxx */
+			return(soc_core_thumb_bxx_b(core));
+		case 0xe800:
+			if(IR & 1) { /* 1110 1xxx xxxx xxx1 */
+				LOG_ACTION(return(soc_core_thumb_step_undefined(core)));
+			} else /* 1110 1xxx xxxx xxx0 */
+				return(soc_core_thumb_bxx_blx(core));
+		case 0xf800:
+			return(soc_core_thumb_bxx_bl(core));
+		case 0xf000:
+			return(soc_core_thumb_bxx_prefix(core));
+	}
+
+	LOG_ACTION(return(soc_core_thumb_step_fail_decode(core)));
+}
+
+/* **** */
 
 void soc_core_thumb_step(soc_core_p core)
 {
@@ -842,17 +866,35 @@ void soc_core_thumb_step(soc_core_p core)
 
 	IR = soc_core_reg_pc_fetch_step_thumb(core);
 
-	thumb_fn fn = thumb_fn_list_x000[IR >> 8];
-
-	if(fn) {
-		return(fn(core));
+	uint32_t group = mlBFTST(IR, 15, 13);
+	switch(group) {
+		case 0x0000: /* 000x xxxx xxxx xxxx */
+			return(soc_core_thumb_step_group0_0000_1fff(core));
+		case 0x2000: /* 001x xxxx xxxx xxxx */
+			return(soc_core_thumb_ascm_rd_i(core));
+		case 0x4000: /* 010x xxxx xxxx xxxx */
+			return(soc_core_thumb_step_group2_4000_5fff(core));
+		case 0x6000: /* 011x xxxx xxxx xxxx */
+			return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
+		case 0x8000: /* 100x xxxx xxxx xxxx */
+			if(BTST(IR, 12)) /* 1001 xxxx xxxx xxxx */
+				return(soc_core_thumb_ldst_rd_i(core));
+			else /* 1000 xxxx xxxx xxxx */
+				return(soc_core_thumb_ldst_bwh_o_rn_rd(core));
+			break;
+		case 0xa000: /* 101x xxxx xxxx xxxx */
+			if(BTST(IR, 12)) /* 1011 xxxx xxxx xxxx */
+				return(soc_core_thumb_step_group5_b000_bfff(core));
+			else /* 1010 xxxx xxxx xxxx */
+				return(soc_core_thumb_add_rd_pcsp_i(core));
+			break;
+		case 0xc000: /* 110x xxxx xxxx xxxx */
+			return(soc_core_thumb_step_group6_c000_dfff(core));
+		case 0xe000: /* 111x xxxx xxxx xxxx */
+			return(soc_core_thumb_step_group7_e000_ffff(core));
 	}
 
-//fail_decode:
-	LOG("IR = 0x%04x, IR[15:8] = 0x%04x", IR, mlBFTST(IR, 15, 8));
-
-	soc_core_disasm_thumb(core, IP, IR);
-	LOG_ACTION(exit(1));
+	LOG_ACTION(return(soc_core_thumb_step_fail_decode(core)));
 }
 
 void soc_core_thumb_step_profile(soc_core_p core)
