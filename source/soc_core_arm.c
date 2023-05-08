@@ -791,7 +791,7 @@ void soc_core_arm_step(soc_core_p core)
 {
 	IR = soc_core_reg_pc_fetch_step_arm(core);
 
-	const uint opcode = mlBFEXT(IR, 27, 25);
+	const unsigned opcode = mlBFEXT(IR, 27, 25);
 
 	CCx.e = soc_core_arm_check_cc(core);
 

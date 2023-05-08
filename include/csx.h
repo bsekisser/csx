@@ -19,12 +19,6 @@ typedef struct csx_data_t* csx_data_p;
 
 /* **** */
 
-#ifndef uint
-	typedef unsigned int uint;
-#endif
-
-/* **** */
-
 #include "soc_core.h"
 //#include "soc_core_coprocessor.h"
 #include "soc_mmu.h"

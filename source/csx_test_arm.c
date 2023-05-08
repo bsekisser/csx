@@ -24,22 +24,22 @@
 
 /* **** */
 
-typedef uint32_t (*csx_test_set_fn)(csx_test_p t, uint32_t* psr, uint j, uint k);
+typedef uint32_t (*csx_test_set_fn)(csx_test_p t, uint32_t* psr, unsigned j, unsigned k);
 
 static int _csx_test_set(csx_test_p t,
 	csx_test_set_fn asm_fn,
 	csx_test_set_fn inst_fn,
-	uint jk_limit,
+	unsigned jk_limit,
 	uint32_t psr_mask)
 {
 	uint32_t xres = 0, tres = 0;
 	uint32_t xpsr = 0, tpsr = 0;
 
-	uint j = 0, k = 0;
+	unsigned j = 0, k = 0;
 	for(j = 0; j < jk_limit; j++) {
-		uint jj = (jk_limit > 15) ? (j << 24) : _test_value(j);
+		unsigned jj = (jk_limit > 15) ? (j << 24) : _test_value(j);
 		for(k = 0; k < jk_limit; k++) {
-			uint kk = (jk_limit > 15) ? (k << 24) : _test_value(k);
+			unsigned kk = (jk_limit > 15) ? (k << 24) : _test_value(k);
 
 			xres = asm_fn(t, &xpsr, jj, kk);
 			tres = inst_fn(t, &tpsr, jj, kk);
@@ -528,8 +528,8 @@ typedef struct ldstm_t {
 
 static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	ldstm_p l,
-	uint tvs,
-	uint rvs)
+	unsigned tvs,
+	unsigned rvs)
 {
 	const ptrdiff_t asp_diff = (uintptr_t)l->asp[1] - (uintptr_t)l->asp[0];
 	const ptrdiff_t esp_diff = (uintptr_t)l->esp[1] - (uintptr_t)l->esp[0];
@@ -556,7 +556,7 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	}
 }
 
-static void csx_test_arm_ldstm_setup_stack(csx_test_p t, ldstm_p l, uint spat)
+static void csx_test_arm_ldstm_setup_stack(csx_test_p t, ldstm_p l, unsigned spat)
 {
 	l->esp[0] = 0x10001000 + (spat << 2);
 	l->esp[1] = l->esp[0];

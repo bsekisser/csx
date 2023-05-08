@@ -36,12 +36,12 @@ typedef struct soc_mmu_t { // TODO: move to header
 }soc_mmu_t;
 
 typedef struct soc_mmu_ptd_t {
-	uint ap:2;
-	uint b:1;
-	uint base:20;
-	uint c:1;
-	uint domain:4;
-	uint type:2;
+	unsigned ap:2;
+	unsigned b:1;
+	unsigned base:20;
+	unsigned c:1;
+	unsigned domain:4;
+	unsigned type:2;
 }soc_mmu_ptd_t;
 
 /* **** */

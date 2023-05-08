@@ -66,7 +66,7 @@ static int __soc_omap_mpu_gpio_atreset(void* param)
 
 	soc_omap_mpu_gpio_p gpio = param;
 
-	for(uint i = 0; i < 4; i++) {
+	for(unsigned i = 0; i < 4; i++) {
 		soc_omap_mpu_gpio_unit_p unit = &gpio->unit[i];
 		
 		memset(unit, 0, sizeof(soc_omap_mpu_gpio_unit_t));

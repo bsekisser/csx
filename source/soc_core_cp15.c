@@ -150,7 +150,7 @@ static uint32_t _soc_core_cp15_cn3_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 
 	if(write) {
 		LOG_START("Domain Access Control Register\n\t");
-		uint i = 15;
+		unsigned i = 15;
 		do {
 			_LOG_("D%02u(%01u)", i, data >> (i << 1) & 3);
 			if(i) {

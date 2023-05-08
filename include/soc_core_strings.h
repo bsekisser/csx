@@ -18,14 +18,8 @@ extern const char* shift_op_string[2][6];
 
 /* **** */
 
-#ifndef uint
-	typedef unsigned int uint;
-#endif
-
-/* **** */
-
 #define rR_NAME(_x) _reg_name(rR(_x))
-static inline const char* _reg_name(uint rr) {
+static inline const char* _reg_name(unsigned rr) {
 	if(_check_pedantic_rname)
 		assert((rr & 0x0f) == rr);
 

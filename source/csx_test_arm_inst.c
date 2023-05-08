@@ -19,7 +19,7 @@
 
 #define COND(_cc) ((COND_ ## _cc) << 28)
 
-static inline void _c_cc(csx_test_p t, uint cc, uint32_t value)
+static inline void _c_cc(csx_test_p t, unsigned cc, uint32_t value)
 {
 	value |= ((cc & 0x0f) << 28);
 	
@@ -64,7 +64,7 @@ static inline uint32_t _rn(soc_core_reg_t r)
 
 /* arm instruction utilities */
 
-static void _bcc(csx_test_p t, uint cc, int32_t offset, int link)
+static void _bcc(csx_test_p t, unsigned cc, int32_t offset, int link)
 {
 	uint32_t opcode = (5 << 25);
 
@@ -217,12 +217,12 @@ void arm_ands_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(AND), 1, rn, rd, shopt);
 }
 
-void arm_asr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_asr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_mov_rd_sop(t, rd, arm_dpi_asr_r_s(rm, shift));
 }
 
-void arm_asrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_asrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_movs_rd_sop(t, rd, arm_dpi_asr_r_s(rm, shift));
 }
@@ -242,22 +242,22 @@ void arm_eors_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shif
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(EOR), 1, rn, rd, shopt);
 }
 
-void arm_lsl_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_lsl_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_mov_rd_sop(t, rd, arm_dpi_lsl_r_s(rm, shift));
 }
 
-void arm_lsls_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_lsls_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_movs_rd_sop(t, rd, arm_dpi_lsl_r_s(rm, shift));
 }
 
-void arm_lsr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_lsr_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_mov_rd_sop(t, rd, arm_dpi_lsr_r_s(rm, shift));
 }
 
-void arm_lsrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, uint shift)
+void arm_lsrs_rd_rm_is(csx_test_p t, soc_core_reg_t rd, soc_core_reg_t rm, unsigned shift)
 {
 	arm_movs_rd_sop(t, rd, arm_dpi_lsr_r_s(rm, shift));
 }
@@ -289,12 +289,12 @@ void arm_movs_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt)
 		soc_core_disasm_arm(t->csx->core, 0, opcode);
 }
 
-void arm_ror_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, uint shift)
+void arm_ror_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, unsigned shift)
 {
 	arm_mov_rd_sop(t, rd, arm_dpi_ror_i_s(imm, shift));
 }
 
-void arm_rors_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, uint shift)
+void arm_rors_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, unsigned shift)
 {
 	arm_movs_rd_sop(t, rd, arm_dpi_ror_i_s(imm, shift));
 }

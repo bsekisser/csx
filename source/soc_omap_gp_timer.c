@@ -130,7 +130,7 @@ int soc_omap_gp_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_gp_timer_h h2gpt
 
 	/* **** */
 
-	for(uint i = 0; i < 8; i++)
+	for(unsigned i = 0; i < 8; i++)
 		csx_mmio_register_access_list(mmio, SOC_OMAP_GP_TIMER_BASE(i),
 			__soc_omap_gp_timer_acl, gpt);
 

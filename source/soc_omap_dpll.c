@@ -76,7 +76,7 @@ static uint32_t soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint32
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
-		const uint pll_enable = BEXT(data, DPLL1_CTL_PLL_ENABLE);
+		const unsigned pll_enable = BEXT(data, DPLL1_CTL_PLL_ENABLE);
 		BSET_AS(dpll->ctl_reg, DPLL1_CTL_LOCK, pll_enable);
 
 		if(_trace_mmio_dpll) {

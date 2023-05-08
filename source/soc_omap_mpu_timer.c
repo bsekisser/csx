@@ -80,7 +80,7 @@ static void __mpu_timer_cntl_write(soc_omap_mpu_timer_unit_p sotu, uint32_t data
 
 static soc_omap_mpu_timer_unit_p
 __mpu_timer_unit(soc_omap_mpu_timer_p sot, uint32_t ppa) {
-	uint tu = ppa - SOC_OMAP_MPU_TIMER1;
+	unsigned tu = ppa - SOC_OMAP_MPU_TIMER1;
 	tu >>= 8;
 	tu &= 3;
 	
@@ -109,7 +109,7 @@ static int __soc_omap_mpu_timer_atreset(void* param)
 
 	soc_omap_mpu_timer_p t = param;
 
-	for(uint i = 0; i < 3; i++) {
+	for(unsigned i = 0; i < 3; i++) {
 		soc_omap_mpu_timer_unit_p sotu = &t->unit[i];
 		
 		memset(sotu, 0, sizeof(soc_omap_mpu_timer_unit_t));
@@ -144,7 +144,7 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 		LOG_END();
 	}
 
-	const uint elapsed_cycles = csx->cycle - sotu->cycle;
+	const unsigned elapsed_cycles = csx->cycle - sotu->cycle;
 	sotu->cycle = csx->cycle;
 
 /*
@@ -156,7 +156,7 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
  * int64_t delta64_count = sot->count - elapsed_cycles;
  */
 
-	const uint delta_count = sotu->count - elapsed_cycles;
+	const unsigned delta_count = sotu->count - elapsed_cycles;
 
 	if(0) {
 		LOG_START("elapsed_cycles = 0x%016" PRIx64, (uint64_t)elapsed_cycles)
@@ -165,7 +165,7 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 	}
 
 	if(elapsed_cycles >= sotu->count) {
-		uint cycles_remain = elapsed_cycles - sotu->count;
+		unsigned cycles_remain = elapsed_cycles - sotu->count;
 		if(sotu->cntl.ar) {
 			sotu->count = sotu->load - cycles_remain;
 		} else {
@@ -190,11 +190,11 @@ static uint32_t _soc_omap_mpu_timer_cntl(void* param, uint32_t ppa, size_t size,
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
-		uint was_st = sotu->cntl.st;
+		unsigned was_st = sotu->cntl.st;
 
 		__mpu_timer_cntl_write(sotu, data);
 
-		uint start = sotu->cntl.st && was_st ^ sotu->cntl.st;
+		unsigned start = sotu->cntl.st && was_st ^ sotu->cntl.st;
 
 		sotu->cntl_data = data;
 
@@ -281,7 +281,7 @@ int soc_omap_mpu_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t
 
 	/* **** */
 
-	for(uint i = 0; i < 3; i++) {
+	for(unsigned i = 0; i < 3; i++) {
 		csx_mmio_access_list_t _soc_omap_mpu_timer_acl[4] = {
 			_MPU_TIMER_ACLE(i, CNTL, _soc_omap_mpu_timer_cntl)
 			_MPU_TIMER_ACLE(i, LOAD, _soc_omap_mpu_timer_load)

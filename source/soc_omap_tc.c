@@ -170,7 +170,7 @@ static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t si
 			_LOG_(", PGWST: %01u", mlBFEXT(data, 30, 27));
 			_LOG_(", BTWST: %01u", mlBFEXT(data, 26, 23));
 			_LOG_(", MAD: %01u", BEXT(data, 22));
-			const uint bw = BEXT(data, 20);
+			const unsigned bw = BEXT(data, 20);
 			LOG_END(", BW: %01u (data bus width, %s bit)", bw, bw ? "32" : "16");
 
 			const char *rdmodesl[] = {
@@ -183,7 +183,7 @@ static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t si
 				"0x110, Reserved for future expansion",
 				"0x111, Mode 7: Syncronous burst read mode"};
 
-			const uint rdmode = mlBFEXT(data, 18, 16);
+			const unsigned rdmode = mlBFEXT(data, 18, 16);
 			LOG("RDMODE: %01u -- %s", rdmode, rdmodesl[rdmode & 7]);
 			LOG_START("PGWST/WELEN: %01u", mlBFEXT(data, 15, 12));
 			_LOG_(", WRWST: %01u", mlBFEXT(data, 11, 8));

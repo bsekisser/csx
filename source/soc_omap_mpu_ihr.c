@@ -208,14 +208,14 @@ int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L1, __soc_omap_mpu_ihr_l1_acl, ihr);
 
-	for(uint i = 0; i < 32; i++) {
+	for(unsigned i = 0; i < 32; i++) {
 		uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(1, 0, i);
 		csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);
 	}
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L2, __soc_omap_mpu_ihr_l2_acl, ihr);
 
-	for(uint j = 0; j <= 3; j++) {
+	for(unsigned j = 0; j <= 3; j++) {
 		csx_mmio_access_list_t __soc_omap_mpu_ihr_l2x_acl[3] = {
 			SOC_OMAP_MPU_IHR_L2_BANKx_ACL(SOC_OMAP_MPU_IHR_ACLE)
 			{ .ppa = ~0U, },
@@ -225,7 +225,7 @@ int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 			SOC_OMAP_MPU_IHR_Lx_BANKx(2, j),
 			__soc_omap_mpu_ihr_l2x_acl, ihr);
 
-		for(uint k = 0; k < 32; k++) {
+		for(unsigned k = 0; k < 32; k++) {
 			uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(2, j, k);
 			
 			csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);

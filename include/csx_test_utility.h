@@ -8,11 +8,11 @@
 /* **** */
 
 void _cxx(csx_test_p t, uint32_t value, size_t size);
-int _test_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr);
-int _test_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask);
+int _test_cpsr_xpsr(csx_test_p t, unsigned cpsr, unsigned xpsr);
+int _test_cpsr_xpsr_mask(csx_test_p t, unsigned cpsr, unsigned xpsr, unsigned mask);
 int _test_nzc(csx_test_p t, int n, int z, int c);
 int _test_nzcv(csx_test_p t, int n, int z, int c, int v);
-uint32_t _test_value(uint i);
+uint32_t _test_value(unsigned i);
 
 /* **** */
 

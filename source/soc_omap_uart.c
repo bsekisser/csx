@@ -113,7 +113,7 @@ static int __soc_omap_uart_atreset(void* param) {
 
 	soc_omap_uart_p uart = param;
 
-	for(uint uux = 0; uux < 3; uux++)
+	for(unsigned uux = 0; uux < 3; uux++)
 		__soc_omap_uart_unit_reset(&uart->unit[uux]);
 	
 	return(0);

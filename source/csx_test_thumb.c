@@ -50,7 +50,7 @@ static uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t r
 	return(soc_core_reg_get(core, 0));
 }
 
-static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, uint rm) {
+static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, unsigned rm) {
 
 	uint32_t xpsr = 0, xres = 0;
 	uint32_t cpsr = 0, cres = 0;

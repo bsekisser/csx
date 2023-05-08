@@ -89,7 +89,7 @@ typedef struct csx_statistics_t {
 
 int csx_statistics_init(csx_p csx);
 
-static inline void csx_counter_add(uint32_t* c, uint add) {
+static inline void csx_counter_add(uint32_t* c, unsigned add) {
 	if(_csx_statistical_counters)
 		*c += add;
 }
@@ -99,7 +99,7 @@ static inline void csx_counter_inc(uint32_t* c) {
 		(*c)++;
 }
 
-static inline void csx_counter_hit_if(csx_counter_hit_p c, uint test) {
+static inline void csx_counter_hit_if(csx_counter_hit_p c, unsigned test) {
 	if(_csx_statistical_counters) {
 		if(test)
 			c->hit++;

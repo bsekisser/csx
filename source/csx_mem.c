@@ -31,7 +31,7 @@ static int _csx_mem_atexit(void* param)
 	const csx_mem_h h2mem = param;
 	csx_mem_p mem = *h2mem;
 
-	for(uint i = 0; i < mem->l2alloc.count; i++) {
+	for(unsigned i = 0; i < mem->l2alloc.count; i++) {
 		void** h2l2 = &mem->l2alloc.ptr[i];
 
 		free(*h2l2);
@@ -105,7 +105,7 @@ static csx_mem_callback_p _csx_mem_mmap_alloc_malloc(csx_mem_p mem, size_t l2siz
 {
 	const csx_mem_callback_p p2l2 = malloc(l2size);
 
-	uint count = mem->l2alloc.count;
+	unsigned count = mem->l2alloc.count;
 	mem->l2alloc.ptr[count] = p2l2;
 	mem->l2alloc.count++;
 
@@ -118,11 +118,11 @@ static csx_mem_callback_p _csx_mem_mmap_alloc_malloc(csx_mem_p mem, size_t l2siz
 }
 
 
-static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, uint ppa)
+static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, unsigned ppa)
 {
-	uint l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
-	uint l2page = PAGE_OFFSET(PAGE(ppa));
-	uint offset = PAGE_OFFSET(ppa);
+	unsigned l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
+	unsigned l2page = PAGE_OFFSET(PAGE(ppa));
+	unsigned offset = PAGE_OFFSET(ppa);
 	
 	if(0) LOG("ppa = 0x%08x -- %03x:%03x:%03x", ppa, l1page, l2page, offset);
 
@@ -286,10 +286,10 @@ int csx_mem_init(csx_p csx, csx_mem_h h2mem)
 	
 	/* **** */
 	
-	const uint ppa = 0x12345678;
-	const uint l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
-	const uint l2page = PAGE_OFFSET(PAGE(ppa));
-	const uint offset = PAGE_OFFSET(ppa);
+	const unsigned ppa = 0x12345678;
+	const unsigned l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
+	const unsigned l2page = PAGE_OFFSET(PAGE(ppa));
+	const unsigned offset = PAGE_OFFSET(ppa);
 	
 	if(0) {
 		LOG_START("PAGE_SIZE = 0x%08zx", (size_t)PAGE_SIZE);

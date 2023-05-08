@@ -80,15 +80,15 @@ static int _soc_tlb_atreset(void* param)
 }
 
 static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
-	uint tlb_bits,
+	unsigned tlb_bits,
 	uint32_t va,
 	soc_tlbe_h h2tlbe)
 {
 	if(0) LOG("tlbe_table = 0x%08" PRIxPTR ", tlb_bits = %02u, va = 0x%08x, h2tlbe = 0x%08" PRIxPTR,
 		(uintptr_t)tlbe_table, tlb_bits, va, (uintptr_t)h2tlbe);
 
-	const uint vp = PAGE(va);
-	const uint vp_tlbe = vp & _BM(tlb_bits);
+	const unsigned vp = PAGE(va);
+	const unsigned vp_tlbe = vp & _BM(tlb_bits);
 
 	if(0) LOG("vp = 0x%08x, vp_tlbe = 0x%08x", vp, vp_tlbe);
 
@@ -150,16 +150,16 @@ static void _tlb_fill_tlbe_write(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_
 	tlbe->rwx |= rWx;
 }
 
-static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, uint tlb_bits)
+static void _tlb_invalidate_all(soc_tlbe_p tlbe_table, unsigned tlb_bits)
 {
-	for(uint i = 0; i < _BV(tlb_bits); i++)
+	for(unsigned i = 0; i < _BV(tlb_bits); i++)
 		memset(&tlbe_table[i], 0, sizeof(soc_tlbe_t));
 //		tlbe_table[i].i = 0;
 }
 
 static csx_mem_callback_p _tlb_read(soc_tlbe_p tlbe_table,
-	uint tlb_bits,
-	uint va,
+	unsigned tlb_bits,
+	unsigned va,
 	soc_tlbe_h h2tlbe)
 {
 	soc_tlbe_p tlbe = _tlb_entry(tlbe_table, tlb_bits, va, h2tlbe);
@@ -174,8 +174,8 @@ static csx_mem_callback_p _tlb_read(soc_tlbe_p tlbe_table,
 }
 
 static void* _tlb_write(soc_tlbe_p tlbe_table,
-	uint tlb_bits,
-	uint va,
+	unsigned tlb_bits,
+	unsigned va,
 	soc_tlbe_h h2tlbe)
 {
 	soc_tlbe_p tlbe = _tlb_entry(tlbe_table, tlb_bits, va, h2tlbe);

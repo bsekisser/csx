@@ -51,17 +51,17 @@ static inline void _setup_rR_vR_src(soc_core_p core, const uint8_t rrx, const ui
 }
 
 static inline void soc_core_decode_dst(soc_core_p core,
-	uint rrx,
-	uint msb,
-	uint lsb)
+	unsigned rrx,
+	unsigned msb,
+	unsigned lsb)
 {
 	_setup_rR_dst(core, rrx, mlBFEXT(IR, msb, lsb));
 }
 
 static inline void soc_core_decode_src(soc_core_p core,
-	uint rrx,
-	uint msb,
-	uint lsb)
+	unsigned rrx,
+	unsigned msb,
+	unsigned lsb)
 {
 	_setup_rR_vR_src(core, rrx, mlBFEXT(IR, msb, lsb));
 }

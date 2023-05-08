@@ -95,8 +95,8 @@ static uint32_t _soc_nnd_flash_mem_access(void* param, uint32_t ppa, size_t size
 
 static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
 {
-//	const uint cs = addr >> CSx_LSB;
-	const uint cs = 0;
+//	const unsigned cs = addr >> CSx_LSB;
+	const unsigned cs = 0;
 	
 	const soc_nnd_unit_p unit = &nnd->unit[cs];
 
@@ -147,9 +147,9 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 
 	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr);
 
-	uint index = (unit->cl & 0x0f);
+	unsigned index = (unit->cl & 0x0f);
 
-	uint value = 0;
+	unsigned value = 0;
 
 	switch(offset) {
 		case RWD:

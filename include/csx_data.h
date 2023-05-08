@@ -12,10 +12,6 @@ typedef struct csx_data_bit_t* csx_data_bit_p;
 
 /* **** */
 
-#ifndef uint
-	typedef unsigned int uint;
-#endif
-
 typedef struct csx_data_bit_t {
 	uint8_t bit;
 	uint8_t offset;
@@ -30,8 +26,8 @@ typedef struct csx_data_bit_t {
 	}csx_data_bit_t;
 */
 
-void csx_data_bit_bmas(void* p2data, csx_data_bit_p sdbp, uint set);
-uint csx_data_bit_read(void* p2src, csx_data_bit_p sdbp);
+void csx_data_bit_bmas(void* p2data, csx_data_bit_p sdbp, unsigned set);
+unsigned csx_data_bit_read(void* p2src, csx_data_bit_p sdbp);
 
 uint32_t csx_data_read_x(void* p2src, size_t size);
 void csx_data_write_x(void* p2dst, size_t size, uint32_t value);

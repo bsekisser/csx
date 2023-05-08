@@ -15,15 +15,15 @@ void _cxx(csx_test_p t, uint32_t value, size_t size)
 	t->pc += size;
 }
 
-int _test_cpsr_xpsr(csx_test_p t, uint cpsr, uint xpsr)
+int _test_cpsr_xpsr(csx_test_p t, unsigned cpsr, unsigned xpsr)
 {
 	return(_test_cpsr_xpsr_mask(t, cpsr, xpsr, SOC_CORE_PSR_NZCV));
 }
 
-int _test_cpsr_xpsr_mask(csx_test_p t, uint cpsr, uint xpsr, uint mask)
+int _test_cpsr_xpsr_mask(csx_test_p t, unsigned cpsr, unsigned xpsr, unsigned mask)
 {
-	uint test_cpsr = cpsr & mask;
-	uint test_xpsr = xpsr & mask;
+	unsigned test_cpsr = cpsr & mask;
+	unsigned test_xpsr = xpsr & mask;
 	
 	if(test_cpsr != test_xpsr) {
 		TRACE_PSR(cpsr);
@@ -41,7 +41,7 @@ int _test_nzc(csx_test_p t, int n, int z, int c)
 {
 	soc_core_p core = t->csx->core;
 	
-	uint xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
+	unsigned xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_C, !!c);
 	
@@ -52,7 +52,7 @@ int _test_nzcv(csx_test_p t, int n, int z, int c, int v)
 {
 	soc_core_p core = t->csx->core;
 	
-	uint xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
+	unsigned xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_C, !!c);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_V, !!v);
@@ -60,7 +60,7 @@ int _test_nzcv(csx_test_p t, int n, int z, int c, int v)
 	return(_test_cpsr_xpsr(t, CPSR, xpsr));
 }
 
-uint32_t _test_value(uint i)
+uint32_t _test_value(unsigned i)
 {
 	uint32_t test_value = i;
 	

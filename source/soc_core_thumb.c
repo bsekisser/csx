@@ -505,7 +505,7 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 
 	for(int i = 0; i <= 7; i++)
 	{
-		const uint rxx = BEXT(rlist, i);
+		const unsigned rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
 
 		if(rxx)
@@ -583,7 +583,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 
 	for(int i = 0; i <=7; i++)
 	{
-		const uint rxx = BEXT(rlist, i);
+		const unsigned rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
 
 		if(rxx)
