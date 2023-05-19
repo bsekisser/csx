@@ -720,7 +720,7 @@ static void arm_inst_msr(soc_core_p core)
 	}
 	else
 	{
-		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x*/",
+		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x */",
 			cs, cpsrs, rR_NAME(M), operand, mask, operand & mask);
 	}
 
