@@ -104,17 +104,20 @@ typedef void (*step_fn)(soc_core_p);
 
 void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc)
 {
+	PC = new_pc;
+	soc_core_reg_set_thumb(core, PC & 1);
+}
+
+void soc_core_reg_set_thumb(soc_core_p core, int thumb)
+{
 	step_fn step_fn_list[2][2] = {
 		{ soc_core_arm_step, soc_core_arm_step_profile, },
 		{ soc_core_thumb_step, soc_core_thumb_step_profile, },
 	};
 	
-	const int thumb = new_pc & 1;
 	BMAS(CPSR, SOC_CORE_PSR_BIT_T, thumb);
 	core->step = step_fn_list[thumb][_profile_soc_core_step];
-	new_pc &= (~3 >> thumb);
-
-	PC = new_pc;
+	PC &= (~3 >> thumb);
 }
 
 uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v)

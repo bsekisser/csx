@@ -1,4 +1,10 @@
-#define rRvRvPC PC_ARM
+#define ARM_IP_NEXT ((IP + 4) & ~3U)
+#define ARM_PC ((IP + 8) & ~3U)
+
+#define rRvRvPC ARM_PC
+
+
+/* **** */
 
 #include "soc_core_arm.h"
 #include "soc_core_arm_decode.h"
@@ -176,30 +182,21 @@ static void _arm_inst_ldstm(soc_core_p core,
 	vR(EA) += sizeof(uint32_t);
 }
 
-static void arm_inst_b(soc_core_p core)
+static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
 {
 	if(_check_pedantic_arm_decode_fault) {
 		if(ARM_INST_B != (IR & ARM_INST_B_MASK))
 			DECODE_FAULT;
 	}
-
-	const int blx = (0x0f == mlBFEXT(IR, 31, 28));
-	const int hl = BEXT(IR, ARM_INST_BIT_LINK);
-	const int32_t offset = mlBFMOVs(IR, 23, 0, 2);
-
-	const int link = blx || (!blx && hl);
-	const uint32_t new_pc = (PC_ARM + offset) + (blx ? ((hl << 1) | 1) : 0);
+	
+	const int blx = (0 != blx_hl);
+	const int32_t offset = mlBFMOVs(IR, 23, 0, 2) | blx_hl;
+	const uint32_t new_pc = (ARM_PC + offset);
 	const int thumb = new_pc & 1;
 
-	if(blx)
-	{
-		CORE_T(CCx.s = "AL");
-		CCx.e = 1;
-	}
-
-	int splat = _trace_bx_0 && blx && (new_pc == PC);
+	const int splat = _trace_bx_0 && !blx && (new_pc == ARM_IP_NEXT);
 	CORE_TRACE("b%s%s(0x%08x) /* %c(%s0x%08x) hl = %01u */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', splat ? "x" : "", offset, hl);
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', splat ? "x" : "", offset, blx_hl);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -209,10 +206,28 @@ static void arm_inst_b(soc_core_p core)
 	if(CCx.e)
 	{
 		if(link)
-			LR = PC;
+			LR = ARM_IP_NEXT;
 
-		soc_core_reg_set_pcx(core, new_pc);
+		PC = new_pc;
 	}
+}
+
+static void arm_inst_b_bl(soc_core_p core)
+{
+	const int link = BEXT(IR, ARM_INST_BIT_LINK);
+
+	_arm_inst_b_bl_blx(core, link, 0);
+}
+
+static void arm_inst_blx(soc_core_p core)
+{
+	const int hl = BMOV(IR, ARM_INST_BIT_LINK, 1) | 1;
+
+	CORE_T(CCx.s = "AL");
+	CCx.e = 1;
+
+	_arm_inst_b_bl_blx(core, 1, hl);
+	soc_core_reg_set_thumb(core, 1);
 }
 
 static void arm_inst_bx(soc_core_p core)
@@ -235,7 +250,7 @@ static void arm_inst_bx(soc_core_p core)
 	if(CCx.e)
 	{
 		if(link)
-			LR = PC;
+			LR = ARM_IP_NEXT;
 
 		soc_core_reg_set_pcx(core, new_pc);
 	}
@@ -474,7 +489,7 @@ static void arm_inst_ldstm(soc_core_p core)
 			}
 			else
 			{
-				rxx_v = PC_ARM;
+				rxx_v = ARM_PC;
 				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), 15, rxx_v);
 				soc_core_write(core, vR(EA), sizeof(uint32_t), rxx_v);
 			}
@@ -817,7 +832,7 @@ void soc_core_arm_step(soc_core_p core)
 				return(arm_inst_ldstm(core));
 				break;
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				return(arm_inst_b(core));
+				return(arm_inst_b_bl(core));
 				break;
 			case 0x07: /* xxxx 111x xxxx xxxx */
 				return(soc_core_arm_step_group7(core));
@@ -828,7 +843,7 @@ void soc_core_arm_step(soc_core_p core)
 	} else if(INST_CC_NV == ARM_IR_CC) {
 		switch(opcode) {
 			case 0x05: /* xxxx 101x xxxx xxxx */
-				return(arm_inst_b(core));
+				return(arm_inst_blx(core));
 				break;
 			default:
 				goto decode_fault;

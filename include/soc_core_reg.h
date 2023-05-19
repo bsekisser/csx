@@ -22,11 +22,7 @@ enum {
 };
 
 #define LR							core->reg[rLR]
-
 #define PC							core->reg[rPC]
-#define PC_ARM						((PC + 4) & ~3)
-#define PC_THUMB					((PC + 2) & ~1)
-
 #define SP							core->reg[rSP]
 
 /* **** */
@@ -38,6 +34,7 @@ uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r);
 
 void soc_core_reg_set(soc_core_p core, soc_core_reg_t r, uint32_t v);
 void soc_core_reg_set_pcx(soc_core_p core, uint32_t new_pc);
+void soc_core_reg_set_thumb(soc_core_p core, int thumb);
 
 uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v);
 

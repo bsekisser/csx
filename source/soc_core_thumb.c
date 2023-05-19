@@ -1,4 +1,7 @@
-#define rRvRvPC PC_THUMB
+#define THUMB_IP_NEXT ((IP + 2) & ~1U)
+#define THUMB_PC ((IP + 4) & ~1U)
+
+#define rRvRvPC THUMB_PC
 
 #include "soc_core_thumb.h"
 #include "soc_core_thumb_inst.h"
@@ -29,7 +32,7 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 	if(pcsp)
 		_setup_rR_vR(N, rSP, SP);
 	else
-		_setup_rR_vR(N, rPC, PC_THUMB & ~3);
+		_setup_rR_vR(N, rPC, THUMB_PC & ~3);
 
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
@@ -160,15 +163,15 @@ static void soc_core_thumb_bcc(soc_core_p core)
 
 	CCx.e = soc_core_check_cc(core, cond);
 
-	const uint32_t new_pc = PC_THUMB + imm8;
+	const uint32_t new_pc = THUMB_PC + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1, PC_THUMB, imm8, CCx.e);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1, THUMB_PC, imm8, CCx.e);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 
 	if(CCx.e)
 	{
-		PC = new_pc;
+		PC = new_pc & ~1U;
 	}
 }
 
@@ -190,7 +193,7 @@ static void soc_core_thumb_bx(soc_core_p core)
 		thumb ? 'T' : 'A', new_pc & ~1);
 
 	if(link) {
-		const uint32_t new_lr = PC | 1;
+		const uint32_t new_lr = THUMB_IP_NEXT | 1;
 		CORE_TRACE_LINK(new_lr);
 		LR = new_lr;
 	}
@@ -203,16 +206,16 @@ static void soc_core_thumb_bx(soc_core_p core)
 static void soc_core_thumb_bxx_b(soc_core_p core)
 {
 	const int16_t eao = mlBFMOVs(IR, 10, 0, 1);
-	const uint32_t new_pc = PC + eao;
+	const uint32_t new_pc = THUMB_PC + eao;
 
-	int splat = _trace_bx_0 && (new_pc == PC);
+	int splat = _trace_bx_0 && (new_pc == THUMB_IP_NEXT);
 	CORE_TRACE("b(0x%08x); /* 0x%08x + %s0x%03x*/",
 		new_pc & ~1, PC, splat ? "x" : "", eao);
 
-	PC = new_pc;
+	PC = new_pc & ~1U;
 }
 
-static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, int blx)
+static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, unsigned blx)
 {
 	const uint32_t new_pc = LR + eao;
 
@@ -220,14 +223,12 @@ static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, int blx)
 
 	LR = PC | 1;
 
-	int splat = _trace_bx_0 && (new_pc == PC);
+	int splat = _trace_bx_0 && (new_pc == THUMB_IP_NEXT);
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
 		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
 
-	if(blx)
-		soc_core_reg_set_pcx(core, new_pc & ~3);
-	else
-		PC = new_pc & ~1;
+	PC = new_pc;
+	soc_core_reg_set_thumb(core, 1 >> blx);
 
 	if(0) LOG("LR = 0x%08x, PC = 0x%08x", LR, PC);
 }
@@ -391,7 +392,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 	switch(operation)
 	{
 		case	0x4000:
-			_setup_rR_vR(N, rPC, PC_THUMB & ~0x03);
+			_setup_rR_vR(N, rPC, THUMB_PC & ~0x03);
 			break;
 		case	0x9000:
 			_setup_rR_vR(N, rSP, SP);
