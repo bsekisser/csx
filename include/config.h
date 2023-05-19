@@ -4,7 +4,7 @@
 
 #define _check_pedantic_arm_decode_fault 0
 #define _check_pedantic_mmio 0
-#define _check_pedantic_mmio_size 1
+#define _check_pedantic_mmio_size 0
 #define _check_pedantic_pc 0
 #define _check_pedantic_rname 0
 #define _check_pedantic_size 0

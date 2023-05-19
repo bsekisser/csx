@@ -58,8 +58,7 @@ uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 	}
 
 	res = !!res;
-	if(cc & 1)
-		res = !res;
+	res = (cc & 1) ? !res : res;
 
 	return(res);
 }
@@ -70,12 +69,17 @@ uint8_t soc_core_check_cc(soc_core_p core, uint8_t cc)
 		CPSR_(N), CPSR_(Z), CPSR_(C), CPSR_(V)); \
 	}
 
+static void _soc_core_flags_nz(soc_core_p core, uint32_t rd_v)
+{
+	CPSR |= BMOV(rd_v, 31, SOC_CORE_PSR_BIT_N);
+	CPSR |= (!(!!rd_v) << SOC_CORE_PSR_BIT_Z);
+}
+
 void soc_core_flags_nz(soc_core_p core, uint32_t rd_v)
 {
 	CPSR &= ~SOC_CORE_PSR_NZ;
 	
-	CPSR |= BMOV(rd_v, 31, SOC_CORE_PSR_BIT_N);
-	CPSR |= ((rd_v == 0) << SOC_CORE_PSR_BIT_Z);
+	_soc_core_flags_nz(core, rd_v);
 	
 	if(0) TRACE_CPSR
 }
@@ -99,8 +103,7 @@ static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, 
 
 	CPSR &= ~SOC_CORE_PSR_NZCV;
 
-	CPSR |= BMOV(rd_v, 31, SOC_CORE_PSR_BIT_N);
-	CPSR |= ((rd_v == 0) << SOC_CORE_PSR_BIT_Z);
+	_soc_core_flags_nz(core, rd_v);
 
 	CPSR |= BMOV((xvec ^ ovec ^ rd_v), 31, SOC_CORE_PSR_BIT_C);
 	CPSR |= BMOV(ovec, 31, SOC_CORE_PSR_BIT_V);
