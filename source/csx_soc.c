@@ -214,7 +214,7 @@ if(0)		if(csx->insns > 0x100000)
 		}
 	}
 
-	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x", csx->cycle, IP);
+	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", csx->cycle, IP, PC);
 
 	return(err);
 }
