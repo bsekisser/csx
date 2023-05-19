@@ -223,7 +223,7 @@ static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, unsigned b
 
 	LR = PC | 1;
 
-	int splat = _trace_bx_0 && (new_pc == THUMB_IP_NEXT);
+	int splat = _trace_bx_0 && (new_pc == THUMB_PC);
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
 		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
 
