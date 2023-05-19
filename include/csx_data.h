@@ -3,6 +3,11 @@
 /* **** forward declarations */
 
 typedef struct csx_data_bit_t* csx_data_bit_p;
+typedef struct csx_data_target_t* csx_data_target_p;
+
+/* **** local library includes */
+
+#include "bitfield.h"
 
 /* **** system includes */
 
@@ -17,6 +22,12 @@ typedef struct csx_data_bit_t {
 	uint8_t offset;
 	size_t size;
 }csx_data_bit_t;
+
+typedef struct csx_data_target_t {
+	void* base;
+	unsigned offset;
+	size_t size;
+}csx_data_target_t;
 
 /*
 	typedef struct csx_data_bfx_t {
@@ -100,6 +111,27 @@ static inline uint32_t csx_data_offset_mem_access(void* p2sd, uint32_t offset, s
 		csx_data_offset_write(p2sd, offset, size, data);
 	else
 		data = csx_data_offset_read(p2sd, offset, size);
+
+	return(data);
+}
+
+static inline uint32_t csx_data_target_mem_access(csx_data_target_p cdt,
+	size_t size,
+	uint32_t* write)
+{
+	void* const p2target = cdt->base + cdt->offset;
+	const uint32_t data = write ? *write : csx_data_read(p2target, cdt->size);
+
+	if(write) {
+		uint32_t data_write = data;
+
+		if(cdt->size > size) {
+			const uint32_t target_data = csx_data_read(p2target, cdt->size);
+			data_write = pbBFINS(target_data, data, 0, size << 3);
+		}
+
+		csx_data_write(p2target, cdt->size, data_write);
+	}
 
 	return(data);
 }

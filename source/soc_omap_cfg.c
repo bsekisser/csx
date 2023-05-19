@@ -112,6 +112,9 @@ static int __soc_omap_cfg_atreset(void* param)
 
 static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
+
 	const soc_omap_cfg_p cfg = param;
 
 	const uint16_t offset = ppa & 0x1ff;
@@ -151,6 +154,9 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t 
 
 static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
+
 	const soc_omap_cfg_p cfg = param;
 
 	const uint16_t offset = ppa & 0x1ff;
@@ -177,6 +183,9 @@ static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, 
 
 static uint32_t _soc_omap_cfg_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
+
 	const soc_omap_cfg_p cfg = param;
 
 	switch(ppa) {

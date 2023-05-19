@@ -76,10 +76,19 @@ static int __soc_omap_gp_timer_atexit(void* param)
 #define SOC_OMAP_GP_TIMER_VAR_FN(_name) \
 	static uint32_t _soc_omap_gp_timer_ ## _name(void* param, uint32_t ppa, size_t size, uint32_t* write) \
 	{ \
+		if(_check_pedantic_mmio_size) \
+			assert(sizeof(uint32_t) == size); \
+	\
 		const soc_omap_gp_timer_p gpt = param; \
 		const csx_p csx = gpt->csx; \
 	\
-		const uint32_t data = csx_data_mem_access(&gpt->_name, size, write); \
+		csx_data_target_t target = { \
+			.base = &gpt->_name, \
+			.offset = 0, \
+			.size = sizeof(gpt->_name), \
+		}; \
+	\
+		const uint32_t data = csx_data_target_mem_access(&target, size, write); \
 	\
 		if(_trace_mmio_gp_timer) \
 			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \

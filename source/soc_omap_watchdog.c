@@ -75,7 +75,8 @@ static uint32_t _soc_omap_watchdog_timer_mode(void* param,
 	size_t size,
 	uint32_t* write)
 {
-	assert(sizeof(uint32_t) == size);
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
 
@@ -97,7 +98,8 @@ static uint32_t _soc_omap_watchdog_wspr(void* param,
 	size_t size,
 	uint32_t* write)
 {
-	assert(sizeof(uint32_t) == size);
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
 
@@ -114,7 +116,8 @@ static uint32_t _soc_omap_watchdog_wwps(void* param,
 	size_t size,
 	uint32_t* write)
 {
-	assert(sizeof(uint32_t) == size);
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
 

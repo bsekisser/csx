@@ -48,6 +48,9 @@ static int __soc_omap_mpu_mmc_atexit(void* param)
 
 static uint32_t _soc_omap_mpu_mmc_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
 	const soc_omap_mpu_mmc_p mmc = param;
 	const csx_p csx = mmc->csx;
 

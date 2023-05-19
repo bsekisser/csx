@@ -46,7 +46,13 @@ static uint32_t _soc_omap_misc_mem_access(void* param, uint32_t ppa, size_t size
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
 	
-	uint32_t data = csx_data_offset_mem_access(misc->data, ppa & 0xff, size, write);
+	csx_data_target_t target = {
+		.base = misc->data,
+		.offset = ppa & 0xff,
+		.size = sizeof(uint32_t),
+	};
+	
+	uint32_t data = csx_data_target_mem_access(&target, size, write);
 
 	switch(ppa) {
 		case 0xfffe6014:

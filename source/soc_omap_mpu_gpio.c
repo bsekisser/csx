@@ -26,6 +26,7 @@
 typedef struct soc_omap_mpu_gpio_unit_t* soc_omap_mpu_gpio_unit_p;
 typedef struct soc_omap_mpu_gpio_unit_t {
 	uint32_t clear_dataout;
+	uint32_t datain;
 	uint32_t dataout;
 	uint32_t direction;
 	uint32_t edge_control2;
@@ -91,18 +92,22 @@ static soc_omap_mpu_gpio_unit_p __soc_omap_mpu_gpio_unit(
 	static uint32_t _soc_omap_mpu_gpio_##_x(void* param, \
 		uint32_t ppa, size_t size, uint32_t* write) \
 	{ \
-		if(_check_pedantic_mmio_size) \
-			assert(BTST((sizeof(uint16_t) | sizeof(uint32_t)), size)); \
+		if(_check_pedantic_mmio_size) { \
+			assert((sizeof(uint32_t) | sizeof(uint16_t)) & size); \
+		} \
 	\
 		const soc_omap_mpu_gpio_p gpio = param; \
 		const csx_p csx = gpio->csx; \
 	\
 		const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa); \
 	\
-		const uint32_t data = write ? *write : unit->_x;	\
+		csx_data_target_t target = { \
+			.base = &unit->_x, \
+			.offset = 0, \
+			.size = sizeof(unit->_x), \
+		}; \
 	\
-		if(write) \
-			unit->_x = data; \
+		const uint32_t data = csx_data_target_mem_access(&target, size, write);	\
 	\
 		if(_trace_mmio_mpu_gpio) \
 			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
@@ -112,6 +117,7 @@ static soc_omap_mpu_gpio_unit_p __soc_omap_mpu_gpio_unit(
 
 
 SOC_OMAP_MPU_GPIO_VAR(clear_dataout)
+SOC_OMAP_MPU_GPIO_VAR(datain)
 SOC_OMAP_MPU_GPIO_VAR(dataout)
 SOC_OMAP_MPU_GPIO_VAR(direction)
 SOC_OMAP_MPU_GPIO_VAR(edge_control2)
@@ -128,6 +134,7 @@ SOC_OMAP_MPU_GPIO_VAR(xxxx_xxc0)
 static csx_mmio_access_list_t __soc_omap_mpu_gpio_acl[] = {
 	GPIO_ACLE(0x10, SYSCONFIG, _soc_omap_mpu_gpio_sysconfig)
 	GPIO_ACLE(0x1c, IRQENABLE1, _soc_omap_mpu_gpio_irqenable1)
+	GPIO_ACLE(0x2c, DATAIN, _soc_omap_mpu_gpio_datain)
 	GPIO_ACLE(0x30, DATAOUT, _soc_omap_mpu_gpio_dataout)
 	GPIO_ACLE(0x34, DIRECTION, _soc_omap_mpu_gpio_direction)
 	GPIO_ACLE(0x3c, EDGE_CTRL2, _soc_omap_mpu_gpio_edge_control2)

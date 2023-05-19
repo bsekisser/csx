@@ -148,20 +148,24 @@ static int __soc_omap_mpu_ihr_atreset(void* param)
 #define SOC_OMAP_MPU_IHR_MEM_ACCESS_VAR(_enum, _name, _var) \
 	UNUSED_FN static uint32_t _soc_omap_mpu_ihr_ ## _name(void* param, uint32_t ppa, size_t size, uint32_t* write) \
 	{ \
+		if(_check_pedantic_mmio_size) \
+			assert(sizeof(uint32_t) == size); \
+	\
 		soc_omap_mpu_ihr_p ihr = param; \
 		csx_p csx = ihr->csx; \
-		\
-		uint32_t data = write ? *write : 0; \
-		\
-		if(write) \
-			ihr->_var = data; \
-		else \
-			data = ihr->_var; \
-		\
+	\
+		csx_data_target_t target = { \
+			.base = &ihr->_var, \
+			.offset = 0, \
+			.size = sizeof(ihr->_var), \
+		}; \
+	\
+		const uint32_t data = csx_data_target_mem_access(&target, size, write); \
+	\
 		if(_trace_mmio_mpu_ihr) { \
 			CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data); \
 		} \
-		\
+	\
 		return(data); \
 	}
 

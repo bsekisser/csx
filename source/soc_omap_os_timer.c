@@ -79,6 +79,9 @@ enum {
 
 static uint32_t _soc_omap_os_timer_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
+	
 	const soc_omap_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 	
@@ -97,6 +100,9 @@ static uint32_t _soc_omap_os_timer_ctrl(void* param, uint32_t ppa, size_t size, 
 
 static uint32_t _soc_omap_os_timer_tick_val(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint32_t) == size);
+	
 	const soc_omap_os_timer_p ost = param;
 	const csx_p csx = ost->csx;
 	
