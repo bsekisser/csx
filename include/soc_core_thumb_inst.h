@@ -52,6 +52,7 @@ enum {
 
 enum {
 	THUMB_SDP_OP_ADD = 0x00,
+	THUMB_SDP_OP_CMP = 0x01,
 	THUMB_SDP_OP_MOV = 0x02,
 };
 

@@ -710,12 +710,19 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 	_setup_rR_vR_src(core, rRD, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
 
 	uint32_t res = vR(D);
+	const unsigned wb = (operation != THUMB_SDP_OP_CMP);
 
 	switch(operation)
 	{
 		case THUMB_SDP_OP_ADD:
 			res += vR(M);
 			CORE_TRACE("add(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
+				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
+			break;
+		case THUMB_SDP_OP_CMP:
+			res -= vR(M);
+			soc_core_flags_nzcv_sub(core, res, vR(D), vR(M));
+			CORE_TRACE("cmp(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
 				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
 			break;
 		case THUMB_SDP_OP_MOV:
@@ -730,7 +737,8 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 			break;
 	}
 
-	soc_core_reg_set(core, rR(D), res);
+	if(wb)
+		soc_core_reg_set(core, rR(D), res);
 }
 
 /* **** */
