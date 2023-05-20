@@ -34,6 +34,7 @@
 #define CORE_TRACE_THUMB ({})
 
 void soc_core_trace(soc_core_p core, const char* format, ...);
+void soc_core_trace_dump_regs(soc_core_p core);
 void soc_core_trace_end(soc_core_p core);
 void soc_core_trace_out(soc_core_p core, const char* format, ...);
 void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr);

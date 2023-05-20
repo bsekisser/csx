@@ -1,6 +1,7 @@
 #include "soc_core_trace.h"
 
 #include "soc_core_psr.h"
+#include "soc_core_strings.h"
 
 /* **** */
 
@@ -43,6 +44,22 @@ void soc_core_trace(soc_core_p core, const char* format, ...)
 		printf(")\n");
 	else
 		soc_core_trace_end(core);
+}
+
+void soc_core_trace_dump_regs(soc_core_p core)
+{
+	LOG_END();
+	
+	LOG_START("\n");
+	unsigned i = 0;
+	do {
+		_LOG_("%04s == 0x%08x", _reg_name(i), GPR(i));
+		i++;
+		if(i < 16) {
+			_LOG_("%s", (3 & i) ? ", " : "\n");
+		}
+	}while(i < 16);
+	LOG_END();
 }
 
 void soc_core_trace_end(soc_core_p core)
