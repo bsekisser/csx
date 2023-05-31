@@ -2,11 +2,6 @@
 
 /* **** */
 
-typedef struct soc_core_dpi_t* soc_core_dpi_p;
-typedef struct soc_core_ldst_t* soc_core_ldst_p;
-
-/* **** */
-
 #include "csx.h"
 
 #include "soc_core_decode.h"
