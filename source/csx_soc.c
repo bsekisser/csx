@@ -57,19 +57,52 @@ static int _csx_soc_atexit(void* param)
 	handle_free(param);
 
 	return(0);
-}	
-
-static void __csx_soc_init_load_rgn_file(void* dst, csx_data_p cdp, uint32_t start, uint32_t end)
-{
-	void* src = cdp->data;
-	void* dst_start = dst + (cdp->base - start);
-	void* dst_limit = dst + (end - start);
-	void* dst_end = dst_start + cdp->size;
-
-	if(dst_end < dst_limit)
-		memcpy(dst_start, src, cdp->size);
 }
 
+static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, uint32_t end)
+{
+	if(start > cdp->base)
+		return(0);
+	
+	if(end < cdp->base)
+		return(0);
+
+	LOG("base: 0x%08x, start: 0x%08x, end: 0x%08x", cdp->base, start, end);
+
+	void* dst_start = dst + (cdp->base - start);
+	const void* src = cdp->data;
+
+	const void* dst_limit = dst + (end - start);
+	const void* dst_end = dst_start + cdp->size;
+
+	const size_t count = (dst_end <= dst_limit) ?
+		cdp->size : (size_t)(dst_limit - dst_start);
+
+	LOG_START("dst: 0x%08" PRIxPTR, (uintptr_t)dst);
+	_LOG_(" --- start: 0x%08" PRIxPTR, (uintptr_t)dst_start);
+	_LOG_(" <-->> end: 0x%08" PRIxPTR, (uintptr_t)dst_end);
+	_LOG_(" <<--> limit: 0x%08" PRIxPTR, (uintptr_t)dst_limit);
+	LOG_END(", count: 0x%08zx", count);
+
+	if(count)
+		memcpy(dst_start, src, count);
+
+	return(1);
+}
+
+static void __csx_soc_init_cdp(csx_p csx, csx_data_p cdp)
+{
+	csx_soc_p soc = csx->soc;
+	
+	__csx_soc_init__cdp_copy(csx->sdram, cdp,
+		CSX_SDRAM_START, CSX_SDRAM_END);
+
+	__csx_soc_init__cdp_copy(soc->sram, cdp,
+		SOC_SRAM_START, SOC_SRAM_END);
+
+	__csx_soc_init__cdp_copy(soc->brom, cdp,
+		SOC_BROM_START, SOC_BROM_END);
+}
 
 static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* file_name)
 {
@@ -91,17 +124,7 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	cdp->data = data;
 	cdp->size = sb.st_size;
 
-	if((cdp->base >= CSX_SDRAM_START)
-		&& (cdp->base < CSX_SDRAM_END))
-	{
-		__csx_soc_init_load_rgn_file(csx->sdram,
-			cdp, CSX_SDRAM_START, CSX_SDRAM_END);
-	} else if((cdp->base >= SOC_SRAM_START)
-		&& (cdp->base < SOC_SRAM_END))
-	{
-		__csx_soc_init_load_rgn_file(csx->soc->sram,
-			cdp, SOC_SRAM_START, SOC_SRAM_END);
-	}
+	__csx_soc_init_cdp(csx, cdp);
 
 	LOG("base = 0x%08x, data = 0x%08" PRIxPTR ", size = 0x%08zx",
 		cdp->base, (uintptr_t)cdp->data, cdp->size);
@@ -148,7 +171,7 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
 	csx_callback_atreset(csx, _csx_soc_reset, soc);
 
-	csx_mem_mmap(csx, 0, 0x0003ffff, 0, soc->brom);
+	csx_mem_mmap(csx, SOC_BROM_START, SOC_BROM_END, 0, soc->brom);
 	csx_mem_mmap(csx, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
 
 	int err = 0;
@@ -179,13 +202,18 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	csx_soc_reset(csx);
 
+	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
+	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
+	
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
 	} else {
 		csx->loader.base = 0x10020000;
-		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
+		__csx_soc_init_cdp(csx, &csx->loader);
 
 		csx->firmware.base = csx->loader.base + csx->loader.size;
+
+		csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 	}
 
 	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
@@ -194,6 +222,8 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
 	soc_core_reg_set_pcx(core, cdp->base);
+
+if(0)	soc_core_reg_set(core, 12, 1);
 
 	if(!err)
 	{
@@ -209,7 +239,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 			}
 
 			csx->insns++;
-if(0)		if(csx->insns > 0x100000)
+if(1)		if(csx->insns > 0x100000)
 				break;
 		}
 	}

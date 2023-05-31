@@ -25,7 +25,7 @@ typedef struct csx_soc_t {
 
 	csx_p csx;
 	
-	uint8_t brom[0x0003ffff];
+	uint8_t brom[SOC_BROM_ALLOC];
 	uint8_t sram[SOC_SRAM_ALLOC]; /* aka framebuffer */
 	
 	callback_list_t atexit_list;
