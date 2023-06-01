@@ -20,7 +20,11 @@
 
 typedef struct soc_nnd_unit_t* soc_nnd_unit_p;
 typedef struct soc_nnd_unit_t {
+	csx_p							csx;
+	soc_nnd_p						nnd;
 	uint32_t						cl;
+	unsigned						cl_index;
+	unsigned						cs;
 	uint32_t						status;
 }soc_nnd_unit_t;
 
@@ -54,9 +58,14 @@ const uint8_t soc_nnd_flash_manufacturer_code[] = {
 #define CSx_LSB 24
 #define OFFSET_MSB (CSx_LSB - 1)
 
-
-const uint8_t soc_nnd_flash_id[5] = {
-	0xec, 0xd3, 0x51, 0x95, 0x58
+const uint8_t soc_nnd_flash_id[16][5] = {
+//	[0x4] = { 0xec, 0x77, 0x51, 0x95, 0x58 },
+//	[0x8] = { 0xec, 0x73, 0x51, 0x95, 0x58 },
+//	[0xc] = { 0xec, 0x77, 0x51, 0x95, 0x58 }, // <<!
+	[0xc] = { 0xec, 0x78, 0x51, 0x95, 0x58 },
+//
+//	0xec, 0xd3, 0x51, 0x95, 0x58
+//
 //	soc_nnd_flash_part_id[0],
 //	soc_nnd_flash_manufacturer_code[0],
 };
@@ -93,17 +102,32 @@ static uint32_t _soc_nnd_flash_mem_access(void* param, uint32_t ppa, size_t size
 	return(0);
 }
 
-static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr)
+static soc_nnd_unit_p _soc_nnd_flash_unit(soc_nnd_p nnd, uint32_t addr, unsigned* p2cs)
 {
-//	const unsigned cs = addr >> CSx_LSB;
-	const unsigned cs = 0;
-	
-	const soc_nnd_unit_p unit = &nnd->unit[cs];
-
-	LOG("nnd = 0x%08" PRIxPTR ", addr = 0x%08x, cs = 0x%02x, unit = 0x%08" PRIxPTR,
-	    (uintptr_t)nnd, addr, cs, (uintptr_t)unit);
+	const unsigned cs = addr >> CSx_LSB;
 
 	assert(cs < 16);
+
+	if(p2cs)
+		*p2cs = cs;
+
+//	return(0);
+	const soc_nnd_unit_p unit = &nnd->unit[cs];
+
+	if(0) {
+		LOG_START("");
+
+		if(0) {
+			_LOG_("nnd = 0x%08" PRIxPTR, (uintptr_t)nnd);
+			_LOG_(", unit = 0x%08x" PRIxPTR, (uintptr_t)unit);
+			_LOG_(", ");
+		}
+
+		_LOG_("addr = 0x%08x", addr);
+		_LOG_(", cs = 0x%02x", cs);
+
+		LOG_END();
+	}
 
 	return(unit);
 }
@@ -123,6 +147,13 @@ int soc_nnd_flash_init(csx_p csx, soc_nnd_h h2nnd)
 	ERR_NULL(nnd);
 
 	nnd->csx = csx;
+
+	for(unsigned cs = 0; cs < 16; cs++) {
+		soc_nnd_unit_p unit = &nnd->unit[cs];
+		unit->cs = cs;
+		unit->csx = csx;
+		unit->nnd = nnd;
+	}
 
 	/* **** */
 
@@ -145,46 +176,65 @@ uint32_t soc_nnd_flash_read(soc_nnd_p nnd, uint32_t addr, size_t size)
 	if(0) LOG("addr = 0x%08x, offset = 0x%08x, size = 0x%08zx",
 		addr, offset, size);
 
-	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr);
+	unsigned cs = 0;
+	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr, &cs);
 
-	unsigned index = (unit->cl & 0x0f);
+	if(0 == unit) {
+		LOG("addr = 0x%08x, cs = 0x%08x, offset = 0x%08x, size = 0x%08zx",
+			addr, cs, offset, size);
 
-	unsigned value = 0;
+		return(0);
+	}
+
+	unsigned cl_index = unit->cl_index;
+	unsigned value =  addr & 0xff;
 
 	switch(offset) {
 		case RWD:
-			if(0x70 == (unit->cl & 0xff)) { /* read status */
-				value = unit->status;
-			} else if(0x90 == (unit->cl & 0xf0)) { /* read id */
-				value = soc_nnd_flash_id[index++];
-				unit->cl = (unit->cl & 0xf0) | ((index < 5) ? index : 0);
+			switch(unit->cl & 0xff) {
+				case 0x70: /* read status */
+					value = unit->status;
+				break;
+				case 0x90: /* read id */
+					value = soc_nnd_flash_id[cs][cl_index++];
+					unit->cl_index = cl_index < 5 ? cl_index : 0;
+				break;
 			}
 			break;
+		case 0x10:
+			value = htobe32('DSKI');
+			break;
 		default:
-			LOG("addr = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x",
-				addr, value, size, unit->cl);
+			LOG("addr = 0x%08x, cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x",
+				addr, cs, value, size, unit->cl);
 			break;
 	}
 
+	LOG("addr = 0x%08x, cs = 0x%08x, size = 0x%08zx, cl = 0x%08x:0%08x, value = 0x%08x",
+		addr, cs, size, unit->cl, cl_index, value);
 
 	return(value);
 }
 
 static void soc_nnd_flash_write_cle(soc_nnd_p nnd, soc_nnd_unit_p unit, size_t size, uint32_t value)
 {
-	LOG("value = 0x%08x, size = 0x%08zx, cl = 0x%08x", value, size, unit->cl);
+	unsigned cs = unit->cs;
+	
+	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
 
 	if(0xff == value) { /* reset */
 		unit->cl = 0;
+		unit->cl_index = 0;
 		unit->status = 0;
 		BSET(unit->status, 7); /* not write protected */
 		BSET(unit->status, 6); /* device ready */
 	} else {
 		unit->cl <<= 8;
 		unit->cl |= (value & 0xff);
+		unit->cl_index = 0;
 	}
 
-	LOG("value = 0x%08x, size = 0x%08zx, cl = 0x%08x", value, size, unit->cl);
+	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
 
 	UNUSED(nnd);
 }
@@ -193,16 +243,24 @@ void soc_nnd_flash_write(soc_nnd_p nnd, uint32_t addr, size_t size, uint32_t val
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
-	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr);
+	unsigned cs = 0;
+	const soc_nnd_unit_p unit = _soc_nnd_flash_unit(nnd, addr, &cs);
+
+	if(0 == unit) {
+		LOG("addr = 0x%08x, cs = 0x%08x, offset = 0x%08x, size = 0x%08zx, value = 0x%08x",
+			addr, cs, offset, size, value);
+
+		return;
+	}
 
 	switch(offset) {
 		case CLE:
-			LOG("CLE: value = 0x%08x, size = 0x%08zx", value, size);
+			if(0) LOG("CLE: value = 0x%08x, size = 0x%08zx", value, size);
 			soc_nnd_flash_write_cle(nnd, unit, size, value);
 			break;
 		default:
-			LOG("addr = 0x%08x, offset = 0x%08x, value = 0x%08x, size = 0x%08zx",
-				addr, offset, value, size);
+			LOG("addr = 0x%08x, cs = 0x%08x, offset = 0x%08x, value = 0x%08x, size = 0x%08zx",
+				addr, cs, offset, value, size);
 			break;
 	}
 }

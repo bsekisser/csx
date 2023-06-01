@@ -78,11 +78,13 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, u
 	const size_t count = (dst_end <= dst_limit) ?
 		cdp->size : (size_t)(dst_limit - dst_start);
 
-	LOG_START("dst: 0x%08" PRIxPTR, (uintptr_t)dst);
-	_LOG_(" --- start: 0x%08" PRIxPTR, (uintptr_t)dst_start);
-	_LOG_(" <-->> end: 0x%08" PRIxPTR, (uintptr_t)dst_end);
-	_LOG_(" <<--> limit: 0x%08" PRIxPTR, (uintptr_t)dst_limit);
-	LOG_END(", count: 0x%08zx", count);
+	if(0) {
+		LOG_START("dst: 0x%08" PRIxPTR, (uintptr_t)dst);
+		_LOG_(" --- start: 0x%08" PRIxPTR, (uintptr_t)dst_start);
+		_LOG_(" <-->> end: 0x%08" PRIxPTR, (uintptr_t)dst_end);
+		_LOG_(" <<--> limit: 0x%08" PRIxPTR, (uintptr_t)dst_limit);
+		LOG_END(", count: 0x%08zx", count);
+	}
 
 	if(count)
 		memcpy(dst_start, src, count);
@@ -208,15 +210,18 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
 	} else {
-		csx->loader.base = 0x10020000;
-		__csx_soc_init_cdp(csx, &csx->loader);
+		if(1) {
+			csx->loader.base = 0x10020000;
+			__csx_soc_init_cdp(csx, &csx->loader);
 
-		csx->firmware.base = csx->loader.base + csx->loader.size;
+			csx->firmware.base = csx->loader.base + csx->loader.size;
+		} else
+			csx->firmware.base = 0x10020000;
 
 		csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 	}
 
-	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
+//	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
 	soc_core_psr_mode_switch(core, (CPSR & ~0x1f) | (0x18 + 7));
 

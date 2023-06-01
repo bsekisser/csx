@@ -337,7 +337,7 @@ static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 
 static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 {
-	LOG_ACTION(exit(-1));
+//	LOG_ACTION(exit(-1));
 
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR(S, ~mlBFEXT(IR, 6, 5), mlBFEXT(IR, 11, 7));
