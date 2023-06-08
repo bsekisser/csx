@@ -11,6 +11,7 @@ typedef struct soc_mmu_t* soc_mmu_p;
 
 /* **** */
 
+void csx_mmu_dump_ttbr0(csx_p csx);
 uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size);
 uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size);
 void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data);

@@ -140,6 +140,38 @@ static soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
 
 /* **** */
 
+void csx_mmu_dump_ttbr0(csx_p csx)
+{
+	if(!CP15_reg1_Mbit)
+		return;
+	if(~0U == TTBR0)
+		return;
+	
+	soc_mmu_p mmu = csx->mmu;
+	
+	unsigned ttbcr_x = TTBCR & 7;
+	const uint32_t ttbr0_ppa = mlBFTST(TTBR0, 31, 14 - ttbcr_x);
+	const uint32_t ttbr0_ti_bits = (32 - ttbcr_x) - 20;
+	const	uint32_t last_ti = mlBFMOV(~0, 31 - ttbcr_x, 20, 2);
+
+	LOG("TTBCR: 0x%08x (.x = %01u), TTBR0: 0x%08x, TTBR0_PPA: 0x%08x -- 0x%08x",
+		TTBCR, ttbcr_x, TTBR0, ttbr0_ppa, last_ti);
+
+	for(uint32_t ti = 0; ti <= last_ti; ti + sizeof(uint32_t))
+	{
+		const uint32_t ppa = ti << 20;
+		const uint32_t l1ptd_ppa = ttbr0_ppa | ti;
+		LOG_START("0x%08x:0x%08x:0x%08x -- ", ppa, ti, l1ptd_ppa);
+		
+		const uint32_t l1ptd = csx_mem_access_read(csx, l1ptd_ppa, sizeof(uint32_t), 0);
+		const unsigned l1ptd_type = l1ptd & 3;
+
+		_LOG_("%01u -- ", l1ptd_type);
+		
+		LOG_END();
+	}
+}
+
 uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 {
 	uint32_t ppa = va;
