@@ -157,7 +157,7 @@ void csx_mmu_dump_ttbr0(csx_p csx)
 	LOG("TTBCR: 0x%08x (.x = %01u), TTBR0: 0x%08x, TTBR0_PPA: 0x%08x -- 0x%08x",
 		TTBCR, ttbcr_x, TTBR0, ttbr0_ppa, last_ti);
 
-	for(uint32_t ti = 0; ti <= last_ti; ti + sizeof(uint32_t))
+	for(uint32_t ti = 0; ti <= last_ti; ti += sizeof(uint32_t))
 	{
 		const uint32_t ppa = ti << 20;
 		const uint32_t l1ptd_ppa = ttbr0_ppa | ti;
