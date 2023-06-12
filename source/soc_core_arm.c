@@ -22,6 +22,8 @@
 
 /* **** */
 
+#include "exception.h"
+
 #include "csx_statistics.h"
 
 /* **** */
@@ -461,7 +463,7 @@ static void arm_inst_ldstm(soc_core_p core)
 	{
 		if(CP15_reg1_Ubit) {
 			if(vR(EA) & 3)
-				DataAbort();
+				soc_core_exception(core, _EXCEPTION_DataAbort);
 		}
 		else
 			vR(EA) &= ~3;

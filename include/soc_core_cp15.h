@@ -35,15 +35,20 @@ enum {
 enum {
 	_CP15_CRn1_CRm0_OP2x0_a = 1,
 	_CP15_CRn1_CRm0_OP2x0_m = 0,
+	_CP15_CRn1_CRm0_OP2x0_v = 13,
 	_CP15_CRn1_CRm0_OP2x0_u = 22,
+	_CP15_CRn1_CRm0_OP2x0_ve = 24,
+	_CP15_CRn1_CRm0_OP2x0_ee = 25,
 };
 
 #define CP15_reg1_bit(_x)			BEXT(_vCR(_CP15_CRn1_CRm0_OP2x0), _CP15_CRn1_CRm0_OP2x0_##_x)
 #define CP15_reg1_set(_x)			BSET(_vCR(_CP15_CRn1_CRm0_OP2x0), _CP15_CRn1_CRm0_OP2x0_##_x)
 
 #define CP15_reg1_Abit				CP15_reg1_bit(a)
+#define CP15_reg1_EEbit				CP15_reg1_bit(ee)
 #define CP15_reg1_Mbit				CP15_reg1_bit(m)
 #define CP15_reg1_Ubit				CP15_reg1_bit(u)
+#define CP15_reg1_VEbit				CP15_reg1_bit(ve)
 
 //#define ARMv5_CP15_reg1_Ubit		((_arm_version >= arm_v5t) && CP15_reg1_bit(u))
 #define ARMv5_CP15_reg1_Ubit		CP15_reg1_bit(u)

@@ -6,6 +6,10 @@
 
 /* **** */
 
+#include "exception.h"
+
+/* **** */
+
 #include "bitfield.h"
 #include "err_test.h"
 #include "log.h"
@@ -202,7 +206,7 @@ static uint32_t _soc_core_cp15_cn5_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 static uint32_t _soc_core_cp15_cn7_cm5_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
 {
 	if(write) {
-		IF_USER_MODE(UNDEFINED_INSTRUCTION);
+		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
 		LOG("Invalidate ICache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache"));
@@ -215,7 +219,7 @@ static uint32_t _soc_core_cp15_cn7_cm5_op2x0(soc_core_p core, uint32_t opcode, u
 static uint32_t _soc_core_cp15_cn7_cm7_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
 {
 	if(write) {
-		IF_USER_MODE(UNDEFINED_INSTRUCTION);
+		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
 		LOG("Invalidate ICache and DCache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache and DCache"));
@@ -243,7 +247,7 @@ static uint32_t _soc_core_cp15_cn7_cm10_op2x3(soc_core_p core, uint32_t opcode, 
 static uint32_t _soc_core_cp15_cn7_cm10_op2x4(soc_core_p core, uint32_t opcode, uint32_t* write)
 {
 	if(write) {
-		IF_USER_MODE(UNDEFINED_INSTRUCTION);
+		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
 		LOG("Drain write buffer");
 	} else {
 		DEBUG(LOG("XX READ -- Drain write buffer"));

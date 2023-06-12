@@ -16,6 +16,10 @@
 
 /* **** */
 
+#include "exception.h"
+
+/* **** */
+
 #include "bitfield.h"
 #include "log.h"
 #include "shift_roll.h"
@@ -574,7 +578,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 	if(CP15_reg1_AbitOrUbit && (0 != (start_address & 3))) {
 		LOG("start_address = 0x%08x, 0x%08x", start_address, start_address & 3);
 		soc_core_disasm_thumb(core, IP, IR);
-		DataAbort();
+		soc_core_exception(core, _EXCEPTION_DataAbort);
 	}
 
 	uint32_t ea = start_address & ~3;

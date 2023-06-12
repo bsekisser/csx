@@ -9,6 +9,10 @@
 #include "csx_statistics.h"
 #include "csx_test_utility.h"
 
+#include "exception.h"
+
+#include "arm_cpsr.h"
+
 /* **** */
 
 #include "bitfield.h"
@@ -47,20 +51,9 @@ static int _soc_core_reset(void* param)
 	for(int i = 0; i < 16; i++)
 		soc_core_reg_set(core, i, ((~0UL) << 16) | _test_value(i));
 
-	CPSR = 0x13;		/* Enter Supervisor mode */
-	BCLR(CPSR, 5);		/* Execute in ARM state */
-	BSET(CPSR, 6);		/* Disable fast interrupts */
-	BSET(CPSR, 7);		/* Disable normal interrupts */
-	BSET(CPSR, 8);		/* Disable Imprecise Aborts (v6 only) */
-	BSET(CPSR, 9);		/* Endianness on exception entry */
-	
-	const int high_vectors = 0;
-	uint32_t reset_pc = !high_vectors ? 0 : 0xffff0000;	/* if high vectors */
+	CPSR = CPSR_M(Supervisor);
+	soc_core_exception(core, _EXCEPTION_Reset);
 
-	soc_core_psr_mode_switch(core, CPSR);
-	soc_core_reg_set_pcx(core, reset_pc);
-
-	soc_core_trace_psr(core, __FUNCTION__, CPSR);
 	return(0);
 }
 

@@ -7,8 +7,11 @@
 
 /* **** */
 
+#include "exception.h"
+
 #include "csx_data.h"
 #include "csx_mem.h"
+#include "csx.h"
 
 /* **** */
 
@@ -194,8 +197,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 		LOG(" -- PREFETCH ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
 			(uintptr_t)csx, va, ppa, size);
 
-		soc_core_p core = csx->core;
-		PrefetchAbort();
+		csx_exception(csx, _EXCEPTION_PrefetchAbort);
 	}
 
 	if(tlb && src)
@@ -226,8 +228,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
 			(uintptr_t)csx, va, ppa, size);
 
-		soc_core_p core = csx->core;
-		DataAbort();
+		csx_exception(csx, _EXCEPTION_DataAbort);
 	}
 	
 	if(tlb && src)
@@ -258,8 +259,7 @@ void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx, data = 0x%08x",
 			(uintptr_t)csx, va, ppa, size, data);
 
-		soc_core_p core = csx->core;
-		DataAbort();
+		csx_exception(csx, _EXCEPTION_DataAbort);
 	}
 
 	if(tlb && dst)
