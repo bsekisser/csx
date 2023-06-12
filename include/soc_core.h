@@ -25,6 +25,9 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 #define ILLEGAL_INSTRUCTION \
 	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 
+#define IMPLIMENTATION_DEFINED \
+	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
+
 #define UNDEFINED \
 	{ soc_core_disasm(core, IP, IR); LOG_ACTION(core->csx->state = CSX_STATE_HALT); }
 

@@ -96,9 +96,11 @@ static void _csx_soc_exception(csx_p csx, soc_core_p core, unsigned type)
 	switch(type) {
 		case _EXCEPTION_FIQ:
 		case _EXCEPTION_IRQ:
-			if(CP15_reg1_VEbit) // ????
-				UNIMPLIMENTED
-			break;
+			if(CP15_reg1_VEbit) { // ????
+				LOG_ACTION(IMPLIMENTATION_DEFINED);
+				break;
+			}
+		__attribute__((fallthrough));
 		default:
 			PC = exception->pc;
 			if(CP15_reg1_bit(v))
