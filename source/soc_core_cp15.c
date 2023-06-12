@@ -116,6 +116,10 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 
 		if(BEXT(bits_set, 0))
 			csx_mmu_dump_ttbr0(csx);
+
+		if(CP15_reg1_EEbit) {
+			LOG("CP15_reg1_EEbit -- XXX");
+		}
 	} else {
 		DEBUG(LOG("READ -- Control Register"));
 	}

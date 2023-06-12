@@ -84,15 +84,14 @@ static void _csx_soc_exception(csx_p csx, soc_core_p core, unsigned type)
 	if(SPSR)
 		*SPSR = saved_cpsr;
 
-	const uint32_t cpsr_mask = exception->cpsr_clear | exception->cpsr_set;
+	CPSR &= ~exception->cpsr_clear;
+	CPSR |= exception->cpsr_set;
 
-	CPSR &= ~cpsr_mask;
-	CPSR |= (exception->cpsr_set & ~CPSR_C(E));
+	const unsigned cpsr_c_e = exception->cpsr_set & CPSR_C(E);
+	const unsigned cpsr_c_e_set = cpsr_c_e && CP15_reg1_bit(ee);
 
-	if(exception->cpsr_set & CPSR_C(E)) {
-		BSET_AS(CPSR, _CPSR_C_BIT_E, !!CP15_reg1_bit(ee));
-	}
-
+	BSET_AS(CPSR, _CPSR_C_BIT_E, cpsr_c_e_set);
+	
 	switch(type) {
 		case _EXCEPTION_FIQ:
 		case _EXCEPTION_IRQ:
