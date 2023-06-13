@@ -114,7 +114,7 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 		unsigned bits_set = (_vCR(_CP15_CRn1_CRm0_OP2x0) ^ data) & data;
 		_vCR(_CP15_CRn1_CRm0_OP2x0) = data;
 
-		if(BEXT(bits_set, 0))
+		if(0 && BEXT(bits_set, 0))
 			csx_mmu_dump_ttbr0(csx);
 
 		if(CP15_reg1_EEbit) {
