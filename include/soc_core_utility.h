@@ -13,6 +13,7 @@
 
 /* **** */
 
+#include "bitfield.h"
 #include "log.h"
 
 /* **** */
@@ -65,7 +66,7 @@ static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t siz
 	if(0 == data) {
 		splat++;
 		if(16 <= splat) {
-			LOG_ACTION(exit(-1));
+			LOG_ACTION(core->csx->state = CSX_STATE_HALT);
 		}
 	} else
 		splat = 0;
