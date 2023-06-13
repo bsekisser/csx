@@ -33,19 +33,43 @@ typedef struct soc_mmu_t* soc_mmu_p;
 typedef struct soc_mmu_t { // TODO: move to header
 	csx_p							csx;
 	uint32_t						ttbcr;
-	
+
 	callback_list_t atexit_list;
 	callback_list_t atreset_list;
+
+	union {
+		unsigned raw_flags;
+		struct {
+			unsigned debug:1;
+		};
+	};
 }soc_mmu_t;
 
+typedef struct soc_mmu_ptd_t* soc_mmu_ptd_p;
 typedef struct soc_mmu_ptd_t {
-	unsigned ap:2;
-	unsigned b:1;
-	unsigned base:20;
-	unsigned c:1;
-	unsigned domain:4;
-	unsigned type:2;
+	uint64_t base;
+
+	unsigned raw;
+
+	union {
+		unsigned flags_raw;
+		struct {
+			unsigned ap:2;
+			unsigned apx:1;
+			unsigned b:1;
+			unsigned c:1;
+			unsigned domain:4;
+			unsigned imp:1;
+			unsigned is_supersection:1;
+			unsigned ng:1;
+			unsigned s:1;
+			unsigned tex:3;
+			unsigned type:2;
+			unsigned xn:1;
+		};
+	};
 }soc_mmu_ptd_t;
+
 
 /* **** */
 
@@ -57,11 +81,93 @@ static int _soc_mmu_atexit(void* param)
 
 	soc_mmu_h h2mmu = param;
 	soc_mmu_p mmu = *h2mmu;
-	
+
 	callback_list_process(&mmu->atexit_list);
 
 	handle_free(param);
-	
+
+	return(0);
+}
+
+static inline int _soc_mmu_l1ptd_02(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t va, unsigned* p2ppa)
+{
+	ptd->ap = mlBFEXT(ptd->raw, 11, 10);
+	ptd->apx = BEXT(ptd->raw, 15);
+	ptd->b = BEXT(ptd->raw, 2);
+	ptd->c = BEXT(ptd->raw, 3);
+	ptd->imp = BEXT(ptd->raw, 9);
+	ptd->is_supersection = BEXT(ptd->raw, 18);
+	ptd->ng = BEXT(ptd->raw, 17);
+	ptd->s = BEXT(ptd->raw, 16);
+	ptd->tex = mlBFEXT(ptd->raw, 14, 12);
+	ptd->xn = BEXT(ptd->raw, 4);
+
+	ptd->domain = ptd->is_supersection ? 0 : mlBFEXT(ptd->raw, 8, 5);
+
+	const unsigned sba_lsb = ptd->is_supersection ? 24 : 20;
+	ptd->base = mlBFTST(ptd->raw, 31, sba_lsb);
+
+	if(ptd->is_supersection) {
+		ptd->base |= mlBFMOV(ptd->raw, 23, 20, 32);
+		ptd->base |= mlBFMOV(ptd->raw, 8, 5, 36);
+	}
+
+	if(mmu->debug) {
+		if(ptd->is_supersection) {
+			LOG_START("Supersection Base Address: 0x%016llx", ptd->base);
+		} else {
+			LOG_START("Section Base Address: 0x%08llx", ptd->base);
+		}
+
+		_LOG_(":nG(%01u)", ptd->ng);
+		_LOG_(":%c", ptd->s ? 'S' : 's');
+		_LOG_(":APX(%01u)", ptd->apx);
+		_LOG_(":TEX(%01u)", ptd->tex);
+		_LOG_(":AP(%01u)", ptd->ap);
+		_LOG_(":IMP(%01u)", ptd->imp);
+
+		if(!ptd->is_supersection)
+			_LOG_(":Domain(%01u)", ptd->domain);
+
+		_LOG_(":XN(%01u)", ptd->xn);
+		_LOG_(":%c", ptd->c ? 'C' : 'c');
+		_LOG_(":%c", ptd->b ? 'B' : 'b');
+
+		LOG_END();
+	}
+
+	const uint32_t ppa = ptd->base | mlBFEXT(va, sba_lsb, 0);
+	if(p2ppa)
+		*p2ppa = ppa;
+
+	return(1);
+}
+
+static inline int _soc_mmu_l1ptd_0(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t va, uint32_t* p2ppa)
+{
+	const csx_p csx = mmu->csx;
+
+	const unsigned ttbcr_x = TTBCR & 7;
+	const uint32_t ttbr0_ppa = mlBFTST(TTBR0, 31, 14 - ttbcr_x);
+	const uint32_t ttbr0_ti = mlBFMOV(va, 31 - ttbcr_x, 20, 2);
+	const uint32_t l1ptd_ppa = ttbr0_ppa | ttbr0_ti;
+
+	const uint32_t l1ptd = csx_mem_access_read(csx, l1ptd_ppa, sizeof(uint32_t), 0);
+
+	if(mmu->debug) {
+		LOG("TTBR0 = 0x%08x, ttbr0_ppa = 0x%08x, ttbr0_ti = 0x%08x, l1ptd_ppa = 0x%08x, l1ptd = 0x%08x",
+			TTBR0, ttbr0_ppa, ttbr0_ti, l1ptd_ppa, l1ptd);
+	}
+
+	ptd->raw = l1ptd;
+	ptd->type = l1ptd & 3;
+
+	switch(ptd->type) {
+		case 2:
+			return(_soc_mmu_l1ptd_02(mmu, ptd, va, p2ppa));
+			break;
+	}
+
 	return(0);
 }
 
@@ -73,7 +179,7 @@ static int _soc_mmu_reset(void* param)
 
 	soc_mmu_p mmu = param;
 	csx_p csx = mmu->csx;
-	
+
 	TTBCR = 0;
 	TTBR0 = ~0U;
 	CP15_reg1_set(m);
@@ -81,64 +187,6 @@ static int _soc_mmu_reset(void* param)
 	callback_list_process(&mmu->atreset_list);
 
 	return(0);
-}
-
-static soc_mmu_ptd_t _get_l1ptd(soc_mmu_p mmu, uint32_t va)
-{
-	const csx_p csx = mmu->csx;
-
-	const int x = TTBCR & 7;
-
-	const uint32_t l1ttb = mlBFTST(TTBR0, 31, 14 - x);
-	const uint32_t va_ti = mlBFMOV(va, 31 - x, 20, 2);
-	const uint32_t l1pta = l1ttb | va_ti;
-	LOG("TTBR0 = 0x%08x, l1ttb = 0x%08x, va_ti = 0x%08x, l1pta = 0x%08x", TTBR0, l1ttb, va_ti, l1pta);
-
-	const uint32_t l1ptd = csx_mem_access_read(csx, l1pta, sizeof(uint32_t), 0);
-	LOG("l1ptd = 0x%08x, [1:0] = %01u", l1ptd, l1ptd & 3);
-
-	static soc_mmu_ptd_t ptd;
-
-	ptd.domain = mlBFEXT(l1ptd, 8, 5);
-	ptd.type = l1ptd & 3;
-
-	switch(ptd.type) {
-		case 1: /* page */
-			ptd.ap = 0;
-			ptd.b = 0;
-			ptd.base = mlBFTST(l1ptd, 31, 10);
-			ptd.c = 0;
-
-			LOG_START("Page Table Base Address(0x%08x)", ptd.base);
-			_LOG_(": IMP(%01u)", BEXT(l1ptd, 9));
-			_LOG_(": Domain(%01u)", ptd.domain);
-			_LOG_(": SBO(%01u)", BEXT(l1ptd, 4));
-			_LOG_(": ?(%01u)?", mlBFEXT(l1ptd, 3, 2));
-			LOG_END(": 1(%01u)", mlBFEXT(l1ptd, 1, 0));
-			break;
-		case 2: /* page */
-			ptd.ap = mlBFEXT(l1ptd, 11, 10);
-			ptd.b = BEXT(l1ptd, 2);
-			ptd.base = mlBFTST(l1ptd, 31, 20);
-			ptd.c = BEXT(l1ptd, 3);
-
-			LOG_START("Section Base Address(0x%08x)", ptd.base);
-			_LOG_(": ?(0x%02x)", mlBFEXT(l1ptd, 19, 12));
-			_LOG_(": AP(%02u)", ptd.ap);
-			_LOG_(": IMP(%01u)", BEXT(l1ptd, 9));
-			_LOG_(": Domain(%01u)", ptd.domain);
-			_LOG_(": SBO(%01u)", BEXT(l1ptd, 4));
-			_LOG_(": %c", ptd.c ? 'C' : 'c');
-			_LOG_(": %c", ptd.b ? 'B' : 'b');
-			LOG_END(": 2(%01u)", mlBFEXT(l1ptd, 1, 0));
-			break;
-		case 0: /* invalid */
-		case 3: /* reserved -- ??? fine ??? */
-			LOG_ACTION(exit(-1));
-			break;
-	}
-
-	return(ptd);
 }
 
 /* **** */
@@ -149,30 +197,33 @@ void csx_mmu_dump_ttbr0(csx_p csx)
 		return;
 	if(~0U == TTBR0)
 		return;
-	
-	soc_mmu_p mmu = csx->mmu;
-	
-	unsigned ttbcr_x = TTBCR & 7;
-	const uint32_t ttbr0_ppa = mlBFTST(TTBR0, 31, 14 - ttbcr_x);
-	const uint32_t ttbr0_ti_bits = (32 - ttbcr_x) - 20;
-	const	uint32_t last_ti = mlBFMOV(~0, 31 - ttbcr_x, 20, 2);
 
-	LOG("TTBCR: 0x%08x (.x = %01u), TTBR0: 0x%08x, TTBR0_PPA: 0x%08x -- 0x%08x",
-		TTBCR, ttbcr_x, TTBR0, ttbr0_ppa, last_ti);
+	const soc_mmu_p mmu = csx->mmu;
+	const unsigned savedDebug = mmu->debug;
+	mmu->debug = 1;
 
-	for(uint32_t ti = 0; ti <= last_ti; ti += sizeof(uint32_t))
+	const unsigned ttbcr_x = TTBCR & 7;
+	const uint32_t last_ti = mlBFEXT(~0, 31 - ttbcr_x, 20);
+
+	for(uint32_t ti = 0; ti <= last_ti; ti++)
 	{
-		const uint32_t ppa = ti << 20;
-		const uint32_t l1ptd_ppa = ttbr0_ppa | ti;
-		LOG_START("0x%08x:0x%08x:0x%08x -- ", ppa, ti, l1ptd_ppa);
-		
-		const uint32_t l1ptd = csx_mem_access_read(csx, l1ptd_ppa, sizeof(uint32_t), 0);
-		const unsigned l1ptd_type = l1ptd & 3;
+		const unsigned va = ti << 20;
 
-		_LOG_("%01u -- ", l1ptd_type);
-		
-		LOG_END();
+		soc_mmu_ptd_t l1ptd;
+		unsigned page_size = 0, ppa = 0;
+
+		if(_soc_mmu_l1ptd_0(csx->mmu, &l1ptd, va, &ppa)) {
+			switch(l1ptd.type) {
+				case 2:
+					page_size = mlBF(19, 0);
+					break;
+			}
+
+			LOG("0x%08x--0x%08x --> 0x%08x--0x%08x", va, va + page_size, ppa, ppa + page_size);
+		}
 	}
+
+	mmu->debug = savedDebug;
 }
 
 uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
@@ -189,7 +240,7 @@ uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
 			return(csx_mem_callback_read(src, va, size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-	} 
+	}
 
 	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
@@ -220,7 +271,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 			return(csx_mem_callback_read(src, va, size));
 
 		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-	} 
+	}
 
 	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
 
@@ -230,7 +281,7 @@ uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
 
 		csx_exception(csx, _EXCEPTION_DataAbort);
 	}
-	
+
 	if(tlb && src)
 		soc_tlb_fill_data_tlbe_read(tlbe, va, src);
 
@@ -274,11 +325,12 @@ int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 
 	assert(0 != csx);
 	assert(0 != h2mmu);
-	
+
 	soc_mmu_p mmu = HANDLE_CALLOC(h2mmu, 1, sizeof(soc_mmu_t));
 	ERR_NULL(mmu);
 
 	mmu->csx = csx;
+	mmu->debug = 0;
 
 	callback_list_init(&mmu->atexit_list, 0, LIST_LIFO);
 	callback_list_init(&mmu->atreset_list, 0, LIST_FIFO);
@@ -289,29 +341,19 @@ int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
 	return(0);
 }
 
-int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* ppa)
+int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
 {
 	static int count = 1;
 	const csx_p csx = mmu->csx;
 
 	if(!CP15_reg1_Mbit || (~0U == TTBR0)) {
-		*ppa = va;
+		*p2ppa = va;
 		return(~0U == TTBR0);
 	}
 
-	const soc_mmu_ptd_t l1ptd = _get_l1ptd(mmu, va);
-
-	switch(l1ptd.type) {
-		case 2: {
-			const uint32_t va_si = mlBFEXT(va, 19, 0);
-			*ppa = l1ptd.base | va_si;
-			LOG("l1_sba = 0x%08x, va_si = 0x%08x, ppa = 0x%08x",
-				l1ptd.base, va_si, *ppa);
-			return(1);
-		} break;
-		default:
-			LOG_ACTION(exit(-1));
-	}
+	soc_mmu_ptd_t l1ptd;
+	if(_soc_mmu_l1ptd_0(mmu, &l1ptd, va, p2ppa))
+		return(1);
 
 	count--;
 	if(0 >= count)
