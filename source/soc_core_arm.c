@@ -150,38 +150,32 @@ static void _arm_inst_ldst(soc_core_p core)
 }
 
 static void _arm_inst_ldstm(soc_core_p core,
-	soc_core_reg_t i,
 	uint8_t user_mode_regs)
 {
-	uint32_t rxx_v = 0;
-
-	/* CP15_r1_Ubit == 0 */
-	const uint32_t ea = vR(EA) & ~3;
-
 	if(LDST_BIT(l20))
 	{
-		rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
+		vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
 
-		if(0) LOG("r(%u)==[0x%08x](0x%08x)", i, ea, rxx_v);
+		if(0) LOG("r(%u)==[0x%08x](0x%08x)", rR(D), vR(EA), vR(D));
 
 		if(user_mode_regs)
-			soc_core_reg_usr(core, i, &rxx_v);
+			soc_core_reg_usr(core, rR(D), &vR(D));
 		else
-			soc_core_reg_set(core, i, rxx_v);
+			soc_core_reg_set(core, rR(D), vR(D));
 	}
 	else
 	{
 		if(user_mode_regs)
-			rxx_v = soc_core_reg_usr(core, i, 0);
+			vR(D) = soc_core_reg_usr(core, rR(D), 0);
 		else
-			rxx_v = soc_core_reg_get(core, i);
+			vR(D) = soc_core_reg_get(core, rR(D));
 
-		if(0) LOG("[0x%08x]==r(%u)(0x%08x)", ea, i, rxx_v);
+		if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), rR(D), vR(D));
 
-		soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
+		soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
 	}
 
-	vR(EA) += sizeof(uint32_t);
+	vR(EA) += vR(N_OFFSET);
 }
 
 static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
@@ -390,12 +384,12 @@ static void arm_inst_ldstm(soc_core_p core)
 	
 	const csx_p csx = core->csx;
 
-	rR(EA) = sizeof(uint32_t);
+	vR(N_OFFSET) = sizeof(uint32_t);
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
-	const uint8_t rcount = (__builtin_popcount(vR(M)) << 2);
+	const unsigned rcount = (__builtin_popcount(vR(M)) << 2);
 
 	const uint32_t sp_in = vR(N);
 	uint32_t sp_out = sp_in;
@@ -468,37 +462,37 @@ static void arm_inst_ldstm(soc_core_p core)
 		else
 			vR(EA) &= ~3;
 
-		for(int i = 0; i < 15; i++)
+		for(rR(D) = 0; rR(D) < 15; rR(D)++)
 		{
-			if(BTST(vR(M), i))
+			if(BTST(vR(M), rR(D)))
 			{
 				CYCLE++;
-				_arm_inst_ldstm(core, i, user_mode_regs);
+				_arm_inst_ldstm(core, user_mode_regs);
 			}
 		}
 
 		if(BTST(vR(M), 15)) {
-			uint32_t rxx_v = 0;
-
 			if(LDST_BIT(l20))
 			{
-				rxx_v = soc_core_read(core, vR(EA), sizeof(uint32_t));
-				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, vR(EA), rxx_v);
+				vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
+				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, vR(EA), vR(D));
 				if(_arm_version >= arm_v5t)
-					soc_core_reg_set_pcx(core, rxx_v);
+					soc_core_reg_set_pcx(core, vR(D));
 				else
-					PC = rxx_v & ~3;
+					PC = vR(D) & ~3;
 			}
 			else
 			{
-				rxx_v = ARM_PC;
-				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), 15, rxx_v);
-				soc_core_write(core, vR(EA), sizeof(uint32_t), rxx_v);
+				vR(D) = ARM_PC;
+				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), 15, vR(D));
+				soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
 			}
 		}
 
-		if(load_spsr && core->spsr)
-			soc_core_psr_mode_switch(core, *core->spsr);
+		if(load_spsr && core->spsr) {
+			LOG_ACTION(soc_core_psr_mode_switch(core, *core->spsr));
+			soc_core_reg_set_thumb(core, CPSR & CPSR_C(Thumb));
+		}
 
 		if((LDST_BIT(w21) && (user_mode_regs || load_spsr))
 			|| (user_mode_regs && load_spsr))
