@@ -57,8 +57,15 @@ typedef struct csx_mmio_t {
 
 	csx_p csx;
 	
-	callback_list_p	atexit_list;
-	callback_list_p atreset_list;
+	struct {
+		callback_qlist_t list;
+		callback_qlist_elem_t elem;
+	}atexit;
+	
+	struct {
+		callback_qlist_t list;
+		callback_qlist_elem_t elem;
+	}atreset;
 	
 	soc_omap_cfg_p cfg;
 	soc_omap_dpll_p dpll;
@@ -95,18 +102,25 @@ static csx_mmio_mem_access_p __csx_mmio_register_access(csx_mmio_p mmio, uint32_
 /* **** */
 
 static int _csx_mmio_atexit(void* param) {
-	if(_trace_atexit)
-		LOG();
+	if(_trace_atexit) {
+		LOG(">>");
+	}
 
-	csx_mmio_h h2mmio = param;
-	csx_mmio_p mmio = *h2mmio;
+	const csx_mmio_h h2mmio = param;
+	const csx_mmio_p mmio = *h2mmio;
 
-	callback_list_process(mmio->atexit_list);
+	callback_qlist_process(&mmio->atexit.list);
 
-	handle_free((void**)&mmio->atexit_list);
-	handle_free((void**)&mmio->atreset_list);
-	
+	if(_trace_atexit_pedantic) {
+		LOG("--");
+	}
+
 	handle_free(param);
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
+
 	return(0);
 }
 
@@ -114,9 +128,9 @@ static int _csx_mmio_atreset(void* param) {
 	if(_trace_atreset)
 		LOG();
 
-	csx_mmio_p mmio = param;
+	const csx_mmio_p mmio = param;
 
-	callback_list_process(mmio->atreset_list);
+	callback_qlist_process(&mmio->atreset.list);
 
 	return(0);
 }
@@ -135,8 +149,77 @@ void csx_mmio_access_list_reset(csx_mmio_p mmio, csx_mmio_access_list_p acl, siz
 	UNUSED(mmio);
 }
 
-DECL_CALLBACK_P_REGISTER_FN(csx_mmio, csx_mmio_p, mmio, atexit)
-DECL_CALLBACK_P_REGISTER_FN(csx_mmio, csx_mmio_p, mmio, atreset)
+csx_mmio_p csx_mmio_alloc(csx_p csx, csx_mmio_h h2mmio)
+{
+	ERR_NULL(csx);
+	ERR_NULL(h2mmio);
+
+	if(_trace_alloc) {
+		LOG();
+	}
+
+	const csx_mmio_p mmio = HANDLE_CALLOC(h2mmio, 1, sizeof(csx_mmio_t));
+	ERR_NULL(mmio);
+
+	mmio->csx = csx;
+
+	/* **** */
+
+	callback_qlist_init(&mmio->atexit.list, LIST_LIFO);
+	callback_qlist_init(&mmio->atreset.list, LIST_FIFO);
+
+	/* **** */
+
+	csx_callback_atexit(csx, &mmio->atexit.elem, _csx_mmio_atexit, h2mmio);
+	csx_callback_atreset(csx, &mmio->atreset.elem, _csx_mmio_atreset, mmio);
+
+	/* **** */
+
+	ERR_NULL(soc_omap_cfg_alloc(csx, mmio, &mmio->cfg));
+	ERR_NULL(soc_omap_dpll_alloc(csx, mmio, &mmio->dpll));
+	ERR_NULL(soc_omap_gp_timer_alloc(csx, mmio, &mmio->gp_timer));
+	ERR_NULL(soc_omap_misc_alloc(csx, mmio, &mmio->misc));
+	ERR_NULL(soc_omap_mpu_alloc(csx, mmio, &mmio->mpu));
+	ERR_NULL(soc_omap_mpu_gpio_alloc(csx, mmio, &mmio->mpu_gpio));
+	ERR_NULL(soc_omap_mpu_ihr_alloc(csx, mmio, &mmio->mpu_ihr));
+	ERR_NULL(soc_omap_mpu_mmc_alloc(csx, mmio, &mmio->mpu_mmc));
+	ERR_NULL(soc_omap_mpu_timer_alloc(csx, mmio, &mmio->mpu_timer));
+	ERR_NULL(soc_omap_os_timer_alloc(csx, mmio, &mmio->os_timer));
+	ERR_NULL(soc_omap_tc_alloc(csx, mmio, &mmio->tc));
+	ERR_NULL(soc_omap_uart_alloc(csx, mmio, &mmio->uart));
+	ERR_NULL(soc_omap_usb_alloc(csx, mmio, &mmio->usb));
+	ERR_NULL(soc_omap_watchdog_alloc(csx, mmio, &mmio->wdt));
+
+	/* **** */
+
+	return(mmio);
+}
+
+void csx_mmio_callback_atexit(csx_mmio_p mmio,
+	callback_qlist_elem_p cble, callback_fn fn, void* param)
+{
+	if(0) {
+		LOG_START("cbl: 0x%08" PRIxPTR, (uintptr_t)&mmio->atexit.list);
+		_LOG_(", cble: 0x%08" PRIxPTR, (uintptr_t)cble);
+		_LOG_(", fn: 0x%08" PRIxPTR, (uintptr_t)fn);
+		LOG_END(", param: 0x%08" PRIxPTR, (uintptr_t)param);
+	}
+
+	callback_qlist_setup_and_register_callback(&mmio->atexit.list, cble, fn, param);
+}
+
+void csx_mmio_callback_atreset(csx_mmio_p mmio,
+	callback_qlist_elem_p cble, callback_fn fn, void* param)
+{
+	if(0) {
+		LOG_START("cbl: 0x%08" PRIxPTR, (uintptr_t)&mmio->atreset.list);
+		_LOG_(", cble: 0x%08" PRIxPTR, (uintptr_t)cble);
+		_LOG_(", fn: 0x%08" PRIxPTR, (uintptr_t)fn);
+		LOG_END(", param: 0x%08" PRIxPTR, (uintptr_t)param);
+	}
+
+	callback_qlist_setup_and_register_callback(&mmio->atreset.list, cble, fn, param);
+}
 
 static uint32_t csx_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
@@ -160,56 +243,34 @@ static uint32_t csx_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint
 	return(0);
 }
 
-int csx_mmio_init(csx_p csx, csx_mmio_h h2mmio)
+void csx_mmio_init(csx_mmio_p mmio)
 {
-	if(_trace_init)
-		LOG();
-
-	assert(0 != csx);
-	assert(0 != h2mmio);
-	
-	csx_mmio_p taclet = 0;
-	
-	LOG("padding = 0x%08zx, mem_access[x] = 0x%08zx", 
-		sizeof(taclet->padding), sizeof(taclet->mem_access[0]));
-
-	assert(sizeof(taclet->padding) >= sizeof(taclet->mem_access[0]));
-
-	csx_mmio_p mmio = handle_calloc((void**)h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
 
-	/* **** */
-
-	mmio->csx = csx;
-
-	csx_callback_atexit(csx, _csx_mmio_atexit, h2mmio);
-	csx_callback_atreset(csx, _csx_mmio_atreset, mmio);
-
-	callback_list_alloc_init(&mmio->atexit_list, 32, LIST_LIFO);
-	callback_list_alloc_init(&mmio->atreset_list, 32, LIST_FIFO);
-
-	csx_mem_mmap(csx, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
+	if(_trace_init) {
+		LOG();
+	}
 
 	/* **** */
 
-	soc_omap_cfg_init(csx, mmio, &mmio->cfg);
-	soc_omap_dpll_init(csx, mmio, &mmio->dpll);
-	soc_omap_gp_timer_init(csx, mmio, &mmio->gp_timer);
-	soc_omap_misc_init(csx, mmio, &mmio->misc);
-	soc_omap_mpu_init(csx, mmio, &mmio->mpu);
-	soc_omap_mpu_gpio_init(csx, mmio, &mmio->mpu_gpio);
-	soc_omap_mpu_ihr_init(csx, mmio, &mmio->mpu_ihr);
-	soc_omap_mpu_mmc_init(csx, mmio, &mmio->mpu_mmc);
-	soc_omap_mpu_timer_init(csx, mmio, &mmio->mpu_timer);
-	soc_omap_os_timer_init(csx, mmio, &mmio->os_timer);
-	soc_omap_tc_init(csx, mmio, &mmio->tc);
-	soc_omap_uart_init(csx, mmio, &mmio->uart);
-	soc_omap_usb_init(csx, mmio, &mmio->usb);
-	soc_omap_watchdog_init(csx, mmio, &mmio->wdt);
+	csx_mem_mmap(mmio->csx, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
 
 	/* **** */
 
-	return(0);
+	soc_omap_cfg_init(mmio->cfg);
+	soc_omap_dpll_init(mmio->dpll);
+	soc_omap_gp_timer_init(mmio->gp_timer);
+	soc_omap_misc_init(mmio->misc);
+	soc_omap_mpu_init(mmio->mpu);
+	soc_omap_mpu_gpio_init(mmio->mpu_gpio);
+	soc_omap_mpu_ihr_init(mmio->mpu_ihr);
+	soc_omap_mpu_mmc_init(mmio->mpu_mmc);
+	soc_omap_mpu_timer_init(mmio->mpu_timer);
+	soc_omap_os_timer_init(mmio->os_timer);
+	soc_omap_tc_init(mmio->tc);
+	soc_omap_uart_init(mmio->uart);
+	soc_omap_usb_init(mmio->usb);
+	soc_omap_watchdog_init(mmio->wdt);
 }
 
 void csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, csx_mem_fn fn, void* param)

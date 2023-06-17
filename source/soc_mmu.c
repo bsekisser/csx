@@ -32,10 +32,19 @@
 typedef struct soc_mmu_t* soc_mmu_p;
 typedef struct soc_mmu_t { // TODO: move to header
 	csx_p							csx;
+	csx_soc_p						soc;
+
 	uint32_t						ttbcr;
 
-	callback_list_t atexit_list;
-	callback_list_t atreset_list;
+	struct {
+		callback_qlist_t list;
+		callback_qlist_elem_t elem;
+	}atexit;
+		
+	struct {
+		callback_qlist_t list;
+		callback_qlist_elem_t elem;
+	}atreset;
 
 	union {
 		unsigned raw_flags;
@@ -76,15 +85,23 @@ typedef struct soc_mmu_ptd_t {
 static int _soc_mmu_atexit(void* param)
 {
 	if(_trace_atexit) {
-		LOG();
+		LOG("<<");
 	}
 
 	soc_mmu_h h2mmu = param;
 	soc_mmu_p mmu = *h2mmu;
 
-	callback_list_process(&mmu->atexit_list);
+	callback_qlist_process(&mmu->atexit.list);
+
+	if(_trace_atexit_pedantic) {
+		LOG("--");
+	}
 
 	handle_free(param);
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
 
 	return(0);
 }
@@ -171,7 +188,7 @@ static inline int _soc_mmu_l1ptd_0(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t va
 	return(0);
 }
 
-static int _soc_mmu_reset(void* param)
+static int _soc_mmu_atreset(void* param)
 {
 	if(_trace_atreset) {
 		LOG();
@@ -184,7 +201,7 @@ static int _soc_mmu_reset(void* param)
 	TTBR0 = ~0U;
 	CP15_reg1_set(m);
 
-	callback_list_process(&mmu->atreset_list);
+	callback_qlist_process(&mmu->atreset.list);
 
 	return(0);
 }
@@ -317,28 +334,49 @@ void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
 		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
 }
 
-int soc_mmu_init(csx_p csx, soc_mmu_h h2mmu)
+
+
+soc_mmu_p soc_mmu_alloc(csx_p csx, csx_soc_p soc, soc_mmu_h h2mmu)
 {
-	if(_trace_init) {
+	ERR_NULL(csx);
+	ERR_NULL(soc);
+	ERR_NULL(h2mmu);
+
+	if(_trace_alloc) {
 		LOG();
 	}
 
-	assert(0 != csx);
-	assert(0 != h2mmu);
+	/* **** */
 
 	soc_mmu_p mmu = HANDLE_CALLOC(h2mmu, 1, sizeof(soc_mmu_t));
 	ERR_NULL(mmu);
 
 	mmu->csx = csx;
 	mmu->debug = 0;
+	mmu->soc = soc;
 
-	callback_list_init(&mmu->atexit_list, 0, LIST_LIFO);
-	callback_list_init(&mmu->atreset_list, 0, LIST_FIFO);
+	/* **** */
 
-	csx_callback_atexit(csx, _soc_mmu_atexit, h2mmu);
-	csx_callback_atreset(csx, _soc_mmu_reset, mmu);
+	callback_qlist_init(&mmu->atexit.list, LIST_LIFO);
+	callback_qlist_init(&mmu->atreset.list, LIST_FIFO);
 
-	return(0);
+	/* **** */
+
+	csx_soc_callback_atexit(soc, &mmu->atexit.elem, _soc_mmu_atexit, h2mmu);
+	csx_soc_callback_atreset(soc, &mmu->atreset.elem, _soc_mmu_atreset, mmu);
+
+	/* **** */
+
+	return(mmu);
+}
+
+void soc_mmu_init(soc_mmu_p mmu)
+{
+	ERR_NULL(mmu);
+
+	if(_trace_init) {
+		LOG();
+	}
 }
 
 int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)

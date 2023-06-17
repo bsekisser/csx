@@ -8,6 +8,7 @@
 
 /* **** */
 
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -26,6 +27,8 @@ typedef struct soc_omap_misc_t {
 	csx_mmio_p mmio;
 	
 	uint8_t data[0x100];
+
+	callback_qlist_elem_t atexit;
 }soc_omap_misc_t;
 
 /* **** */
@@ -79,24 +82,42 @@ static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_misc_init(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h h2misc)
+soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h h2misc)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2misc);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2misc);
 	
-	if(_trace_init)
+	if(_trace_alloc) {
 		LOG();
-	
+	}
+
+	/* **** */
+
 	soc_omap_misc_p misc = handle_calloc((void**)h2misc, 1, sizeof(soc_omap_misc_t));
 	ERR_NULL(misc);
 	
 	misc->csx = csx;
 	misc->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_misc_atexit, h2misc);
+	/* **** */
 
-	csx_mmio_register_access_list(mmio, 0, __soc_omap_misc_acl, misc);
+	csx_mmio_callback_atexit(mmio, &misc->atexit, __soc_omap_misc_atexit, h2misc);
+
+	/* **** */
 	
-	return(0);
+	return(misc);
+}
+
+void soc_omap_misc_init(soc_omap_misc_p misc)
+{
+	ERR_NULL(misc);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_register_access_list(misc->mmio, 0, __soc_omap_misc_acl, misc);
 }

@@ -8,6 +8,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -27,6 +28,8 @@ typedef struct soc_omap_mpu_t {
 	uint32_t idlct[2];
 	uint32_t rstct[2];
 	uint32_t sysst;
+
+	callback_qlist_elem_t atexit;
 }soc_omap_mpu_t;
 
 /* **** */
@@ -40,7 +43,7 @@ typedef struct soc_omap_mpu_t {
 
 /* **** */
 
-static int _soc_omap_mpu_atexit(void* param)
+static int __soc_omap_mpu_atexit(void* param)
 {
 	if(_trace_atexit) {
 		LOG();
@@ -204,15 +207,17 @@ static csx_mmio_access_list_t _soc_omap_mpu_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_mpu_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2mpu)
+soc_omap_mpu_p soc_omap_mpu_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2mpu)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2mpu);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2mpu);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	soc_omap_mpu_p mpu = handle_calloc((void**)h2mpu, 1, sizeof(soc_omap_mpu_t));
 	ERR_NULL(mpu);
@@ -220,13 +225,24 @@ int soc_omap_mpu_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2mpu)
 	mpu->csx = csx;
 	mpu->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, _soc_omap_mpu_atexit, h2mpu);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &mpu->atexit, __soc_omap_mpu_atexit, h2mpu);
 
 	/* **** */
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_mpu_acl, mpu);
+	return(mpu);
+}
+
+void soc_omap_mpu_init(soc_omap_mpu_p mpu)
+{
+	ERR_NULL(mpu);
+	
+	if(_trace_init) {
+		LOG();
+	}
 
 	/* **** */
 
-	return(0);
+	csx_mmio_register_access_list(mpu->mmio, 0, _soc_omap_mpu_acl, mpu);
 }

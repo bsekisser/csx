@@ -28,7 +28,9 @@
 #define _profile_soc_core_step_arm IF_PROFILING_SOC_CORE_STEP(1)
 #define _profile_soc_core_step_thumb IF_PROFILING_SOC_CORE_STEP(1)
 
+#define _trace_alloc 0
 #define _trace_atexit 0
+#define _trace_atexit_pedantic 0
 #define _trace_atreset 0
 #define _trace_bx_0 1
 #define _trace_init 0

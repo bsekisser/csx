@@ -30,15 +30,19 @@
 static int _soc_core_atexit(void* param)
 {
 	if(_trace_atexit) {
-		LOG();
+		LOG(">>");
 	}
-	
+
 	handle_free(param);
-	
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
+
 	return(0);
 }
 
-static int _soc_core_reset(void* param)
+static int _soc_core_atreset(void* param)
 {
 	if(_trace_atreset) {
 		LOG();
@@ -62,32 +66,48 @@ int soc_core_in_a_privaleged_mode(soc_core_p core)
 	return(0x00 != mlBFEXT(CPSR, 4, 0));
 }
 
-int soc_core_init(csx_p csx, soc_core_h h2core)
+soc_core_p soc_core_alloc(csx_p csx, csx_soc_p soc, soc_core_h h2core)
 {
-	if(_trace_init) {
+	ERR_NULL(csx);
+	ERR_NULL(soc);
+	ERR_NULL(h2core);
+
+	if(_trace_alloc) {
 		LOG();
 	}
 
-	// TODO: move to csx_soc
-
-	int err = 0;
+	/* **** */
 
 	soc_core_p core = HANDLE_CALLOC(h2core, 1, sizeof(soc_core_t));
 	ERR_NULL(core);
 
 	core->csx = csx;
-
-	csx_soc_callback_atexit(csx->soc, _soc_core_atexit, h2core);
-	csx_soc_callback_atreset(csx->soc, _soc_core_reset, core);
+	core->soc = soc;
 
 	/* **** */
 
-//	soc_core_reset(core);
+	csx_soc_callback_atexit(soc, &core->atexit, _soc_core_atexit, h2core);
+	csx_soc_callback_atreset(soc, &core->atreset, _soc_core_atreset, core);
 
-	return(err);
+	/* **** */
+
+	return(core);
+}
+
+void soc_core_init(soc_core_p core)
+{
+	ERR_NULL(core);
+
+	if(_trace_init) {
+		LOG();
+	}
 }
 
 void soc_core_reset(soc_core_p core)
 {
-	_soc_core_reset(core);
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	_soc_core_atreset(core);
 }

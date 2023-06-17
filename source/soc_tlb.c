@@ -7,6 +7,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -44,6 +45,9 @@ typedef struct soc_tlb_t {
 
 	csx_p							csx;
 	csx_soc_p						soc;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_tlb_t;
 
 /* **** */
@@ -63,19 +67,28 @@ enum {
 static int _soc_tlb_atexit(void* param)
 {
 	if(_trace_atexit) {
-		LOG();
+		LOG(">>");
 	}
 
 	handle_free(param);
+	
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
+	
 	return(0);
 }
 
 static int _soc_tlb_atreset(void* param)
 {
+	if(_trace_atreset) {
+		LOG();
+	}
+
 	soc_tlb_p tlb = param;
-	
+
 	soc_tlb_invalidate_all(tlb);
-	
+
 	return(0);
 }
 
@@ -199,6 +212,35 @@ static void set_tlbe_urwx_rwx(soc_tlbe_p t, int u_rwx, int rwx)
 
 /* **** */
 
+soc_tlb_p soc_tlb_alloc(csx_p csx, csx_soc_p soc, soc_tlb_h h2tlb)
+{
+	ERR_NULL(csx);
+	ERR_NULL(h2tlb);
+
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	soc_tlb_p tlb = HANDLE_CALLOC(h2tlb, 1, sizeof(soc_tlb_t));
+	ERR_NULL(tlb);
+	
+	/* **** */
+	
+	tlb->csx = csx;
+	tlb->soc = soc;
+	
+	/* **** */
+	
+	csx_soc_callback_atexit(soc, &tlb->atexit, _soc_tlb_atexit, h2tlb);
+	csx_soc_callback_atreset(soc, &tlb->atreset, _soc_tlb_atreset, tlb);
+
+	/* **** */
+	
+	return(tlb);
+}
+
 void soc_tlb_fill_data_tlbe_read(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
 {
 	_tlb_fill_tlbe_read(tlbe, va, cb);
@@ -234,31 +276,9 @@ csx_mem_callback_p soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 	return(miss ? 0 : cb);
 }
 
-int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb)
+void soc_tlb_init(soc_tlb_p tlb)
 {
-	assert(0 != csx);
-	assert(0 != h2tlb);
-
-	if(_trace_init) {
-		LOG();
-	}
-
-	soc_tlb_p tlb = HANDLE_CALLOC(h2tlb, 1, sizeof(soc_tlb_t));
-	ERR_NULL(tlb);
-	
-	/* **** */
-	
-	csx_soc_p soc = csx->soc;
-	
-	tlb->csx = csx;
-	tlb->soc = soc;
-	
-	csx_soc_callback_atexit(soc, _soc_tlb_atexit, h2tlb);
-	csx_soc_callback_atreset(soc, _soc_tlb_atreset, tlb);
-
-	/* **** */
-	
-	return(0);
+	UNUSED(tlb);
 }
 
 void soc_tlb_invalidate_all(soc_tlb_p tlb)

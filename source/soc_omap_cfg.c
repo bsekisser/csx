@@ -10,7 +10,7 @@
 /* **** */
 
 #include "bitfield.h"
-#include "callback_list.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -28,6 +28,9 @@ typedef struct soc_omap_cfg_t {
 
 	uint8_t data[0x0200];
 	uint8_t reset;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_cfg_t;
 
 #define SOC_OMAP_CFG_ACL_LIST_ACLE(_ahi, _alo, _dhi, _dlo, _name) \
@@ -216,15 +219,17 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[] = {
 	{ .ppa = ~0U, }
 };
 
-int soc_omap_cfg_init(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2cfg)
+soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2cfg)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2cfg);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2cfg);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	soc_omap_cfg_p cfg = handle_calloc((void**)h2cfg, 1, sizeof(soc_omap_cfg_t));
 	ERR_NULL(cfg);
@@ -232,15 +237,26 @@ int soc_omap_cfg_init(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2cfg)
 	cfg->csx = csx;
 	cfg->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_cfg_atexit, h2cfg);
-	csx_mmio_callback_atreset(mmio, __soc_omap_cfg_atreset, cfg);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &cfg->atexit, __soc_omap_cfg_atexit, h2cfg);
+	csx_mmio_callback_atreset(mmio, &cfg->atreset, __soc_omap_cfg_atreset, cfg);
 
 	/* **** */
+
+	return(cfg);
+}
+
+void soc_omap_cfg_init(soc_omap_cfg_p cfg)
+{
+	ERR_NULL(cfg);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	csx_mmio_p mmio = cfg->mmio;
 
 	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_0, (void*)cfg);
 	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_1, (void*)cfg);
-
-	/* **** */
-
-	return(0);
 }

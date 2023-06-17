@@ -11,6 +11,7 @@
 /* **** local library includes */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -53,6 +54,9 @@ typedef struct soc_omap_mpu_ihr_t {
 			uint32_t ilr[4][32];
 		}l2;
 	};
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_mpu_ihr_t;
 
 enum {
@@ -127,7 +131,7 @@ static int __soc_omap_mpu_ihr_atexit(void* param)
 
 static int __soc_omap_mpu_ihr_atreset(void* param)
 {
-	if(_trace_atexit) {
+	if(_trace_atreset) {
 		LOG();
 	}
 
@@ -191,15 +195,17 @@ static csx_mmio_access_list_t __soc_omap_mpu_ihr_l2_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
+soc_omap_mpu_ihr_p soc_omap_mpu_ihr_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 {
-	if(_trace_init) {
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2ihr);
+
+	if(_trace_alloc) {
 		LOG();
 	}
 
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2ihr);
+	/* **** */
 
 	soc_omap_mpu_ihr_p ihr = handle_calloc((void**)h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
 	ERR_NULL(ihr);
@@ -207,8 +213,27 @@ int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 	ihr->csx = csx;
 	ihr->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_mpu_ihr_atexit, h2ihr);
-	csx_mmio_callback_atreset(mmio, __soc_omap_mpu_ihr_atreset, ihr);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &ihr->atexit, __soc_omap_mpu_ihr_atexit, h2ihr);
+	csx_mmio_callback_atreset(mmio, &ihr->atreset, __soc_omap_mpu_ihr_atreset, ihr);
+
+	/* **** */
+	
+	return(ihr);
+}
+
+void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_p ihr)
+{
+	ERR_NULL(ihr);
+
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_p mmio = ihr->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L1, __soc_omap_mpu_ihr_l1_acl, ihr);
 
@@ -231,10 +256,8 @@ int soc_omap_mpu_ihr_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
 
 		for(unsigned k = 0; k < 32; k++) {
 			uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(2, j, k);
-			
+
 			csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);
 		}
 	}
-
-	return(0);
 }

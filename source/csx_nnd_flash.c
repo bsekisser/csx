@@ -32,6 +32,9 @@ typedef struct csx_nnd_t {
 	csx_p							csx;
 
 	csx_nnd_unit_t					unit[16];
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }csx_nnd_t;
 
 /* **** */
@@ -82,13 +85,17 @@ const uint8_t csx_nnd_flash_id[16][5] = {
  * 	 \  24
  */
 
-static int _csx_nnd_flash_atexit(void* param)
+static int __csx_nnd_flash_atexit(void* param)
 {
 	if(_trace_atexit) {
-		LOG();
+		LOG(">>");
 	}
 
 	handle_free(param);
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
 
 	return(0);
 }
@@ -134,19 +141,28 @@ static csx_nnd_unit_p _csx_nnd_flash_unit(csx_nnd_p nnd, uint32_t addr, unsigned
 
 /* **** */
 
-int csx_nnd_flash_init(csx_p csx, csx_nnd_h h2nnd)
-{
-	assert(0 != csx);
-	assert(0 != h2nnd);
 
-	if(_trace_init) {
+csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
+{
+	ERR_NULL(csx);
+	ERR_NULL(h2nnd);
+
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	csx_nnd_p nnd = HANDLE_CALLOC(h2nnd, 1, sizeof(csx_nnd_t));
 	ERR_NULL(nnd);
 
 	nnd->csx = csx;
+
+	/* **** */
+
+	csx_callback_atexit(csx, &nnd->atexit, __csx_nnd_flash_atexit, h2nnd);
+
+	/* **** */
 
 	for(unsigned cs = 0; cs < 16; cs++) {
 		csx_nnd_unit_p unit = &nnd->unit[cs];
@@ -157,16 +173,25 @@ int csx_nnd_flash_init(csx_p csx, csx_nnd_h h2nnd)
 
 	/* **** */
 
-	csx_callback_atexit(csx, _csx_nnd_flash_atexit, h2nnd);
+	return(nnd);
+}
+
+void csx_nnd_flash_init(csx_nnd_p nnd)
+{
+	ERR_NULL(nnd);
+
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_p csx = nnd->csx;
 
 	csx_mem_mmap(csx, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x08000000, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x0c000000, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
-
-	/* **** */
-
-	return(0);
 }
 
 uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)

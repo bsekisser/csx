@@ -83,7 +83,8 @@ int main(int argc, char **argv)
 
 	uint64_t est_host_cps = dtime_calibrate();
 
-	csx_p csx = csx_init();
+	csx_p csx = csx_init(csx_alloc());
+
 	csx_reset(csx);
 
 	uint64_t dtime_start = get_dtime();

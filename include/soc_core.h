@@ -16,6 +16,11 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 #include "soc_core_arm.h"
 #include "soc_core_reg.h"
+#include "soc.h"
+
+/* **** */
+
+#include "callback_qlist.h"
 
 /* **** */
 
@@ -88,14 +93,19 @@ typedef struct soc_core_t {
 #define SCIx			(&core->inst)
 	soc_core_inst_t		inst;
 
-	soc_core_step_fn	step;
 	csx_p				csx;
+	csx_soc_p			soc;
+	soc_core_step_fn	step;
 
 	uint				trace:1;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_core_t;
 
 /* **** */
 
+soc_core_p soc_core_alloc(csx_p csx, csx_soc_p soc, soc_core_h h2core);
 int soc_core_in_a_privaleged_mode(soc_core_p core);
-int soc_core_init(csx_p csx, soc_core_h h2core);
+void soc_core_init(soc_core_p core);
 void soc_core_reset(soc_core_p core);

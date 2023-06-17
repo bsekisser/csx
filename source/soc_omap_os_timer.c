@@ -9,6 +9,7 @@
 /* **** local library includes */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -31,6 +32,9 @@ typedef struct soc_omap_os_timer_t {
 		uint32_t cntr;
 		uint32_t val;
 	}tick;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_os_timer_t;
 
 /* **** */
@@ -128,26 +132,43 @@ static csx_mmio_access_list_t _soc_omap_os_timer_acl[] = {
 
 /* **** */
 
-int soc_omap_os_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_os_timer_h h2ost)
+soc_omap_os_timer_p soc_omap_os_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_os_timer_h h2ost)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2ost);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2ost);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
 	
+	/* **** */
+
 	soc_omap_os_timer_p ost = handle_calloc((void**)h2ost, 1, sizeof(soc_omap_os_timer_t));
 	ERR_NULL(ost);
 
 	ost->csx = csx;
 	ost->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_os_timer_atexit, h2ost);
-	csx_mmio_callback_atreset(mmio, __soc_omap_os_timer_atreset, ost);
+	/* **** */
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_os_timer_acl, ost);
+	csx_mmio_callback_atexit(mmio, &ost->atexit, __soc_omap_os_timer_atexit, h2ost);
+	csx_mmio_callback_atreset(mmio, &ost->atreset, __soc_omap_os_timer_atreset, ost);
 
-	return(0);
+	/* **** */
+
+	return(ost);
+}
+
+void soc_omap_os_timer_init(soc_omap_os_timer_p ost)
+{
+	ERR_NULL(ost);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_register_access_list(ost->mmio, 0, _soc_omap_os_timer_acl, ost);
 }

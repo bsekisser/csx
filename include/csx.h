@@ -31,11 +31,12 @@ typedef struct csx_data_t* csx_data_p;
 #include "csx_mem.h"
 #include "csx_mmio.h"
 #include "csx_state.h"
+#include "csx_statistics.h"
 #include "csx_soc_omap.h"
 
 /* **** */
 
-#include "callback_list.h"
+#include "callback_qlist.h"
 #include "unused.h"
 
 /* **** */
@@ -60,6 +61,7 @@ typedef struct csx_t {
 	csx_mem_p						mem;
 	csx_mmio_p						mmio;
 	csx_soc_p						soc;
+	csx_statistics_p				statistics;
 
 	soc_core_p						core;
 //	soc_coprocessor_p				cp;
@@ -82,18 +84,19 @@ typedef struct csx_t {
 
 	uint8_t							sdram[CSX_SDRAM_ALLOC];
 
-	callback_list_t					atexit_list;
-	callback_list_t					atreset_list;
+	callback_qlist_t				atexit_list;
+	callback_qlist_t				atreset_list;
 }csx_t;
 
 /* **** */
 
 #include "config.h"
 
+csx_p csx_alloc(void);
 void csx_atexit(csx_h h2csx);
-void csx_callback_atexit(csx_p csx, callback_fn fn, void* param);
-void csx_callback_atreset(csx_p csx, callback_fn fn, void* param);
-csx_p csx_init(void);
+void csx_callback_atexit(csx_p csx, callback_qlist_elem_p cble, callback_fn fn, void* param);
+void csx_callback_atreset(csx_p csx, callback_qlist_elem_p cble, callback_fn fn, void* param);
+csx_p csx_init(csx_p csx);
 uint32_t csx_read(csx_p csx, uint32_t ppa, size_t size);
 void csx_reset(csx_p csx);
 void csx_write(csx_p csx, uint32_t ppa, size_t size, uint32_t write);

@@ -19,7 +19,7 @@
 
 #include "bitfield.h"
 #include "bounds.h"
-#include "callback_list.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -46,15 +46,23 @@
 static int _csx_soc_atexit(void* param)
 {
 	if(_trace_atexit) {
-		LOG();
+		LOG(">>");
 	}
 
 	csx_soc_h h2soc = param;
 	csx_soc_p soc = *h2soc;
 
-	callback_list_process(&soc->atexit_list);
+	callback_qlist_process(&soc->atexit.list);
+
+	if(_trace_atexit_pedantic) {
+		LOG("--");
+	}
 
 	handle_free(param);
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
 
 	return(0);
 }
@@ -134,7 +142,7 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	close(fd);
 }
 
-static int _csx_soc_reset(void* param)
+static int _csx_soc_atreset(void* param)
 {
 	if(_trace_atreset) {
 		LOG();
@@ -143,53 +151,85 @@ static int _csx_soc_reset(void* param)
 	csx_soc_p soc = param;
 //	csx_p csx = soc->csx;
 
-	callback_list_process(&soc->atreset_list);
+	callback_qlist_process(&soc->atreset.list);
 
 	return(0);
 }
 
 /* **** */
 
-DECL_CALLBACK_REGISTER_FN(csx_soc, csx_soc_p, soc, atexit)
-DECL_CALLBACK_REGISTER_FN(csx_soc, csx_soc_p, soc, atreset)
-
-int csx_soc_init(csx_p csx, csx_soc_h h2soc)
+csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
 {
+	ERR_NULL(csx);
+	ERR_NULL(h2soc);
+
+	if(_trace_alloc) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_soc_p soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
+	ERR_NULL(soc);
+
+	soc->csx = csx;
+
+	callback_qlist_init(&soc->atexit.list, LIST_LIFO);
+	callback_qlist_init(&soc->atreset.list, LIST_FIFO);
+
+	/* **** */
+
+	csx_callback_atexit(csx, &soc->atexit.elem, _csx_soc_atexit, h2soc);
+	csx_callback_atreset(csx, &soc->atreset.elem, _csx_soc_atreset, soc);
+
+	/* **** */
+
+	ERR_NULL(soc_core_alloc(csx, soc, &csx->core));
+	ERR_NULL(soc_mmu_alloc(csx, soc, &csx->mmu));
+	ERR_NULL(soc_tlb_alloc(csx, soc, &csx->tlb));
+
+	/* **** */
+
+	return(soc);
+}
+
+void csx_soc_callback_atexit(csx_soc_p soc,
+	callback_qlist_elem_p cble, callback_fn fn, void* param)
+{
+	callback_qlist_setup_and_register_callback(&soc->atexit.list, cble, fn, param);
+}
+
+void csx_soc_callback_atreset(csx_soc_p soc,
+	callback_qlist_elem_p cble, callback_fn fn, void* param)
+{
+	callback_qlist_setup_and_register_callback(&soc->atreset.list, cble, fn, param);
+}
+
+void csx_soc_init(csx_soc_p soc)
+{
+	ERR_NULL(soc);
+
 	if(_trace_init) {
 		LOG();
 	}
 
-	assert(0 != csx);
-	assert(0 != h2soc);
+	/* **** */
 
-	csx_soc_p soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
-	ERR_NULL(soc);
-	
-	soc->csx = csx;
-	
-	callback_list_init(&soc->atexit_list, 0, LIST_LIFO);
-	callback_list_init(&soc->atreset_list, 0, LIST_FIFO);
-	
-	csx_callback_atexit(csx, _csx_soc_atexit, h2soc);
-	csx_callback_atreset(csx, _csx_soc_reset, soc);
+	csx_p csx = soc->csx;
 
 	csx_mem_mmap(csx, SOC_BROM_START, SOC_BROM_END, 0, soc->brom);
 	csx_mem_mmap(csx, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
-
-	int err = 0;
 
 	CYCLE = 0;
 
 	// TODO: fix soc module locations into soc
 
-	ERR(err = soc_core_init(csx, &csx->core));
-	ERR(err = soc_core_cp15_init(csx));
-	ERR(err = soc_mmu_init(csx, &csx->mmu));
-	ERR(err = soc_tlb_init(csx, &csx->tlb));
+	/* **** */
 
-//	soc_omap5912_init(csx, &csx->soc);
-
-	return(err);
+	soc_core_init(csx->core);
+	ERR(soc_core_cp15_init(csx));
+	soc_mmu_init(csx->mmu);
+	soc_tlb_init(csx->tlb);
 }
 
 int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
@@ -200,7 +240,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	core->trace = !!core_trace;
 
-	csx_soc_reset(csx);
+//	csx_soc_reset(csx);
 
 	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
@@ -254,5 +294,9 @@ if(1)		if(csx->insns > 0x100000)
 
 void csx_soc_reset(csx_p csx)
 {
-	_csx_soc_reset(csx->soc);
+	if(_trace_atreset) {
+		LOG();
+	}
+
+	_csx_soc_atreset(csx->soc);
 }

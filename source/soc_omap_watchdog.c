@@ -7,6 +7,7 @@
 
 /* **** local includes */
 
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -26,6 +27,9 @@ typedef struct soc_omap_watchdog_t {
 	uint32_t cntl;
 	uint32_t load;
 	uint32_t mode;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_watchdog_t;
 
 #define SOC_OMAP_WATCHDOG_ACL(_MMIO) \
@@ -138,30 +142,46 @@ static csx_mmio_access_list_t _soc_omap_watchdog_acl[] = {
 
 /* **** */
 
-int soc_omap_watchdog_init(csx_p csx, csx_mmio_p mmio, soc_omap_watchdog_h h2sow)
+
+
+soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
+	csx_mmio_p mmio, soc_omap_watchdog_h h2sow)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2sow);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2sow);
+
+	if(_trace_alloc) {
+		LOG();
+	}
+
+	/* **** */
+
+	soc_omap_watchdog_p sow = handle_calloc((void**)h2sow, 1, sizeof(soc_omap_watchdog_t));
+	ERR_NULL(sow);
+
+	sow->csx = csx;
+	sow->mmio = mmio;
+
+	csx_mmio_callback_atexit(mmio, &sow->atexit, __soc_omap_watchdog_atexit, h2sow);
+	csx_mmio_callback_atreset(mmio, &sow->atreset, __soc_omap_watchdog_atreset, sow);
+
+	/* **** */
+
+	return(sow);
+}
+
+void soc_omap_watchdog_init(soc_omap_watchdog_p sow)
+{
+	ERR_NULL(sow);
 
 	if(_trace_init) {
 		LOG();
 	}
 
-	soc_omap_watchdog_p sow = handle_calloc((void**)h2sow, 1, sizeof(soc_omap_watchdog_t));
-	ERR_NULL(sow);
-	
-	sow->csx = csx;
-	sow->mmio = mmio;
+	/* **** */ 
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_watchdog_atexit, h2sow);
-	csx_mmio_callback_atreset(mmio, __soc_omap_watchdog_atreset, sow);
-	
-	/* **** */
+	csx_mmio_register_access_list(sow->mmio, 0, _soc_omap_watchdog_acl, sow);
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_watchdog_acl, sow);
-	
 	/* **** */
-	
-	return(0);
 }

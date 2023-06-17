@@ -16,11 +16,12 @@ typedef struct soc_tlbe_t* soc_tlbe_p;
 
 /* **** */
 
+soc_tlb_p soc_tlb_alloc(csx_p csx, csx_soc_p soc, soc_tlb_h h2tlb);
 void soc_tlb_fill_data_tlbe_read(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb);
 void soc_tlb_fill_data_tlbe_write(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb);
 void soc_tlb_fill_instruction_tlbe(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb);
 csx_mem_callback_p soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe);
-int soc_tlb_init(csx_p csx, soc_tlb_h h2tlb);
+void soc_tlb_init(soc_tlb_p tlb);
 void soc_tlb_invalidate_all(soc_tlb_p tlb);
 void soc_tlb_invalidate_data(soc_tlb_p tlb);
 void soc_tlb_invalidate_instruction(soc_tlb_p tlb);

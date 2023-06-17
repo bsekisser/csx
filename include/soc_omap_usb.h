@@ -12,4 +12,5 @@ typedef struct soc_omap_usb_t* soc_omap_usb_p;
 
 /* **** */
 
-int soc_omap_usb_init(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb);
+soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb);
+void soc_omap_usb_init(soc_omap_usb_p usb);

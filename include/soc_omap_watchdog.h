@@ -16,4 +16,6 @@ typedef struct soc_omap_watchdog_t* soc_omap_watchdog_p;
 
 /* **** */
 
-int soc_omap_watchdog_init(csx_p csx, csx_mmio_p mmio, soc_omap_watchdog_h h2sow);
+soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
+	csx_mmio_p mmio, soc_omap_watchdog_h h2sow);
+void soc_omap_watchdog_init(soc_omap_watchdog_p sow);

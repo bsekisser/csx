@@ -77,17 +77,19 @@ typedef struct csx_statistic_profile_t {
 	}soc_core;
 }csx_statistic_profile_t;
 
-/* **** */
-
 typedef struct csx_statistics_t {
 	csx_p csx;
 	csx_statistic_counters_t counters;
 	csx_statistic_profile_t profile;
+	
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }csx_statistics_t;
 
 /* **** */
 
-int csx_statistics_init(csx_p csx);
+csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s);
+void csx_statistics_init(csx_statistics_p s);
 
 static inline void csx_counter_add(uint32_t* c, unsigned add) {
 	if(_csx_statistical_counters)

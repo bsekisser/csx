@@ -8,6 +8,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -44,6 +45,9 @@ typedef struct soc_omap_uart_t {
 	csx_mmio_p mmio;
 	
 	soc_omap_uart_unit_t unit[3];
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_uart_t;
 
 /* **** */
@@ -463,15 +467,17 @@ static csx_mmio_access_list_t __soc_omap_uart_acl[] = {
 
 /* **** */
 
-int soc_omap_uart_init(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h h2uart)
+soc_omap_uart_p soc_omap_uart_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h h2uart)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2uart);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2uart);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	soc_omap_uart_p uart = handle_calloc((void**)h2uart, 1, sizeof(soc_omap_uart_t));
 	ERR_NULL(uart);
@@ -479,16 +485,27 @@ int soc_omap_uart_init(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h h2uart)
 	uart->csx = csx;
 	uart->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_uart_atexit, h2uart);
-	csx_mmio_callback_atreset(mmio, __soc_omap_uart_atreset, uart);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &uart->atexit, __soc_omap_uart_atexit, h2uart);
+	csx_mmio_callback_atreset(mmio, &uart->atreset, __soc_omap_uart_atreset, uart);
+
+	return(uart);
+}
+
+void soc_omap_uart_init(soc_omap_uart_p uart)
+{
+	ERR_NULL(uart);
+	
+	if(_trace_init) {
+		LOG();
+	}
 
 	/* **** */
+
+	csx_mmio_p mmio = uart->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_UART1, __soc_omap_uart_acl, uart);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_UART2, __soc_omap_uart_acl, uart);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_UART3, __soc_omap_uart_acl, uart);
-
-	/* **** */
-
-	return(0);
 }

@@ -9,6 +9,7 @@
 /* **** local includes */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -43,6 +44,9 @@ typedef struct soc_omap_mpu_timer_t {
 	csx_mmio_p mmio;
 
 	soc_omap_mpu_timer_unit_t unit[3];
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_mpu_timer_t;
 
 enum {
@@ -258,17 +262,17 @@ static uint32_t _soc_omap_mpu_timer_read(void* param, uint32_t ppa, size_t size,
 #define _MPU_TIMER_ACLE(_i, _name, _fn) \
 	{ __MMIO_TRACE_FN(MPU_TIMER_(_i, _name), 0, MPU_TIMER_NAME(_i, _name), _fn) },
 
-int soc_omap_mpu_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t)
+soc_omap_mpu_timer_p soc_omap_mpu_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2t);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2t);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
 
-	int err = 0;
+	/* **** */
 
 	soc_omap_mpu_timer_p t = handle_calloc((void**)h2t, 1, sizeof(soc_omap_mpu_timer_t));
 	ERR_NULL(t);
@@ -276,8 +280,23 @@ int soc_omap_mpu_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t
 	t->csx = csx;
 	t->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_mpu_timer_atexit, h2t);
-	csx_mmio_callback_atreset(mmio, __soc_omap_mpu_timer_atreset, t);
+	csx_mmio_callback_atexit(mmio, &t->atexit, __soc_omap_mpu_timer_atexit, h2t);
+	csx_mmio_callback_atreset(mmio, &t->atreset, __soc_omap_mpu_timer_atreset, t);
+
+	/* **** */
+
+	return(t);
+}
+
+void soc_omap_mpu_timer_init(soc_omap_mpu_timer_p t)
+{
+	ERR_NULL(t);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	csx_mmio_p mmio = t->mmio;
 
 	/* **** */
 
@@ -291,8 +310,4 @@ int soc_omap_mpu_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t
 		
 		csx_mmio_register_access_list(mmio, 0, _soc_omap_mpu_timer_acl, t);
 	}
-
-	/* **** */
-
-	return(err);
 }

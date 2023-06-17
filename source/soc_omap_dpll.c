@@ -9,7 +9,7 @@
 /* **** local library level includes*/
 
 #include "bitfield.h"
-#include "callback_list.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -26,21 +26,26 @@ typedef struct soc_omap_dpll_t {
 	csx_mmio_p mmio;
 
 	uint32_t ctl_reg;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_dpll_t;
 
 /* **** */
 
-static int _soc_omap_dpll_atexit(void* param) {
-	if(_trace_atexit)
+static int __soc_omap_dpll_atexit(void* param) {
+	if(_trace_atexit) {
 		LOG();
+	}
 
 	handle_free(param);
 	return(0);
 }
 
-static int _soc_omap_dpll_atreset(void* param) {
-	if(_trace_atreset)
+static int __soc_omap_dpll_atreset(void* param) {
+	if(_trace_atreset) {
 		LOG();
+	}
 
 	soc_omap_dpll_p dpll = param;
 
@@ -64,7 +69,7 @@ enum {
 	DPLL1_CTL_PLL_ENABLE = 0x04,
 };
 
-static uint32_t soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 //	LOG("size = 0x%08zx", size);
 
@@ -101,18 +106,21 @@ static uint32_t soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint32
 }
 
 static csx_mmio_access_list_t _soc_omap_dpll_acl[] = {
-	MMIO_TRACE_FN(0xfffe, 0xcf00, 0x0000, 0x2002, DPLL1_CTL_REG, soc_omap_dpll_ctl)
+	MMIO_TRACE_FN(0xfffe, 0xcf00, 0x0000, 0x2002, DPLL1_CTL_REG, _soc_omap_dpll_ctl)
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_dpll_init(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h h2dpll)
+soc_omap_dpll_p soc_omap_dpll_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h h2dpll)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2dpll);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2dpll);
 
-	if(_trace_init)
+	if(_trace_alloc) {
 		LOG();
+	}
+
+	/* **** */
 
 	soc_omap_dpll_p dpll = handle_calloc((void**)h2dpll, 1, sizeof(soc_omap_dpll_t));
 	ERR_NULL(dpll);
@@ -120,14 +128,25 @@ int soc_omap_dpll_init(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h h2dpll)
 	dpll->csx = csx;
 	dpll->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, _soc_omap_dpll_atexit, h2dpll);
-	csx_mmio_callback_atreset(mmio, _soc_omap_dpll_atreset, dpll);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &dpll->atexit, __soc_omap_dpll_atexit, h2dpll);
+	csx_mmio_callback_atreset(mmio, &dpll->atreset, __soc_omap_dpll_atreset, dpll);
 
 	/* **** */
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_dpll_acl, dpll);
+	return(dpll);
+}
+
+void soc_omap_dpll_init(soc_omap_dpll_p dpll)
+{
+	ERR_NULL(dpll);
+	
+	if(_trace_init) {
+		LOG();
+	}
 
 	/* **** */
 
-	return(0);
+	csx_mmio_register_access_list(dpll->mmio, 0, _soc_omap_dpll_acl, dpll);
 }

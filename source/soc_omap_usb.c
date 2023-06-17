@@ -8,6 +8,7 @@
 
 /* **** local library level includes */
 
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -21,18 +22,22 @@
 /* **** */
 
 typedef struct soc_omap_usb_t {
-		csx_p csx;
-		csx_mmio_p mmio;
+	csx_p csx;
+	csx_mmio_p mmio;
 
-		uint8_t data[0x100];
+	uint8_t data[0x100];
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_usb_t;
 
 /* **** */
 
 static int __soc_omap_usb_atexit(void* param)
 {
-	if(_trace_atexit)
+	if(_trace_atexit) {
 		LOG();
+	}
 
 	handle_free(param);
 	return(0);
@@ -40,13 +45,13 @@ static int __soc_omap_usb_atexit(void* param)
 
 UNUSED_FN int __soc_omap_usb_atreset(void* param)
 {
-	if(_trace_atreset)
+	if(_trace_atreset) {
 		LOG();
+	}
 
 //	soc_omap_usb_p usb = param;
 
 	return(0);
-
 	UNUSED(param);
 }
 
@@ -77,14 +82,17 @@ static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_usb_init(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
+soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2usb);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2usb);
 
-	if(_trace_init)
+	if(_trace_alloc) {
 		LOG();
+	}
+
+	/* **** */
 
 	soc_omap_usb_p usb = handle_calloc((void**)h2usb, 1, sizeof(soc_omap_usb_t));
 	ERR_NULL(usb);
@@ -92,10 +100,24 @@ int soc_omap_usb_init(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
 	usb->csx = csx;
 	usb->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_usb_atexit, h2usb);
-//	csx_mmio_callback_atreset(mmio, __soc_omap_usb_atreset, usb);
+	csx_mmio_callback_atexit(mmio, &usb->atexit, __soc_omap_usb_atexit, h2usb);
+	csx_mmio_callback_atreset(mmio, &usb->atreset, __soc_omap_usb_atreset, usb);
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_usb_client_acl, usb);
+	/* **** */
 
-	return(0);
+	return(usb);
+}
+
+
+void soc_omap_usb_init(soc_omap_usb_p usb)
+{
+	ERR_NULL(usb);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_register_access_list(usb->mmio, 0, _soc_omap_usb_client_acl, usb);
 }

@@ -11,6 +11,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -41,6 +42,9 @@ typedef struct soc_omap_mpu_gpio_t {
 	csx_mmio_p mmio;
 	
 	soc_omap_mpu_gpio_unit_t unit[4];
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_mpu_gpio_t;
 
 /* **** */
@@ -61,7 +65,7 @@ static int __soc_omap_mpu_gpio_atexit(void* param)
 
 static int __soc_omap_mpu_gpio_atreset(void* param)
 {
-	if(_trace_atexit) {
+	if(_trace_atreset) {
 		LOG();
 	}
 
@@ -144,15 +148,17 @@ static csx_mmio_access_list_t __soc_omap_mpu_gpio_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_mpu_gpio_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_gpio_h h2gpio)
+soc_omap_mpu_gpio_p soc_omap_mpu_gpio_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_gpio_h h2gpio)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2gpio);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2gpio);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	soc_omap_mpu_gpio_p gpio = handle_calloc((void**)h2gpio, 1, sizeof(soc_omap_mpu_gpio_t));
 	ERR_NULL(gpio);
@@ -160,13 +166,30 @@ int soc_omap_mpu_gpio_init(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_gpio_h h2gpi
 	gpio->csx = csx;
 	gpio->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_mpu_gpio_atexit, h2gpio);
-	csx_mmio_callback_atreset(mmio, __soc_omap_mpu_gpio_atreset, gpio);
+	/* **** */
+
+	csx_mmio_callback_atexit(mmio, &gpio->atexit, __soc_omap_mpu_gpio_atexit, h2gpio);
+	csx_mmio_callback_atreset(mmio, &gpio->atreset, __soc_omap_mpu_gpio_atreset, gpio);
+
+	/* **** */
+	
+	return(gpio);
+}
+
+void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_p gpio)
+{
+	ERR_NULL(gpio);
+
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_p mmio = gpio->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO1, __soc_omap_mpu_gpio_acl, gpio);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO2, __soc_omap_mpu_gpio_acl, gpio);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO3, __soc_omap_mpu_gpio_acl, gpio);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO4, __soc_omap_mpu_gpio_acl, gpio);
-
-	return(0);
 }

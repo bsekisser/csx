@@ -9,6 +9,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -37,6 +38,9 @@ typedef struct soc_omap_tc_t {
 		}t1;
 		struct {}t2;
 	}ocp;
+
+	callback_qlist_elem_t atexit;
+	callback_qlist_elem_t atreset;
 }soc_omap_tc_t;
 
 /* **** */
@@ -80,7 +84,7 @@ static int _soc_omap_tc_atexit(void* param)
 
 static int _soc_omap_tc_atreset(void* param)
 {
-	if(_trace_atexit) {
+	if(_trace_atreset) {
 		LOG();
 	}
 
@@ -232,17 +236,17 @@ static csx_mmio_access_list_t _soc_omap_tc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_tc_init(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
+soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
 {
-	if(_trace_atexit) {
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2tc);
+
+	if(_trace_alloc) {
 		LOG();
 	}
 
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2tc);
-
-	/* ****/
+	/* **** */
 
 	soc_omap_tc_p tc = handle_calloc((void**)h2tc, 1, sizeof(soc_omap_tc_t));
 	ERR_NULL(tc);
@@ -250,10 +254,25 @@ int soc_omap_tc_init(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
 	tc->csx = csx;
 	tc->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, _soc_omap_tc_atexit, h2tc);
-	csx_mmio_callback_atreset(mmio, _soc_omap_tc_atreset, tc);
+	/* **** */
 
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_tc_acl, tc);
+	csx_mmio_callback_atexit(mmio, &tc->atexit, _soc_omap_tc_atexit, h2tc);
+	csx_mmio_callback_atreset(mmio, &tc->atreset, _soc_omap_tc_atreset, tc);
 
-	return(0);
+	/* **** */
+
+	return(tc);
+}
+
+void soc_omap_tc_init(soc_omap_tc_p tc)
+{
+	ERR_NULL(tc);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */ 
+
+	csx_mmio_register_access_list(tc->mmio, 0, _soc_omap_tc_acl, tc);
 }

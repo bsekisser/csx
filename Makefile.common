@@ -15,7 +15,7 @@ INCLUDE += -I$(TOP_DIR)/../include
 INCLUDE += -Iinclude
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
-SRCS += $(TOP_DIR)/../include/callback_list.c
+SRCS += $(TOP_DIR)/../include/callback_qlist.c
 SRCS += $(TOP_DIR)/../include/dtime.c
 
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))

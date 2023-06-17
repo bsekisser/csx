@@ -2,12 +2,17 @@
 
 /* **** */
 
+#include "callback_qlist.h"
+#include "err_test.h"
 #include "handle.h"
 #include "log.h"
+#include "unused.h"
 
 /* **** */
 
+#include <errno.h>
 #include <stdint.h>
+#include <string.h>
 
 /* **** */
 
@@ -106,6 +111,10 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 /* **** */
 
 static int _csx_statistics_atexit(void* param) {
+	if(_trace_atexit) {
+		LOG(">>");
+	}
+
 //	csx_statistics_h h2c = param;
 //	csx_statistics_p c = *h2c;
 
@@ -121,34 +130,51 @@ static int _csx_statistics_atexit(void* param) {
 		PROFILE_LIST(ASSERT_ZERO);
 	}
 	
+	if(_trace_atexit_pedantic) {
+		LOG("--");
+	}
+
 	handle_free(param);
+
+	if(_trace_atexit_pedantic) {
+		LOG("<<");
+	}
 
 	return(0);
 }
 
 static int _csx_statistics_atreset(void* param) {
+	if(_trace_atreset) {
+		LOG();
+	}
+
 //	csx_statistics_p c = param;
 
 	COUNTER_LIST(ZERO);
 	PROFILE_LIST(ZERO);
 
 	return(0);
-
 	UNUSED(param);
 }
 
 /* **** */ 
 
-int csx_statistics_init(csx_p csx)
+csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s)
 {
-	statistics = calloc(1, sizeof(csx_statistics_t));
-
+	statistics = handle_calloc((void**)h2s, 1, sizeof(csx_statistics_t));
+	ERR_NULL(statistics);
+	
 	statistics->csx = csx;
 
 	/* **** */
 
-	csx_callback_atexit(csx, _csx_statistics_atexit, &statistics);
-	csx_callback_atreset(csx, _csx_statistics_atreset, statistics);
+	csx_callback_atexit(csx, &statistics->atexit, _csx_statistics_atexit, h2s);
+	csx_callback_atreset(csx, &statistics->atreset, _csx_statistics_atreset, statistics);
 
-	return(0);
+	return(statistics);
+}
+
+void csx_statistics_init(csx_statistics_p s)
+{
+	UNUSED(s);
 }

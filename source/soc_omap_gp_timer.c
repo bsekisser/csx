@@ -9,6 +9,7 @@
 /* **** */
 
 #include "bitfield.h"
+#include "callback_qlist.h"
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
@@ -32,6 +33,8 @@ typedef struct soc_omap_gp_timer_t {
 	uint32_t tmar;
 	uint32_t tsicr;
 	uint32_t twer;
+
+	callback_qlist_elem_t atexit;
 }soc_omap_gp_timer_t;
 
 /* **** */
@@ -119,15 +122,17 @@ static csx_mmio_access_list_t __soc_omap_gp_timer_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-int soc_omap_gp_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_gp_timer_h h2gpt)
+soc_omap_gp_timer_p soc_omap_gp_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_gp_timer_h h2gpt)
 {
-	assert(0 != csx);
-	assert(0 != mmio);
-	assert(0 != h2gpt);
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2gpt);
 
-	if(_trace_init) {
+	if(_trace_alloc) {
 		LOG();
 	}
+
+	/* **** */
 
 	soc_omap_gp_timer_p gpt = handle_calloc((void**)h2gpt, 1, sizeof(soc_omap_gp_timer_t));
 	ERR_NULL(gpt);
@@ -135,15 +140,26 @@ int soc_omap_gp_timer_init(csx_p csx, csx_mmio_p mmio, soc_omap_gp_timer_h h2gpt
 	gpt->csx = csx;
 	gpt->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, __soc_omap_gp_timer_atexit, h2gpt);
+	csx_mmio_callback_atexit(mmio, &gpt->atexit, __soc_omap_gp_timer_atexit, h2gpt);
 
 	/* **** */
+
+	return(gpt);
+}
+
+void soc_omap_gp_timer_init(soc_omap_gp_timer_p gpt)
+{
+	ERR_NULL(gpt);
+	
+	if(_trace_init) {
+		LOG();
+	}
+
+	/* **** */
+
+	csx_mmio_p mmio = gpt->mmio;
 
 	for(unsigned i = 0; i < 8; i++)
 		csx_mmio_register_access_list(mmio, SOC_OMAP_GP_TIMER_BASE(i),
 			__soc_omap_gp_timer_acl, gpt);
-
-	/* **** */
-
-	return(0);
 }
