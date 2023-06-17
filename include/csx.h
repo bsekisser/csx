@@ -22,7 +22,7 @@ typedef struct csx_data_t* csx_data_p;
 #include "soc_core.h"
 //#include "soc_core_coprocessor.h"
 #include "soc_mmu.h"
-#include "soc_nnd_flash.h"
+#include "csx_nnd_flash.h"
 #include "soc_tlb.h"
 #include "soc.h" // TODO: move soc to csx_soc
 
@@ -64,7 +64,7 @@ typedef struct csx_t {
 	soc_core_p						core;
 //	soc_coprocessor_p				cp;
 	soc_mmu_p						mmu;
-	soc_nnd_p						nnd;
+	csx_nnd_p						nnd;
 	soc_tlb_p						tlb;
 
 	uint64_t						cycle;

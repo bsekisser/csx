@@ -185,8 +185,6 @@ int csx_soc_init(csx_p csx, csx_soc_h h2soc)
 	ERR(err = soc_core_init(csx, &csx->core));
 	ERR(err = soc_core_cp15_init(csx));
 	ERR(err = soc_mmu_init(csx, &csx->mmu));
-//	ERR(err = soc_mmio_init(csx, &csx->mmio));
-//	ERR(err = soc_nnd_flash_init(csx, &csx->nnd));
 	ERR(err = soc_tlb_init(csx, &csx->tlb));
 
 //	soc_omap5912_init(csx, &csx->soc);
