@@ -2,7 +2,9 @@
 
 /* **** */
 
+#include "csx_coprocessor.h"
 #include "csx_statistics.h"
+#include "csx.h"
 
 /* **** */
 
@@ -19,6 +21,13 @@
 #include <string.h>
 
 /* **** */
+
+#undef DEBUG
+//#define DEBUG(_x) _x
+
+#ifndef DEBUG
+	#define DEBUG(_x)
+#endif
 
 #define iTLB_BITS 8
 #define dTLB_BITS 8
@@ -241,6 +250,34 @@ soc_tlb_p soc_tlb_alloc(csx_p csx, csx_soc_p soc, soc_tlb_h h2tlb)
 	return(tlb);
 }
 
+static uint32_t _soc_tlb_cp15_0_8_5_0_invalidate_instruction(void* param, uint32_t* write)
+{
+	const uint32_t data = write ? *write : 0;
+
+	if(write) {
+		LOG("Invalidate instruction TLB");
+		soc_tlb_invalidate_instruction(param);
+	} else {
+		DEBUG(LOG("XX READ -- Invalidate instruction TLB"));
+	}
+
+	return(data);
+}
+
+uint32_t _soc_tlb_cp15_0_8_7_0_invalidate_all(void* param, uint32_t* write)
+{
+	const uint32_t data = write ? *write : 0;
+
+	if(write) {
+		LOG("Invalidate TLB");
+		soc_tlb_invalidate_all(param);
+	} else {
+		DEBUG(LOG("XX READ -- Invalidate TLB"));
+	}
+
+	return(data);
+}
+
 void soc_tlb_fill_data_tlbe_read(soc_tlbe_p tlbe, uint32_t va, csx_mem_callback_p cb)
 {
 	_tlb_fill_tlbe_read(tlbe, va, cb);
@@ -278,7 +315,20 @@ csx_mem_callback_p soc_tlb_ifetch(soc_tlb_p tlb, uint32_t va, soc_tlbe_h h2tlbe)
 
 void soc_tlb_init(soc_tlb_p tlb)
 {
-	UNUSED(tlb);
+	ERR_NULL(tlb);
+	
+	if(_trace_init) {
+		LOG();
+	}
+	
+	/* **** */
+	
+	csx_coprocessor_p cp = tlb->csx->cp;
+
+	csx_coprocessor_register_access(cp, cp15(0, 8, 5, 0),
+		_soc_tlb_cp15_0_8_5_0_invalidate_instruction, tlb);
+	csx_coprocessor_register_access(cp, cp15(0, 8, 7, 0),
+		_soc_tlb_cp15_0_8_7_0_invalidate_all, tlb);
 }
 
 void soc_tlb_invalidate_all(soc_tlb_p tlb)

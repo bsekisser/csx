@@ -22,8 +22,7 @@
 
 /* **** */
 
-#include "exception.h"
-
+#include "csx_soc_exception.h"
 #include "csx_statistics.h"
 
 /* **** */
@@ -31,6 +30,10 @@
 #include "bitfield.h"
 #include "log.h"
 #include "shift_roll.h"
+
+#define likely(_x) __builtin_expect(!!(_x), 1)
+#define unlikely(_x) __builtin_expect(!!(_x), 0)
+
 
 /* **** */
 
@@ -62,7 +65,9 @@ static void _arm_inst_dpi_final(soc_core_p core)
 {
 	soc_core_trace_inst_dpi(core);
 
-	if(rPC == rR(D))
+	const unsigned is_r_pc = (rPC == rR(D));
+
+	if(0) if(unlikely(is_r_pc))
 	{
 		const int thumb = DPI_BIT(s20) && core->spsr
 			&& BTST(*core->spsr, SOC_CORE_PSR_BIT_T);
@@ -73,17 +78,17 @@ static void _arm_inst_dpi_final(soc_core_p core)
 		CORE_TRACE_BRANCH(vR(D));
 	}
 
-	if(CCx.e)
+	if(likely(CCx.e))
 	{
-		if(DPI_WB)
+		if(likely(DPI_WB))
 		{
-			if(rPC == rR(D))
-				soc_core_reg_set_pcx(core, vR(D));
-			else
+			if(likely(!is_r_pc))
 				soc_core_reg_set(core, rR(D), vR(D));
+			else
+				soc_core_reg_set_pcx(core, vR(D));
 		}
 
-		if(DPI_BIT(s20) && (rPC == rR(D)))
+		if(unlikely(DPI_BIT(s20) && is_r_pc))
 		{
 			if(core->spsr)
 				soc_core_psr_mode_switch(core, *core->spsr);
@@ -102,7 +107,7 @@ static void _arm_inst_dp(soc_core_p core)
 
 	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
 
-	if(get_rn)
+	if(likely(get_rn))
 		_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	_setup_rR_dst(core, rRD, ARM_IR_RD);
@@ -199,7 +204,7 @@ static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
 
 	CORE_TRACE_BRANCH(new_pc);
 
-	if(CCx.e)
+	if(likely(CCx.e))
 	{
 		if(link)
 			LR = ARM_IP_NEXT;
@@ -243,7 +248,7 @@ static void arm_inst_bx(soc_core_p core)
 
 	CORE_TRACE_BRANCH(new_pc);
 
-	if(CCx.e)
+	if(likely(CCx.e))
 	{
 		if(link)
 			LR = ARM_IP_NEXT;
@@ -525,14 +530,13 @@ static void arm_inst_mcr_mrc(soc_core_p core)
 
 	if(CCx.e)
 	{
-		uint32_t rval = soc_core_cp15(core, MCRC_L ? 0 : &vR(D));
-		if(MCRC_L) {
-			if(rPC == rR(D)) {
-				CPSR &= ~SOC_CORE_PSR_NZCV;
-				CPSR |= rval & SOC_CORE_PSR_NZCV;
-			} else
-				vR(D) = rval;
-		}
+		uint32_t *write = MCRC_L ? 0 : &vR(D);
+		const uint32_t result = csx_coprocessor_access(core->csx->cp, write);
+		if(MCRC_L && (rPC == rR(D))) {
+			CPSR &= ~SOC_CORE_PSR_NZCV;
+			CPSR |= result & SOC_CORE_PSR_NZCV;
+		} else
+			vR(D) = result;
 	}
 }
 

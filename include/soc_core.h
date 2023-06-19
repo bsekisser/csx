@@ -12,8 +12,6 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 /* **** */
 
-#include "csx.h"
-
 #include "soc_core_arm.h"
 #include "soc_core_reg.h"
 #include "soc.h"
@@ -21,6 +19,9 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 /* **** */
 
 #include "callback_qlist.h"
+
+#include "csx_coprocessor.h"
+#include "csx.h"
 
 /* **** */
 

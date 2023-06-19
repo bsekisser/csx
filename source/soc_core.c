@@ -6,10 +6,10 @@
 
 /* **** */
 
+#include "csx_coprocessor.h"
 #include "csx_statistics.h"
+#include "csx_soc_exception.h"
 #include "csx_test_utility.h"
-
-#include "exception.h"
 
 #include "arm_cpsr.h"
 
@@ -53,6 +53,7 @@ static int _soc_core_atreset(void* param)
 	soc_core_p core = param;
 
 	for(int i = 0; i < 16; i++)
+//		soc_core_reg_set(core, i, 0);
 		soc_core_reg_set(core, i, ((~0UL) << 16) | _test_value(i));
 
 	CPSR = CPSR_M(Supervisor);

@@ -2,6 +2,9 @@
 
 /* **** */
 
+typedef struct csx_soc_exception_t** csx_soc_exception_h;
+typedef struct csx_soc_exception_t* csx_soc_exception_p;
+
 #include "arm_cpsr.h"
 
 /* **** */
@@ -30,6 +33,9 @@ enum {
 
 #define CSX_EXCEPTION(_x) csx_exception(csx, _EXCEPTION_##_x)
 void csx_exception(csx_p csx, unsigned type);
+
+csx_soc_exception_p csx_soc_exception_alloc(csx_p csx, csx_soc_exception_h h2cxu);
+void csx_soc_exception_init(csx_soc_exception_p cxu);
 
 /* **** */
 

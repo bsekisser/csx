@@ -243,8 +243,11 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 //	csx_soc_reset(csx);
 
 	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
+//	csx->loader.base = 0x10;
 	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 	
+//	loader_firmware = 1;
+
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
 	} else {
@@ -253,20 +256,21 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 			__csx_soc_init_cdp(csx, &csx->loader);
 
 			csx->firmware.base = csx->loader.base + csx->loader.size;
+
+			csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 		} else
 			csx->firmware.base = 0x10020000;
-
-		csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 	}
 
-//	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
+	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
 	soc_core_psr_mode_switch(core, (CPSR & ~0x1f) | (0x18 + 7));
 
 	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
 	soc_core_reg_set_pcx(core, cdp->base);
 
-if(0)	soc_core_reg_set(core, 12, 1);
+	if(0)
+		soc_core_reg_set(core, 12, 1);
 
 	if(!err)
 	{
@@ -282,7 +286,7 @@ if(0)	soc_core_reg_set(core, 12, 1);
 			}
 
 			csx->insns++;
-if(1)		if(csx->insns > 0x100000)
+if(0)		if(csx->insns > 0x100000)
 				break;
 		}
 	}

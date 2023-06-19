@@ -7,10 +7,9 @@
 
 /* **** */
 
-#include "exception.h"
-
 #include "csx_data.h"
 #include "csx_mem.h"
+#include "csx_soc_exception.h"
 #include "csx.h"
 
 /* **** */
@@ -29,12 +28,30 @@
 
 /* **** */
 
+#undef DEBUG
+//#define DEBUG(_x) _x
+
+#ifndef DEBUG
+	#define DEBUG(_x)
+#endif
+
+/* **** */
+
 typedef struct soc_mmu_t* soc_mmu_p;
 typedef struct soc_mmu_t { // TODO: move to header
 	csx_p							csx;
 	csx_soc_p						soc;
 
-	uint32_t						ttbcr;
+	uint32_t dacr;
+
+	union {
+		uint32_t raw;
+		struct {
+			uint32_t n:3;
+		};
+	}ttbcr;
+	
+	uint32_t						ttbr[2];
 
 	struct {
 		callback_qlist_t list;
@@ -160,20 +177,91 @@ static inline int _soc_mmu_l1ptd_02(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t v
 	return(1);
 }
 
+static uint32_t _soc_mmu_cp15_0_3_0_0_access_dacr(void* param, uint32_t* write)
+{
+	const soc_mmu_p mmu = param;
+
+	uint32_t data = write ? *write : mmu->dacr;
+
+	if(write) {
+		LOG_START("Domain Access Control Register\n\t");
+		unsigned i = 15;
+		do {
+			_LOG_("D%02u(%01u)", i, data >> (i << 1) & 3);
+			if(i) {
+				_LOG_(", ");
+			}
+		}while(i--);
+		LOG_END();
+		
+		mmu->dacr = data;
+	} else {
+		DEBUG(LOG("Domain Access Control Register"));
+	}
+
+	return(data);
+}
+
+static uint32_t _soc_mmu_cp15_access_ttbcr(void* param, uint32_t* write)
+{
+	const soc_mmu_p mmu = param;
+
+	const uint32_t data = write ? *write : mmu->ttbcr.n;
+
+	if(write)
+		mmu->ttbcr.n = mlBFEXT(data, 2, 0);
+
+	return(data);
+	
+}
+
+static uint32_t _soc_mmu_cp15_access_ttbr(soc_mmu_p mmu, uint32_t* write, unsigned r)
+{
+	const uint32_t mask = mlBF(31, 14 - mmu->ttbcr.n) | mlBF(4, 3) | _BV(2) | _BV(1) | _BV(0);
+	
+	const uint32_t data = write ? *write : mmu->ttbr[r];
+
+	if(write) {
+		LOG_START("Translation Table Base %01u\n\t", r);
+		_LOG_("mmu->ttbr[0]: 0x%05x", mlBFEXT(data, 31, 14));
+		_LOG_(" SBZ: 0x%03x", mlBFEXT(data, 13, 5));
+		_LOG_(" RGN: %01u", mlBFEXT(data, 4, 3));
+		_LOG_(" IMP: %01u", BEXT(data, 2));
+		_LOG_(" %c", BEXT(data, 1) ? 'S' : 's');
+		LOG_END(" %c", BEXT(data, 0) ? 'C' : 'c');
+
+		mmu->ttbr[r] = data;
+//		mmu->ttbr[r] = data & mask;
+	} else {
+		DEBUG(LOG("READ -- Translation Table Base %01u", r));
+	}
+
+	return(data);
+}
+
+static uint32_t _soc_mmu_cp15_access_ttbr0(void* param, uint32_t* write)
+{
+	return(_soc_mmu_cp15_access_ttbr(param, write, 0));
+}
+
+static uint32_t _soc_mmu_cp15_access_ttbr1(void* param, uint32_t* write)
+{
+	return(_soc_mmu_cp15_access_ttbr(param, write, 1));
+}
+
 static inline int _soc_mmu_l1ptd_0(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t va, uint32_t* p2ppa)
 {
 	const csx_p csx = mmu->csx;
 
-	const unsigned ttbcr_x = TTBCR & 7;
-	const uint32_t ttbr0_ppa = mlBFTST(TTBR0, 31, 14 - ttbcr_x);
-	const uint32_t ttbr0_ti = mlBFMOV(va, 31 - ttbcr_x, 20, 2);
-	const uint32_t l1ptd_ppa = ttbr0_ppa | ttbr0_ti;
+	const uint32_t ttbr_ppa = mlBFTST(mmu->ttbr[0], 31, 14 - mmu->ttbcr.n);
+	const uint32_t ttbr_ti = mlBFMOV(va, 31 - mmu->ttbcr.n, 20, 2);
+	const uint32_t l1ptd_ppa = ttbr_ppa | ttbr_ti;
 
 	const uint32_t l1ptd = csx_mem_access_read(csx, l1ptd_ppa, sizeof(uint32_t), 0);
 
 	if(mmu->debug) {
-		LOG("TTBR0 = 0x%08x, ttbr0_ppa = 0x%08x, ttbr0_ti = 0x%08x, l1ptd_ppa = 0x%08x, l1ptd = 0x%08x",
-			TTBR0, ttbr0_ppa, ttbr0_ti, l1ptd_ppa, l1ptd);
+		LOG("mmu->ttbr0 = 0x%08x, mmu->ttbr0_ppa = 0x%08x, mmu->ttbr0_ti = 0x%08x, l1ptd_ppa = 0x%08x, l1ptd = 0x%08x",
+			mmu->ttbr[0], ttbr_ppa, ttbr_ti, l1ptd_ppa, l1ptd);
 	}
 
 	ptd->raw = l1ptd;
@@ -197,9 +285,10 @@ static int _soc_mmu_atreset(void* param)
 	soc_mmu_p mmu = param;
 	csx_p csx = mmu->csx;
 
-	TTBCR = 0;
-	TTBR0 = ~0U;
-	CP15_reg1_set(m);
+	mmu->ttbcr.raw = 0;
+	mmu->ttbr[0] = ~0U;
+	mmu->ttbr[1] = ~0U;
+	CP15_reg1_clear(m);
 
 	callback_qlist_process(&mmu->atreset.list);
 
@@ -210,17 +299,17 @@ static int _soc_mmu_atreset(void* param)
 
 void csx_mmu_dump_ttbr0(csx_p csx)
 {
+	const soc_mmu_p mmu = csx->mmu;
+
 	if(!CP15_reg1_Mbit)
 		return;
-	if(~0U == TTBR0)
+	if(~0U == mmu->ttbr[0])
 		return;
 
-	const soc_mmu_p mmu = csx->mmu;
 	const unsigned savedDebug = mmu->debug;
 	mmu->debug = 1;
 
-	const unsigned ttbcr_x = TTBCR & 7;
-	const uint32_t last_ti = mlBFEXT(~0, 31 - ttbcr_x, 20);
+	const uint32_t last_ti = mlBFEXT(~0, 31 - mmu->ttbcr.n, 20);
 
 	for(uint32_t ti = 0; ti <= last_ti; ti++)
 	{
@@ -377,6 +466,17 @@ void soc_mmu_init(soc_mmu_p mmu)
 	if(_trace_init) {
 		LOG();
 	}
+
+	csx_coprocessor_p cp = mmu->csx->cp;
+
+	csx_coprocessor_register_access(cp, cp15(0, 2, 0, 0),
+		_soc_mmu_cp15_access_ttbr0, mmu);
+	csx_coprocessor_register_access(cp, cp15(0, 2, 0, 1),
+		_soc_mmu_cp15_access_ttbr1, mmu);
+	csx_coprocessor_register_access(cp, cp15(0, 2, 0, 2),
+		_soc_mmu_cp15_access_ttbcr, mmu);
+	csx_coprocessor_register_access(cp, cp15(0, 3, 0, 0),
+		_soc_mmu_cp15_0_3_0_0_access_dacr, mmu);
 }
 
 int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
@@ -384,9 +484,10 @@ int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
 	static int count = 1;
 	const csx_p csx = mmu->csx;
 
-	if(!CP15_reg1_Mbit || (~0U == TTBR0)) {
+	const unsigned invalid_ttbr0 = (~0U == mmu->ttbr[0]);
+	if(!CP15_reg1_Mbit || invalid_ttbr0) {
 		*p2ppa = va;
-		return(~0U == TTBR0);
+		return(CP15_reg1_Mbit && invalid_ttbr0);
 	}
 
 	soc_mmu_ptd_t l1ptd;

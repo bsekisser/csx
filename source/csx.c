@@ -2,16 +2,18 @@
 
 /* **** soc_includes */
 
-#include "soc.h"
 #include "soc_core_arm.h"
+#include "soc.h"
 
 /* **** csx includes */
 
+#include "csx_cache.h"
+#include "csx_coprocessor.h"
 #include "csx_mem.h"
 #include "csx_mmio.h"
+#include "csx_soc_exception.h"
 #include "csx_soc_omap.h"
 #include "csx_statistics.h"
-//#include "csx_test.h"
 
 /* **** local includes */
 
@@ -44,11 +46,15 @@ csx_p csx_alloc(void) {
 
 	/* **** */
 
-	ERR_NULL(csx_soc_alloc(csx, &csx->soc));
+	ERR_NULL(csx_cache_alloc(csx, &csx->cache));
+	ERR_NULL(csx_coprocessor_alloc(csx, &csx->cp));
 	ERR_NULL(csx_mem_alloc(csx, &csx->mem));
 	ERR_NULL(csx_mmio_alloc(csx, &csx->mmio));
 	ERR_NULL(csx_nnd_flash_alloc(csx, &csx->nnd));
+	ERR_NULL(csx_soc_alloc(csx, &csx->soc));
 	ERR_NULL(csx_statistics_alloc(csx, &csx->statistics));
+
+	ERR_NULL(csx_soc_exception_alloc(csx, &csx->cxu));
 
 	/* **** */
 
@@ -98,11 +104,15 @@ csx_p csx_init(csx_p csx)
 
 	/* **** */
 
+	csx_cache_init(csx->cache);
+	csx_coprocessor_init(csx->cp);
 	csx_mem_init(csx->mem);
 	csx_mmio_init(csx->mmio);
 	csx_nnd_flash_init(csx->nnd);
 	csx_soc_init(csx->soc);
 	csx_statistics_init(csx->statistics);
+
+	csx_soc_exception_init(csx->cxu);
 
 	/* **** */
 

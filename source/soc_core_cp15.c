@@ -6,7 +6,7 @@
 
 /* **** */
 
-#include "exception.h"
+#include "csx_soc_exception.h"
 
 /* **** */
 
@@ -46,6 +46,7 @@
 #define cp15_op2(_op2) \
 	(((_op2) & 7) << 5)
 
+#undef cp15
 #define cp15(_op1, _n, _m, _op2) \
 	(cp15_op1(_op1) | cp15_crn(_n) | cp15_crm(_m) | cp15_op2(_op2))
 
@@ -73,7 +74,7 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 	const csx_p csx = core->csx;
 	
 	uint32_t data = write ? *write : _vCR(_CP15_CRn1_CRm0_OP2x0);
-	
+
 	if(write) {
 		LOG_START("Control Register\n\t");
 		_LOG_("0(0x%01x)", mlBFEXT(data, 31, 27));
@@ -130,167 +131,6 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 
 /* **** */
 
-static uint32_t _soc_core_cp15_cn2_cm0_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	const csx_p csx = core->csx;
-
-	uint32_t data = write ? *write : TTBR0;
-	
-	if(write) {
-		LOG_START("Translation Table Base 0\n\t");
-		_LOG_("TTBR0: 0x%05x", mlBFEXT(data, 31, 14));
-		_LOG_(" SBZ: 0x%03x", mlBFEXT(data, 13, 5));
-		_LOG_(" RGN: %01u", mlBFEXT(data, 4, 3));
-		_LOG_(" IMP: %01u", BEXT(data, 2));
-		_LOG_(" %c", BEXT(data, 1) ? 'S' : 's');
-		LOG_END(" %c", BEXT(data, 0) ? 'C' : 'c');
-
-		TTBR0 = data;
-	} else {
-		DEBUG(LOG("READ -- Translation Table Base 0"));
-	}
-
-	return(data);
-	UNUSED(opcode);
-}
-
-static uint32_t _soc_core_cp15_cn3_cm0_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	const csx_p csx = core->csx;
-
-	uint32_t data = write ? *write : _vCR(_DACR);
-
-	if(write) {
-		LOG_START("Domain Access Control Register\n\t");
-		unsigned i = 15;
-		do {
-			_LOG_("D%02u(%01u)", i, data >> (i << 1) & 3);
-			if(i) {
-				_LOG_(", ");
-			}
-		}while(i--);
-		LOG_END();
-		_vCR(_DACR) = data;
-	} else {
-		DEBUG(LOG("Domain Access Control Register"));
-	}
-
-	return(data);
-	UNUSED(opcode);
-}
-
-/* **** */
-
-static uint32_t _soc_core_cp15_cn5_cm0_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	const csx_p csx = core->csx;
-
-	uint32_t data = write ? *write : _vCR(_DFSR);
-
-	if(write) {
-		LOG_START("Fault Status Register: DFSR\n\t");
-		_LOG_("0[31:12](0x%03x)", mlBFEXT(data, 31, 12));
-		_LOG_(", %s", BEXT(data, 11) ? "WR" : "wr");
-		_LOG_(", %s", BEXT(data, 10) ? "FS" : "fs");
-		_LOG_(", 0(%01u):0(%01u)", BEXT(data, 9), BEXT(data, 8));
-		_LOG_(", DOMAIN: %01u", mlBFEXT(data, 7, 4));
-		LOG_END(", STATUS: %01u", mlBFEXT(data, 3, 0));
-		
-		_vCR(_DFSR) = data;
-	} else {
-		DEBUG(LOG("READ -- Fault Status Register: DFSR"));
-	}
-
-	return(data);
-	UNUSED(opcode);
-}
-
-/* **** */
-
-static uint32_t _soc_core_cp15_cn7_cm5_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
-		LOG("Invalidate ICache");
-	} else {
-		DEBUG(LOG("XX READ -- Invalidate ICache"));
-	}
-
-	return(0);
-	UNUSED(opcode);
-}
-
-static uint32_t _soc_core_cp15_cn7_cm7_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
-		LOG("Invalidate ICache and DCache");
-	} else {
-		DEBUG(LOG("XX READ -- Invalidate ICache and DCache"));
-	}
-
-	return(0);
-	UNUSED(opcode);
-}
-
-static uint32_t _soc_core_cp15_cn7_cm10_op2x3(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	uint32_t data = write ? *write : 0;
-	
-	if(write) {
-		DEBUG(LOG("Cache, Test and Clean"));
-	} else {
-		LOG("Cache, Test and Clean");
-		data = (CPSR & SOC_CORE_PSR_NZCV) | SOC_CORE_PSR_Z;
-	}
-
-	return(data);
-	UNUSED(opcode);
-}
-
-static uint32_t _soc_core_cp15_cn7_cm10_op2x4(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
-		LOG("Drain write buffer");
-	} else {
-		DEBUG(LOG("XX READ -- Drain write buffer"));
-	}
-
-	return(0);
-	UNUSED(opcode);
-}
-		
-/* **** */
-
-static uint32_t _soc_core_cp15_cn8_cm5_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	if(write) {
-		LOG("Invalidate instruction TLB");
-		soc_tlb_invalidate_instruction(core->csx->tlb);
-	} else {
-		DEBUG(LOG("XX READ -- Invalidate instruction TLB"));
-	}
-
-	return(0);
-	UNUSED(opcode);
-}
-
-static uint32_t _soc_core_cp15_cn8_cm7_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
-{
-	if(write) {
-		LOG("Invalidate TLB");
-		soc_tlb_invalidate_all(core->csx->tlb);
-	} else {
-		DEBUG(LOG("XX READ -- Invalidate TLB"));
-	}
-
-	return(0);
-	UNUSED(opcode);
-}
-
-/* **** */
-
 uint32_t soc_core_cp15(soc_core_p core, uint32_t* write)
 {
 	const uint32_t mask = cp15(~0, ~0, ~0, ~0);
@@ -299,24 +139,6 @@ uint32_t soc_core_cp15(soc_core_p core, uint32_t* write)
 	switch(opcode) {
 		case cp15(0, 1, 0, 0):
 			return(_soc_core_cp15_cn1_cm0_op2x0(core, opcode, write));
-		case cp15(0, 2, 0, 0):
-			return(_soc_core_cp15_cn2_cm0_op2x0(core, opcode, write));
-		case cp15(0, 3, 0, 0):
-			return(_soc_core_cp15_cn3_cm0_op2x0(core, opcode, write));
-		case cp15(0, 5, 0, 0):
-			return(_soc_core_cp15_cn5_cm0_op2x0(core, opcode, write));
-		case cp15(0, 7, 5, 0):
-			return(_soc_core_cp15_cn7_cm5_op2x0(core, opcode, write));
-		case cp15(0, 7, 7, 0):
-			return(_soc_core_cp15_cn7_cm7_op2x0(core, opcode, write));
-		case cp15(0, 7, 10, 3):
-			return(_soc_core_cp15_cn7_cm10_op2x3(core, opcode, write));
-		case cp15(0, 7, 10, 4):
-			return(_soc_core_cp15_cn7_cm10_op2x4(core, opcode, write));
-		case cp15(0, 8, 5, 0):
-			return(_soc_core_cp15_cn8_cm5_op2x0(core, opcode, write));
-		case cp15(0, 8, 7, 0):
-			return(_soc_core_cp15_cn8_cm7_op2x0(core, opcode, write));
 	}
 
 	return(__soc_core_cp15_fault(core, opcode, write));

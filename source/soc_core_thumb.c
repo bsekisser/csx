@@ -16,7 +16,7 @@
 
 /* **** */
 
-#include "exception.h"
+#include "csx_soc_exception.h"
 
 /* **** */
 

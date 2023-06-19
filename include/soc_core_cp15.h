@@ -16,20 +16,20 @@ enum {
 	_CP15_CRn1_CRm0_OP2x1, /* auxiliarry control register */
 	_CP15_CRn1_CRm0_OP2x2, /* coprocessor access control register */
 //
-	_CP15_CRn2_CRm0_OP2x0, /* translation table base 0 */
-	_CP15_CRn2_CRm0_OP2x1, /* translation table base 1 */
+//	_CP15_CRn2_CRm0_OP2x0, /* translation table base 0 */
+//	_CP15_CRn2_CRm0_OP2x1, /* translation table base 1 */
 //
-	_CP15_CRn3_CRm0_OP2x0, /* domain access control register */
+//	_CP15_CRn3_CRm0_OP2x0, /* domain access control register */
 //
-	_CP15_CRn5_CRm0_OP2x0, /* combined / data fsr */
-	_CP15_CRn5_CRm0_OP2x1, /* instruction fsr */
+//	_CP15_CRn5_CRm0_OP2x0, /* combined / data fsr */
+//	_CP15_CRn5_CRm0_OP2x1, /* instruction fsr */
 //
 	_CREG_COUNT,
 //
-	_DACR = _CP15_CRn3_CRm0_OP2x0,
-	_DFSR = _CP15_CRn5_CRm0_OP2x0,
-	_IFSR = _CP15_CRn5_CRm0_OP2x1,
-	_TTBR0 = _CP15_CRn2_CRm0_OP2x0,
+//	_DACR = _CP15_CRn3_CRm0_OP2x0,
+//	_DFSR = _CP15_CRn5_CRm0_OP2x0,
+//	_IFSR = _CP15_CRn5_CRm0_OP2x1,
+//	_TTBR0 = _CP15_CRn2_CRm0_OP2x0,
 };
 
 enum {
@@ -42,6 +42,7 @@ enum {
 };
 
 #define CP15_reg1_bit(_x)			BEXT(_vCR(_CP15_CRn1_CRm0_OP2x0), _CP15_CRn1_CRm0_OP2x0_##_x)
+#define CP15_reg1_clear(_x)			BCLR(_vCR(_CP15_CRn1_CRm0_OP2x0), _CP15_CRn1_CRm0_OP2x0_##_x)
 #define CP15_reg1_set(_x)			BSET(_vCR(_CP15_CRn1_CRm0_OP2x0), _CP15_CRn1_CRm0_OP2x0_##_x)
 
 #define CP15_reg1_Abit				CP15_reg1_bit(a)
@@ -54,5 +55,5 @@ enum {
 #define ARMv5_CP15_reg1_Ubit		CP15_reg1_bit(u)
 #define CP15_reg1_AbitOrUbit		(CP15_reg1_bit(a) || CP15_reg1_bit(u))
 
-#define TTBCR						mmu->ttbcr
-#define TTBR0						_vCR(_TTBR0)
+//#define TTBCR						mmu->ttbcr
+//#define TTBR0						_vCR(_TTBR0)
