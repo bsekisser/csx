@@ -2,9 +2,10 @@
 #include "csx_test_thumb_asm.h"
 #include "csx_test_thumb_inst.h"
 
-#include "csx_test_utility.h"
 #include "soc_core_test.h"
-#include "soc.h"
+
+#include "csx_test_utility.h"
+#include "csx_soc.h"
 
 /* **** */
 
@@ -39,7 +40,7 @@ static uint32_t _test_thumb_asm(csx_test_p t, thumb_fn fn, uint32_t rn, uint32_t
 }
 
 static uint32_t _test_thumb_adds_rn_i_inst(csx_test_p t, uint32_t rn, uint32_t rm, uint32_t* cpsr) {
-	soc_core_p core = t->csx->core;
+	soc_core_p core = t->core;
 
 	soc_core_reg_set(core, 1, rn);
 
@@ -87,8 +88,7 @@ static void csx_test_thumb_adds_rn_i(csx_test_p t, uint32_t rn, unsigned rm) {
 
 static void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 {
-	csx_p csx = t->csx;
-	soc_core_p core = csx->core;
+	soc_core_p core = t->core;
 
 	t->start_pc = t->pc = 0x10000000;
 
@@ -122,8 +122,7 @@ static void csx_test_thumb_add_sub_i3_rn_rd(csx_test_p t)
 
 static void csx_test_thumb_b(csx_test_p t)
 {
-	csx_p csx = t->csx;
-	soc_core_p core = csx->core;
+	soc_core_p core = t->core;
 
 	int savedTrace = _soc_core_test_trace(core, 0, 0);
 
@@ -207,7 +206,7 @@ static void csx_test_thumb_b(csx_test_p t)
 static void csx_test_thumb_ldstm(csx_test_p t)
 {
 	csx_p csx = t->csx;
-	soc_core_p core = csx->core;
+	soc_core_p core = t->core;
 
 	t->start_pc = t->pc = 0x10000000;
 

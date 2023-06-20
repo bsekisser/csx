@@ -6,11 +6,13 @@ typedef struct csx_test_t* csx_test_p;
 
 /* **** */
 
+#include "soc_core.h"
 #include "csx.h"
 
 /* **** */
 
 typedef struct csx_test_t {
+	soc_core_p		core;
 	csx_p			csx;
 
 	uint32_t		start_pc;

@@ -231,7 +231,7 @@ static uint32_t _csx_soc_exception_cp15_access_fsr_ifsr(void* param, uint32_t* w
 
 void csx_exception(csx_p csx, unsigned type)
 {
-	_csx_soc_exception(csx, csx->core, type);
+	_csx_soc_exception(csx, csx->soc->core, type);
 }
 
 csx_soc_exception_p csx_soc_exception_alloc(csx_p csx, csx_soc_exception_h h2cxu)

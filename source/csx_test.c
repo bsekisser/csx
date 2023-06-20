@@ -3,13 +3,13 @@
 #include "csx_test_thumb.h"
 #include "csx_test_utility.h"
 
-#include "soc.h"
 #include "soc_core_psr.h"
+#include "csx_soc.h"
 
 /* **** */
 
-#include "err_test.h"
 #include "bitfield.h"
+#include "err_test.h"
 #include "log.h"
 
 /* **** */
@@ -22,7 +22,7 @@
 static uint32_t _csx_test_run(csx_test_p t, uint32_t start_pc, uint32_t end_pc, uint32_t count)
 {
 	const csx_p csx = t->csx;
-	const soc_core_p core = csx->core;
+	const soc_core_p core = t->core;
 
 	if(0) LOG("start_pc = 0x%08x thumb = %u", start_pc, !!(CPSR & SOC_CORE_PSR_T));
 
@@ -60,9 +60,10 @@ int csx_test_main(csx_p csx, int core_trace)
 	csx_test_p t = calloc(1, sizeof(csx_test_t));
 	ERR_NULL(t);
 
+	t->core = csx->soc->core;
 	t->csx = csx;
 
-	csx->core->trace = core_trace;
+	t->core->trace = core_trace;
 
 	t->start_pc = CSX_SDRAM_START;
 	csx->state = CSX_STATE_HALT;

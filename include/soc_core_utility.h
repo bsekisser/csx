@@ -4,12 +4,14 @@
 
 /* **** */
 
-#include "soc.h"
+#include "soc_mmu.h"
+#include "soc_core.h"
 
 /* **** */
 
-#include "csx.h"
+#include "csx_soc.h"
 #include "csx_statistics.h"
+#include "csx.h"
 
 /* **** */
 
@@ -61,7 +63,7 @@ static inline int _check_sbz(uint32_t opcode, uint8_t msb, uint8_t lsb, uint32_t
 static inline uint32_t _soc_core_ifetch(soc_core_p core, uint32_t va, size_t size) {
 	static uint32_t splat = 0;
 	
-	const uint32_t data = csx_mmu_ifetch(core->csx, va, size);
+	const uint32_t data = soc_mmu_ifetch(core->mmu, va, size);
 	
 	if(0 == data) {
 		splat++;
@@ -93,7 +95,7 @@ static inline uint32_t soc_core_ifetch(soc_core_p core, uint32_t va, size_t size
 }
 
 static inline uint32_t _soc_core_read(soc_core_p core, uint32_t va, size_t size) {
-	return(csx_mmu_read(core->csx, va, size));
+	return(soc_mmu_read(core->mmu, va, size));
 }
 
 static inline uint32_t _soc_core_read_profile(soc_core_p core, uint32_t va, size_t size)
@@ -117,7 +119,7 @@ static inline uint32_t soc_core_read(soc_core_p core, uint32_t va, size_t size)
 
 static inline void _soc_core_write(soc_core_p core, uint32_t va, size_t size, uint32_t data)
 {
-	csx_mmu_write(core->csx, va, size, data);
+	soc_mmu_write(core->mmu, va, size, data);
 }
 
 static inline void _soc_core_write_profile(soc_core_p core, uint32_t va, size_t size, uint32_t data)

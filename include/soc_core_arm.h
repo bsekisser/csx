@@ -2,6 +2,10 @@
 
 /* **** */
 
+#include "soc_core.h"
+
+/* **** */
+
 #include "csx.h"
 
 /* **** */

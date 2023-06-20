@@ -1,10 +1,9 @@
-#include "soc.h"
+#include "csx_soc.h"
 
 /* **** soc includes */
 
 #include "soc_core.h"
 #include "soc_core_cp15.h"
-#include "soc.h"
 
 /* **** csx includes */
 
@@ -184,9 +183,9 @@ csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
 
 	/* **** */
 
-	ERR_NULL(soc_core_alloc(csx, soc, &csx->core));
-	ERR_NULL(soc_mmu_alloc(csx, soc, &csx->mmu));
-	ERR_NULL(soc_tlb_alloc(csx, soc, &csx->tlb));
+	ERR_NULL(soc_core_alloc(csx, soc, &soc->core));
+	ERR_NULL(soc_mmu_alloc(csx, soc, &soc->mmu));
+	ERR_NULL(soc_tlb_alloc(csx, soc, &soc->tlb));
 
 	/* **** */
 
@@ -226,17 +225,17 @@ void csx_soc_init(csx_soc_p soc)
 
 	/* **** */
 
-	soc_core_init(csx->core);
+	soc_core_init(soc->core);
 	ERR(soc_core_cp15_init(csx));
-	soc_mmu_init(csx->mmu);
-	soc_tlb_init(csx->tlb);
+	soc_mmu_init(soc->mmu);
+	soc_tlb_init(soc->tlb);
 }
 
 int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 {
 	int err = 0;
 
-	const soc_core_p core = csx->core;
+	const soc_core_p core = csx->soc->core;
 
 	core->trace = !!core_trace;
 

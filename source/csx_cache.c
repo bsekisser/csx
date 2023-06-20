@@ -39,7 +39,7 @@ typedef struct csx_cache_t {
 static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->core;
+	const soc_core_p core = csx->soc->core;
 
 	if(write) {
 		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
@@ -54,7 +54,7 @@ static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->core;
+	const soc_core_p core = csx->soc->core;
 
 	if(write) {
 		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
@@ -69,7 +69,7 @@ static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->core;
+	const soc_core_p core = csx->soc->core;
 
 	uint32_t data = write ? *write : 0;
 	
@@ -86,7 +86,7 @@ static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
 static uint32_t _csx_cache_cp15_0_7_10_4_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->core;
+	const soc_core_p core = csx->soc->core;
 
 	if(write) {
 		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));

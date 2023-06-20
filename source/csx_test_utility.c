@@ -1,6 +1,6 @@
 #include "csx_test_utility.h"
 
-#include "soc.h"
+#include "csx_soc.h"
 
 /* **** */
 
@@ -39,7 +39,7 @@ int _test_cpsr_xpsr_mask(csx_test_p t, unsigned cpsr, unsigned xpsr, unsigned ma
 
 int _test_nzc(csx_test_p t, int n, int z, int c)
 {
-	soc_core_p core = t->csx->core;
+	soc_core_p core = t->core;
 	
 	unsigned xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);
@@ -50,7 +50,7 @@ int _test_nzc(csx_test_p t, int n, int z, int c)
 
 int _test_nzcv(csx_test_p t, int n, int z, int c, int v)
 {
-	soc_core_p core = t->csx->core;
+	soc_core_p core = t->core;
 	
 	unsigned xpsr = _BSET_AS(0, SOC_CORE_PSR_BIT_N, !!n);
 		BSET_AS(xpsr, SOC_CORE_PSR_BIT_Z, !!z);

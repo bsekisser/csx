@@ -14,13 +14,14 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 #include "soc_core_arm.h"
 #include "soc_core_reg.h"
-#include "soc.h"
+#include "soc_mmu.h"
 
 /* **** */
 
 #include "callback_qlist.h"
 
 #include "csx_coprocessor.h"
+#include "csx_soc.h"
 #include "csx.h"
 
 /* **** */
@@ -95,6 +96,7 @@ typedef struct soc_core_t {
 	soc_core_inst_t		inst;
 
 	csx_p				csx;
+	soc_mmu_p			mmu;
 	csx_soc_p			soc;
 	soc_core_step_fn	step;
 

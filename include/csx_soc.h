@@ -1,14 +1,13 @@
 #pragma once
 
-// TODO: transition soc to csx_soc
-
-//typedef struct csx_t* csx_p;
 typedef struct csx_soc_t** csx_soc_h;
 typedef struct csx_soc_t* csx_soc_p;
 
 /* **** */
 
-#include "callback_qlist.h"
+#include "soc_core.h"
+#include "soc_mmu.h"
+#include "soc_tlb.h"
 
 /* **** */
 
@@ -17,17 +16,20 @@ typedef struct csx_soc_t* csx_soc_p;
 
 /* **** */
 
-// TODO: soc_t from soc_omap_5912.h
+#include "callback_qlist.h"
+
+/* **** */
 
 typedef struct csx_soc_t {
-	// TODO: sram
-	// TODO: mmio modules
-
-	csx_p csx;
-	
 	uint8_t brom[SOC_BROM_ALLOC];
 	uint8_t sram[SOC_SRAM_ALLOC]; /* aka framebuffer */
 	
+	soc_core_p core;
+	soc_mmu_p mmu;
+	soc_tlb_p tlb;
+
+	csx_p csx;
+
 	struct {
 		callback_qlist_t list;
 		callback_qlist_elem_t elem;

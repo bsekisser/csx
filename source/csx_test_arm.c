@@ -7,7 +7,8 @@
 #include "soc_core_psr.h"
 #include "soc_core_test.h"
 #include "soc_core.h"
-#include "soc.h"
+
+#include "csx_soc.h"
 #include "csx_test.h"
 #include "csx_test_utility.h"
 #include "csx.h"
@@ -94,7 +95,7 @@ static inline uint32_t eao(csx_test_p t, int32_t ieao)
 
 static uint32_t csx_test_arm_adcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 1, ir0);
@@ -116,7 +117,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
 
-	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->core, 0, 0);
 
 	uint32_t res = 0, xres = 0;
 	uint32_t xpsr = 0, cpsr = 0;
@@ -139,14 +140,14 @@ static void csx_test_arm_adcs(csx_test_p t)
 		csx_test_arm_adcs_asm, csx_test_arm_adcs_inst,
 			256, 0));
 
-	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
+	_soc_core_test_trace(t->core, 0, &savedTrace);
 }
 
 /* **** */
 
 static uint32_t csx_test_arm_adds_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -193,7 +194,7 @@ static void csx_test_arm_adds(csx_test_p t)
 
 static uint32_t csx_test_arm_ands_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -224,7 +225,7 @@ static void csx_test_arm_ands(csx_test_p t)
 
 static void csx_test_arm_b(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	uint32_t offset = eao(t, 3);
 	uint32_t new_pc = epc(t) + offset;
@@ -285,7 +286,7 @@ static void csx_test_arm_b(csx_test_p t)
 
 static uint32_t csx_test_arm_bics_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -319,7 +320,7 @@ static void csx_test_arm_bics(csx_test_p t)
 
 static uint32_t csx_test_arm_cmp_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	const uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -338,7 +339,7 @@ static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 
 static void csx_test_arm_cmp(csx_test_p t)
 {
-	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->core, 0, 0);
 	
 /* **** */
 
@@ -383,14 +384,14 @@ static void csx_test_arm_cmp(csx_test_p t)
 		assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	};
 
-	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
+	_soc_core_test_trace(t->core, 0, &savedTrace);
 }
 
 /* **** */
 
 static uint32_t csx_test_arm_eors_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -424,7 +425,7 @@ static void csx_test_arm_eors(csx_test_p t)
 
 static void csx_test_arm_dpi(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	int savedTrace = _soc_core_test_trace(core, 0, 0);
 
@@ -549,7 +550,7 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 	}
 
 	for(int i = 0; i < 4; i++) {
-		const uint32_t rv = soc_core_reg_get(t->csx->core, rvs + i);
+		const uint32_t rv = soc_core_reg_get(t->core, rvs + i);
 		if(0) LOG("r[%02x] = 0x%08x", i, rv);
 
 		assert(_test_value(tvs + i) == rv);
@@ -612,7 +613,7 @@ enum {
 
 static void csx_test_arm_ldmda(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	ldstm_t ldstm;
 
@@ -656,7 +657,7 @@ const uint32_t _ldstm_db = _BV(24);
 
 static void csx_test_arm_ldmdb(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	ldstm_t ldstm;
 
@@ -700,7 +701,7 @@ const uint32_t _ldstm_ia = _BV(23);
 
 static void csx_test_arm_ldmia(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	ldstm_t ldstm;
 
@@ -744,7 +745,7 @@ const uint32_t _ldstm_ib = _BV(24) | _BV(23);
 
 static void csx_test_arm_ldmib(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	ldstm_t ldstm;
 
@@ -797,7 +798,7 @@ static void csx_test_arm_ldstm(csx_test_p t)
 
 static void csx_test_arm_mov(csx_test_p t)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 
 	int savedTrace = _soc_core_test_trace(core, 0, 0);
 
@@ -834,7 +835,7 @@ static void csx_test_arm_mov(csx_test_p t)
 
 static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
-	const soc_core_p core = t->csx->core;
+	const soc_core_p core = t->core;
 	uint32_t res = 0;
 
 	soc_core_reg_set(core, 0, ir0);
@@ -853,7 +854,7 @@ static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 
 static void csx_test_arm_subs(csx_test_p t)
 {
-	int savedTrace = _soc_core_test_trace(t->csx->core, 0, 0);
+	int savedTrace = _soc_core_test_trace(t->core, 0, 0);
 
 	t->start_pc = t->pc = 0x10000000;
 
@@ -896,7 +897,7 @@ static void csx_test_arm_subs(csx_test_p t)
 		csx_test_arm_subs_asm, csx_test_arm_subs_inst,
 			256, 0));
 
-	_soc_core_test_trace(t->csx->core, 0, &savedTrace);
+	_soc_core_test_trace(t->core, 0, &savedTrace);
 }
 
 /* **** */

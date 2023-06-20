@@ -3,10 +3,12 @@
 #include "soc_core_arm_decode.h"
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
+#include "soc_mmu.h"
 
 /* **** */
 
 #include "csx_soc_exception.h"
+#include "csx_soc.h"
 
 /* **** */
 
@@ -72,6 +74,7 @@ static uint32_t __soc_core_cp15_fault(soc_core_p core, uint32_t opcode, uint32_t
 static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, uint32_t* write)
 {
 	const csx_p csx = core->csx;
+	const csx_soc_p soc = core->soc;
 	
 	uint32_t data = write ? *write : _vCR(_CP15_CRn1_CRm0_OP2x0);
 
@@ -116,7 +119,7 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 		_vCR(_CP15_CRn1_CRm0_OP2x0) = data;
 
 		if(0 && BEXT(bits_set, 0))
-			csx_mmu_dump_ttbr0(csx);
+			soc_mmu_dump_ttbr0(soc->mmu);
 
 		if(CP15_reg1_EEbit) {
 			LOG("CP15_reg1_EEbit -- XXX");

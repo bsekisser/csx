@@ -3,13 +3,14 @@
 #include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core.h"
-#include "soc.h"
+#include "soc_tlb.h"
 
 /* **** */
 
 #include "csx_data.h"
 #include "csx_mem.h"
 #include "csx_soc_exception.h"
+#include "csx_soc.h"
 #include "csx.h"
 
 /* **** */
@@ -38,9 +39,10 @@
 /* **** */
 
 typedef struct soc_mmu_t* soc_mmu_p;
-typedef struct soc_mmu_t { // TODO: move to header
+typedef struct soc_mmu_t {
 	csx_p							csx;
 	csx_soc_p						soc;
+	soc_tlb_p						tlb;
 
 	uint32_t dacr;
 
@@ -297,134 +299,6 @@ static int _soc_mmu_atreset(void* param)
 
 /* **** */
 
-void csx_mmu_dump_ttbr0(csx_p csx)
-{
-	const soc_mmu_p mmu = csx->mmu;
-
-	if(!CP15_reg1_Mbit)
-		return;
-	if(~0U == mmu->ttbr[0])
-		return;
-
-	const unsigned savedDebug = mmu->debug;
-	mmu->debug = 1;
-
-	const uint32_t last_ti = mlBFEXT(~0, 31 - mmu->ttbcr.n, 20);
-
-	for(uint32_t ti = 0; ti <= last_ti; ti++)
-	{
-		const unsigned va = ti << 20;
-
-		soc_mmu_ptd_t l1ptd;
-		unsigned page_size = 0, ppa = 0;
-
-		if(_soc_mmu_l1ptd_0(csx->mmu, &l1ptd, va, &ppa)) {
-			switch(l1ptd.type) {
-				case 2:
-					page_size = mlBF(19, 0);
-					break;
-			}
-
-			LOG("0x%08x--0x%08x --> 0x%08x--0x%08x", va, va + page_size, ppa, ppa + page_size);
-		}
-	}
-
-	mmu->debug = savedDebug;
-}
-
-uint32_t csx_mmu_ifetch(csx_p csx, uint32_t va, size_t size)
-{
-	uint32_t ppa = va;
-	csx_mem_callback_p src = 0;
-	int tlb = 0;
-	soc_tlbe_p tlbe = 0;
-
-	if(CP15_reg1_Mbit) {
-		src = soc_tlb_ifetch(csx->tlb, va, &tlbe);
-
-		if(src)
-			return(csx_mem_callback_read(src, va, size));
-
-		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-	}
-
-	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
-
-	if(!src) {
-		LOG(" -- PREFETCH ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
-			(uintptr_t)csx, va, ppa, size);
-
-		csx_exception(csx, _EXCEPTION_PrefetchAbort);
-	}
-
-	if(tlb && src)
-		soc_tlb_fill_instruction_tlbe(tlbe, va, src);
-
-	return(data);
-}
-
-uint32_t csx_mmu_read(csx_p csx, uint32_t va, size_t size)
-{
-	uint32_t ppa = va;
-	csx_mem_callback_p src = 0;
-	int tlb = 0;
-	soc_tlbe_p tlbe = 0;
-
-	if(CP15_reg1_Mbit) {
-		src = soc_tlb_read(csx->tlb, va, &tlbe);
-
-		if(src)
-			return(csx_mem_callback_read(src, va, size));
-
-		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-	}
-
-	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
-
-	if(!src) {
-		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
-			(uintptr_t)csx, va, ppa, size);
-
-		csx_exception(csx, _EXCEPTION_DataAbort);
-	}
-
-	if(tlb && src)
-		soc_tlb_fill_data_tlbe_read(tlbe, va, src);
-
-	return(data);
-}
-
-void csx_mmu_write(csx_p csx, uint32_t va, size_t size, uint32_t data)
-{
-	uint32_t ppa = va;
-	csx_mem_callback_p dst = 0;
-	int tlb = 0;
-	soc_tlbe_p tlbe = 0;
-
-	if(CP15_reg1_Mbit) {
-		dst = soc_tlb_write(csx->tlb, va, &tlbe);
-
-		if(dst)
-			return(csx_mem_callback_write(dst, va, size, &data));
-
-		tlb = soc_mmu_vpa_to_ppa(csx->mmu, va, &ppa);
-	}
-
-	dst = csx_mem_access_write(csx, ppa, size, &data);
-
-	if(!dst) {
-		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx, data = 0x%08x",
-			(uintptr_t)csx, va, ppa, size, data);
-
-		csx_exception(csx, _EXCEPTION_DataAbort);
-	}
-
-	if(tlb && dst)
-		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
-}
-
-
-
 soc_mmu_p soc_mmu_alloc(csx_p csx, csx_soc_p soc, soc_mmu_h h2mmu)
 {
 	ERR_NULL(csx);
@@ -459,6 +333,73 @@ soc_mmu_p soc_mmu_alloc(csx_p csx, csx_soc_p soc, soc_mmu_h h2mmu)
 	return(mmu);
 }
 
+void soc_mmu_dump_ttbr0(soc_mmu_p mmu)
+{
+	const csx_p csx = mmu->csx;
+	
+	if(!CP15_reg1_Mbit)
+		return;
+	if(~0U == mmu->ttbr[0])
+		return;
+
+	const unsigned savedDebug = mmu->debug;
+	mmu->debug = 1;
+
+	const uint32_t last_ti = mlBFEXT(~0, 31 - mmu->ttbcr.n, 20);
+
+	for(uint32_t ti = 0; ti <= last_ti; ti++)
+	{
+		const unsigned va = ti << 20;
+
+		soc_mmu_ptd_t l1ptd;
+		unsigned page_size = 0, ppa = 0;
+
+		if(_soc_mmu_l1ptd_0(mmu, &l1ptd, va, &ppa)) {
+			switch(l1ptd.type) {
+				case 2:
+					page_size = mlBF(19, 0);
+					break;
+			}
+
+			LOG("0x%08x--0x%08x --> 0x%08x--0x%08x", va, va + page_size, ppa, ppa + page_size);
+		}
+	}
+
+	mmu->debug = savedDebug;
+}
+
+uint32_t soc_mmu_ifetch(soc_mmu_p mmu, uint32_t va, size_t size)
+{
+	const csx_p csx = mmu->csx;
+	uint32_t ppa = va;
+	csx_mem_callback_p src = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		src = soc_tlb_ifetch(mmu->tlb, va, &tlbe);
+
+		if(src)
+			return(csx_mem_callback_read(src, va, size));
+
+		tlb = soc_mmu_vpa_to_ppa(mmu, va, &ppa);
+	}
+
+	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
+
+	if(!src) {
+		LOG(" -- PREFETCH ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
+			(uintptr_t)csx, va, ppa, size);
+
+		csx_exception(csx, _EXCEPTION_PrefetchAbort);
+	}
+
+	if(tlb && src)
+		soc_tlb_fill_instruction_tlbe(tlbe, va, src);
+
+	return(data);
+}
+
 void soc_mmu_init(soc_mmu_p mmu)
 {
 	ERR_NULL(mmu);
@@ -466,6 +407,12 @@ void soc_mmu_init(soc_mmu_p mmu)
 	if(_trace_init) {
 		LOG();
 	}
+
+	/* **** */
+
+	mmu->tlb = mmu->soc->tlb;
+
+	/* **** */
 
 	csx_coprocessor_p cp = mmu->csx->cp;
 
@@ -477,6 +424,38 @@ void soc_mmu_init(soc_mmu_p mmu)
 		_soc_mmu_cp15_access_ttbcr, mmu);
 	csx_coprocessor_register_access(cp, cp15(0, 3, 0, 0),
 		_soc_mmu_cp15_0_3_0_0_access_dacr, mmu);
+}
+
+uint32_t soc_mmu_read(soc_mmu_p mmu, uint32_t va, size_t size)
+{
+	const csx_p csx = mmu->csx;
+	uint32_t ppa = va;
+	csx_mem_callback_p src = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		src = soc_tlb_read(mmu->tlb, va, &tlbe);
+
+		if(src)
+			return(csx_mem_callback_read(src, va, size));
+
+		tlb = soc_mmu_vpa_to_ppa(mmu, va, &ppa);
+	}
+
+	const uint32_t data = csx_mem_access_read(csx, ppa, size, &src);
+
+	if(!src) {
+		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx",
+			(uintptr_t)csx, va, ppa, size);
+
+		csx_exception(csx, _EXCEPTION_DataAbort);
+	}
+
+	if(tlb && src)
+		soc_tlb_fill_data_tlbe_read(tlbe, va, src);
+
+	return(data);
 }
 
 int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
@@ -499,4 +478,34 @@ int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
 		LOG_ACTION(exit(-1));
 
 	return(0);
+}
+
+void soc_mmu_write(soc_mmu_p mmu, uint32_t va, size_t size, uint32_t data)
+{
+	const csx_p csx = mmu->csx;
+	uint32_t ppa = va;
+	csx_mem_callback_p dst = 0;
+	int tlb = 0;
+	soc_tlbe_p tlbe = 0;
+
+	if(CP15_reg1_Mbit) {
+		dst = soc_tlb_write(mmu->tlb, va, &tlbe);
+
+		if(dst)
+			return(csx_mem_callback_write(dst, va, size, &data));
+
+		tlb = soc_mmu_vpa_to_ppa(mmu, va, &ppa);
+	}
+
+	dst = csx_mem_access_write(csx, ppa, size, &data);
+
+	if(!dst) {
+		LOG(" -- DATA ABORT -- csx = 0x%08" PRIxPTR ", va = 0x%08x, ppa = 0x%08x, size = 0x%08zx, data = 0x%08x",
+			(uintptr_t)csx, va, ppa, size, data);
+
+		csx_exception(csx, _EXCEPTION_DataAbort);
+	}
+
+	if(tlb && dst)
+		soc_tlb_fill_data_tlbe_write(tlbe, va, dst);
 }

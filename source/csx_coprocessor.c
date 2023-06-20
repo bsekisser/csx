@@ -2,9 +2,11 @@
 
 #include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
+#include "soc_core.h"
 
 #include "csx_coprocessor.h"
 #include "csx_mem.h"
+#include "csx_soc.h"
 #include "csx.h"
 
 /* **** */
@@ -29,8 +31,9 @@ typedef struct csx_coprocessor_access_t {
 
 typedef struct csx_coprocessor_t {
 	csx_coprocessor_access_t cp15[16][16][7][7];
-	csx_p csx;
 	soc_core_p core;
+	csx_p csx;
+	csx_soc_p soc;
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
@@ -100,17 +103,6 @@ uint32_t csx_coprocessor_access(csx_coprocessor_p cp, uint32_t* write)
 	return(0);
 }
 
-void csx_coprocessor_register_access(csx_coprocessor_p cp,
-	uint32_t cpx, coprocessor_access_fn fn, void* param)
-{
-	if(15 == ir_cp_num(cpx)) {
-		const csx_coprocessor_access_p cpar = _csx_coprocessor_access(cp, cpx);
-
-		cpar->fn = fn;
-		cpar->param = param;
-	}
-}
-
 csx_coprocessor_p csx_coprocessor_alloc(csx_p csx, csx_coprocessor_h h2cp)
 {
 	ERR_NULL(csx);
@@ -145,9 +137,27 @@ void csx_coprocessor_init(csx_coprocessor_p cp)
 		LOG();
 	}
 
-//	cp->core = cp->csx->soc->core;
-	cp->core = cp->csx->core;
+	/* **** */
+
+	cp->soc = cp->csx->soc;
+	ERR_NULL(cp->soc);
+
+	cp->core = cp->soc->core;
+	ERR_NULL(cp->core);
+
+	/* **** */
 
 	csx_coprocessor_register_access(cp, cp15(0, 1, 0, 0),
-		_csx_cp15_x_x_x_x_access, cp->csx->core);
+		_csx_cp15_x_x_x_x_access, cp->core);
+}
+
+void csx_coprocessor_register_access(csx_coprocessor_p cp,
+	uint32_t cpx, coprocessor_access_fn fn, void* param)
+{
+	if(15 == ir_cp_num(cpx)) {
+		const csx_coprocessor_access_p cpar = _csx_coprocessor_access(cp, cpx);
+
+		cpar->fn = fn;
+		cpar->param = param;
+	}
 }

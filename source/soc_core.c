@@ -2,13 +2,13 @@
 #include "soc_core.h"
 
 #include "soc_core_trace.h"
-#include "soc.h"
 
 /* **** */
 
 #include "csx_coprocessor.h"
 #include "csx_statistics.h"
 #include "csx_soc_exception.h"
+#include "csx_soc.h"
 #include "csx_test_utility.h"
 
 #include "arm_cpsr.h"
@@ -102,6 +102,10 @@ void soc_core_init(soc_core_p core)
 	if(_trace_init) {
 		LOG();
 	}
+	
+	/* **** */
+	
+	core->mmu = core->soc->mmu;
 }
 
 void soc_core_reset(soc_core_p core)

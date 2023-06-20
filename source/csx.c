@@ -3,7 +3,6 @@
 /* **** soc_includes */
 
 #include "soc_core_arm.h"
-#include "soc.h"
 
 /* **** csx includes */
 
@@ -13,6 +12,7 @@
 #include "csx_mmio.h"
 #include "csx_soc_exception.h"
 #include "csx_soc_omap.h"
+#include "csx_soc.h"
 #include "csx_statistics.h"
 
 /* **** local includes */

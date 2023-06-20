@@ -1,6 +1,6 @@
-#include "csx.h"
+#include "csx_soc.h"
 #include "csx_test.h"
-#include "soc.h"
+#include "csx.h"
 
 /* **** local includes */
 
