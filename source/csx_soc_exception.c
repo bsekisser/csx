@@ -186,7 +186,7 @@ static uint32_t _csx_soc_exception_cp15_access_fsr(csx_soc_exception_p cxu,
 		[_FSR_IFSR] = "IFSR",
 	};
 
-	if(*write) {
+	if(write) {
 		LOG_START("Fault Status Register: %s\n\t", fsr_string[fsr]);
 		_LOG_("0[31:12](0x%03x)", mlBFEXT(data, 31, 12));
 		_LOG_(", %s", BEXT(data, 11) ? "WR" : "wr");
