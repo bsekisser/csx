@@ -18,11 +18,16 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 /* **** */
 
-#include "callback_qlist.h"
-
 #include "csx_coprocessor.h"
 #include "csx_soc.h"
 #include "csx.h"
+
+#include "arm_cpsr.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "callback_qlist.h"
 
 /* **** */
 
@@ -109,6 +114,11 @@ typedef struct soc_core_t {
 /* **** */
 
 soc_core_p soc_core_alloc(csx_p csx, csx_soc_p soc, soc_core_h h2core);
-int soc_core_in_a_privaleged_mode(soc_core_p core);
+
+static inline int soc_core_in_a_privaleged_mode(soc_core_p core)
+{
+	return(CPSR_M(User) != mlBFEXT(CPSR, 4, 0));
+}
+
 void soc_core_init(soc_core_p core);
 void soc_core_reset(soc_core_p core);

@@ -62,11 +62,6 @@ static int _soc_core_atreset(void* param)
 	return(0);
 }
 
-int soc_core_in_a_privaleged_mode(soc_core_p core)
-{
-	return(0x00 != mlBFEXT(CPSR, 4, 0));
-}
-
 soc_core_p soc_core_alloc(csx_p csx, csx_soc_p soc, soc_core_h h2core)
 {
 	ERR_NULL(csx);
