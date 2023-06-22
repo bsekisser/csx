@@ -38,6 +38,7 @@
 #define _trace_mem_mmap_alloc 0
 #define _trace_mem_mmap_alloc_free 0
 #define _trace_mem_mmap_alloc_malloc 0
+#define _trace_psr_switch 0
 
 #define _trace_mmio 0
 

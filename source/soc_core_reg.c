@@ -3,6 +3,7 @@
 #include "soc_core_arm.h"
 #include "soc_core_psr.h"
 #include "soc_core_thumb.h"
+#include "soc_core_trace.h"
 #include "soc_core_utility.h"
 #include "soc_core.h"
 
@@ -152,6 +153,9 @@ void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 	if(old_mode == new_mode)
 		return;
 
+	if(_trace_psr_switch)
+		soc_core_trace_psr(core, 0, CPSR);
+
 	uint32_t *src = 0, *dst = 0;
 	uint8_t sreg = 0;
 
@@ -183,5 +187,8 @@ void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 
 	CPSR &= ~mlBF(4, 0);
 	CPSR |= mlBFTST(new_mode, 4, 0);
+
+	if(_trace_psr_switch)
+		soc_core_trace_psr(core, 0, CPSR);
 }
 
