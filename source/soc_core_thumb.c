@@ -612,7 +612,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 
 	CORE_T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
 	reglist[8] = 0;
-	CORE_TRACE("%s(rSP, r{%s%s});", bit_l ? "pop" : "push", reglist, pclrs);
+	CORE_TRACE("%s(rSP, r{%s%s}); /* 0x%08x */", bit_l ? "pop" : "push", reglist, pclrs, sp_v);
 
 	if(bit_r)
 	{
