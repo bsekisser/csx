@@ -18,6 +18,7 @@ typedef struct csx_cache_t {
 /* **** */
 
 #include "bitfield.h"
+#include "log.h"
 
 /* **** */
 
@@ -29,7 +30,7 @@ typedef struct csx_cache_t {
 
 #define IF_USER_MODE(_action) \
 	if(IS_USER_MODE) { \
-		_action; \
+		LOG_ACTION(_action); \
 	}
 
 #define IS_USER_MODE (0 == soc_core_in_a_privaleged_mode(core))
