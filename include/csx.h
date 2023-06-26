@@ -67,9 +67,7 @@ typedef struct csx_t {
 	uint64_t						insns;
 	csx_state_t						state;
 
-	uint32_t						cr[16 * 16 * 7];
-#define _vCR(_x)					vCR(_x)
-#define vCR(_x)						csx->cr[_x]
+	uint32_t						cp15_reg1;
 
 	csh								cs_handle;
 

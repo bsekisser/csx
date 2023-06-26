@@ -30,7 +30,6 @@ typedef uint32_t (*coprocessor_access_fn)(void* param, uint32_t* write);
 
 /* **** */
 
-#include "csx_mem.h"
 #include "csx.h"
 
 /* **** */

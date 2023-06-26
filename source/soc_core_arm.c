@@ -10,7 +10,6 @@
 #include "soc_core_arm_decode.h"
 #include "soc_core_arm_inst.h"
 
-#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_ldst.h"
 #include "soc_core_psr.h"
@@ -22,6 +21,7 @@
 
 /* **** */
 
+#include "csx_cp15_reg1.h"
 #include "csx_soc_exception.h"
 #include "csx_statistics.h"
 

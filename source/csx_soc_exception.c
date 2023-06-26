@@ -1,9 +1,9 @@
-#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_psr.h"
 #include "soc_core_reg.h"
 #include "soc_core.h"
 
+#include "csx_cp15_reg1.h"
 #include "csx_soc_exception.h"
 #include "csx.h"
 

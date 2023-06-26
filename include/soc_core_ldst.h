@@ -3,11 +3,14 @@
 /* **** */
 
 #include "soc_core_arm_decode.h"
-#include "soc_core_cp15.h"
 #include "soc_core_reg.h"
 #include "soc_core_trace.h"
 #include "soc_core_utility.h"
 #include "soc_core.h"
+
+/* **** */
+
+#include "csx_cp15_reg1.h"
 
 /* **** */
 

@@ -1,12 +1,12 @@
 #include "soc_mmu.h"
 
-#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core.h"
 #include "soc_tlb.h"
 
 /* **** */
 
+#include "csx_cp15_reg1.h"
 #include "csx_data.h"
 #include "csx_mem.h"
 #include "csx_soc_exception.h"

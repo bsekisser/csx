@@ -16,6 +16,7 @@ enum {
 };
 
 #define CPSR_C(_x) _BV(_CPSR_C_BIT_##_x)
+#define IF_CPSR_C(_x) (CPSR_C(_x) & CPSR)
 
 enum {
 	_CPSR_M_User = 0x10,

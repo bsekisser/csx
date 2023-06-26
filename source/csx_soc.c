@@ -3,7 +3,6 @@
 /* **** soc includes */
 
 #include "soc_core.h"
-#include "soc_core_cp15.h"
 
 /* **** csx includes */
 
@@ -226,7 +225,6 @@ void csx_soc_init(csx_soc_p soc)
 	/* **** */
 
 	soc_core_init(soc->core);
-	ERR(soc_core_cp15_init(csx));
 	soc_mmu_init(soc->mmu);
 	soc_tlb_init(soc->tlb);
 }

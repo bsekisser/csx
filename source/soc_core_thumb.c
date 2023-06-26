@@ -6,7 +6,6 @@
 #include "soc_core_thumb.h"
 #include "soc_core_thumb_inst.h"
 
-#include "soc_core_cp15.h"
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
 #include "soc_core_psr.h"
@@ -16,6 +15,7 @@
 
 /* **** */
 
+#include "csx_cp15_reg1.h"
 #include "csx_soc_exception.h"
 
 /* **** */
