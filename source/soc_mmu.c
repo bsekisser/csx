@@ -337,7 +337,7 @@ void soc_mmu_dump_ttbr0(soc_mmu_p mmu)
 {
 	const csx_p csx = mmu->csx;
 	
-	if(!CP15_reg1_Mbit)
+	if(!CP15_reg1_bit(m))
 		return;
 	if(~0U == mmu->ttbr[0])
 		return;
@@ -376,7 +376,7 @@ uint32_t soc_mmu_ifetch(soc_mmu_p mmu, uint32_t va, size_t size)
 	int tlb = 0;
 	soc_tlbe_p tlbe = 0;
 
-	if(CP15_reg1_Mbit) {
+	if(CP15_reg1_bit(m)) {
 		src = soc_tlb_ifetch(mmu->tlb, va, &tlbe);
 
 		if(src)
@@ -434,7 +434,7 @@ uint32_t soc_mmu_read(soc_mmu_p mmu, uint32_t va, size_t size)
 	int tlb = 0;
 	soc_tlbe_p tlbe = 0;
 
-	if(CP15_reg1_Mbit) {
+	if(CP15_reg1_bit(m)) {
 		src = soc_tlb_read(mmu->tlb, va, &tlbe);
 
 		if(src)
@@ -464,9 +464,9 @@ int soc_mmu_vpa_to_ppa(soc_mmu_p mmu, uint32_t va, uint32_t* p2ppa)
 	const csx_p csx = mmu->csx;
 
 	const unsigned invalid_ttbr0 = (~0U == mmu->ttbr[0]);
-	if(!CP15_reg1_Mbit || invalid_ttbr0) {
+	if(!CP15_reg1_bit(m) || invalid_ttbr0) {
 		*p2ppa = va;
-		return(CP15_reg1_Mbit && invalid_ttbr0);
+		return(CP15_reg1_bit(m) && invalid_ttbr0);
 	}
 
 	soc_mmu_ptd_t l1ptd;
@@ -488,7 +488,7 @@ void soc_mmu_write(soc_mmu_p mmu, uint32_t va, size_t size, uint32_t data)
 	int tlb = 0;
 	soc_tlbe_p tlbe = 0;
 
-	if(CP15_reg1_Mbit) {
+	if(CP15_reg1_bit(m)) {
 		dst = soc_tlb_write(mmu->tlb, va, &tlbe);
 
 		if(dst)

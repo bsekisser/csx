@@ -121,8 +121,8 @@ static uint32_t _soc_core_cp15_cn1_cm0_op2x0(soc_core_p core, uint32_t opcode, u
 		if(0 && BEXT(bits_set, 0))
 			soc_mmu_dump_ttbr0(soc->mmu);
 
-		if(CP15_reg1_EEbit) {
-			LOG("CP15_reg1_EEbit -- XXX");
+		if(CP15_reg1_bit(ee)) {
+			LOG("CP15_reg1_bit(ee) -- XXX");
 		}
 	} else {
 		DEBUG(LOG("READ -- Control Register"));

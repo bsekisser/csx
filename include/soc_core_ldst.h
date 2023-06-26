@@ -85,7 +85,7 @@ static void _arm_ldst_w(soc_core_p core, uint32_t ea)
 	if(LDST_BIT(l20)) {
 		vR(D) = soc_core_read(core, ea, sizeof(uint32_t));
 		
-		if(CP15_reg1_Ubit)
+		if(CP15_reg1_bit(u))
 			vR(D) = _ror(vR(D), ((ea & 3) << 3));
 		
 		__arm_ldst_reg_set(core);

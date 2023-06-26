@@ -460,7 +460,7 @@ static void arm_inst_ldstm(soc_core_p core)
 
 	if(CCx.e)
 	{
-		if(CP15_reg1_Ubit) {
+		if(CP15_reg1_bit(u)) {
 			if(vR(EA) & 3)
 				soc_core_exception(core, _EXCEPTION_DataAbort);
 		}
