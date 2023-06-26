@@ -314,7 +314,9 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 
 	switch(operation)
 	{
+		case THUMB_DP_OP_CMN:
 		case THUMB_DP_OP_CMP:
+		case THUMB_DP_OP_TST:
 			wb = 0;
 			__attribute__((fallthrough));
 		default:
