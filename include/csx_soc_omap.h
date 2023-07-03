@@ -86,6 +86,7 @@ enum {
 	SOC_OMAP_MPU_TIMER4_WDT =			0xfffec800U,
 	SOC_OMAP_MPU_IHR_L1 =				0xfffecb00U,
 	SOC_OMAP_TC_EMIFS =					0xfffecc00U,
+	SOC_OMAP_DMA =						0xfffed800U,
 	SOC_OMAP_MPU =						0xfffece00U,
 	SOC_OMAP_DPLL =						0xfffecf00U,
 

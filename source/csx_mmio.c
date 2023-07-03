@@ -5,6 +5,7 @@
 /* **** soc level includes */
 
 #include "soc_omap_cfg.h"
+#include "soc_omap_dma.h"
 #include "soc_omap_dpll.h"
 #include "soc_omap_gp_timer.h"
 #include "soc_omap_misc.h"
@@ -68,6 +69,7 @@ typedef struct csx_mmio_t {
 	}atreset;
 	
 	soc_omap_cfg_p cfg;
+	soc_omap_dma_p dma;
 	soc_omap_dpll_p dpll;
 	soc_omap_gp_timer_p gp_timer;
 	soc_omap_misc_p misc;
@@ -176,6 +178,7 @@ csx_mmio_p csx_mmio_alloc(csx_p csx, csx_mmio_h h2mmio)
 	/* **** */
 
 	ERR_NULL(soc_omap_cfg_alloc(csx, mmio, &mmio->cfg));
+	ERR_NULL(soc_omap_dma_alloc(csx, mmio, &mmio->dma));
 	ERR_NULL(soc_omap_dpll_alloc(csx, mmio, &mmio->dpll));
 	ERR_NULL(soc_omap_gp_timer_alloc(csx, mmio, &mmio->gp_timer));
 	ERR_NULL(soc_omap_misc_alloc(csx, mmio, &mmio->misc));
@@ -258,6 +261,7 @@ void csx_mmio_init(csx_mmio_p mmio)
 	/* **** */
 
 	soc_omap_cfg_init(mmio->cfg);
+	soc_omap_dma_init(mmio->dma);
 	soc_omap_dpll_init(mmio->dpll);
 	soc_omap_gp_timer_init(mmio->gp_timer);
 	soc_omap_misc_init(mmio->misc);
