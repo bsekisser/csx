@@ -11,7 +11,7 @@
 #include "bitfield.h"
 #include "callback_qlist.h"
 #include "handle.h"
-#include "mem_access.h"
+#include "mem_access_le.h"
 
 /* **** */
 
@@ -76,7 +76,7 @@ enum {
 #define _DMA_LCH_CTRL(_n) _DMA_cn(_LCH_CTRL, _n)
 
 static inline unsigned dma_ch_mem_access(soc_omap_dma_p dma, unsigned pat, size_t size, unsigned* write) {
-	return(mem_access_endian(&dma->ch[pat & 0xff], size, write));
+	return(mem_access_le(&dma->ch[pat & 0xff], size, write));
 }
 
 static inline unsigned dma_ch_mem_read(soc_omap_dma_p dma, unsigned pat, size_t size, unsigned* write) {
