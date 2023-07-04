@@ -1,4 +1,5 @@
 CFLAGS = -g -Wall -Wextra
+CFLAGS += -Wtype-limits
 CFLAGS += -O2
 CFLAGS += -march=native
 CFLAGS += $(INCLUDE)
