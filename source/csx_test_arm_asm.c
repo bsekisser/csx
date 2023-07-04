@@ -88,6 +88,8 @@ static void _arm_cmps_rd_rn_rm(return_p p2rt, uint32_t rn, uint32_t rm) {
 			: /* output(s) */
 			: [rn] "r" (rn), [rm] "r" (rm)
 			: "cc");
+
+		UNUSED(p2rt);
 	#else
 		p2rt->result = rn - rm;
 	#endif
