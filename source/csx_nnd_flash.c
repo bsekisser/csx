@@ -126,7 +126,7 @@ static csx_nnd_unit_p _csx_nnd_flash_unit(csx_nnd_p nnd, uint32_t addr, unsigned
 
 		if(0) {
 			_LOG_("nnd = 0x%08" PRIxPTR, (uintptr_t)nnd);
-			_LOG_(", unit = 0x%08x" PRIxPTR, (uintptr_t)unit);
+			_LOG_(", unit = 0x%08" PRIxPTR, (uintptr_t)unit);
 			_LOG_(", ");
 		}
 
