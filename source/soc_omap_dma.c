@@ -11,7 +11,7 @@
 #include "bitfield.h"
 #include "callback_qlist.h"
 #include "handle.h"
-#include "mem_access_le.h"
+#include "mem_access.h"
 
 /* **** */
 
@@ -100,8 +100,9 @@ enum {
 
 /* **** */
 
-static inline uint32_t dma_16le32le_access(void* p, size_t size, uint32_t* write) {
-	return(mem_access_le(p, size, write));
+static inline uint32_t dma_32x_access(void* p, size_t size, uint32_t* write) {
+	// !!! TODO !!!
+	return(mem_access(p, size, write));
 }
 
 #define DMA_CCR(_x, _n) _DMA_CHrn(_CCR##_x, _n)
@@ -170,7 +171,7 @@ uint32_t _soc_omap_dma_ccr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, ccr);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register\n\t");
@@ -197,7 +198,7 @@ uint32_t _soc_omap_dma_ccr2(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, ccr2);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register 2\n\t");
@@ -218,7 +219,7 @@ uint32_t _soc_omap_dma_cdac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cdac);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Destination Address Counter Register: 0x%08x", data);
@@ -235,7 +236,7 @@ uint32_t _soc_omap_dma_cdei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cdei);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Destination Element Index Register: 0x%08x", data);
@@ -252,7 +253,7 @@ uint32_t _soc_omap_dma_cdfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cdfi);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Destination Frame Index Register: 0x%08x", data);
@@ -269,7 +270,7 @@ uint32_t _soc_omap_dma_cdsa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, cdsa);
 
-	const uint32_t data = dma_16le32le_access(var, size, write);
+	const uint32_t data = dma_32x_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Destination Start Address: 0x%08x", *var);
@@ -286,7 +287,7 @@ uint32_t _soc_omap_dma_cen(void* param, uint32_t ppa, size_t size, uint32_t* wri
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cen);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Element Number Register: 0x%08x", data);
@@ -303,7 +304,7 @@ uint32_t _soc_omap_dma_cfn(void* param, uint32_t ppa, size_t size, uint32_t* wri
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cfn);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Frame Number Register: 0x%08x", data);
@@ -320,7 +321,7 @@ uint32_t _soc_omap_dma_cicr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, cicr);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Interrupt Control Register\n\t");
@@ -344,7 +345,7 @@ uint32_t _soc_omap_dma_clnk_ctrl(void* param, uint32_t ppa, size_t size, uint32_
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, clnk_ctrl);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Link Control Register\n\t");
@@ -366,7 +367,7 @@ uint32_t _soc_omap_dma_color(void* param, uint32_t ppa, size_t size, uint32_t* w
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, color);
 
-	const uint32_t data = dma_16le32le_access(var, size, write);
+	const uint32_t data = dma_32x_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Color Parameter Register: 0x%08x", *var);
@@ -383,7 +384,7 @@ uint32_t _soc_omap_dma_csac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, csac);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Source Channel Element Index Register: 0x%08x", data);
@@ -400,7 +401,7 @@ uint32_t _soc_omap_dma_csdp(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, csdp);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Destination Parameters Register\n\t");
@@ -424,7 +425,7 @@ uint32_t _soc_omap_dma_csei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, csei);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Element Index Register: 0x%08x", data);
@@ -441,7 +442,7 @@ uint32_t _soc_omap_dma_csfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, csfi);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Frame Index Register: 0x%08x", data);
@@ -458,7 +459,7 @@ uint32_t _soc_omap_dma_csr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, csr);
 
-	const uint32_t data = mem_access_le(var, size, 0);
+	const uint32_t data = mem_access(var, size, 0);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: [RO] Channel Satus Register\n\t");
@@ -475,7 +476,7 @@ uint32_t _soc_omap_dma_cssa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, cssa);
 
-	const uint32_t data = dma_16le32le_access(var, size, write);
+	const uint32_t data = dma_32x_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Source Start Address: 0x%08x", *var);
@@ -491,7 +492,7 @@ uint32_t _soc_omap_dma_gcr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 
 	const soc_omap_dma_p dma = param;
 
-	const uint32_t data = mem_access_le(&dma->gcr.gcr, size, write);
+	const uint32_t data = mem_access(&dma->gcr.gcr, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Control Register\n\t");
@@ -513,7 +514,7 @@ uint32_t _soc_omap_dma_gscr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 
 	const soc_omap_dma_p dma = param;
 
-	const uint32_t data = mem_access_le(&dma->gcr.gscr, size, write);
+	const uint32_t data = mem_access(&dma->gcr.gscr, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Software Compatible Register\n\t");
@@ -534,7 +535,7 @@ uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 	const soc_omap_dma_p dma = param;
 	void* var = PPA2p2CHr(ppa, lch_ctrl);
 
-	const uint32_t data = mem_access_le(var, size, write);
+	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Logican Channel Control Register\n\t");
