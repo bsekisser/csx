@@ -15,15 +15,56 @@
 
 /* **** */
 
+#define SOC_OMAP_DMA_CH_COUNT 16
+
+typedef struct soc_omap_dma_ch_t* soc_omap_dma_ch_p;
+typedef struct soc_omap_dma_ch_t {
+		unsigned ccr;
+		unsigned ccr2;
+		unsigned cdac;
+		unsigned cdei;
+		unsigned cdfi;
+		unsigned cdsa;
+		unsigned cen;
+		unsigned cfn;
+		unsigned cicr;
+		unsigned clnk_ctrl;
+		unsigned color;
+		unsigned csac;
+		unsigned csdp;
+		unsigned csei;
+		unsigned csfi;
+		unsigned csr;
+		unsigned cssa;
+		unsigned lch_ctrl;
+}soc_omap_dma_ch_t;
+
 typedef struct soc_omap_dma_t {
+	soc_omap_dma_ch_t ch[SOC_OMAP_DMA_CH_COUNT];
+
+	struct {
+		unsigned gcr;
+		unsigned gscr;
+	}gcr;
+
 	csx_p csx;
 	csx_mmio_p mmio;
-
-	uint8_t ch[0xdd00 - 0xd800];
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
 }soc_omap_dma_t;
+
+/* **** */
+
+enum {
+	_GCR = 0x00,
+	_GSCR = 0x04,
+};
+
+#define _DMA_GCRx(_x) (SOC_OMAP_DMA_GLOBAL + (_x))
+
+#define DMA_GCR _DMA_GCRx(_GCR)
+#define DMA_GSCR _DMA_GCRx(_GSCR)
 
 /* **** */
 
@@ -51,74 +92,35 @@ enum {
 	_LCH_CTRL = 0x2a,
 };
 
-#define _DMA_cn(_c, _n) (_c + ((_n) * 0x40))
-#define _SOC_OMAP_DMA_cn(_c, _n) (SOC_OMAP_DMA + _DMA_cn(_c, _n))
+#define _DMA_CHrn(_r, _n) (SOC_OMAP_DMA_CH + REG_CHrn(_r, _n))
+#define PPA2CHr(_ppa) ((_ppa) & 0x3f)
+#define PPA2CHn(_ppa) (((_ppa) >> 6) & 0x0f)
+#define PPA2p2CHr(_ppa, _r) (&(&dma->ch[PPA2CHn(ppa)])->_r)
+#define REG_CHrn(_r, _n) (_r + ((_n) * 0x40))
 
-#define _DMA_CCR(_x, _n) _DMA_cn(_CCR##_x, _n)
-#define _DMA_CDAC(_n) _DMA_cn(_CDAC, _n)
-#define _DMA_CDEI(_n) _DMA_cn(_CDEI, _n)
-#define _DMA_CDFI(_n) _DMA_cn(_CDFI, _n)
-#define _DMA_CDSA(_n) _DMA_cn(_CDSA_L, _n)
-#define _DMA_CDSA_PPA2CH(_ppa) _DMA_CDSA((((_ppa) - _DMA_CDSA(0)) / 0x40))
-#define _DMA_CEN(_n) _DMA_cn(_CEN, _n)
-#define _DMA_CFN(_n) _DMA_cn(_CFN, _n)
-#define _DMA_CICR(_n) _DMA_cn(_CICR, _n)
-#define _DMA_CLNK_CTRL(_n) _DMA_cn(_CLNK_CTRL, _n)
-#define _DMA_COLOR(_n) _DMA_cn(_COLOR_L, _n)
-#define _DMA_COLOR_PPA2CH(_ppa) _DMA_COLOR((((_ppa) - _DMA_COLOR(0)) / 0x40))
-#define _DMA_CSAC(_n) _DMA_cn(_CSAC, _n)
-#define _DMA_CSDP(_n) _DMA_cn(_CSDP, _n)
-#define _DMA_CSEI(_n) _DMA_cn(_CSEI, _n)
-#define _DMA_CSFI(_n) _DMA_cn(_CSFI, _n)
-#define _DMA_CSR(_n) _DMA_cn(_CSR, _n)
-#define _DMA_CSSA(_n) _DMA_cn(_CSSA_L, _n)
-#define _DMA_CSSA_PPA2CH(_ppa) _DMA_CSSA((((_ppa) - _DMA_CSSA(0)) / 0x40))
-#define _DMA_LCH_CTRL(_n) _DMA_cn(_LCH_CTRL, _n)
+/* **** */
 
-static inline unsigned dma_ch_mem_access(soc_omap_dma_p dma, unsigned pat, size_t size, unsigned* write) {
-	return(mem_access_le(&dma->ch[pat & 0xff], size, write));
+static inline uint32_t dma_16le32le_access(void* p, size_t size, uint32_t* write) {
+	return(mem_access_le(p, size, write));
 }
 
-static inline unsigned dma_ch_mem_read(soc_omap_dma_p dma, unsigned pat, size_t size, unsigned* write) {
-	return(write ? *write : dma_ch_mem_access(dma, pat, size, 0));
-}
-
-static inline unsigned dma_ch16_mem_access(soc_omap_dma_p dma, unsigned pat, unsigned* write) {
-	return(dma_ch_mem_access(dma, pat, sizeof(uint16_t), write));
-}
-
-static inline void dma_ch16_mask_and_set(soc_omap_dma_p dma, unsigned pat, uint32_t mask, uint32_t set) {
-	unsigned data = dma_ch16_mem_access(dma, pat, 0) & mask;
-	data |= (set & ~mask);
-
-	dma_ch16_mem_access(dma, pat, &data);
-}
-
-static inline void dma_ch16_write(soc_omap_dma_p dma, unsigned pat, uint32_t data) {
-	dma_ch16_mem_access(dma, pat, &data);
-}
-
-static inline unsigned dma_ch32_mem_access(soc_omap_dma_p dma, unsigned pat, unsigned* write) {
-	return(dma_ch_mem_access(dma, pat, sizeof(uint32_t), write));
-}
-
-#define DMA_CCR(_x, _n) _SOC_OMAP_DMA_cn(_CCR##_x, _n)
-#define DMA_CDAC(_n) _SOC_OMAP_DMA_cn(_CDAC, _n)
-#define DMA_CDEI(_n) _SOC_OMAP_DMA_cn(_CDEI, _n)
-#define DMA_CDFI(_n) _SOC_OMAP_DMA_cn(_CDFI, _n)
-#define DMA_CDSA(_x, _n) _SOC_OMAP_DMA_cn(_CDSA_##_x, _n)
-#define DMA_CEN(_n) _SOC_OMAP_DMA_cn(_CEN, _n)
-#define DMA_CFN(_n) _SOC_OMAP_DMA_cn(_CFN, _n)
-#define DMA_CLNK_CTRL(_n) _SOC_OMAP_DMA_cn(_CLNK_CTRL, _n)
-#define DMA_CICR(_n) _SOC_OMAP_DMA_cn(_CICR, _n)
-#define DMA_COLOR(_x, _n) _SOC_OMAP_DMA_cn(_COLOR_##_x, _n)
-#define DMA_CSAC(_n) _SOC_OMAP_DMA_cn(_CSAC, _n)
-#define DMA_CSDP(_n) _SOC_OMAP_DMA_cn(_CSDP, _n)
-#define DMA_CSEI(_n) _SOC_OMAP_DMA_cn(_CSEI, _n)
-#define DMA_CSFI(_n) _SOC_OMAP_DMA_cn(_CSFI, _n)
-#define DMA_CSR(_n) _SOC_OMAP_DMA_cn(_CSR, _n)
-#define DMA_CSSA(_x, _n) _SOC_OMAP_DMA_cn(_CSSA_##_x, _n)
-#define DMA_LCH_CTRL(_n) _SOC_OMAP_DMA_cn(_LCH_CTRL, _n)
+#define DMA_CCR(_x, _n) _DMA_CHrn(_CCR##_x, _n)
+#define DMA_CDAC(_n) _DMA_CHrn(_CDAC, _n)
+#define DMA_CDEI(_n) _DMA_CHrn(_CDEI, _n)
+#define DMA_CDFI(_n) _DMA_CHrn(_CDFI, _n)
+#define DMA_CDSA(_x, _n) _DMA_CHrn(_CDSA_##_x, _n)
+#define DMA_CEN(_n) _DMA_CHrn(_CEN, _n)
+#define DMA_CFN(_n) _DMA_CHrn(_CFN, _n)
+#define DMA_CLNK_CTRL(_n) _DMA_CHrn(_CLNK_CTRL, _n)
+#define DMA_CICR(_n) _DMA_CHrn(_CICR, _n)
+#define DMA_COLOR(_x, _n) _DMA_CHrn(_COLOR_##_x, _n)
+#define DMA_CSAC(_n) _DMA_CHrn(_CSAC, _n)
+#define DMA_CSDP(_n) _DMA_CHrn(_CSDP, _n)
+#define DMA_CSEI(_n) _DMA_CHrn(_CSEI, _n)
+#define DMA_CSFI(_n) _DMA_CHrn(_CSFI, _n)
+#define DMA_CSR(_n) _DMA_CHrn(_CSR, _n)
+#define DMA_CSSA(_x, _n) _DMA_CHrn(_CSSA_##_x, _n)
+#define DMA_LCH_CTRL(_n) _DMA_CHrn(_LCH_CTRL, _n)
 
 /* **** */
 
@@ -141,13 +143,18 @@ static int __soc_omap_dma_atreset(void* param)
 
 	const soc_omap_dma_p dma = param;
 
-	for(unsigned n = 0; n < 1; n++) {
-		dma_ch16_write(dma, _DMA_CCR(0, n), 0);
-		dma_ch16_mask_and_set(dma, _DMA_CICR(n), mlBF(15, 6), 3);
-		dma_ch16_mask_and_set(dma, _DMA_CLNK_CTRL(n), mlBF(13, 5), 0);
-		dma_ch16_write(dma, _DMA_CSDP(n), 0);
-		dma_ch16_write(dma, _DMA_CSR(n), 0);
-		dma_ch16_mask_and_set(dma, _DMA_LCH_CTRL(n), mlBF(14, 4), 0);
+	dma->gcr.gcr = (dma->gcr.gcr & ~mlBF(15, 5)) | _BV(3);
+	dma->gcr.gscr &= ~_BV(3);
+
+	for(unsigned n = 0; n < SOC_OMAP_DMA_CH_COUNT; n++) {
+		soc_omap_dma_ch_p ch = &dma->ch[n];
+
+		ch->ccr = 0;
+		ch->cicr = (ch->cicr & ~mlBF(15, 6)) | 3;
+		ch->clnk_ctrl &= ~mlBF(13, 5);
+		ch->csdp = 0;
+		ch->csr = 0;
+		ch->lch_ctrl &= ~mlBF(14, 4);
 	}
 
 	return(0);
@@ -161,8 +168,9 @@ uint32_t _soc_omap_dma_ccr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, ccr);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register\n\t");
@@ -175,7 +183,7 @@ uint32_t _soc_omap_dma_ccr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		_LOG_(", ENABLE: %01u\n\t", BEXT(data, 7));
 		_LOG_("PRIO: %01u", BEXT(data, 6));
 		_LOG_(", FS: %01u", BEXT(data, 5));
-		LOG_END("SYNC: %02u", mlBFEXT(data, 4, 0));
+		LOG_END(", SYNC: %02u", mlBFEXT(data, 4, 0));
 	}
 
 	return(data);
@@ -187,8 +195,9 @@ uint32_t _soc_omap_dma_ccr2(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, ccr2);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register 2\n\t");
@@ -207,8 +216,9 @@ uint32_t _soc_omap_dma_cdac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cdac);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Destination Address Counter Register: 0x%08x", data);
@@ -223,8 +233,9 @@ uint32_t _soc_omap_dma_cdei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cdei);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Destination Element Index Register: 0x%08x", data);
@@ -239,8 +250,9 @@ uint32_t _soc_omap_dma_cdfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cdfi);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Destination Frame Index Register: 0x%08x", data);
@@ -255,12 +267,12 @@ uint32_t _soc_omap_dma_cdsa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+	uint32_t* var = PPA2p2CHr(ppa, cdsa);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = dma_16le32le_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
-		const uint32_t cdsa = dma_ch32_mem_access(dma, _DMA_CDSA_PPA2CH(ppa), 0);
-		LOG("DMA: Channel Destination Start Address: 0x%08x", cdsa);
+		LOG("DMA: Channel Destination Start Address: 0x%08x", *var);
 	}
 
 	return(data);
@@ -272,8 +284,9 @@ uint32_t _soc_omap_dma_cen(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cen);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Element Number Register: 0x%08x", data);
@@ -288,8 +301,9 @@ uint32_t _soc_omap_dma_cfn(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cfn);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Frame Number Register: 0x%08x", data);
@@ -304,8 +318,9 @@ uint32_t _soc_omap_dma_cicr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, cicr);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Interrupt Control Register\n\t");
@@ -327,8 +342,9 @@ uint32_t _soc_omap_dma_clnk_ctrl(void* param, uint32_t ppa, size_t size, uint32_
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, clnk_ctrl);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Link Control Register\n\t");
@@ -348,12 +364,12 @@ uint32_t _soc_omap_dma_color(void* param, uint32_t ppa, size_t size, uint32_t* w
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+	uint32_t* var = PPA2p2CHr(ppa, color);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = dma_16le32le_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
-		const uint32_t cpr = dma_ch32_mem_access(dma, _DMA_COLOR_PPA2CH(ppa), 0);
-		LOG("DMA: Color Parameter Register: 0x%08x", cpr);
+		LOG("DMA: Color Parameter Register: 0x%08x", *var);
 	}
 
 	return(data);
@@ -365,8 +381,9 @@ uint32_t _soc_omap_dma_csac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, csac);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Source Channel Element Index Register: 0x%08x", data);
@@ -381,8 +398,9 @@ uint32_t _soc_omap_dma_csdp(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, csdp);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Destination Parameters Register\n\t");
@@ -404,8 +422,9 @@ uint32_t _soc_omap_dma_csei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, csei);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Element Index Register: 0x%08x", data);
@@ -420,8 +439,9 @@ uint32_t _soc_omap_dma_csfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, csfi);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Frame Index Register: 0x%08x", data);
@@ -436,8 +456,9 @@ uint32_t _soc_omap_dma_csr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, csr);
 
-	const uint32_t data = dma_ch_mem_read(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, 0);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: [RO] Channel Satus Register\n\t");
@@ -452,15 +473,57 @@ uint32_t _soc_omap_dma_cssa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+	uint32_t* var = PPA2p2CHr(ppa, cssa);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = dma_16le32le_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
-		const uint32_t cssa = dma_ch32_mem_access(dma, _DMA_CSSA_PPA2CH(ppa), 0);
-		LOG("DMA: Channel Source Start Address: 0x%08x", cssa);
+		LOG("DMA: Channel Source Start Address: 0x%08x", *var);
 	}
 
 	return(data);
+}
+
+uint32_t _soc_omap_dma_gcr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+
+	const uint32_t data = mem_access_le(&dma->gcr.gcr, size, write);
+
+	if(write && _trace_mmio_dma) {
+		LOG_START("DMA: Global Control Register\n\t");
+		_LOG_("RESERVED[15, 5]: 0x%04x", mlBFEXT(data, 15, 5));
+		_LOG_(", ROUND_ROBIN_DISABLE: %01u", BEXT(data, 4));
+		_LOG_(", CLK_AUTOGATING_ON: %01u\n\t", BEXT(data, 3));
+		_LOG_("FREE: %01u", BEXT(data, 2));
+		LOG_END(", RESERVED[1:0]: %01u", mlBFEXT(data, 1, 0));
+	}
+
+	return(data);
+	UNUSED(ppa);
+}
+
+uint32_t _soc_omap_dma_gscr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+
+	const uint32_t data = mem_access_le(&dma->gcr.gscr, size, write);
+
+	if(write && _trace_mmio_dma) {
+		LOG_START("DMA: Global Software Compatible Register\n\t");
+		_LOG_("RESERVED[15, 4]: 0x%04x", mlBFEXT(data, 15, 4));
+		_LOG_(", OMAP3_1_MAPPING_DISABLE: %01u", BEXT(data, 3));
+		LOG_END(", RESERVED[2:0]: %01u", mlBFEXT(data, 2, 0));
+	}
+
+	return(data);
+	UNUSED(ppa);
 }
 
 uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
@@ -469,8 +532,9 @@ uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+	void* var = PPA2p2CHr(ppa, lch_ctrl);
 
-	const uint32_t data = dma_ch_mem_access(dma, ppa, size, write);
+	const uint32_t data = mem_access_le(var, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Logican Channel Control Register\n\t");
@@ -527,7 +591,10 @@ void soc_omap_dma_init(soc_omap_dma_p dma)
 
 	csx_mmio_p mmio = dma->mmio;
 
-	for(unsigned n = 0; n < 16; n++) {
+	csx_mmio_register_access(mmio, DMA_GCR, _soc_omap_dma_gcr, dma);
+	csx_mmio_register_access(mmio, DMA_GSCR, _soc_omap_dma_gscr, dma);
+
+	for(unsigned n = 0; n < SOC_OMAP_DMA_CH_COUNT; n++) {
 		csx_mmio_register_access(mmio, DMA_CDAC(n), _soc_omap_dma_cdac, dma);
 		csx_mmio_register_access(mmio, DMA_CDEI(n), _soc_omap_dma_cdei, dma);
 		csx_mmio_register_access(mmio, DMA_CDFI(n), _soc_omap_dma_cdfi, dma);

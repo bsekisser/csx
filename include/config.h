@@ -44,10 +44,13 @@
 
 #define IF_TRACE_MMIO(_x) (_trace_mmio ? (_x) : 0)
 #define _trace_mmio_cfg IF_TRACE_MMIO(1)
+//#define _trace_mmio_dma IF_TRACE_MMIO(1)
 #define _trace_mmio_dma 1
 #define _trace_mmio_dpll IF_TRACE_MMIO(1)
 //#define _trace_mmio_gp_timer IF_TRACE_MMIO(1)
 #define _trace_mmio_gp_timer 1
+//#define _trace_mmio_lcd IF_TRACE_MMIO(1)
+#define _trace_mmio_lcd 1
 //#define _trace_mmio_misc IF_TRACE_MMIO(1)
 #define _trace_mmio_misc 1
 #define _trace_mmio_mpu IF_TRACE_MMIO(1)

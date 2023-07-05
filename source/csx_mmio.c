@@ -8,6 +8,7 @@
 #include "soc_omap_dma.h"
 #include "soc_omap_dpll.h"
 #include "soc_omap_gp_timer.h"
+#include "soc_omap_lcd.h"
 #include "soc_omap_misc.h"
 #include "soc_omap_mpu.h"
 #include "soc_omap_mpu_gpio.h"
@@ -72,6 +73,7 @@ typedef struct csx_mmio_t {
 	soc_omap_dma_p dma;
 	soc_omap_dpll_p dpll;
 	soc_omap_gp_timer_p gp_timer;
+	soc_omap_lcd_p lcd;
 	soc_omap_misc_p misc;
 	soc_omap_mpu_p mpu;
 	soc_omap_mpu_gpio_p mpu_gpio;
@@ -181,6 +183,7 @@ csx_mmio_p csx_mmio_alloc(csx_p csx, csx_mmio_h h2mmio)
 	ERR_NULL(soc_omap_dma_alloc(csx, mmio, &mmio->dma));
 	ERR_NULL(soc_omap_dpll_alloc(csx, mmio, &mmio->dpll));
 	ERR_NULL(soc_omap_gp_timer_alloc(csx, mmio, &mmio->gp_timer));
+	ERR_NULL(soc_omap_lcd_alloc(csx, mmio, &mmio->lcd));
 	ERR_NULL(soc_omap_misc_alloc(csx, mmio, &mmio->misc));
 	ERR_NULL(soc_omap_mpu_alloc(csx, mmio, &mmio->mpu));
 	ERR_NULL(soc_omap_mpu_gpio_alloc(csx, mmio, &mmio->mpu_gpio));
@@ -264,6 +267,7 @@ void csx_mmio_init(csx_mmio_p mmio)
 	soc_omap_dma_init(mmio->dma);
 	soc_omap_dpll_init(mmio->dpll);
 	soc_omap_gp_timer_init(mmio->gp_timer);
+	soc_omap_lcd_init(mmio->lcd);
 	soc_omap_misc_init(mmio->misc);
 	soc_omap_mpu_init(mmio->mpu);
 	soc_omap_mpu_gpio_init(mmio->mpu_gpio);
