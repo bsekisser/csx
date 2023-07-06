@@ -79,6 +79,7 @@ enum {
 	SOC_OMAP_MPU_IHR_L2 =				0xfffe0000U,
 	SOC_OMAP_CFG0 =						0xfffe1000U,
 	SOC_OMAP_CFG1 =						0xfffe1100U,
+	SOC_OMAP_DMA_LCD =					0xfffee300U, // ??? -- documentation conflict
 	SOC_OMAP_WATCHDOG =					0xfffeb000U,
 	SOC_OMAP_LCD =						0xfffec000U,
 	SOC_OMAP_MPU_TIMER1 =				0xfffec500U,

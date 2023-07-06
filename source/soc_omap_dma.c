@@ -39,8 +39,16 @@ typedef struct soc_omap_dma_ch_t {
 		unsigned lch_ctrl;
 }soc_omap_dma_ch_t;
 
+typedef struct soc_omap_dma_lcd_t* soc_omap_dma_lcd_p;
+typedef struct soc_omap_dma_lcd_t {
+	unsigned csdp;
+	unsigned ctrl;
+	unsigned top_b[2];
+}soc_omap_dma_lcd_t;
+
 typedef struct soc_omap_dma_t {
 	soc_omap_dma_ch_t ch[SOC_OMAP_DMA_CH_COUNT];
+	soc_omap_dma_lcd_t lcd;
 
 	struct {
 		unsigned gcr;
@@ -100,11 +108,6 @@ enum {
 
 /* **** */
 
-static inline uint32_t dma_32x_access(void* p, size_t size, uint32_t* write) {
-	// !!! TODO !!!
-	return(mem_access(p, size, write));
-}
-
 #define DMA_CCR(_x, _n) _DMA_CHrn(_CCR##_x, _n)
 #define DMA_CDAC(_n) _DMA_CHrn(_CDAC, _n)
 #define DMA_CDEI(_n) _DMA_CHrn(_CDEI, _n)
@@ -122,6 +125,21 @@ static inline uint32_t dma_32x_access(void* p, size_t size, uint32_t* write) {
 #define DMA_CSR(_n) _DMA_CHrn(_CSR, _n)
 #define DMA_CSSA(_x, _n) _DMA_CHrn(_CSSA_##_x, _n)
 #define DMA_LCH_CTRL(_n) _DMA_CHrn(_LCH_CTRL, _n)
+
+/* **** */
+
+enum {
+	_DMA_LCD_CSDP = 0xc0,
+	_DMA_LCD_CTRL = 0xc4,
+	_DMA_LCD_TOP_B1_L = 0xc8,
+	_DMA_LCD_TOP_B1_U = 0xca,
+	
+};
+
+#define _DMA_LCD_(_x) _DMA_LCD_##_x
+#define _DMA_LCDx(_x) (SOC_OMAP_DMA_LCD + _DMA_LCD_(_x))
+
+#define DMA_LCD(_x) _DMA_LCDx(_x)
 
 /* **** */
 
@@ -157,6 +175,11 @@ static int __soc_omap_dma_atreset(void* param)
 		ch->csr = 0;
 		ch->lch_ctrl &= ~mlBF(14, 4);
 	}
+
+	const soc_omap_dma_lcd_p lcd = &dma->lcd;
+
+	lcd->csdp = 0;
+	lcd->ctrl = 0;
 
 	return(0);
 }
@@ -270,7 +293,7 @@ uint32_t _soc_omap_dma_cdsa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, cdsa);
 
-	const uint32_t data = dma_32x_access(var, size, write);
+	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Destination Start Address: 0x%08x", *var);
@@ -367,7 +390,7 @@ uint32_t _soc_omap_dma_color(void* param, uint32_t ppa, size_t size, uint32_t* w
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, color);
 
-	const uint32_t data = dma_32x_access(var, size, write);
+	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Color Parameter Register: 0x%08x", *var);
@@ -476,7 +499,7 @@ uint32_t _soc_omap_dma_cssa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_dma_p dma = param;
 	uint32_t* var = PPA2p2CHr(ppa, cssa);
 
-	const uint32_t data = dma_32x_access(var, size, write);
+	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Source Start Address: 0x%08x", *var);
@@ -527,6 +550,92 @@ uint32_t _soc_omap_dma_gscr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	UNUSED(ppa);
 }
 
+uint32_t _soc_omap_dma_lcd_csdp(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	void* var = &dma->lcd.csdp;
+
+	const uint32_t data = mem_access(var, size, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG_START("DMA: LCD Channel Source Destination Parameters Register\n\t");
+		_LOG_("BURST_EN_B2: %01u", mlBFEXT(data, 15, 14));
+		_LOG_(", PACK_EN_B2: %01u", BEXT(data, 13));
+		_LOG_(", DATA_TYPE_B2: %01u", mlBFEXT(data, 12, 11));
+		_LOG_(", RESERVED[10, 9]: 0x%04x\n\t", mlBFEXT(data, 10, 9));
+		_LOG_("BURST_EN_B1: %01u", mlBFEXT(data, 8, 7));
+		_LOG_(", PACK_EN_B1: %01u", BEXT(data, 6));
+		_LOG_(", RESERVED[10, 9]: 0x%04x", mlBFEXT(data, 5, 2));
+		LOG_END(", DATA_TYPE_B1: %01u", mlBFEXT(data, 1, 0));
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	void* var = &dma->lcd.ctrl;
+
+	const uint32_t data = mem_access(var, size, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG_START("DMA: LCD Control Register\n\t");
+		_LOG_("RESERVED[15:9]: 0x%02x", mlBFEXT(data, 15, 9));
+		_LOG_(", LDP: %01u", BEXT(data, 8));
+		_LOG_(", LSP: %01u", mlBFEXT(data, 7, 6));
+		_LOG_(", BUSS_ERROR_IT_COND: %01u", BEXT(data, 5));
+		_LOG_(", BUSS_2_IT_COND: %01u\n\t", BEXT(data, 4));
+		_LOG_("BUSS_1_IT_COND: %01u", BEXT(data, 3));
+		_LOG_(", BUSS_ERROR_IT_IE: %01u", BEXT(data, 2));
+		_LOG_(", BLOCK_IT_IE: %01u", BEXT(data, 1));
+		LOG_END(", BLOCK_MODE: %01u", BEXT(data, 0));
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_top_b1(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	void* var = &dma->lcd.top_b[0];
+
+	const uint32_t data = mem_32x_access(var, (ppa & 3), size, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG_START("DMA: LCD Control Register\n\t");
+		_LOG_("RESERVED[15:9]: 0x%02x", mlBFEXT(data, 15, 9));
+		_LOG_(", LDP: %01u", BEXT(data, 8));
+		_LOG_(", LSP: %01u", mlBFEXT(data, 7, 6));
+		_LOG_(", BUSS_ERROR_IT_COND: %01u", BEXT(data, 5));
+		_LOG_(", BUSS_2_IT_COND: %01u\n\t", BEXT(data, 4));
+		_LOG_("BUSS_1_IT_COND: %01u", BEXT(data, 3));
+		_LOG_(", BUSS_ERROR_IT_IE: %01u", BEXT(data, 2));
+		_LOG_(", BLOCK_IT_IE: %01u", BEXT(data, 1));
+		LOG_END(", BLOCK_MODE: %01u", BEXT(data, 0));
+	}
+
+	return(data);
+}
+
 uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	if(_check_pedantic_mmio_size)
@@ -538,7 +647,7 @@ uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 	const uint32_t data = mem_access(var, size, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG_START("DMA: Logican Channel Control Register\n\t");
+		LOG_START("DMA: Logical Channel Control Register\n\t");
 		_LOG_("LID: %01u", BEXT(data, 15));
 		_LOG_(", RESERVED[14, 4]: 0x%04x", mlBFEXT(data, 14, 4));
 		LOG_END(", LT[4:0]: %01u", mlBFEXT(data, 4, 0));
@@ -592,9 +701,11 @@ void soc_omap_dma_init(soc_omap_dma_p dma)
 
 	csx_mmio_p mmio = dma->mmio;
 
+/* global dma control */
 	csx_mmio_register_access(mmio, DMA_GCR, _soc_omap_dma_gcr, dma);
 	csx_mmio_register_access(mmio, DMA_GSCR, _soc_omap_dma_gscr, dma);
 
+/* dma channel */
 	for(unsigned n = 0; n < SOC_OMAP_DMA_CH_COUNT; n++) {
 		csx_mmio_register_access(mmio, DMA_CDAC(n), _soc_omap_dma_cdac, dma);
 		csx_mmio_register_access(mmio, DMA_CDEI(n), _soc_omap_dma_cdei, dma);
@@ -618,4 +729,8 @@ void soc_omap_dma_init(soc_omap_dma_p dma)
 		csx_mmio_register_access(mmio, DMA_CSSA(U, n), _soc_omap_dma_cssa, dma);
 		csx_mmio_register_access(mmio, DMA_LCH_CTRL(n), _soc_omap_dma_lch_ctrl, dma);
 	}
+
+/* dma lcd */
+	csx_mmio_register_access(mmio, DMA_LCD(CSDP), _soc_omap_dma_lcd_csdp, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(CTRL), _soc_omap_dma_lcd_ctrl, dma);
 }
