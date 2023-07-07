@@ -52,6 +52,22 @@ static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 	return(0);
 }
 
+static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
+{
+	const csx_p csx = param;
+	const soc_core_p core = csx->soc->core;
+
+	if(write) {
+		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
+		LOG("Invalidate DCache");
+	} else {
+		DEBUG(LOG("XX READ -- Invalidate DCache"));
+	}
+
+	return(0);
+}
+
+
 static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
@@ -132,6 +148,8 @@ void csx_cache_init(csx_cache_p cache)
 
 	csx_coprocessor_register_access(cp, cp15(0, 7, 5, 0),
 		_csx_cache_cp15_0_7_5_0_access, cache);
+	csx_coprocessor_register_access(cp, cp15(0, 7, 6, 0),
+		_csx_cache_cp15_0_7_6_0_access, cache);
 	csx_coprocessor_register_access(cp, cp15(0, 7, 7, 0),
 		_csx_cache_cp15_0_7_7_0_access, cache);
 	csx_coprocessor_register_access(cp, cp15(0, 7, 10, 3),
