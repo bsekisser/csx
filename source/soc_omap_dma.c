@@ -713,7 +713,7 @@ uint32_t _soc_omap_dma_lcd_src_en_b(void* param, uint32_t ppa, size_t size, uint
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
-		LOG("DMA: LCD Soure Element Number B%01u Register -- 0x%08x\n\t",
+		LOG("DMA: LCD Source Element Number B%01u Register -- 0x%08x\n\t",
 			(1 + BEXT(ppa, 1)), *var);
 	}
 
