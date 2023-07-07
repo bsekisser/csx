@@ -103,7 +103,8 @@ enum {
 #define _DMA_CHrn(_r, _n) (SOC_OMAP_DMA_CH + REG_CHrn(_r, _n))
 #define PPA2CHr(_ppa) ((_ppa) & 0x3f)
 #define PPA2CHn(_ppa) (((_ppa) >> 6) & 0x0f)
-#define PPA2p2CHr(_ppa, _r) (&(&dma->ch[PPA2CHn(ppa)])->_r)
+#define PPA2p2CHn(_ppa) (&dma->ch[PPA2CHn(ppa)])
+//#define PPA2p2CHr(_ppa, _r) (&PPA2p2CHn(ppa)->_r)
 #define REG_CHrn(_r, _n) (_r + ((_n) * 0x40))
 
 /* **** */
@@ -192,9 +193,9 @@ uint32_t _soc_omap_dma_ccr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, ccr);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->ccr, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register\n\t");
@@ -219,9 +220,9 @@ uint32_t _soc_omap_dma_ccr2(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, ccr2);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->ccr2, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register 2\n\t");
@@ -240,9 +241,9 @@ uint32_t _soc_omap_dma_cdac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cdac);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cdac, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Channel Destination Address Counter Register: 0x%08x", data);
@@ -257,12 +258,12 @@ uint32_t _soc_omap_dma_cdei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cdei);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cdei, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG_START("DMA: Channel Destination Element Index Register: 0x%08x", data);
+		LOG("DMA: Channel Destination Element Index Register: 0x%08x", data);
 	}
 
 	return(data);
@@ -274,12 +275,12 @@ uint32_t _soc_omap_dma_cdfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cdfi);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cdfi, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG_START("DMA: Channel Destination Frame Index Register: 0x%08x", data);
+		LOG("DMA: Channel Destination Frame Index Register: 0x%08x", data);
 	}
 
 	return(data);
@@ -291,12 +292,12 @@ uint32_t _soc_omap_dma_cdsa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
-	uint32_t* var = PPA2p2CHr(ppa, cdsa);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
+	const uint32_t data = mem_32x_access(&ch->cdsa, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG("DMA: Channel Destination Start Address: 0x%08x", *var);
+		LOG("DMA: Channel Destination Start Address: 0x%08x", ch->cdsa);
 	}
 
 	return(data);
@@ -308,9 +309,9 @@ uint32_t _soc_omap_dma_cen(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cen);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cen, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Element Number Register: 0x%08x", data);
@@ -325,9 +326,9 @@ uint32_t _soc_omap_dma_cfn(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cfn);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cfn, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Frame Number Register: 0x%08x", data);
@@ -342,9 +343,9 @@ uint32_t _soc_omap_dma_cicr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, cicr);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->cicr, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Interrupt Control Register\n\t");
@@ -366,9 +367,9 @@ uint32_t _soc_omap_dma_clnk_ctrl(void* param, uint32_t ppa, size_t size, uint32_
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, clnk_ctrl);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->clnk_ctrl, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Link Control Register\n\t");
@@ -388,12 +389,12 @@ uint32_t _soc_omap_dma_color(void* param, uint32_t ppa, size_t size, uint32_t* w
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
-	uint32_t* var = PPA2p2CHr(ppa, color);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
+	const uint32_t data = mem_32x_access(&ch->color, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG("DMA: Color Parameter Register: 0x%08x", *var);
+		LOG("DMA: Color Parameter Register: 0x%08x", ch->color);
 	}
 
 	return(data);
@@ -405,9 +406,9 @@ uint32_t _soc_omap_dma_csac(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, csac);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->csac, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: Source Channel Element Index Register: 0x%08x", data);
@@ -422,9 +423,9 @@ uint32_t _soc_omap_dma_csdp(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, csdp);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->csdp, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Destination Parameters Register\n\t");
@@ -446,9 +447,9 @@ uint32_t _soc_omap_dma_csei(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, csei);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->csei, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Element Index Register: 0x%08x", data);
@@ -463,9 +464,9 @@ uint32_t _soc_omap_dma_csfi(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, csfi);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->csfi, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Frame Index Register: 0x%08x", data);
@@ -480,9 +481,9 @@ uint32_t _soc_omap_dma_csr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, csr);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, 0);
+	const uint32_t data = mem_32_access(&ch->csr, 0);
 
 	if(write && _trace_mmio_dma) {
 		LOG("DMA: [RO] Channel Satus Register\n\t");
@@ -497,12 +498,12 @@ uint32_t _soc_omap_dma_cssa(void* param, uint32_t ppa, size_t size, uint32_t* wr
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
-	uint32_t* var = PPA2p2CHr(ppa, cssa);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_32x_access(var, ppa & 3, size, write);
+	const uint32_t data = mem_32x_access(&ch->cssa, ppa & 3, size, write);
 
 	if(write && _trace_mmio_dma) {
-		LOG("DMA: Channel Source Start Address: 0x%08x", *var);
+		LOG("DMA: Channel Source Start Address: 0x%08x", ch->cssa);
 	}
 
 	return(data);
@@ -515,7 +516,7 @@ uint32_t _soc_omap_dma_gcr(void* param, uint32_t ppa, size_t size, uint32_t* wri
 
 	const soc_omap_dma_p dma = param;
 
-	const uint32_t data = mem_access(&dma->gcr.gcr, size, write);
+	const uint32_t data = mem_32_access(&dma->gcr.gcr, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Control Register\n\t");
@@ -537,7 +538,7 @@ uint32_t _soc_omap_dma_gscr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 
 	const soc_omap_dma_p dma = param;
 
-	const uint32_t data = mem_access(&dma->gcr.gscr, size, write);
+	const uint32_t data = mem_32_access(&dma->gcr.gscr, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Software Compatible Register\n\t");
@@ -556,9 +557,9 @@ uint32_t _soc_omap_dma_lcd_csdp(void* param, uint32_t ppa, size_t size, uint32_t
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = &dma->lcd.csdp;
+	soc_omap_dma_lcd_p lcd = &dma->lcd;
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&lcd->csdp, write);
 
 	if(_trace_mmio_dma_lcd)
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
@@ -584,9 +585,9 @@ uint32_t _soc_omap_dma_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = &dma->lcd.ctrl;
+	soc_omap_dma_lcd_p lcd = &dma->lcd;
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&lcd->ctrl, write);
 
 	if(_trace_mmio_dma_lcd)
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
@@ -613,7 +614,7 @@ uint32_t _soc_omap_dma_lcd_top_b1(void* param, uint32_t ppa, size_t size, uint32
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = &dma->lcd.top_b[0];
+	uint32_t* var = &dma->lcd.top_b[0];
 
 	const uint32_t data = mem_32x_access(var, (ppa & 3), size, write);
 
@@ -642,9 +643,9 @@ uint32_t _soc_omap_dma_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	void* var = PPA2p2CHr(ppa, lch_ctrl);
+	soc_omap_dma_ch_p ch = PPA2p2CHn(ppa);
 
-	const uint32_t data = mem_access(var, size, write);
+	const uint32_t data = mem_32_access(&ch->lch_ctrl, write);
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Logical Channel Control Register\n\t");

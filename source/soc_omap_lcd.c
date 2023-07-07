@@ -90,7 +90,7 @@ uint32_t _soc_omap_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.ctrl, size, write);
+	const uint32_t data = mem_32_access(&lcd->r.ctrl, write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Control Register << 0x%08x\n\t", data);
@@ -126,7 +126,7 @@ uint32_t _soc_omap_lcd_display_status(void* param, uint32_t ppa, size_t size, ui
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.display_status, size, 0);
+	const uint32_t data = mem_32_access(&lcd->r.display_status, 0);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: [RO] Display Status Register << 0x%08x\n\t", data);
@@ -146,7 +146,7 @@ uint32_t _soc_omap_lcd_lineint(void* param, uint32_t ppa, size_t size, uint32_t*
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.lineint, size, write);
+	const uint32_t data = mem_32_access(&lcd->r.lineint, write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Line Interrupt Register << 0x%08x\n\t", data);
@@ -166,7 +166,7 @@ uint32_t _soc_omap_lcd_timing0(void* param, uint32_t ppa, size_t size, uint32_t*
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.timing[0], size, write);
+	const uint32_t data = mem_32_access(&lcd->r.timing[0], write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Timing 0 Register << 0x%08x\n\t", data);
@@ -188,7 +188,7 @@ uint32_t _soc_omap_lcd_timing1(void* param, uint32_t ppa, size_t size, uint32_t*
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.timing[1], size, write);
+	const uint32_t data = mem_32_access(&lcd->r.timing[1], write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Timing 1 Register << 0x%08x\n\t", data);
@@ -210,7 +210,7 @@ uint32_t _soc_omap_lcd_timing2(void* param, uint32_t ppa, size_t size, uint32_t*
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.timing[2], size, write);
+	const uint32_t data = mem_32_access(&lcd->r.timing[2], write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Timing 2 Register << 0x%08x\n\t", data);
@@ -238,7 +238,7 @@ uint32_t _soc_omap_lcd_status(void* param, uint32_t ppa, size_t size, uint32_t* 
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.status, size, write);
+	const uint32_t data = mem_32_access(&lcd->r.status, write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Status Register << 0x%08x\n\t", data);
@@ -264,7 +264,7 @@ uint32_t _soc_omap_lcd_subpanel(void* param, uint32_t ppa, size_t size, uint32_t
 	const soc_omap_lcd_p lcd = param;
 //	const csx_p csx = lcd->csx;
 
-	const uint32_t data = mem_access(&lcd->r.subpanel, size, write);
+	const uint32_t data = mem_32_access(&lcd->r.subpanel, write);
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Subpanel Register << 0x%08x\n\t", data);
