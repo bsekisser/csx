@@ -39,18 +39,23 @@ typedef struct soc_omap_dma_ch_t {
 		unsigned lch_ctrl;
 }soc_omap_dma_ch_t;
 
+typedef struct soc_omap_dma_lcd_b_t* soc_omap_dma_lcd_b_p;
+typedef struct soc_omap_dma_lcd_b_t {
+	unsigned bot;
+	int16_t src_ei;
+	unsigned src_en;
+	int src_fi;
+	unsigned src_fn;
+	unsigned top;
+}soc_omap_dma_lcd_b_t;
+
 typedef struct soc_omap_dma_lcd_t* soc_omap_dma_lcd_p;
 typedef struct soc_omap_dma_lcd_t {
+	unsigned ccr;
 	unsigned csdp;
 	unsigned ctrl;
-	struct {
-		unsigned bot;
-		int16_t src_ei;
-		unsigned src_en;
-		int src_fi;
-		unsigned src_fn;
-		unsigned top;
-	}b[2];
+	unsigned lch_ctrl;
+	soc_omap_dma_lcd_b_t b[2];
 }soc_omap_dma_lcd_t;
 
 typedef struct soc_omap_dma_t {
@@ -137,6 +142,7 @@ enum {
 
 enum {
 	_DMA_LCD_CSDP = 0xc0,
+	_DMA_LCD_CCR = 0xc2,
 	_DMA_LCD_CTRL = 0xc4,
 	_DMA_LCD_TOP_B1_L = 0xc8,
 	_DMA_LCD_TOP_B1_U = 0xca,
@@ -152,6 +158,9 @@ enum {
 	_DMA_LCD_SRC_FI_B2_L = 0xde,
 	_DMA_LCD_SRC_EN_B1 = 0xe0,
 	_DMA_LCD_SRC_EN_B2 = 0xe2,
+	_DMA_LCD_SRC_FN_B1 = 0xe4,
+	_DMA_LCD_SRC_FN_B2 = 0xe6,
+	_DMA_LCD_LCH_CTRL = 0xea,
 	_DMA_LCD_SRC_FI_B1_U = 0xf4,
 	_DMA_LCD_SRC_FI_B2_U = 0xf6,
 };
@@ -542,7 +551,7 @@ uint32_t _soc_omap_dma_ch_lch_ctrl(void* param, uint32_t ppa, size_t size, uint3
 		LOG_START("DMA: Logical Channel Control Register\n\t");
 		_LOG_("LID: %01u", BEXT(data, 15));
 		_LOG_(", RESERVED[14, 4]: 0x%04x", mlBFEXT(data, 14, 4));
-		LOG_END(", LT[4:0]: %01u", mlBFEXT(data, 4, 0));
+		LOG_END(", LT[3:0]: %01u", mlBFEXT(data, 3, 0));
 	}
 
 	return(data);
@@ -590,28 +599,189 @@ uint32_t _soc_omap_dma_gscr(void* param, uint32_t ppa, size_t size, uint32_t* wr
 	UNUSED(ppa);
 }
 
-uint32_t _soc_omap_dma_lcd_bot_b(void* param, uint32_t ppa, size_t size, uint32_t* write)
+uint32_t _soc_omap_dma_lcd_b_bot(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
 
-	uint32_t* var = &dma->lcd.b[BEXT(ppa, 4)].bot;
-
-	const uint32_t data = mem_32x_access(var, (ppa & 3), size, write);
+	const uint32_t data = mem_32x_access(&lcd_b->bot, (ppa & 3), size, write);
 
 	if(_trace_mmio_dma_lcd)
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
 
 	if(write) {
-		*var &= ~1;
+		lcd_b->bot &= ~1;
 
 		if(_trace_mmio_dma_lcd) {
 			LOG("DMA: LCD Bottom Address B%0u %c Register -- 0x%08x\n\t",
-				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), *var);
+				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), lcd_b->bot);
 		}
 	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_b_src_ei(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+/*
+	0xd8 -- 11011000
+	0xdc -- 11011100
+*/
+
+	const soc_omap_dma_p dma = param;
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 2)];
+
+	const uint32_t data = mem_16i_access(&lcd_b->src_ei, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG("DMA: LCD Source Element Index B%01u Register -- 0x%04x\n\t",
+			(1 + BEXT(ppa, 2)), lcd_b->src_ei);
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_b_src_en(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
+
+	const uint32_t data = mem_32_access(&lcd_b->src_en, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG("DMA: LCD Source Element Number B%01u Register -- 0x%08x\n\t",
+			(1 + BEXT(ppa, 1)), lcd_b->src_en);
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_b_src_fi(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+/*
+	L -- 0xda -- 11011010, 0xde -- 11011110
+	U -- 0xf4 -- 11110100, 0xf6 -- 11110110
+	X -- ---- -- 00101110, ---- -- 00101000
+
+	1 -- 0xda -- 11011010, 0xf4 -- 11110100
+	2 -- 0xde -- 11011110, 0xf6 -- 11110110
+	X -- ---- -- 00000100, ---- -- 00000010
+*/
+
+	const soc_omap_dma_p dma = param;
+
+	const unsigned bit_u = BEXT(ppa, 5);
+	const unsigned bit_b = BEXT(ppa, 2 - bit_u);
+	
+	const unsigned offset = (ppa & 1) | (bit_u << 1);
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[bit_b];
+
+	const uint32_t data = mem_32ix_access(&lcd_b->src_fi, offset, size, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG("DMA: LCD Source Frame Index B%01u %c Register -- 0x%08x\n\t",
+			(1 + bit_b), (bit_u ? 'U' : 'L'), lcd_b->src_fi);
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_b_src_fn(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
+
+	const uint32_t data = mem_32_access(&lcd_b->src_fn, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG("DMA: LCD Source Frame Number B%01u Register -- 0x%08x\n\t",
+			(1 + BEXT(ppa, 1)), lcd_b->src_fn);
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_b_top(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+
+	const soc_omap_dma_p dma = param;
+	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
+
+	const uint32_t data = mem_32x_access(&lcd_b->top, (ppa & 3), size, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write) {
+		lcd_b->top &= ~1;
+
+		if(_trace_mmio_dma_lcd) {
+			LOG("DMA: LCD Top Address B%01u %c Register -- 0x%08x\n\t",
+				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), lcd_b->top);
+		}
+	}
+
+	return(data);
+}
+
+uint32_t _soc_omap_dma_lcd_ccr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	if(_check_pedantic_mmio_size)
+		assert(sizeof(uint16_t) == size);
+
+	const soc_omap_dma_p dma = param;
+	soc_omap_dma_lcd_p lcd = &dma->lcd;
+
+	const uint32_t data = mem_32_access(&lcd->ccr, write);
+
+	if(_trace_mmio_dma_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+
+	if(write && _trace_mmio_dma_lcd) {
+		LOG_START("DMA: LCD Channel Control Register\n\t");
+		_LOG_("SRC_AMODE_B2: %01u", mlBFEXT(data, 15, 14));
+		_LOG_(", SRC_AMODE_B1: %01u", mlBFEXT(data, 13, 12));
+		_LOG_(", END_PROG: %01u", BEXT(data, 11));
+		_LOG_(", OMAP3_1_COMPATIBLE_DISABLE: %01u\n\t", BEXT(data, 10));
+		_LOG_("REPEAT: %01u", BEXT(data, 9));
+		_LOG_(", AUTOINIT: %01u", BEXT(data, 8));
+		_LOG_(", ENABLE: %01u", BEXT(data, 7));
+		_LOG_(", PRIO: %01u\n\t", BEXT(data, 6));
+		_LOG_("RESERVED[5]: %01u", BEXT(data, 5));
+		_LOG_(", BS: %01u", BEXT(data, 4));
+		LOG_END(", RESERVED[3:0]: 0x%01u", mlBFEXT(data, 3, 0));
+	}
+
+	dma->csx->soc->core->trace = 1;
 
 	return(data);
 }
@@ -673,116 +843,24 @@ uint32_t _soc_omap_dma_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint32_t
 	return(data);
 }
 
-uint32_t _soc_omap_dma_lcd_src_ei_b(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(sizeof(uint16_t) == size);
-
-/*
-	0xd8 -- 11011000
-	0xdc -- 11011100
-*/
-
-	const soc_omap_dma_p dma = param;
-	int16_t* var = &dma->lcd.b[BEXT(ppa, 2)].src_ei;
-
-	const uint32_t data = mem_16i_access(var, write);
-
-	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
-
-	if(write && _trace_mmio_dma_lcd) {
-		LOG("DMA: LCD Source Element Index B%01u Register -- 0x%04x\n\t",
-			(1 + BEXT(ppa, 2)), *var);
-	}
-
-	return(data);
-}
-
-uint32_t _soc_omap_dma_lcd_src_en_b(void* param, uint32_t ppa, size_t size, uint32_t* write)
+uint32_t _soc_omap_dma_lcd_lch_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
-	unsigned* var = &dma->lcd.b[BEXT(ppa, 1)].src_en;
 
-	const uint32_t data = mem_32_access(var, write);
+	const uint32_t data = mem_32_access(&dma->lcd.lch_ctrl, write);
 
-	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
-
-	if(write && _trace_mmio_dma_lcd) {
-		LOG("DMA: LCD Source Element Number B%01u Register -- 0x%08x\n\t",
-			(1 + BEXT(ppa, 1)), *var);
+	if(write && _trace_mmio_dma) {
+		LOG_START("DMA: Logical Channel Control Register\n\t");
+		_LOG_("RESERVED[15, 4]: 0x%04x", mlBFEXT(data, 15, 4));
+		LOG_END(", LCH_TYPE[3:0]: %01u", mlBFEXT(data, 3, 0));
 	}
 
 	return(data);
+	UNUSED(ppa);
 }
-
-uint32_t _soc_omap_dma_lcd_src_fi_b(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(sizeof(uint16_t) == size);
-
-/*
-	L -- 0xda -- 11011010, 0xde -- 11011110
-	U -- 0xf4 -- 11110100, 0xf6 -- 11110110
-	X -- ---- -- 00101110, ---- -- 00101000
-
-	1 -- 0xda -- 11011010, 0xf4 -- 11110100
-	2 -- 0xde -- 11011110, 0xf6 -- 11110110
-	X -- ---- -- 00000100, ---- -- 00000010
-*/
-
-	const soc_omap_dma_p dma = param;
-
-	const unsigned bit_u = BEXT(ppa, 5);
-	const unsigned bit_b = BEXT(ppa, 2 - bit_u);
-	
-	const unsigned offset = (ppa & 1) | (bit_u << 1);
-	int32_t* var = &dma->lcd.b[bit_b].src_fi;
-
-	const uint32_t data = mem_32ix_access(var, offset, size, write);
-
-	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
-
-	if(write && _trace_mmio_dma_lcd) {
-		LOG("DMA: LCD Source Frame Index B%01u %c Register -- 0x%08x\n\t",
-			(1 + bit_b), (bit_u ? 'U' : 'L'), *var);
-	}
-
-	return(data);
-}
-
-uint32_t _soc_omap_dma_lcd_top_b(void* param, uint32_t ppa, size_t size, uint32_t* write)
-{
-	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
-
-	const soc_omap_dma_p dma = param;
-
-	uint32_t* var = &dma->lcd.b[BEXT(ppa, 4)].top;
-
-	const uint32_t data = mem_32x_access(var, (ppa & 3), size, write);
-
-	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
-
-	if(write) {
-		*var &= ~1;
-
-		if(_trace_mmio_dma_lcd) {
-			LOG("DMA: LCD Top Address B%01u %c Register -- 0x%08x\n\t",
-				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), *var);
-		}
-	}
-
-	return(data);
-}
-
-
 
 /* **** */
 
@@ -858,22 +936,26 @@ void soc_omap_dma_init(soc_omap_dma_p dma)
 	}
 
 /* dma lcd */
-	csx_mmio_register_access(mmio, DMA_LCD(BOT_B1_L), _soc_omap_dma_lcd_bot_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(BOT_B1_U), _soc_omap_dma_lcd_bot_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(BOT_B2_L), _soc_omap_dma_lcd_bot_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(BOT_B2_U), _soc_omap_dma_lcd_bot_b, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(BOT_B1_L), _soc_omap_dma_lcd_b_bot, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(BOT_B1_U), _soc_omap_dma_lcd_b_bot, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(BOT_B2_L), _soc_omap_dma_lcd_b_bot, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(BOT_B2_U), _soc_omap_dma_lcd_b_bot, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(CCR), _soc_omap_dma_lcd_ccr, dma);
 	csx_mmio_register_access(mmio, DMA_LCD(CSDP), _soc_omap_dma_lcd_csdp, dma);
 	csx_mmio_register_access(mmio, DMA_LCD(CTRL), _soc_omap_dma_lcd_ctrl, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_EI_B1), _soc_omap_dma_lcd_src_ei_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_EI_B2), _soc_omap_dma_lcd_src_ei_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_EN_B1), _soc_omap_dma_lcd_src_en_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_EN_B2), _soc_omap_dma_lcd_src_en_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B1_L), _soc_omap_dma_lcd_src_fi_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B1_U), _soc_omap_dma_lcd_src_fi_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B2_L), _soc_omap_dma_lcd_src_fi_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B2_U), _soc_omap_dma_lcd_src_fi_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(TOP_B1_L), _soc_omap_dma_lcd_top_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(TOP_B1_U), _soc_omap_dma_lcd_top_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_L), _soc_omap_dma_lcd_top_b, dma);
-	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_U), _soc_omap_dma_lcd_top_b, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(LCH_CTRL), _soc_omap_dma_lcd_lch_ctrl, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_EI_B1), _soc_omap_dma_lcd_b_src_ei, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_EI_B2), _soc_omap_dma_lcd_b_src_ei, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_EN_B1), _soc_omap_dma_lcd_b_src_en, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_EN_B2), _soc_omap_dma_lcd_b_src_en, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B1_L), _soc_omap_dma_lcd_b_src_fi, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B1_U), _soc_omap_dma_lcd_b_src_fi, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B2_L), _soc_omap_dma_lcd_b_src_fi, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FI_B2_U), _soc_omap_dma_lcd_b_src_fi, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FN_B1), _soc_omap_dma_lcd_b_src_fn, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(SRC_FN_B2), _soc_omap_dma_lcd_b_src_fn, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(TOP_B1_L), _soc_omap_dma_lcd_b_top, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(TOP_B1_U), _soc_omap_dma_lcd_b_top, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_L), _soc_omap_dma_lcd_b_top, dma);
+	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_U), _soc_omap_dma_lcd_b_top, dma);
 }
