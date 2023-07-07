@@ -264,6 +264,20 @@ static uint32_t _soc_tlb_cp15_0_8_5_0_invalidate_instruction(void* param, uint32
 	return(data);
 }
 
+static uint32_t _soc_tlb_cp15_0_8_6_0_invalidate_data(void* param, uint32_t* write)
+{
+	const uint32_t data = write ? *write : 0;
+
+	if(write) {
+		LOG("Invalidate data TLB");
+		soc_tlb_invalidate_data(param);
+	} else {
+		DEBUG(LOG("XX READ -- Invalidate data TLB"));
+	}
+
+	return(data);
+}
+
 uint32_t _soc_tlb_cp15_0_8_7_0_invalidate_all(void* param, uint32_t* write)
 {
 	const uint32_t data = write ? *write : 0;
@@ -327,6 +341,8 @@ void soc_tlb_init(soc_tlb_p tlb)
 
 	csx_coprocessor_register_access(cp, cp15(0, 8, 5, 0),
 		_soc_tlb_cp15_0_8_5_0_invalidate_instruction, tlb);
+	csx_coprocessor_register_access(cp, cp15(0, 8, 6, 0),
+		_soc_tlb_cp15_0_8_6_0_invalidate_data, tlb);
 	csx_coprocessor_register_access(cp, cp15(0, 8, 7, 0),
 		_soc_tlb_cp15_0_8_7_0_invalidate_all, tlb);
 }
