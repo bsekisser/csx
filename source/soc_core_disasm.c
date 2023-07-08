@@ -40,7 +40,7 @@ UNUSED_FN static void __soc_core_disasm(soc_core_p core, uint32_t address, uint3
 					insn_j->op_str);
 		}
 	} else
-		printf("0x%08x:(0x%02zx): Failed to disassemble given code!\n", address, size);
+		printf("(0x%02zx)[0x%08x]:0x%08x Failed to disassemble given code!\n", size, address, opcode);
 
 	cs_close(&handle);
 
