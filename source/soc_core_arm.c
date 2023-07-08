@@ -507,8 +507,11 @@ static void arm_inst_ldstm(soc_core_p core)
 		{
 			if(0) LOG("ea = 0x%08x", vR(EA));
 
-			assert(end_address == vR(EA));
-			soc_core_reg_set(core, rR(N), sp_out);
+//			assert(end_address == vR(EA));
+			if(end_address == vR(EA))
+				soc_core_reg_set(core, rR(N), sp_out);
+			else
+				UNDEFINED;
 		}
 	}
 }
@@ -537,6 +540,35 @@ static void arm_inst_mcr_mrc(soc_core_p core)
 			CPSR |= result & SOC_CORE_PSR_NZCV;
 		} else
 			vR(D) = result;
+	}
+}
+
+static void arm_inst_mla(soc_core_p core)
+{
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+
+	vR(D) = (vR(M) * vR(S)) + vR(N);
+
+	CORE_TRACE_START();
+	_CORE_TRACE_("mla%s(", DPI_BIT(s20) ? "s" : "");
+	_CORE_TRACE_("%s", rR_NAME(D));
+	_CORE_TRACE_(", %s", rR_NAME(M));
+	_CORE_TRACE_(", %s", rR_NAME(S));
+	_CORE_TRACE_(", %s", rR_NAME(N));
+
+	_CORE_TRACE_("); /* (0x%08x * 0x%08x) + 0x%08x = 0x%08x */",
+		vR(M), vR(S), vR(N), vR(D));
+
+	CORE_TRACE_END();
+
+	if(CCx.e) {
+		soc_core_reg_set(core, rR(D), vR(D));
+		if(DPI_BIT(s20))
+			soc_core_flags_nz(core, vR(D));
 	}
 }
 
@@ -729,6 +761,76 @@ static void arm_inst_msr(soc_core_p core)
 //	soc_core_trace_psr(core, 0, new_psr);
 }
 
+static void arm_inst_smull(soc_core_p core)
+{
+	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	_setup_rR_dst(core, rRN, ARM_IR_RN);
+
+	const int64_t result = (int32_t)vR(M) * (int32_t)vR(S);
+
+	vR(D) = result & 0xffffffff;
+	vR(N) = (result >> 32) & 0xffffffff;
+
+	CORE_TRACE_START();
+	_CORE_TRACE_("smull%s(", DPI_BIT(s20) ? "s" : "");
+	_CORE_TRACE_("%s", rR_NAME(D));
+	_CORE_TRACE_(":%s", rR_NAME(N));
+	_CORE_TRACE_(", %s", rR_NAME(M));
+	_CORE_TRACE_(", %s", rR_NAME(S));
+	
+	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
+		vR(M), vR(S), result);
+
+	CORE_TRACE_END();
+
+	if(CCx.e) {
+		soc_core_reg_set(core, rR(D), vR(D));
+		soc_core_reg_set(core, rR(D), vR(D));
+		if(DPI_BIT(s20)) {
+			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(D), 31));
+			BMAS(CPSR, SOC_CORE_PSR_BIT_Z, (0 == result));
+		}
+	}
+}
+
+static void arm_inst_umull(soc_core_p core)
+{
+	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
+	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	_setup_rR_dst(core, rRN, ARM_IR_RN);
+
+	const uint64_t result = (uint32_t)vR(M) * (uint32_t)vR(S);
+
+	vR(D) = result & 0xffffffff;
+	vR(N) = (result >> 32) & 0xffffffff;
+
+	CORE_TRACE_START();
+	_CORE_TRACE_("umull%s(", DPI_BIT(s20) ? "s" : "");
+	_CORE_TRACE_("%s", rR_NAME(D));
+	_CORE_TRACE_(":%s", rR_NAME(N));
+	_CORE_TRACE_(", %s", rR_NAME(M));
+	_CORE_TRACE_(", %s", rR_NAME(S));
+	
+	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
+		vR(M), vR(S), result);
+
+	CORE_TRACE_END();
+
+	if(CCx.e) {
+		soc_core_reg_set(core, rR(D), vR(D));
+		soc_core_reg_set(core, rR(D), vR(D));
+		if(DPI_BIT(s20)) {
+			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(D), 31));
+			BMAS(CPSR, SOC_CORE_PSR_BIT_Z, (0 == result));
+		}
+	}
+}
+
 /* **** */
 
 static uint8_t soc_core_arm_check_cc(soc_core_p core)
@@ -743,6 +845,15 @@ static void soc_core_arm_step_group0_ldst(soc_core_p core)
 			return(arm_inst_ldst_immediate_offset_sh(core));
 		else
 			return(arm_inst_ldst_register_offset_sh(core));
+	} else {
+		switch(mlBFTST(IR, 27, 21)) {
+			case 0x00200000:
+				return(arm_inst_mla(core));
+			case 0x00800000:
+				return(arm_inst_umull(core));
+			case 0x00c00000:
+				return(arm_inst_smull(core));
+		}
 	}
 
 	UNIMPLIMENTED;
