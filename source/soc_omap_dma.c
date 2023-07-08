@@ -781,8 +781,6 @@ uint32_t _soc_omap_dma_lcd_ccr(void* param, uint32_t ppa, size_t size, uint32_t*
 		LOG_END(", RESERVED[3:0]: 0x%01u", mlBFEXT(data, 3, 0));
 	}
 
-	dma->csx->soc->core->trace = 1;
-
 	return(data);
 }
 
