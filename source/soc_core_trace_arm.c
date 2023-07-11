@@ -74,8 +74,14 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 	if(DPI_WB)
 		_CORE_TRACE_("%s", rR_NAME(D));
 
-	if((rR(N) & 0x0f) == rR(N))
-		_CORE_TRACE_("%s%s", DPI_WB ? ", " : "", rR_NAME(N));
+	switch(DPI_OPERATION) {
+		case ARM_DPI_OPERATION_MOV:
+		case ARM_DPI_OPERATION_MVN:
+			break;
+		default:
+			_CORE_TRACE_("%s%s", DPI_WB ? ", " : "", rR_NAME(N));
+			break;
+	}
 
 	if(DPI_BIT(i25))
 	{

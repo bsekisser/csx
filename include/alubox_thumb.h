@@ -5,7 +5,6 @@
 typedef void (*alubox_fn)(soc_core_p core, uint32_t* wb);
 
 #include "alubox_flags.h"
-#include "alubox.t.h"
 
 /* **** */
 
@@ -32,7 +31,7 @@ void _alubox_thumb_adds(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_adcs(soc_core_p core, uint32_t* wb)
 {
-	vR(D) = vR(N) + (vR(M) + core->alu.psr.c);
+	vR(D) = vR(N) + (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
 
 	if(wb)
 		*wb = vR(D);
@@ -59,7 +58,7 @@ void _alubox_thumb_asrs(soc_core_p core, uint32_t* wb)
 	vR(D) = _asr_vc(vR(N), vR(M), &carry_out);
 
 	if(vR(M))
-		core->alu.psr.c = !!carry_out;
+		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
 	if(wb)
 		*wb = vR(D);
@@ -97,7 +96,7 @@ void _alubox_thumb_lsls(soc_core_p core, uint32_t* wb)
 	vR(D) = _lsl_vc(vR(N), vR(M), &carry_out);
 
 	if(vR(M))
-		core->alu.psr.c = !!carry_out;
+		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
 	if(wb && vR(M))
 		*wb = vR(D);
@@ -113,7 +112,7 @@ void _alubox_thumb_lsrs(soc_core_p core, uint32_t* wb)
 	vR(D) = _lsr_vc(vR(N), vR(M), &carry_out);
 
 	if(vR(M))
-		core->alu.psr.c = !!carry_out;
+		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
 	if(wb)
 		*wb = vR(D);
@@ -191,12 +190,12 @@ void _alubox_thumb_rors(soc_core_p core, uint32_t* wb)
 		unsigned carry_out = 0;
 
 		vR(D) = _ror_vc(vR(N), valid_rs, &carry_out);
-		core->alu.psr.c = !!carry_out;
+		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 	} else {
 		vR(D) = vR(N);
 
 		if(vR(M))
-			core->alu.psr.c = BEXT(vR(N), 31);
+			BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(N), 31));
 	}
 
 	if(wb && valid_rs)
@@ -219,7 +218,7 @@ void _alubox_thumb_rsbs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_sbcs(soc_core_p core, uint32_t* wb)
 {
-	vR(D) = vR(N) - (vR(M) + core->alu.psr.c);
+	vR(D) = vR(N) - (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
 
 	if(wb)
 		*wb = vR(D);

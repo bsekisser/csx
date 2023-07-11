@@ -30,6 +30,7 @@ void __alubox_arm_shift_c(soc_core_p core)
 			break;
 	}
 
+//	vR(SOP_C) = carry_out;
 	BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 }
 

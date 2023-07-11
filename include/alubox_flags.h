@@ -25,7 +25,7 @@ void __alubox__flags_nz(soc_core_p core)
 	if(0) LOG("N: %01u, Z: %01u", nf, zf);
 }
 
-__ALUBOX_STATIC__
+UNUSED_FN __ALUBOX_STATIC__
 void __alubox__flags_nz_c(soc_core_p core)
 {
 //	BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!vR(SOP_C));

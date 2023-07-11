@@ -283,7 +283,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 			}
 
 			csx->insns++;
-if(0)		if(csx->insns > 0x100000)
+if(1)		if(csx->insns > 0x100000)
 				break;
 		}
 	}

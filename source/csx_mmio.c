@@ -244,7 +244,7 @@ static uint32_t csx_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint
 
 	csx_mmio_trace_mem_access(mmio->csx, ppa, size, write, data);
 
-	LOG_ACTION(exit(-1));
+//	LOG_ACTION(exit(-1));
 
 	return(0);
 }

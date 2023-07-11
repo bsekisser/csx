@@ -26,7 +26,7 @@
 
 /* **** */
 
-#include "alu_box.h"
+#include "alubox_thumb.h"
 
 /* **** */
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
@@ -57,9 +57,9 @@ static void soc_core_thumb_add_sub_rn_rd__rm(soc_core_p core, int bit_i)
 	soc_core_decode_src(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
-	alubox_fn _alubox_fn[2] = { _alubox_adds, _alubox_subs };
+	alubox_fn _alubox_fn[2] = { _alubox_thumb_adds, _alubox_thumb_subs };
 
-	vR(D) = _alubox_fn[op2](core, vR(N), vR(M));
+	_alubox_fn[op2](core, &GPR(rR(D)));
 
 	const char* ops[2] = { "adds", "subs" };
 	const char opc[2] = { '+', '-' };
@@ -83,8 +83,6 @@ static void soc_core_thumb_add_sub_rn_rd__rm(soc_core_p core, int bit_i)
 			ops[op2], rR_NAME(D), rR_NAME(N), rR_NAME(M),
 			vR(N), opc[op2], vR(M), vR(D));
 	}
-
-	soc_core_reg_set(core, rR(D), vR(D));
 }
 
 static void soc_core_thumb_add_sub_rn_rd_imm3(soc_core_p core)
@@ -127,25 +125,24 @@ static void soc_core_thumb_add_sub_sp_i7(soc_core_p core)
 
 static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 {
-	int wb = 1;
-
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	soc_core_decode_src(core, rRN, 10, 8);
 
-	alubox_fn _alubox_fn[4] = { _alubox_movs, _alubox_cmps, _alubox_adds, _alubox_subs };
+	alubox_fn _alubox_fn[4] = {
+		_alubox_thumb_movs, _alubox_thumb_cmps,
+			_alubox_thumb_adds, _alubox_thumb_subs };
 
-	_setup_rR_vR(D, rR(N), _alubox_fn[operation](core, vR(N), vR(M)));
+	_setup_rR_vR(D, rR(N), 0);
+
+	_alubox_fn[operation](core, &GPR(rR(D)));
 
 	const char* ops[4] = { "movs", "cmps", "adds", "subs" };
 	const char opc[4] = { '=', '-', '+', '-' };
 
 	switch(operation)
 	{
-		case THUMB_ASCM_OP_CMP:
-			wb = 0;
-			__attribute__((fallthrough));
 		default:
 			CORE_TRACE("%s(%s, 0x%03x); /* 0x%08x %c 0x%03x = 0x%08x */",
 				ops[operation], rR_NAME(D),	vR(M),
@@ -155,9 +152,6 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 			CORE_TRACE("movs(%s, 0x%03x);", rR_NAME(D), vR(M));
 			break;
 	}
-
-	if(wb)
-		soc_core_reg_set(core, rR(D), vR(D));
 }
 
 static void soc_core_thumb_bcc(soc_core_p core)
@@ -282,20 +276,15 @@ not_prefix_suffix:
 	CORE_TRACE("BL/BLX(0x%08x)  /* LR = 0x%08x */", eao_prefix, LR);
 }
 
-#define _alubox_asrs _alubox_movs_asr
-#define _alubox_lsls _alubox_movs_lsl
-#define _alubox_lsrs _alubox_movs_lsr
-#define _alubox_rors _alubox_movs_ror
-
 static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 {
 	const uint8_t operation = mlBFEXT(IR, 9, 6);
 
 	alubox_fn _alubox_fn[16] = {
-		_alubox_ands,	_alubox_eors,	_alubox_lsls,	_alubox_lsrs,
-		_alubox_asrs,	_alubox_adcs,	_alubox_sbcs,	_alubox_rors,
-		_alubox_tsts,	_alubox_rsbs,	_alubox_cmps,	_alubox_cmns,
-		_alubox_orrs,	_alubox_muls,	_alubox_bics,	_alubox_mvns,
+		_alubox_thumb_ands,	_alubox_thumb_eors,	_alubox_thumb_lsls,	_alubox_thumb_lsrs,
+		_alubox_thumb_asrs,	_alubox_thumb_adcs,	_alubox_thumb_sbcs,	_alubox_thumb_rors,
+		_alubox_thumb_tsts,	_alubox_thumb_rsbs,	_alubox_thumb_cmps,	_alubox_thumb_cmns,
+		_alubox_thumb_orrs,	_alubox_thumb_muls,	_alubox_thumb_bics,	_alubox_thumb_mvns,
 		};
 
 	const char* _dpr_ops[2][16] = {{
@@ -308,17 +297,12 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 
 	soc_core_decode_src(core, rRM, 5, 3);
 	soc_core_decode_src(core, rRN, 2, 0);
-	_setup_rR_vR(D, rR(N), _alubox_fn[operation](core, vR(N), vR(M)));
-
-	int wb = 1;
+	_setup_rR_vR(D, rR(N), 0);
+	
+	_alubox_fn[operation](core, &GPR(rR(D)));
 
 	switch(operation)
 	{
-		case THUMB_DP_OP_CMN:
-		case THUMB_DP_OP_CMP:
-		case THUMB_DP_OP_TST:
-			wb = 0;
-			__attribute__((fallthrough));
 		default:
 			CORE_TRACE("%s(%s, %s); /* 0x%08x %s0x%08x = 0x%08x */",
 				_dpr_ops[0][operation], rR_NAME(D), rR_NAME(M),
@@ -330,9 +314,6 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 				rR_NAME(D), rR_NAME(M), vR(M), vR(D));
 			break;
 	}
-
-	if(wb)
-		soc_core_reg_set(core, rR(D), vR(D));
 }
 
 static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
@@ -713,28 +694,31 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 	const uint8_t operation = mlBFEXT(IR, 9, 8);
 
 	soc_core_decode_src(core, rRM, 6, 3);
-	_setup_rR_vR_src(core, rRD, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
+	_setup_rR_vR_src(core, rRN, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
+	_setup_rR_vR(D, rR(N), 0);
 
-	uint32_t res = vR(D);
-	const unsigned wb = (operation != THUMB_SDP_OP_CMP);
+	const alubox_fn _alubox_fn[4] = {
+		[THUMB_SDP_OP_ADD] = _alubox_thumb_add,
+		[THUMB_SDP_OP_CMP] = _alubox_thumb_cmps,
+		[THUMB_SDP_OP_MOV] = _alubox_thumb_mov,
+		[3] = _alubox_thumb_nop,
+	};
+	
+	_alubox_fn[operation](core, &GPR(rR(D)));
 
 	switch(operation)
 	{
 		case THUMB_SDP_OP_ADD:
-			res += vR(M);
 			CORE_TRACE("add(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
-				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
+				rR_NAME(D), rR_NAME(M), vR(N), vR(M), vR(D));
 			break;
 		case THUMB_SDP_OP_CMP:
-			res -= vR(M);
-			soc_core_flags_nzcv_sub(core, res, vR(D), vR(M));
-			CORE_TRACE("cmp(%s, %s); /* 0x%08x + 0x%08x = 0x%08x */",
-				rR_NAME(D), rR_NAME(M), vR(D), vR(M), res);
+			CORE_TRACE("cmp(%s, %s); /* 0x%08x - 0x%08x = 0x%08x */",
+				rR_NAME(D), rR_NAME(M), vR(N), vR(M), vR(D));
 			break;
 		case THUMB_SDP_OP_MOV:
-			res = vR(M);
 			CORE_TRACE("mov(%s, %s); /* 0x%08x */",
-				rR_NAME(D), rR_NAME(M), res);
+				rR_NAME(D), rR_NAME(M), vR(D));
 			break;
 		default:
 			LOG("operation = 0x%01x", operation);
@@ -742,9 +726,6 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 			LOG_ACTION(exit(1));
 			break;
 	}
-
-	if(wb)
-		soc_core_reg_set(core, rR(D), res);
 }
 
 /* **** */
