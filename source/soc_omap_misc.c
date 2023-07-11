@@ -27,6 +27,7 @@ typedef struct soc_omap_misc_t {
 	csx_mmio_p mmio;
 	
 	uint8_t sossi[0x100];
+	uint8_t spi[0x100];
 	uint8_t x_fe_60[0x100];
 	uint8_t x_fe_78[0x100];
 
@@ -109,9 +110,36 @@ static uint32_t _soc_omap_misc_sossi_mem_access(void* param, uint32_t ppa, size_
 	return(data);
 }
 
+static uint32_t _soc_omap_misc_spi_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+{
+	const soc_omap_misc_p misc = param;
+	const csx_p csx = misc->csx;
+	
+	csx_data_target_t target = {
+		.base = misc->spi,
+		.offset = ppa & 0xff,
+		.size = sizeof(uint16_t),
+	};
+	
+	uint32_t data = csx_data_target_mem_access(&target, size, write);
+
+	switch(ppa) {
+		case 0xfffb0c14:
+			data |= 1;
+			break;
+	}
+
+	if(_trace_mmio_misc)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
+	return(data);
+}
+
 /* **** */
 
 static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
+	MMIO_TRACE_FN(0xfffb, 0x0c14, 0x0000, 0x0000, spi1_ssr, _soc_omap_misc_spi_mem_access)
+	
 	MMIO_TRACE_FN(0xfffb, 0xac00, 0x0000, 0x0000, xfffb_ac00, _soc_omap_misc_sossi_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0xac04, 0x0000, 0x0000, xfffb_ac04, _soc_omap_misc_sossi_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0xac08, 0x0000, 0x0000, xfffb_ac08, _soc_omap_misc_sossi_mem_access)

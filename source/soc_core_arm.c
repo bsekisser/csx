@@ -38,24 +38,19 @@
 /* **** */
 
 //#define _CHECK_PEDANTIC_INST_SBZ_
-#include "alu_box.h"
+#include "alubox_arm.h"
 
-alubox_fn _alubox_dpi_fn[3][16] = {
+alubox_fn _alubox_dpi_fn[2][16] = {
 	{
-		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
-		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_add,
-		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
-	}, { /* S && !(rPC == rR(D)) */
-		_alubox_ands,	_alubox_eors,	_alubox_subs,	_alubox_rsbs,
-		_alubox_adds,	_alubox_adcs,	_alubox_sbcs,	_alubox_rscs,
-		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
-		_alubox_orrs,	_alubox_movs,	_alubox_bics,	_alubox_mvns,
-	}, { /* S && (rPC == rR(D)) */
-		_alubox_and,	_alubox_eor,	_alubox_sub,	_alubox_rsb,
-		_alubox_add,	_alubox_adc,	_alubox_sbc,	_alubox_rsc,
-		_alubox_tsts,	_alubox_teqs,	_alubox_cmps,	_alubox_cmns,
-		_alubox_orr,	_alubox_mov,	_alubox_bic,	_alubox_mvn,
+		_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_rsb,
+		_alubox_arm_add,	_alubox_arm_adc,	_alubox_arm_sbc,	_alubox_arm_rsc,
+		_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_add,
+		_alubox_arm_orr,	_alubox_arm_mov,	_alubox_arm_bic,	_alubox_arm_mvn,
+	}, {
+		_alubox_arm_ands,	_alubox_arm_eors,	_alubox_arm_subs,	_alubox_arm_rsbs,
+		_alubox_arm_adds,	_alubox_arm_adcs,	_alubox_arm_sbcs,	_alubox_arm_rscs,
+		_alubox_arm_tsts,	_alubox_arm_teqs,	_alubox_arm_cmps,	_alubox_arm_cmns,
+		_alubox_arm_orrs,	_alubox_arm_movs,	_alubox_arm_bics,	_alubox_arm_mvns,
 	}
 };
 
@@ -67,26 +62,10 @@ static void _arm_inst_dpi_final(soc_core_p core)
 
 	const unsigned is_r_pc = (rPC == rR(D));
 
-	if(0) if(unlikely(is_r_pc))
-	{
-		const int thumb = DPI_BIT(s20) && core->spsr
-			&& BTST(*core->spsr, SOC_CORE_PSR_BIT_T);
-
-		if(thumb)
-			CORE_TRACE_THUMB;
-
-		CORE_TRACE_BRANCH(vR(D));
-	}
-
 	if(likely(CCx.e))
 	{
-		if(likely(DPI_WB))
-		{
-			if(likely(!is_r_pc))
-				soc_core_reg_set(core, rR(D), vR(D));
-			else
-				soc_core_reg_set_pcx(core, vR(D));
-		}
+		if(likely(DPI_WB) && unlikely(is_r_pc))
+			soc_core_reg_set_thumb(core, PC & 1);
 
 		if(unlikely(DPI_BIT(s20) && is_r_pc))
 		{
@@ -112,27 +91,11 @@ static void _arm_inst_dp(soc_core_p core)
 
 	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
-	const uint8_t xspc = CCx.e && ((DPI_BIT(s20) && (1 + (rPC == rR(D)))));
-	
-	alubox_fn dpi_fn = _alubox_dpi_fn[xspc][DPI_OPERATION];
+	alubox_fn dpi_fn = _alubox_dpi_fn[DPI_BIT(s20)][DPI_OPERATION];
 
-	vR(D) = dpi_fn(core, vR(N), vR(SOP_V));
+	dpi_fn(core, &GPR(rR(D)));
 
 	_arm_inst_dpi_final(core);
-}
-
-static void _arm_inst_dp_shift_operand(soc_core_p core) {
-	alubox_fn sop_fn_list[4] = {
-		__alubox_lsl_sop_c, __alubox_lsr_sop_c,
-			__alubox_asr_sop_c, __alubox_ror_sop_c
-		};
-
-	if(vR(S)) {
-		vR(SOP_V) = sop_fn_list[DPI_SHIFT_OP](core, vR(M), vR(S));
-	} else {
-		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-		vR(SOP_V) = vR(M);
-	}
 }
 
 static void _arm_inst_ldst(soc_core_p core)
@@ -262,12 +225,7 @@ static void arm_inst_dp_immediate(soc_core_p core)
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 
-	vR(SOP_V) = _ror(vR(M), vR(S));
-
-	if(vR(S))
-		vR(SOP_C) = BEXT(vR(SOP_V), 31);
-	else
-		vR(SOP_C) = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	rR(SOP_C) = __alubox_shift_ror;
 
 	_arm_inst_dp(core);
 }
@@ -276,20 +234,20 @@ static void arm_inst_dp_immediate_shift(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
-	
+
+	rR(SOP_C) = DPI_SHIFT_OP;
+
 	switch(DPI_SHIFT_OP) {
 		case	SOC_CORE_SHIFTER_OP_ASR:
 		case	SOC_CORE_SHIFTER_OP_LSR:
-			if(!vR(S))
+			if(0 == vR(S))
 				vR(S) = 32;
 			__attribute__((fallthrough));
 		case	SOC_CORE_SHIFTER_OP_LSL:
-			_arm_inst_dp_shift_operand(core);
 			break;
 		case	SOC_CORE_SHIFTER_OP_ROR:
-			// TODO: untested!!
-			LOG_ACTION(exit(-1));
-			vR(SOP_V) = __alubox_rrx_sop_c(core, vR(M), vR(S));
+			if(0 == vR(S))
+				rR(SOP_C) = __alubox_shift_rrx;
 			break;
 	}
 
@@ -303,12 +261,13 @@ static void arm_inst_dp_register_shift(soc_core_p core)
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
 
+	rR(SOP_C) = DPI_SHIFT_OP;
+
 	vR(S) &= _BM(7);
 
 	if(CCx.e)
 		CYCLE++;
 
-	_arm_inst_dp_shift_operand(core);
 	_arm_inst_dp(core);
 }
 
