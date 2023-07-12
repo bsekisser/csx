@@ -159,6 +159,18 @@ void _alubox_thumb_mvns(soc_core_p core, uint32_t* wb)
 }
 
 __ALUBOX_STATIC__
+void _alubox_thumb_negs(soc_core_p core, uint32_t* wb)
+{
+	vR(D) = 0 - vR(M);
+
+	if(wb)
+		*wb = vR(D);
+
+	__alubox__flags__add_sub(core, vR(D), 0, vR(M));
+}
+
+
+__ALUBOX_STATIC__
 void _alubox_thumb_nop(soc_core_p core, uint32_t* wb)
 {
 	UNUSED(core, wb);
@@ -202,17 +214,6 @@ void _alubox_thumb_rors(soc_core_p core, uint32_t* wb)
 		*wb = vR(D);
 
 	__alubox__flags_nz(core);
-}
-
-__ALUBOX_STATIC__
-void _alubox_thumb_rsbs(soc_core_p core, uint32_t* wb)
-{
-	vR(D) = vR(M) - vR(N);
-
-	if(wb)
-		*wb = vR(D);
-
-	__alubox__flags__sub_sop(core, vR(M));
 }
 
 __ALUBOX_STATIC__

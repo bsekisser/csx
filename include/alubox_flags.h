@@ -14,15 +14,21 @@
 
 
 __ALUBOX_STATIC__
-void __alubox__flags_nz(soc_core_p core)
+void __alubox__flags_nz_x(soc_core_p core, uint32_t rd)
 {
-	const unsigned nf = BEXT(vR(D), 31);
+	const unsigned nf = BEXT(rd, 31);
 	BMAS(CPSR, SOC_CORE_PSR_BIT_N, nf);
 
-	const unsigned zf = (0 == vR(D));
+	const unsigned zf = (0 == rd);
 	BMAS(CPSR, SOC_CORE_PSR_BIT_Z, zf);
 
-	if(0) LOG("N: %01u, Z: %01u", nf, zf);
+	if(0) LOG("rd: 0x%08x, N: %01u, Z: %01u", rd, nf, zf);
+}
+
+__ALUBOX_STATIC__
+void __alubox__flags_nz(soc_core_p core)
+{
+	__alubox__flags_nz_x(core, vR(D));
 }
 
 UNUSED_FN __ALUBOX_STATIC__
@@ -45,20 +51,27 @@ void __alubox__flags_nz_c(soc_core_p core)
  */
 
 __ALUBOX_STATIC__
-void __alubox__flags__add_sop(soc_core_p core, uint32_t sop)
+void __alubox__flags__add_sub(soc_core_p core, uint32_t rd, uint32_t s1, uint32_t s2)
 {
 	__alubox__flags_nz(core);
 
-	const unsigned xvec = (vR(N) ^ sop);
-	const unsigned ovec = (vR(N) ^ vR(D)) & ~xvec;
+	const unsigned xvec = (s1 ^ s2);
+	const unsigned ovec = (s1 ^ rd) & ~xvec;
 
-	const unsigned cf = BEXT((xvec ^ ovec ^ vR(D)), 31);
+	const unsigned cf = BEXT((xvec ^ ovec ^ rd), 31);
 	BMAS(CPSR, SOC_CORE_PSR_BIT_C, cf);
 
 	const unsigned vf = BEXT(ovec, 31);
 	BMAS(CPSR, SOC_CORE_PSR_BIT_V, vf);
 
-	if(0) LOG("sop: 0x%08x, C: %01u, V: %01u", sop, cf, vf);
+	if(0) LOG("rd: 0x%08x, s1: 0x%08x, s2: 0x%08x, C: %01u, V: %01u",
+		rd, s1, s2, cf, vf);
+}
+
+__ALUBOX_STATIC__
+void __alubox__flags__add_sop(soc_core_p core, uint32_t sop)
+{
+	__alubox__flags__add_sub(core, vR(D), vR(N), sop);
 }
 
 UNUSED_FN __ALUBOX_STATIC__

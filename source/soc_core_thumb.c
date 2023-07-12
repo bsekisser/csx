@@ -283,22 +283,31 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 	alubox_fn _alubox_fn[16] = {
 		_alubox_thumb_ands,	_alubox_thumb_eors,	_alubox_thumb_lsls,	_alubox_thumb_lsrs,
 		_alubox_thumb_asrs,	_alubox_thumb_adcs,	_alubox_thumb_sbcs,	_alubox_thumb_rors,
-		_alubox_thumb_tsts,	_alubox_thumb_rsbs,	_alubox_thumb_cmps,	_alubox_thumb_cmns,
+		_alubox_thumb_tsts,	_alubox_thumb_negs,	_alubox_thumb_cmps,	_alubox_thumb_cmns,
 		_alubox_thumb_orrs,	_alubox_thumb_muls,	_alubox_thumb_bics,	_alubox_thumb_mvns,
 		};
 
 	const char* _dpr_ops[2][16] = {{
 		"ands", "eors", "lsls", "lsrs", "asrs", "adcs", "sbcs", "rors",
-		"tsts", "rsbs", "cmps", "cmns", "orrs", "muls", "bics", "mvns",
+		"tsts", "negs", "cmps", "cmns", "orrs", "muls", "bics", "mvns",
 		} , {
 		"& ",	"^ ",	"<< ",	">> ",	"<<< ",	"+",	"-",	">><<",
 		"& ",	"- ",	"- ",	"+ ",	"| ",	"* ",	"& ~",	"-",
 		}};
 
 	soc_core_decode_src(core, rRM, 5, 3);
-	soc_core_decode_src(core, rRN, 2, 0);
-	_setup_rR_vR(D, rR(N), 0);
-	
+
+	switch(operation) {
+		case THUMB_DP_OP_MVN:
+		case THUMB_DP_OP_NEG:
+			soc_core_decode_dst(core, rRD, 2, 0);
+			break;
+		default:
+			soc_core_decode_src(core, rRN, 2, 0);
+			_setup_rR_vR(D, rR(N), 0);
+			break;
+	}
+
 	_alubox_fn[operation](core, &GPR(rR(D)));
 
 	switch(operation)
