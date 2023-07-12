@@ -235,7 +235,7 @@ void _alubox_thumb_subs(soc_core_p core, uint32_t* wb)
 	if(wb)
 		*wb = vR(D);
 
-	__alubox__flags__add_sop(core, vR(M));
+	__alubox__flags__sub_sop(core, vR(M));
 }
 
 /* **** */
