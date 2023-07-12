@@ -29,6 +29,7 @@
 #include "alubox_thumb.h"
 
 /* **** */
+
 static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 {
 	const int pcsp = BEXT(IR, 11);

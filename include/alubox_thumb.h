@@ -54,14 +54,16 @@ __ALUBOX_STATIC__
 void _alubox_thumb_asrs(soc_core_p core, uint32_t* wb)
 {
 	int carry_out = 0;
+	const unsigned valid_rs = vR(M) & 0xff;
 
-	vR(D) = _asr_vc(vR(N), vR(M), &carry_out);
+	vR(D) = _asr_vc(vR(N), valid_rs, &carry_out);
 
-	if(vR(M))
+	if(valid_rs) {
 		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
-	if(wb)
-		*wb = vR(D);
+		if(wb)
+			*wb = vR(D);
+	}
 
 	__alubox__flags_nz(core);
 }
@@ -92,14 +94,16 @@ __ALUBOX_STATIC__
 void _alubox_thumb_lsls(soc_core_p core, uint32_t* wb)
 {
 	unsigned carry_out = 0;
+	const unsigned valid_rs = vR(M) & 0xff;
 
-	vR(D) = _lsl_vc(vR(N), vR(M), &carry_out);
+	vR(D) = _lsl_vc(vR(N), valid_rs, &carry_out);
 
-	if(vR(M))
+	if(valid_rs) {
 		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
-	if(wb && vR(M))
-		*wb = vR(D);
+		if(wb)
+			*wb = vR(D);
+	}
 
 	__alubox__flags_nz(core);
 }
@@ -108,14 +112,16 @@ __ALUBOX_STATIC__
 void _alubox_thumb_lsrs(soc_core_p core, uint32_t* wb)
 {
 	unsigned carry_out = 0;
+	const unsigned valid_rs = vR(M) & 0xff;
 
-	vR(D) = _lsr_vc(vR(N), vR(M), &carry_out);
+	vR(D) = _lsr_vc(vR(N), valid_rs, &carry_out);
 
-	if(vR(M))
+	if(valid_rs) {
 		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 
-	if(wb)
-		*wb = vR(D);
+		if(wb)
+			*wb = vR(D);
+	}
 
 	__alubox__flags_nz(core);
 }
@@ -190,28 +196,28 @@ void _alubox_thumb_orrs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_rors(soc_core_p core, uint32_t* wb)
 {
-	/* ???? is this actually correct ????
-	 * 
-	 * this looks to be the exact behavior as listed in the
-	 * architectural reference manual.
-	 */
+	const unsigned thumb_rors_4_0 = 1;
 
-	unsigned valid_rs = mlBFEXT(vR(M), 4, 0);
+	const unsigned valid_rs_mask = thumb_rors_4_0 ? mlBF(4, 0) : mlBF(7, 0);
+	const unsigned valid_rs = vR(M) & valid_rs_mask;
+
+	unsigned carry_out = 0;
+	vR(D) = _ror_vc(vR(N), valid_rs, &carry_out);
 
 	if(valid_rs) {
-		unsigned carry_out = 0;
-
-		vR(D) = _ror_vc(vR(N), valid_rs, &carry_out);
 		BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
-	} else {
-		vR(D) = vR(N);
 
-		if(vR(M))
-			BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(N), 31));
+		if(wb)
+			*wb = vR(D);
+	} else if(thumb_rors_4_0 && (0 != (vR(M) & 0xff))) {
+		/* ???? is this actually correct ????
+		 * 
+		 * this looks to be the exact behavior as listed in the
+		 * architectural reference manual.
+		 */
+
+		BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(N), 31));
 	}
-
-	if(wb && valid_rs)
-		*wb = vR(D);
 
 	__alubox__flags_nz(core);
 }
