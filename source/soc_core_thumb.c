@@ -57,7 +57,7 @@ static void soc_core_thumb_add_sub_rn_rd__rm(soc_core_p core, int bit_i)
 	soc_core_decode_src(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
-	alubox_fn _alubox_fn[2] = { _alubox_thumb_adds, _alubox_thumb_subs };
+	const alubox_fn _alubox_fn[2] = { _alubox_thumb_adds, _alubox_thumb_subs };
 
 	_alubox_fn[op2](core, &GPR(rR(D)));
 
@@ -128,13 +128,14 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 	const uint8_t operation = mlBFEXT(IR, 12, 11);
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
-	soc_core_decode_src(core, rRN, 10, 8);
+	soc_core_decode_dst(core, rRD, 10, 8);
+	
+	if(THUMB_ASCM_OP_MOV != operation)
+		_setup_rR_vR_src(core, rRN, rR(D));
 
-	alubox_fn _alubox_fn[4] = {
+	const alubox_fn _alubox_fn[4] = {
 		_alubox_thumb_movs, _alubox_thumb_cmps,
 			_alubox_thumb_adds, _alubox_thumb_subs };
-
-	_setup_rR_vR(D, rR(N), 0);
 
 	_alubox_fn[operation](core, &GPR(rR(D)));
 
@@ -280,7 +281,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 {
 	const uint8_t operation = mlBFEXT(IR, 9, 6);
 
-	alubox_fn _alubox_fn[16] = {
+	const alubox_fn _alubox_fn[16] = {
 		_alubox_thumb_ands,	_alubox_thumb_eors,	_alubox_thumb_lsls,	_alubox_thumb_lsrs,
 		_alubox_thumb_asrs,	_alubox_thumb_adcs,	_alubox_thumb_sbcs,	_alubox_thumb_rors,
 		_alubox_thumb_tsts,	_alubox_thumb_negs,	_alubox_thumb_cmps,	_alubox_thumb_cmns,
@@ -296,15 +297,14 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 		}};
 
 	soc_core_decode_src(core, rRM, 5, 3);
+	soc_core_decode_dst(core, rRD, 2, 0);
 
 	switch(operation) {
 		case THUMB_DP_OP_MVN:
 		case THUMB_DP_OP_NEG:
-			soc_core_decode_dst(core, rRD, 2, 0);
 			break;
 		default:
-			soc_core_decode_src(core, rRN, 2, 0);
-			_setup_rR_vR(D, rR(N), 0);
+			_setup_rR_vR_src(core, rRN, rR(D));
 			break;
 	}
 
@@ -702,8 +702,10 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 	const uint8_t operation = mlBFEXT(IR, 9, 8);
 
 	soc_core_decode_src(core, rRM, 6, 3);
-	_setup_rR_vR_src(core, rRN, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
-	_setup_rR_vR(D, rR(N), 0);
+	_setup_rR_dst(core, rRD, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
+
+	if(THUMB_SDP_OP_MOV != operation)
+		_setup_rR_vR_src(core, rRN, rR(D));
 
 	const alubox_fn _alubox_fn[4] = {
 		[THUMB_SDP_OP_ADD] = _alubox_thumb_add,
