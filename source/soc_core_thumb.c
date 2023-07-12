@@ -318,7 +318,6 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 				vR(N), _dpr_ops[1][operation], vR(M), vR(D));
 			break;
 		case THUMB_DP_OP_MVN:
-			vR(D) = ~vR(M);
 			CORE_TRACE("mvns(%s, %s); /* ~0x%08x = 0x%08x */",
 				rR_NAME(D), rR_NAME(M), vR(M), vR(D));
 			break;
