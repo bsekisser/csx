@@ -19,13 +19,21 @@ enum {
 #define IF_CPSR_C(_x) (CPSR_C(_x) & CPSR)
 
 enum {
-	_CPSR_M_User = 0x10,
-	_CPSR_M_FIQ = 0x11,
-	_CPSR_M_IRQ = 0x12,
-	_CPSR_M_Supervisor = 0x13,
+	_CPSR_M_User,
+	_CPSR_M_FIQ,
+	_CPSR_M_IRQ,
+	_CPSR_M_Supervisor,
+//
+	_CPSR_M_32 = 0x10,
+//
 	_CPSR_M_Abort = 0x17,
 	_CPSR_M_Undefined = 0x18 | 3,
 	_CPSR_M_System = 0x1f,
 };
+
+#define __CPSR_M(_x) (_CPSR_M_##_x)
+
+#define CPSR_M26(_x) __CPSR_M(_x)
+#define CPSR_M32(_x) (__CPSR_M(32) | __CPSR_M(_x))
 
 #define CPSR_M(_x) ((_CPSR_M_##_x) & 0x1f)

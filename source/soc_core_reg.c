@@ -1,6 +1,7 @@
 #include "soc_core_reg.h"
 
 #include "soc_core_arm.h"
+#include "soc_core_disasm.h"
 #include "soc_core_psr.h"
 #include "soc_core_thumb.h"
 #include "soc_core_trace.h"
@@ -9,6 +10,8 @@
 
 #include "csx.h"
 
+#include "arm_cpsr.h"
+
 /* **** */
 
 #include "bitfield.h"
@@ -16,44 +19,43 @@
 
 /* **** */
 
-enum {
-	PSR_MODE_USER = 0x10,
-	PSR_MODE_FIQ,
-	PSR_MODE_IRQ,
-	PSR_MODE_SUPERVISOR,
-	PSR_MODE_ABORT = 0x17,
-	PSR_MODE_UNDEFINED = (0x18 + 0x03),
-	PSR_MODE_SYSTEM = (0x18 + 0x07),
-};
-
 static uint32_t* soc_core_psr_mode_regs(soc_core_p core, uint8_t mode, soc_core_reg_p reg)
 {
 	*reg = 13;
 	
 	switch(mode)
 	{
-		case PSR_MODE_ABORT:
+		case CPSR_M32(Abort):
 			return(&core->abt_reg[0]);
 			break;
-		case PSR_MODE_FIQ:
+		case CPSR_M32(FIQ):
 			*reg = 8;
 			return(&core->fiq_reg[0]);
 			break;
-		case PSR_MODE_IRQ:
+		case CPSR_M32(IRQ):
 			return(&core->irq_reg[0]);
 			break;
-		case PSR_MODE_SUPERVISOR:
+		case CPSR_M32(Supervisor):
 			return(&core->svc_reg[0]);
 			break;
-		case PSR_MODE_UNDEFINED:
+		case CPSR_M32(Undefined):
 			return(&core->und_reg[0]);
 			break;
-		case PSR_MODE_SYSTEM:
-		case PSR_MODE_USER:
+		case CPSR_M32(System):
+		case CPSR_M32(User):
 			break;
+
+		case CPSR_M26(FIQ):
+		case CPSR_M26(IRQ):
+		case CPSR_M26(Supervisor):
+		case CPSR_M26(User):
+			LOG("mode = 0x%03x", mode);
+			LOG_ACTION(UNIMPLIMENTED);
+			break;
+
 		default:
 			LOG("mode = 0x%03x", mode);
-			LOG_ACTION(exit(1));
+			LOG_ACTION(UNDEFINED);
 			break;
 	}
 	
