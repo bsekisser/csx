@@ -40,18 +40,25 @@
 //#define _CHECK_PEDANTIC_INST_SBZ_
 #include "alubox_arm.h"
 
+alubox_fn _alubox_dpi_no_wb_fn[16] = {
+	_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_rsb,
+	_alubox_arm_add,	_alubox_arm_adc,	_alubox_arm_sbc,	_alubox_arm_rsc,
+	_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_add,
+	_alubox_arm_orr,	_alubox_arm_mov,	_alubox_arm_bic,	_alubox_arm_mvn,
+};
+
 alubox_fn _alubox_dpi_fn[2][16] = {
 	{
-		_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_rsb,
-		_alubox_arm_add,	_alubox_arm_adc,	_alubox_arm_sbc,	_alubox_arm_rsc,
-		_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_add,
-		_alubox_arm_orr,	_alubox_arm_mov,	_alubox_arm_bic,	_alubox_arm_mvn,
+		_alubox_arm_and_wb,	_alubox_arm_eor_wb,	_alubox_arm_sub_wb,	_alubox_arm_rsb_wb,
+		_alubox_arm_add_wb,	_alubox_arm_adc_wb,	_alubox_arm_sbc_wb,	_alubox_arm_rsc_wb,
+		_alubox_arm_and_wb,	_alubox_arm_eor_wb,	_alubox_arm_sub_wb,	_alubox_arm_add_wb,
+		_alubox_arm_orr_wb,	_alubox_arm_mov_wb,	_alubox_arm_bic_wb,	_alubox_arm_mvn_wb,
 	}, {
 		_alubox_arm_ands,	_alubox_arm_eors,	_alubox_arm_subs,	_alubox_arm_rsbs,
 		_alubox_arm_adds,	_alubox_arm_adcs,	_alubox_arm_sbcs,	_alubox_arm_rscs,
 		_alubox_arm_tsts,	_alubox_arm_teqs,	_alubox_arm_cmps,	_alubox_arm_cmns,
 		_alubox_arm_orrs,	_alubox_arm_movs,	_alubox_arm_bics,	_alubox_arm_mvns,
-	}
+	},
 };
 
 /* **** */
@@ -64,15 +71,17 @@ static void _arm_inst_dpi_final(soc_core_p core)
 
 	if(likely(CCx.e))
 	{
-		if(likely(DPI_WB) && unlikely(is_r_pc))
-			soc_core_reg_set_thumb(core, PC & 1);
+		if(0 != DPI_WB) {
+			if(is_r_pc) {
+				if(DPI_BIT(s20)) {
+					if(core->spsr) {
+						soc_core_psr_mode_switch(core, *core->spsr);
+					} else
+						UNPREDICTABLE;
+				}
 
-		if(unlikely(DPI_BIT(s20) && is_r_pc))
-		{
-			if(core->spsr)
-				soc_core_psr_mode_switch(core, *core->spsr);
-			else
-				UNPREDICTABLE;
+				soc_core_reg_set_thumb(core, IF_CPSR_C(32) ? PC & 1 : 0);
+			}
 		}
 	}
 }
@@ -84,16 +93,12 @@ static void _arm_inst_dp(soc_core_p core)
 			DECODE_FAULT;
 	}
 
-	const int get_rn = (ARM_DPI_OPERATION_MOV != DPI_OPERATION);
-
-	if(likely(get_rn))
-		_setup_rR_vR_src(core, rRN, ARM_IR_RN);
-
 	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
-	alubox_fn dpi_fn = _alubox_dpi_fn[DPI_BIT(s20)][DPI_OPERATION];
-
-	dpi_fn(core, &GPR(rR(D)));
+	if(CCx.e)
+		_alubox_dpi_fn[DPI_BIT(s20)][DPI_OPERATION](core, &GPR(rR(D)));
+	else
+		_alubox_dpi_no_wb_fn[DPI_OPERATION](core, &GPR(rR(D)));
 
 	_arm_inst_dpi_final(core);
 }
@@ -152,7 +157,7 @@ static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
 		if(ARM_INST_B != (IR & ARM_INST_B_MASK))
 			DECODE_FAULT;
 	}
-	
+
 	const int blx = (0 != blx_hl);
 	const int32_t offset = mlBFMOVs(IR, 23, 0, 2) | blx_hl;
 	const uint32_t new_pc = (ARM_PC + offset);
@@ -345,7 +350,7 @@ static void arm_inst_ldstm(soc_core_p core)
 		if(ARM_INST_LDSTM != (IR & ARM_INST_LDSTM_MASK))
 			DECODE_FAULT;
 	}
-	
+
 	const csx_p csx = core->csx;
 
 	vR(N_OFFSET) = sizeof(uint32_t);
@@ -704,15 +709,17 @@ static void arm_inst_msr(soc_core_p core)
 
 //	soc_core_trace_psr(core, 0, saved_psr);
 
+	const uint32_t operand_masked = operand & mask;
+
 	if(bit_i)
 	{
-		CORE_TRACE("msr(%cPSR_%s, 0x%08x) /* 0x%08x & 0x%08x -> 0x%08x */",
-			cs, cpsrs, operand, operand, mask, operand & mask);
+		CORE_TRACE("msr(%cPSR_%s, 0x%08x) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
+			cs, cpsrs, operand, operand, mask, operand_masked, new_psr);
 	}
 	else
 	{
-		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x */",
-			cs, cpsrs, rR_NAME(M), operand, mask, operand & mask);
+		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
+			cs, cpsrs, rR_NAME(M), operand, mask, operand_masked, new_psr);
 	}
 
 	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
@@ -739,7 +746,7 @@ static void arm_inst_smull(soc_core_p core)
 	_CORE_TRACE_(":%s", rR_NAME(N));
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
-	
+
 	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
 		vR(M), vR(S), result);
 
@@ -774,7 +781,7 @@ static void arm_inst_umull(soc_core_p core)
 	_CORE_TRACE_(":%s", rR_NAME(N));
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
-	
+
 	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
 		vR(M), vR(S), result);
 
@@ -860,7 +867,7 @@ static void soc_core_arm_step_group1(soc_core_p core)
 		} else if(2 == mlBFEXT(IR, 21, 20))
 			UNIMPLIMENTED; /* move immediate to status register */
 	}
-	
+
 	return(arm_inst_dp_immediate(core));
 }
 

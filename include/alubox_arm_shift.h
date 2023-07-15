@@ -37,7 +37,7 @@ void __alubox_arm_shift_c(soc_core_p core)
 __ALUBOX_STATIC__
 void __alubox_arm_shift_sop(soc_core_p core)
 {
-	unsigned carry_in = !!BEXT(CPSR, SOC_CORE_PSR_BIT_C);
+	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	switch(rR(SOP_C)) {
 		case __alubox_shift_asr:

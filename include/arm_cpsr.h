@@ -3,12 +3,13 @@
 /* **** */
 
 enum {
+	_CPSR_C_BIT_32 = 4,
 	_CPSR_C_BIT_T = 5,
 	_CPSR_C_BIT_F = 6,
 	_CPSR_C_BIT_I = 7,
 	_CPSR_C_BIT_A = 8,
 	_CPSR_C_BIT_E = 9,
-	
+
 	_CPSR_C_BIT_Abort = _CPSR_C_BIT_A,
 	_CPSR_C_BIT_FIQ = _CPSR_C_BIT_F,
 	_CPSR_C_BIT_IRQ = _CPSR_C_BIT_I,
@@ -46,6 +47,6 @@ enum {
 #define __CPSR_M(_x) (_CPSR_M_##_x)
 
 #define CPSR_M26(_x) __CPSR_M(_x)
-#define CPSR_M32(_x) (__CPSR_M(32) | __CPSR_M(_x))
+#define CPSR_M32(_x) (CPSR_C(32) | __CPSR_M(_x))
 
 #define CPSR_M(_x) ((_CPSR_M_##_x) & 0x1f)
