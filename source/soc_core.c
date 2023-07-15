@@ -56,7 +56,7 @@ static int _soc_core_atreset(void* param)
 //		soc_core_reg_set(core, i, 0);
 		soc_core_reg_set(core, i, ((~0UL) << 16) | _test_value(i));
 
-	CPSR = CPSR_M(Supervisor);
+	CPSR = CPSR_M32(Supervisor);
 	soc_core_exception(core, _EXCEPTION_Reset);
 
 	return(0);

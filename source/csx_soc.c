@@ -261,7 +261,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
-	soc_core_psr_mode_switch(core, (CPSR & ~0x1f) | (0x18 + 7));
+//	soc_core_psr_mode_switch(core, CPSR_M32(Supervisor));
 
 	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
 	soc_core_reg_set_pcx(core, cdp->base);

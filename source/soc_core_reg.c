@@ -50,6 +50,7 @@ static uint32_t* soc_core_psr_mode_regs(soc_core_p core, uint8_t mode, soc_core_
 		case CPSR_M26(Supervisor):
 		case CPSR_M26(User):
 			LOG("mode = 0x%03x", mode);
+//			LOG_ACTION(return(soc_core_psr_mode_regs(core, 0x10 | mode, reg)));
 			LOG_ACTION(UNIMPLIMENTED);
 			break;
 

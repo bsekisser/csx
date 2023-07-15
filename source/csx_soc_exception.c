@@ -57,23 +57,23 @@ typedef struct exception_t {
 static exception_t exception_list[_EXCEPTION_COUNT] = {
 	[_EXCEPTION_DataAbort] = {
 		CPSR_C(Thumb),
-		CPSR_M(Abort) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
+		CPSR_M32(Abort) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
 		0x10, },
 	[_EXCEPTION_FIQ] = {
 		CPSR_C(Thumb),
-		CPSR_M(FIQ) | CPSR_C(FIQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
+		CPSR_M32(FIQ) | CPSR_C(FIQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
 		0x1c, },
 	[_EXCEPTION_IRQ] = {
 		CPSR_C(Thumb),
-		CPSR_M(IRQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
+		CPSR_M32(IRQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
 		0x18, },
 	[_EXCEPTION_PrefetchAbort] = {
 		CPSR_C(Thumb),
-		CPSR_M(Abort) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
+		CPSR_M32(Abort) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
 		0x0c, },
 	[_EXCEPTION_Reset] = {
 		CPSR_C(Thumb),
-		CPSR_M(Supervisor) | CPSR_C(FIQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
+		CPSR_M32(Supervisor) | CPSR_C(FIQ) | CPSR_C(IRQ) | CPSR_C(Abort) | CPSR_C(E),
 		0x00, },
 	[_EXCEPTION_SWI] = {
 		CPSR_C(Thumb),
