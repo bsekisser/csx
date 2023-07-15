@@ -19,6 +19,18 @@ enum {
 #define IF_CPSR_C(_x) (CPSR_C(_x) & CPSR)
 
 enum {
+	_CPSR_F_BIT_V = 28,
+	_CPSR_F_BIT_C = 29,
+	_CPSR_F_BIT_Z = 30,
+	_CPSR_F_BIT_N = 31,
+};
+
+#define __CPSR_F(_x) (_CPSR_F_BIT_##_x)
+#define __CPSR_F_BV(_x) _BV(__CPSR_F(_x))
+#define IF_CPSR_F(_x) (__CPSR_F_BV(_x) & CPSR)
+
+
+enum {
 	_CPSR_M_User,
 	_CPSR_M_FIQ,
 	_CPSR_M_IRQ,

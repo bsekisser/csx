@@ -125,8 +125,16 @@ void soc_core_trace_start(soc_core_p core)
 	if(!core->trace)
 		return;
 
-	printf("%c(0x%08x(0x%08x), %s(%c), ",
+	char flags[5], *dst = flags;
+	
+	*dst++ = IF_CPSR_F(C) ? 'C' : 'c';
+	*dst++ = IF_CPSR_F(N) ? 'N' : 'n';
+	*dst++ = IF_CPSR_F(V) ? 'V' : 'v';
+	*dst++ = IF_CPSR_F(Z) ? 'Z' : 'z';
+	*dst = 0;
+
+	printf("%c(0x%08x(0x%08x), %s, %s(%c), ",
 		(CPSR & SOC_CORE_PSR_T) ? 'T' : 'A',
-		IP, IR,
+		IP, IR, flags,
 		CCx.s, CCx.e ? '>' : 'X');
 }
