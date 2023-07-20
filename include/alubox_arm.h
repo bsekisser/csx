@@ -234,6 +234,12 @@ void _alubox_arm_mvns(soc_core_p core, uint32_t* wb)
 	}
 }
 
+void _alubox_arm_nop_xx(soc_core_p core, uint32_t* wb)
+{
+	LOG_ACTION(exit(-1));
+	UNUSED(core, wb);
+}
+
 __ALUBOX_STATIC__
 void _alubox_arm_orr(soc_core_p core, uint32_t* wb)
 {

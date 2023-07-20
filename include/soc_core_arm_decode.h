@@ -23,6 +23,7 @@ enum {
 
 #define DPI_BIT(_x)					BEXT(IR, DPI_BIT_##_x)
 #define DPI_OPERATION				mlBFEXT(IR, 24, 21)
+#define DPI_sOPERATION				mlBFEXT(IR, 24, 20)
 #define DPI_SHIFT_OP				(DPI_BIT(i25) ? SOC_CORE_SHIFTER_OP_ROR : mlBFEXT(IR, 6, 5))
 #define DPI_WB						(2 != mlBFEXT(IR, 24, 23))
 

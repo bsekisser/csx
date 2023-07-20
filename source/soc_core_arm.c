@@ -47,18 +47,15 @@ alubox_fn _alubox_dpi_no_wb_fn[16] = {
 	_alubox_arm_orr,	_alubox_arm_mov,	_alubox_arm_bic,	_alubox_arm_mvn,
 };
 
-alubox_fn _alubox_dpi_fn[2][16] = {
-	{
-		_alubox_arm_and_wb,	_alubox_arm_eor_wb,	_alubox_arm_sub_wb,	_alubox_arm_rsb_wb,
-		_alubox_arm_add_wb,	_alubox_arm_adc_wb,	_alubox_arm_sbc_wb,	_alubox_arm_rsc_wb,
-		_alubox_arm_and_wb,	_alubox_arm_eor_wb,	_alubox_arm_sub_wb,	_alubox_arm_add_wb,
-		_alubox_arm_orr_wb,	_alubox_arm_mov_wb,	_alubox_arm_bic_wb,	_alubox_arm_mvn_wb,
-	}, {
-		_alubox_arm_ands,	_alubox_arm_eors,	_alubox_arm_subs,	_alubox_arm_rsbs,
-		_alubox_arm_adds,	_alubox_arm_adcs,	_alubox_arm_sbcs,	_alubox_arm_rscs,
-		_alubox_arm_tsts,	_alubox_arm_teqs,	_alubox_arm_cmps,	_alubox_arm_cmns,
-		_alubox_arm_orrs,	_alubox_arm_movs,	_alubox_arm_bics,	_alubox_arm_mvns,
-	},
+alubox_fn _alubox_dpi_fn[32] = {
+	_alubox_arm_and_wb,	_alubox_arm_ands,	_alubox_arm_eor_wb,	_alubox_arm_eors,
+	_alubox_arm_sub_wb,	_alubox_arm_subs,	_alubox_arm_rsb_wb,	_alubox_arm_rsbs,
+	_alubox_arm_add_wb,	_alubox_arm_adds,	_alubox_arm_adc_wb,	_alubox_arm_adcs,
+	_alubox_arm_sbc_wb,	_alubox_arm_sbcs,	_alubox_arm_rsc_wb,	_alubox_arm_rscs,
+	_alubox_arm_nop_xx,	_alubox_arm_tsts,	_alubox_arm_nop_xx,	_alubox_arm_teqs,
+	_alubox_arm_nop_xx,	_alubox_arm_cmps,	_alubox_arm_nop_xx,	_alubox_arm_cmns,
+	_alubox_arm_orr_wb,	_alubox_arm_orrs,	_alubox_arm_mov_wb,	_alubox_arm_movs,
+	_alubox_arm_bic_wb,	_alubox_arm_bics,	_alubox_arm_mvn_wb,	_alubox_arm_mvns,
 };
 
 /* **** */
@@ -96,7 +93,7 @@ static void _arm_inst_dp(soc_core_p core)
 	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
 	if(CCx.e)
-		_alubox_dpi_fn[DPI_BIT(s20)][DPI_OPERATION](core, &GPR(rR(D)));
+		_alubox_dpi_fn[DPI_sOPERATION](core, &GPR(rR(D)));
 	else
 		_alubox_dpi_no_wb_fn[DPI_OPERATION](core, &GPR(rR(D)));
 
