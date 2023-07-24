@@ -40,14 +40,14 @@
 //#define _CHECK_PEDANTIC_INST_SBZ_
 #include "alubox_arm.h"
 
-alubox_fn _alubox_dpi_no_wb_fn[16] = {
+static alubox_fn _alubox_dpi_no_wb_fn[16] = {
 	_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_rsb,
 	_alubox_arm_add,	_alubox_arm_adc,	_alubox_arm_sbc,	_alubox_arm_rsc,
 	_alubox_arm_and,	_alubox_arm_eor,	_alubox_arm_sub,	_alubox_arm_add,
 	_alubox_arm_orr,	_alubox_arm_mov,	_alubox_arm_bic,	_alubox_arm_mvn,
 };
 
-alubox_fn _alubox_dpi_fn[32] = {
+static alubox_fn _alubox_dpi_fn[32] = {
 	_alubox_arm_and_wb,	_alubox_arm_ands,	_alubox_arm_eor_wb,	_alubox_arm_eors,
 	_alubox_arm_sub_wb,	_alubox_arm_subs,	_alubox_arm_rsb_wb,	_alubox_arm_rsbs,
 	_alubox_arm_add_wb,	_alubox_arm_adds,	_alubox_arm_adc_wb,	_alubox_arm_adcs,
@@ -102,19 +102,12 @@ static void _arm_inst_dp(soc_core_p core)
 
 static void _arm_inst_ldst(soc_core_p core)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
-
-	if(LDST_BIT(l20))
-		_setup_rR_dst(core, rRD, ARM_IR_RD);
-	else
-		_setup_rR_vR_src(core, rRD, ARM_IR_RD);
-
-	uint32_t ea = _arm_ldst_ea(core);
+	_arm_ldst_ea(core);
 
 	if(BTST(IR, 26))
-		_arm_ldst(core, ea);
+		_arm_ldst(core);
 	else
-		_arm_ldst_sh(core, ea);
+		_arm_ldst_sh(core);
 
 	soc_core_trace_inst_ldst(core);
 }
@@ -145,7 +138,7 @@ static void _arm_inst_ldstm(soc_core_p core,
 		soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
 	}
 
-	vR(EA) += vR(N_OFFSET);
+	vR(EA) += sizeof(uint32_t);
 }
 
 static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
@@ -227,7 +220,7 @@ static void arm_inst_dp_immediate(soc_core_p core)
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
 
-	rR(SOP_C) = __alubox_shift_ror;
+	rR(SOP) = __alubox_shift_ror;
 
 	_arm_inst_dp(core);
 }
@@ -237,22 +230,9 @@ static void arm_inst_dp_immediate_shift(soc_core_p core)
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
 
-	rR(SOP_C) = DPI_SHIFT_OP;
+	rR(SOP) = DPI_SHIFT_OP;
 
-	switch(DPI_SHIFT_OP) {
-		case	SOC_CORE_SHIFTER_OP_ASR:
-		case	SOC_CORE_SHIFTER_OP_LSR:
-			if(0 == vR(S))
-				vR(S) = 32;
-			__attribute__((fallthrough));
-		case	SOC_CORE_SHIFTER_OP_LSL:
-			break;
-		case	SOC_CORE_SHIFTER_OP_ROR:
-			if(0 == vR(S))
-				rR(SOP_C) = __alubox_shift_rrx;
-			break;
-	}
-
+	__alubox_arm_shift_sop_immediate_x(core);
 	_arm_inst_dp(core);
 }
 
@@ -263,7 +243,7 @@ static void arm_inst_dp_register_shift(soc_core_p core)
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
 
-	rR(SOP_C) = DPI_SHIFT_OP;
+	rR(SOP) = DPI_SHIFT_OP;
 
 	vR(S) &= _BM(7);
 
@@ -276,7 +256,7 @@ static void arm_inst_dp_register_shift(soc_core_p core)
 static void arm_inst_ldst_immediate_offset(soc_core_p core)
 {
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 11, 0));
-	vR(N_OFFSET) = vR(M);
+	vR(SOP) = vR(M);
 
 	return(_arm_inst_ldst(core));
 }
@@ -284,59 +264,29 @@ static void arm_inst_ldst_immediate_offset(soc_core_p core)
 static void arm_inst_ldst_immediate_offset_sh(soc_core_p core)
 {
 	_setup_rR_vR(M, ~0, mlBFMOV(IR, 11, 8, 4) | mlBFEXT(IR, 3, 0));
-	vR(N_OFFSET) = vR(M);
+	vR(SOP) = vR(M);
 
 	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 {
+	assert(0 == mlBFEXT(IR, 11, 8));
+	
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
-	vR(N_OFFSET) = vR(M);
+	vR(SOP) = vR(M);
 
 	return(_arm_inst_ldst(core));
 }
 
 static void arm_inst_ldst_scaled_register_offset(soc_core_p core)
 {
-//	LOG_ACTION(exit(-1));
-
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
-	_setup_rR_vR(S, ~mlBFEXT(IR, 6, 5), mlBFEXT(IR, 11, 7));
+	_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
 
-	uint32_t index = 0;
+	rR(SOP) = mlBFEXT(IR, 6, 5);
 
-	switch((int8_t)rR(S)) {
-		case ~0: /* lsl */
-			index = _lsl(vR(M), vR(S));
-			break;
-		case ~1: /* lsr */
-			if(vR(S))
-				index = _lsr(vR(M), vR(S));
-			else
-				index = 0;
-			break;
-		case ~2: /* asr */
-			if(vR(S))
-				index = _asr(vR(M), vR(S));
-			else
-				index = -1;
-			break;
-		case ~3: /* ror/rrx */
-			if(vR(S))
-				index = _ror(vR(M), vR(S));
-			else {
-				index = BMOV(CPSR, SOC_CORE_PSR_BIT_C, 31);
-				index |= _lsr(vR(M), 1);
-			}
-			break;
-		default:
-			soc_core_disasm_arm(core, PC, IR);
-			LOG_ACTION(exit(-1));
-			break;
-	}
-
-	vR(N_OFFSET) = index;
+	__alubox_arm_shift_sop_immediate(core);
 
 	return(_arm_inst_ldst(core));
 }
@@ -349,8 +299,6 @@ static void arm_inst_ldstm(soc_core_p core)
 	}
 
 	const csx_p csx = core->csx;
-
-	vR(N_OFFSET) = sizeof(uint32_t);
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
@@ -379,7 +327,7 @@ static void arm_inst_ldstm(soc_core_p core)
 	}
 	else /* decrement */
 	{
-		end_address = sp_in + (!LDST_BIT(p24) << 2);
+		end_address = sp_in + ((0 == LDST_BIT(p24)) << 2);
 		start_address = end_address - rcount;
 		sp_out -= rcount;
 	}

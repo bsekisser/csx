@@ -25,10 +25,10 @@ void _alubox_arm_adc(soc_core_p core, uint32_t* wb)
 	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 	
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) + (vR(SOP_V) + carry_in);
+	vR(D) = vR(N) + (vR(SOP) + carry_in);
 
 	if(0) LOG("0x%08x + 0x%08x + %01u -- 0x%08x",
-		vR(N), vR(SOP_V), carry_in, vR(D));
+		vR(N), vR(SOP), carry_in, vR(D));
 
 	UNUSED(wb);
 }
@@ -57,10 +57,10 @@ void _alubox_arm_add(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) + vR(SOP_V);
+	vR(D) = vR(N) + vR(SOP);
 
 	if(0) LOG("0x%08x + 0x%08x -- 0x%08x",
-		vR(N), vR(SOP_V), vR(D));
+		vR(N), vR(SOP), vR(D));
 
 	UNUSED(wb);
 }
@@ -89,7 +89,7 @@ void _alubox_arm_and(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) & vR(SOP_V);
+	vR(D) = vR(N) & vR(SOP);
 
 	UNUSED(wb);
 }
@@ -120,7 +120,7 @@ void _alubox_arm_bic(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) & ~vR(SOP_V);
+	vR(D) = vR(N) & ~vR(SOP);
 
 	UNUSED(wb);
 }
@@ -151,7 +151,7 @@ void _alubox_arm_eor(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) ^ vR(SOP_V);
+	vR(D) = vR(N) ^ vR(SOP);
 
 	UNUSED(wb);
 }
@@ -180,7 +180,7 @@ __ALUBOX_STATIC__
 void _alubox_arm_mov(soc_core_p core, uint32_t* wb)
 {
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(SOP_V);
+	vR(D) = vR(SOP);
 
 	UNUSED(wb);
 }
@@ -209,7 +209,7 @@ __ALUBOX_STATIC__
 void _alubox_arm_mvn(soc_core_p core, uint32_t* wb)
 {
 	__alubox_arm_shift_sop(core);
-	vR(D) = ~vR(SOP_V);
+	vR(D) = ~vR(SOP);
 
 	UNUSED(wb);
 }
@@ -234,6 +234,7 @@ void _alubox_arm_mvns(soc_core_p core, uint32_t* wb)
 	}
 }
 
+__ALUBOX_STATIC__
 void _alubox_arm_nop_xx(soc_core_p core, uint32_t* wb)
 {
 	LOG_ACTION(exit(-1));
@@ -246,7 +247,7 @@ void _alubox_arm_orr(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) | vR(SOP_V);
+	vR(D) = vR(N) | vR(SOP);
 
 	UNUSED(wb);
 }
@@ -277,7 +278,7 @@ void _alubox_arm_rsb(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(SOP_V) - vR(N);
+	vR(D) = vR(SOP) - vR(N);
 
 	UNUSED(wb);
 }
@@ -308,7 +309,7 @@ void _alubox_arm_rsc(soc_core_p core, uint32_t* wb)
 	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(SOP_V) - (vR(N) + carry_in);
+	vR(D) = vR(SOP) - (vR(N) + carry_in);
 
 	UNUSED(wb);
 }
@@ -339,7 +340,7 @@ void _alubox_arm_sbc(soc_core_p core, uint32_t* wb)
 	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) - (vR(SOP_V) + carry_in);
+	vR(D) = vR(N) - (vR(SOP) + carry_in);
 
 	UNUSED(wb);
 }
@@ -368,7 +369,7 @@ void _alubox_arm_sub(soc_core_p core, uint32_t* wb)
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
 	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) - vR(SOP_V);
+	vR(D) = vR(N) - vR(SOP);
 
 	UNUSED(wb);
 }

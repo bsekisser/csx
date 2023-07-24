@@ -1,0 +1,156 @@
+#include "soc_core_arm.h"
+#include "soc_core_arm_decode.h"
+#include "soc_core_disasm.h"
+#include "soc_core_psr.h"
+#include "soc_core_utility.h"
+#include "soc_core.h"
+#include "csx.h"
+
+#include "alubox_arm.h"
+
+/* **** */
+
+#include "bitfield.h"
+#include "log.h"
+
+/* **** */
+
+#define ARM_IP_NEXT ((IP + 4) & ~3)
+#define ARM_PC ((IP + 8) & ~3)
+
+/* **** */
+
+static void _ldst_pre(soc_core_p core)
+{
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+
+	if(LDST_BIT(l20))
+		_setup_rR_dst(core, rRD, ARM_IR_RD);
+	else
+		_setup_rR_vR_src(core, rRD, ARM_IR_RD);
+
+	vR(EA) = vR(N);
+
+	if(LDST_BIT(p24)) {
+		if(LDST_BIT(u23))
+			vR(EA) += vR(M);
+		else
+			vR(EA) -= vR(M);
+	}
+}
+
+static void _ldst_post(soc_core_p core)
+{
+	if(!LDST_BIT(l20)) {
+		if(rPC == rR(D))
+			soc_core_reg_set_pcx(core, vR(D));
+		else
+			soc_core_reg_set(core, rR(D), vR(D));
+	}
+
+	if(!LDST_BIT(p24)) {
+		if(LDST_BIT(u23))
+			vR(EA) += vR(M);
+		else
+			vR(EA) -= vR(M);
+
+		soc_core_reg_set(core, rR(N), vR(EA));
+	} else if(LDST_BIT(w21))
+		soc_core_reg_set(core, rR(N), vR(EA));
+}
+
+/* **** */
+
+static alubox_fn _alubox_dpi_fn[32] = {
+	_alubox_arm_and_wb,	_alubox_arm_ands,	_alubox_arm_eor_wb,	_alubox_arm_eors,
+	_alubox_arm_sub_wb,	_alubox_arm_subs,	_alubox_arm_rsb_wb,	_alubox_arm_rsbs,
+	_alubox_arm_add_wb,	_alubox_arm_adds,	_alubox_arm_adc_wb,	_alubox_arm_adcs,
+	_alubox_arm_sbc_wb,	_alubox_arm_sbcs,	_alubox_arm_rsc_wb,	_alubox_arm_rscs,
+	_alubox_arm_nop_xx,	_alubox_arm_tsts,	_alubox_arm_nop_xx,	_alubox_arm_teqs,
+	_alubox_arm_nop_xx,	_alubox_arm_cmps,	_alubox_arm_nop_xx,	_alubox_arm_cmns,
+	_alubox_arm_orr_wb,	_alubox_arm_orrs,	_alubox_arm_mov_wb,	_alubox_arm_movs,
+	_alubox_arm_bic_wb,	_alubox_arm_bics,	_alubox_arm_mvn_wb,	_alubox_arm_mvns,
+};
+
+/* **** */
+
+void soc_core_arm2_step(soc_core_p core) {
+	IR = soc_core_reg_pc_fetch_step_arm(core);
+
+	const unsigned opcode = mlBFEXT(IR, 27, 25);
+
+	CCx.e = soc_core_check_cc(core, ARM_IR_CC);
+
+	if(INST_CC_NV != ARM_IR_CC) {
+		switch(opcode) {
+			case 0: /* xxxx 000x xxxx xxxx */
+				if(_dpis == (IR & _dpis_mask)) {
+					_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+					_setup_rR_vR(S, ~0, mlBFEXT(IR, 11, 7));
+
+					rR(SOP_C) = DPI_SHIFT_OP;
+
+					switch(DPI_SHIFT_OP) {
+						case	SOC_CORE_SHIFTER_OP_ASR:
+						case	SOC_CORE_SHIFTER_OP_LSR:
+							if(0 == vR(S))
+								vR(S) = 32;
+							__attribute__((fallthrough));
+						case	SOC_CORE_SHIFTER_OP_LSL:
+							break;
+						case	SOC_CORE_SHIFTER_OP_ROR:
+							if(0 == vR(S))
+								rR(SOP_C) = __alubox_shift_rrx;
+							break;
+					}
+				}
+			break;
+			case 1: /* xxxx 001x xxxx xxxx */
+				_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
+				_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
+				rR(SOP_C) = __alubox_shift_ror;
+			break;
+			case 2: /* xxxx 010x xxxx xxxx */
+				_setup_rR_vR(M, ~0, mlBFEXT(IR, 11, 0));
+				_ldst_pre(core);
+			break;
+			case 5: /* xxxx 101x xxxx xxxx */
+				vR(EA) = mlBFMOVs(IR, 23, 0, 2);
+			break;
+			default:
+				goto decode_fault;
+		}
+		
+		if(CCx.e) switch(opcode) {
+			case 0:
+				if(!(
+			case 1:
+				_alubox_dpi_fn[DPI_sOPERATION](core, &GPR(rR(D)));
+			break;
+			case 2:
+				if(LDST_BIT(l20))
+					vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
+				else
+					soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
+			break;
+		}
+
+		if(CCx.e) switch(opcode) {
+			case 2:
+				_ldst_post(core);
+			break;
+			case 5: /* xxxx 101x xxxx xxxx */
+				if(BEXT(IR, 24))
+					LR = ARM_IP_NEXT;
+				PC = ARM_PC + vR(EA);
+			break;
+		}
+	}
+
+	return;
+
+decode_fault:
+	LOG("IR[27:25] = %1u", opcode);
+
+	DECODE_FAULT;
+}

@@ -15,6 +15,7 @@ typedef void (*alubox_fn)(soc_core_p core, uint32_t* wb);
 __ALUBOX_STATIC__
 void _alubox_thumb_add(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) + vR(M);
 
 	if(wb)
@@ -31,6 +32,7 @@ void _alubox_thumb_adds(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_adcs(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) + (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
 
 	if(wb)
@@ -42,6 +44,7 @@ void _alubox_thumb_adcs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_ands(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) & vR(M);
 
 	if(wb)
@@ -71,6 +74,7 @@ void _alubox_thumb_asrs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_bics(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) & ~vR(M);
 
 	if(wb)
@@ -82,6 +86,7 @@ void _alubox_thumb_bics(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_eors(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) ^ vR(M);
 
 	if(wb)
@@ -145,6 +150,7 @@ void _alubox_thumb_movs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_muls(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) * vR(M);
 
 	if(wb)
@@ -185,6 +191,7 @@ void _alubox_thumb_nop(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_orrs(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) | vR(M);
 
 	if(wb)
@@ -225,6 +232,7 @@ void _alubox_thumb_rors(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_sbcs(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) - (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
 
 	if(wb)
@@ -236,6 +244,7 @@ void _alubox_thumb_sbcs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_subs(soc_core_p core, uint32_t* wb)
 {
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = vR(N) - vR(M);
 
 	if(wb)

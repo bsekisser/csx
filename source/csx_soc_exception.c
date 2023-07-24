@@ -94,13 +94,19 @@ static void _csx_soc_exception(csx_p csx, soc_core_p core, unsigned type)
 		case _EXCEPTION_PrefetchAbort:
 			fflush(stderr);
 			fflush(stdout);
-			assert((CPSR_C(Abort) | CPSR_C(IRQ)) & ~CPSR);
+			if(!((CPSR_C(Abort) | CPSR_C(IRQ)) & ~CPSR)) {
+				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
+			}
 			break;
 		case _EXCEPTION_FIQ:
-			assert((CPSR_C(FIQ) | CPSR_C(IRQ)) & ~CPSR);
+			if(!((CPSR_C(FIQ) | CPSR_C(IRQ)) & ~CPSR)) {
+				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
+			}
 			break;
 		case _EXCEPTION_IRQ:
-			assert(CPSR_C(IRQ) & ~CPSR);
+			if(!(CPSR_C(IRQ) & ~CPSR)) {
+				LOG_ACTION(core->csx->state = CSX_STATE_HALT);
+			}
 			break;
 	}
 

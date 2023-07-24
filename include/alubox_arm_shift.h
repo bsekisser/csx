@@ -7,12 +7,17 @@
 
 /* **** */
 
+#include "log.h"
+#include "shift_roll.h"
+
+/* **** */
+
 __ALUBOX_STATIC__
 void __alubox_arm_shift_c(soc_core_p core)
 {
 	unsigned carry_out = 0;
 
-	switch(rR(SOP_C)) {
+	switch(rR(SOP)) {
 		case __alubox_shift_asr:
 			carry_out = _asr_c(vR(M), vR(S));
 			break;
@@ -30,7 +35,6 @@ void __alubox_arm_shift_c(soc_core_p core)
 			break;
 	}
 
-//	vR(SOP_C) = carry_out;
 	BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!carry_out);
 }
 
@@ -39,21 +43,21 @@ void __alubox_arm_shift_sop(soc_core_p core)
 {
 	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
 
-	switch(rR(SOP_C)) {
+	switch(rR(SOP)) {
 		case __alubox_shift_asr:
-			vR(SOP_V) = _asr(vR(M), vR(S));
+			vR(SOP) = _asr(vR(M), vR(S));
 			break;
 		case __alubox_shift_lsl:
-			vR(SOP_V) = _lsl(vR(M), vR(S));
+			vR(SOP) = _lsl(vR(M), vR(S));
 			break;
 		case __alubox_shift_lsr:
-			vR(SOP_V) = _lsr(vR(M), vR(S));
+			vR(SOP) = _lsr(vR(M), vR(S));
 			break;
 		case __alubox_shift_ror:
-			vR(SOP_V) = _ror(vR(M), vR(S));
+			vR(SOP) = _ror(vR(M), vR(S));
 			break;
 		case __alubox_shift_rrx:
-			vR(SOP_V) = _rrx_v(vR(M), carry_in);
+			vR(SOP) = _rrx_v(vR(M), carry_in);
 			break;
 		default:
 			exit(-1);
@@ -70,5 +74,28 @@ void __alubox_arm_shift_sop(soc_core_p core)
 	if(0) LOG("rrm: 0x%08x, rrs: 0x%08x", rR(M), rR(S));
 
 	if(0) LOG("shift_type: %01u, %s(rm: 0x%08x, rs: 0x%08x) --> sop: 0x%08x, C: %01u",
-		rR(SOP_C), sts[rR(SOP_C)], vR(M), vR(S), vR(SOP_V), carry_in);
+		rR(SOP), sts[rR(SOP)], vR(M), vR(S), vR(SOP), carry_in);
+}
+
+__ALUBOX_STATIC__
+void __alubox_arm_shift_sop_immediate_x(soc_core_p core)
+{
+	switch(rR(SOP)) {
+		case __alubox_shift_asr:
+		case __alubox_shift_lsr:
+			if(0 == vR(S))
+				vR(S) = 32;
+			break;
+		case __alubox_shift_ror:
+			if(0 == vR(S))
+				rR(SOP) = __alubox_shift_rrx;
+			break;
+	}
+}
+
+__ALUBOX_STATIC__
+void __alubox_arm_shift_sop_immediate(soc_core_p core)
+{
+	__alubox_arm_shift_sop_immediate_x(core);
+	__alubox_arm_shift_sop(core);
 }

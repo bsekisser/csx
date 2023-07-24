@@ -54,12 +54,11 @@ enum	{
 	rRN,
 	rRM,
 	rRS,
-	rRSOP_C,
-	rRSOP_V,
-	rR_COUNT,
 //
-	rREA = rRSOP_V,
-	rRN_OFFSET = rRSOP_C,
+	rREA,
+	rRSOP,
+//
+	rR_COUNT,
 };
 
 typedef struct soc_core_inst_t {
@@ -72,7 +71,7 @@ typedef struct soc_core_inst_t {
 	uint32_t					ir;
 #define IR						SCIx->ir
 
-	soc_core_reg_t					r[rR_COUNT];
+	soc_core_reg_t				r[rR_COUNT];
 #define rR(_x)					rRX(rR##_x)
 #define rRX(_x)					SCIx->r[_x]
 

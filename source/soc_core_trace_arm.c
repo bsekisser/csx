@@ -30,13 +30,13 @@ static const char* dpi_ops[16] = {
 static void _dpi_s_s_r(soc_core_p core)
 {
 	_CORE_TRACE_("; /* 0x%08x %s0x%08x --> 0x%08x */",
-		vR(N), dpi_ops[DPI_OPERATION], vR(SOP_V), vR(D));
+		vR(N), dpi_ops[DPI_OPERATION], vR(SOP), vR(D));
 }
 
 static void _dpi_cmp_s_s_r(soc_core_p core)
 {
 	_CORE_TRACE_("; /* 0x%08x %s0x%08x ??? 0x%08x */",
-		vR(N), dpi_ops[DPI_OPERATION], vR(SOP_V), vR(D));
+		vR(N), dpi_ops[DPI_OPERATION], vR(SOP), vR(D));
 }
 
 static void _dpi_mov_s_s(soc_core_p core)
@@ -120,7 +120,7 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 			break;
 		case ARM_DPI_OPERATION_BIC:
 			_CORE_TRACE_("; /* 0x%08x & ~0x%08x(0x%08x) --> 0x%08x */",
-				vR(N), vR(SOP_V), ~vR(SOP_V), vR(D));
+				vR(N), vR(SOP), ~vR(SOP), vR(D));
 			break;
 		case ARM_DPI_OPERATION_CMP:
 		case ARM_DPI_OPERATION_CMN:
@@ -137,12 +137,21 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 		case ARM_DPI_OPERATION_RSB:
 		case ARM_DPI_OPERATION_RSC:
 			_CORE_TRACE_("; /* 0x%08x - 0x%08x --> 0x%08x */",
-				vR(SOP_V), vR(N), vR(D));
+				vR(SOP), vR(N), vR(D));
 			break;
 	}
 
 	CORE_TRACE_END();
 }
+
+static const char* _ldst_lsh_text[8] = {
+	"", "h", "d", "d", "", "h", "b", "h",
+};
+
+static const size_t _ldst_lsh_size[8] = {
+	0, sizeof(uint16_t), sizeof(uint64_t), sizeof(uint64_t),
+	0, sizeof(uint16_t), sizeof(int8_t), sizeof(int16_t),
+};
 
 void soc_core_trace_inst_ldst(soc_core_p core)
 {
@@ -153,38 +162,36 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 
 	_CORE_TRACE_("%sr", LDST_BIT(l20) ? "ld" : "st");
 
+//	size_t size = sizeof(uint32_t);
+
 	if(LDSTX & 1)
 	{
 		const int bit_t = !LDST_BIT(p24) && LDST_BIT(w21);
 
 		_CORE_TRACE_("%s%s", LDST_BIT(b22) ? "b" : "", bit_t ? "t" : "");
+
+#ifdef size
+		if(LDST_BIT(b22))
+			size = sizeof(uint8_t);
+#endif
 	}
 	else
 	{
 		const char* rws = "";
 		if(BTST(IR, 26)) {
-			if(LDST_BIT(b22))
+			if(LDST_BIT(b22)) {
 				rws = "b";
-		} else {
-			switch(BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5)) {
-				case 0x01: /* strh */
-				case 0x05: /* ldrh*/
-					rws = "h";
-					break;
-				case 0x02: /* strd */
-				case 0x03: /* ldrd */
-					rws = "d";
-					break;
-				case 0x06: /* ldrsb */
-					rws = "sb";
-					break;
-				case 0x07: /* ldrsh */
-					rws = "sh";
-					break;
-				default:
-					LOG_ACTION(core->csx->state = CSX_STATE_HALT);
-					break;
+#ifdef size
+				size = sizeof(uint8_t);
+#endif
 			}
+		} else {
+			const unsigned bwh = BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5);
+			
+			rws = _ldst_lsh_text[bwh];
+#ifdef size
+			size = _ldst_lsh_size[bwh];
+#endif
 		}
 
 		_CORE_TRACE_("%s", rws);
@@ -202,7 +209,11 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 	_CORE_TRACE_(")");
 	
 	if(CCx.e)
+#ifdef size
+		_CORE_TRACE_(" /* %02zu:[0x%08x](0x%08x) */", size, vR(EA), vR(D));
+#else
 		_CORE_TRACE_(" /* 0x%08x: 0x%08x */", vR(EA), vR(D));
+#endif
 
 	CORE_TRACE_END();
 }

@@ -34,7 +34,6 @@ void __alubox__flags_nz(soc_core_p core)
 UNUSED_FN __ALUBOX_STATIC__
 void __alubox__flags_nz_c(soc_core_p core)
 {
-//	BMAS(CPSR, SOC_CORE_PSR_BIT_C, !!vR(SOP_C));
 	__alubox__flags_nz(core);
 }
 
@@ -83,11 +82,11 @@ void __alubox__flags__sub_sop(soc_core_p core, uint32_t sop)
 UNUSED_FN __ALUBOX_STATIC__
 void __alubox__flags_add(soc_core_p core)
 {
-	__alubox__flags__add_sop(core, vR(SOP_V));
+	__alubox__flags__add_sop(core, vR(SOP));
 }
 
 UNUSED_FN __ALUBOX_STATIC__
 void __alubox__flags_sub(soc_core_p core)
 {
-	__alubox__flags__sub_sop(core, vR(SOP_V));
+	__alubox__flags__sub_sop(core, vR(SOP));
 }

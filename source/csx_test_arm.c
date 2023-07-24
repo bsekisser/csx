@@ -113,6 +113,17 @@ static uint32_t csx_test_arm_adcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0
 	return(res);
 }
 
+static unsigned _test_xres_res(csx_test_p t, unsigned xres, unsigned res)
+{
+	const unsigned result = (xres == res);
+	
+	if(0 == result) {
+		LOG("xres = 0x%08x, res = 0x%08x", xres, res);
+	}
+
+	return(result);
+}
+
 static void csx_test_arm_adcs(csx_test_p t)
 {
 	t->start_pc = t->pc = 0x10000000;
@@ -125,7 +136,7 @@ static void csx_test_arm_adcs(csx_test_p t)
 	xres = csx_test_arm_adcs_asm(t, &xpsr, ~0, 1);
 	res = csx_test_arm_adcs_inst(t, &cpsr, ~0, 1);
 
-	assert(xres == res);
+	assert(_test_xres_res(t, xres, res));
 	assert(_test_cpsr_xpsr(t, cpsr, xpsr));
 	assert(_test_nzcv(t, 0, 0, 1, 0));
 

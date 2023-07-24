@@ -26,6 +26,7 @@
 
 /* **** */
 
+#include "alubox_arm_shift.h"
 #include "alubox_thumb.h"
 
 /* **** */
@@ -55,7 +56,7 @@ static void soc_core_thumb_add_sub_rn_rd__rm(soc_core_p core, int bit_i)
 {
 	const uint8_t op2 = BEXT(IR, 9);
 
-	soc_core_decode_src(core, rRN, 5, 3);
+	soc_core_decode_dst(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
 	const alubox_fn _alubox_fn[2] = { _alubox_thumb_adds, _alubox_thumb_subs };
@@ -130,9 +131,7 @@ static void soc_core_thumb_ascm_rd_i(soc_core_p core)
 
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
 	soc_core_decode_dst(core, rRD, 10, 8);
-	
-	if(THUMB_ASCM_OP_MOV != operation)
-		_setup_rR_vR_src(core, rRN, rR(D));
+	_setup_rR_dst(core, rRN, rR(D));
 
 	const alubox_fn _alubox_fn[4] = {
 		_alubox_thumb_movs, _alubox_thumb_cmps,
@@ -299,15 +298,7 @@ static void soc_core_thumb_dp_rms_rdn(soc_core_p core)
 
 	soc_core_decode_src(core, rRM, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
-
-	switch(operation) {
-		case THUMB_DP_OP_MVN:
-		case THUMB_DP_OP_NEG:
-			break;
-		default:
-			_setup_rR_vR_src(core, rRN, rR(D));
-			break;
-	}
+	_setup_rR_dst(core, rRN, rR(D));
 
 	_alubox_fn[operation](core, &GPR(rR(D)));
 
@@ -640,62 +631,23 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 
 static void soc_core_thumb_sbi_imm5_rm_rd(soc_core_p core)
 {
-	const uint8_t operation = mlBFEXT(IR, 12, 11);
-	const uint8_t imm5 = mlBFEXT(IR, 10, 6);
+	rR(SOP) = mlBFEXT(IR, 12, 11);
+	_setup_rR_vR(S, ~0, mlBFEXT(IR, 10, 6));
 
 	soc_core_decode_src(core, rRM, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
-	uint8_t shift = imm5;
-	const char *sops = shift_op_string[0][operation];
+	__alubox_arm_shift_sop_immediate(core);
+	soc_core_flags_nz(core, vR(SOP));
+	__alubox_arm_shift_c(core);
 
-	vR(D) = vR(M);
+	soc_core_reg_set(core, rR(D), vR(SOP));
 
-	switch(operation)
-	{
-		case THUMB_SBI_OP_ASR:
-			if(shift)
-			{
-				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
-				vR(D) = _asr(vR(M), shift);
-			}
-			else
-			{
-				int rm31_c = BEXT(vR(M), 31);
-				BMAS(CPSR, SOC_CORE_PSR_BIT_C, rm31_c);
-				vR(D) = rm31_c ? ~0 : 0;
-			}
-			break;
-		case THUMB_SBI_OP_LSL:
-			if(shift)
-			{
-				BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (-shift & 31)));
-				vR(D) = _lsl(vR(M), shift);
-			}
-			break;
-		case THUMB_SBI_OP_LSR:
-			if(shift)
-				vR(D) = _lsr(vR(M), shift);
-			else
-				shift = 32;
-			BMAS(CPSR, SOC_CORE_PSR_BIT_C, BEXT(vR(M), (shift - 1)));
-			break;
-		default:
-			LOG("operation = 0x%01x", operation);
-			LOG_ACTION(exit(1));
-	}
-
-	soc_core_flags_nz(core, vR(D));
-
-	if(0) LOG("N = %1u, Z = %1u, C = %1u, V = %1u",
-		!!(CPSR & SOC_CORE_PSR_N), !!(CPSR & SOC_CORE_PSR_Z),
-		!!(CPSR & SOC_CORE_PSR_C), !!(CPSR & SOC_CORE_PSR_V));
+	const char* sops = shift_op_string[0][rR(SOP)];
 
 	CORE_TRACE("%ss(%s, %s, 0x%02x); /* %s(0x%08x, 0x%02x) = 0x%08x */",
-		sops, rR_NAME(D), rR_NAME(M), shift,
-		sops, vR(M), shift, vR(D));
-
-	soc_core_reg_set(core, rR(D), vR(D));
+		sops, rR_NAME(D), rR_NAME(M), vR(S),
+		sops, vR(M), vR(S), vR(SOP));
 }
 
 static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
@@ -704,9 +656,7 @@ static void soc_core_thumb_sdp_rms_rdn(soc_core_p core)
 
 	soc_core_decode_src(core, rRM, 6, 3);
 	_setup_rR_dst(core, rRD, mlBFEXT(IR, 2, 0) | BMOV(IR, 7, 3));
-
-	if(THUMB_SDP_OP_MOV != operation)
-		_setup_rR_vR_src(core, rRN, rR(D));
+	_setup_rR_dst(core, rRN, rR(D));
 
 	const alubox_fn _alubox_fn[4] = {
 		[THUMB_SDP_OP_ADD] = _alubox_thumb_add,

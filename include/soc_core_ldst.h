@@ -24,125 +24,246 @@
 
 /* **** */
 
-static void __arm_ldst_reg_set(soc_core_p core)
+static inline uint32_t ___ldr_x(soc_core_p core, unsigned r, uint32_t ea)
 {
+	const unsigned v = soc_core_read(core, ea, sizeof(uint32_t));
+
+	if(rPC == r)
+		soc_core_reg_set_pcx(core, v);
+	else
+		soc_core_reg_set(core, r, v);
+
+	return(v);
+}
+
+static inline void ___str_x(soc_core_p core, unsigned r, uint32_t ea)
+{
+	_setup_rR_vR_src(core, rRD, r);
+	soc_core_write(core, ea, sizeof(uint32_t), vR(D));
+}
+
+static inline void __ldr(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+	
+	const unsigned ea_xx = vR(EA) & 3;
+	
+	if(ea_xx && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+	
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
+
+	if(ea_xx && CP15_reg1_bit(u))
+		vR(D) = _ror(vR(D), (ea_xx << 3));
+
 	if(rPC == rR(D)) {
-		CORE_TRACE_BRANCH(vR(D));
 		soc_core_reg_set_pcx(core, vR(D));
 	} else
 		soc_core_reg_set(core, rR(D), vR(D));
 }
 
-/* **** */
-
-static void _arm_ldst_bh(soc_core_p core, uint32_t ea, size_t size)
+static inline void __ldrb(soc_core_p core)
 {
-	if(LDST_BIT(l20)) {
-		vR(D) = soc_core_read(core, ea, size);
-		__arm_ldst_reg_set(core);
-	} else
-		soc_core_write(core, ea, size, vR(D));
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	vR(D) = soc_core_read(core, vR(EA), sizeof(uint8_t));
+	
+	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static void _arm_ldst_d(soc_core_p core, uint32_t ea)
-{ /* untested / verified */
-	if(BTST(IR, 5)) { /* strd */
-		soc_core_write(core, ea, sizeof(uint32_t), vR(D));
-
-		CYCLE++;
-		
-		vR(D) = soc_core_reg_get(core, rR(D) ^ 1);
-		soc_core_write(core, ea + 4, sizeof(uint32_t), vR(D));
-	} else { /* ldrd */
-		vR(D) = soc_core_read(core, ea, sizeof(uint32_t));
-		__arm_ldst_reg_set(core);
-
-		CYCLE++;
-		rR(D) ^= 1;
-
-		vR(D) = soc_core_read(core, ea + 4, sizeof(uint32_t));
-		__arm_ldst_reg_set(core);
-		rR(D) ^= 1;
-	}
-}
-
-static void _arm_ldst_ldr_sb(soc_core_p core, uint32_t ea)
-{
-	vR(D) = (int8_t)soc_core_read(core, ea, sizeof(int8_t));
-	__arm_ldst_reg_set(core);
-}
-
-static void _arm_ldst_ldr_sh(soc_core_p core, uint32_t ea)
-{
-	vR(D) = (int16_t)soc_core_read(core, ea, sizeof(int16_t));
-	__arm_ldst_reg_set(core);
-}
-
-static void _arm_ldst_w(soc_core_p core, uint32_t ea)
+static inline void __ldrd(soc_core_p core)
 {
 	const csx_p csx = core->csx;
 
-	assert(LDST_BIT(p24) || (0 == LDST_BIT(w21)));
-	assert(!((0 == LDST_BIT(p24)) && (1 == LDST_BIT_w21)));
+	if((vR(EA) & 3) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
 
-	if(LDST_BIT(l20)) {
-		vR(D) = soc_core_read(core, ea, sizeof(uint32_t));
-		
-		if(CP15_reg1_bit(u))
-			vR(D) = _ror(vR(D), ((ea & 3) << 3));
-		
-		__arm_ldst_reg_set(core);
-	} else
-		soc_core_write(core, ea, sizeof(uint32_t), vR(D));
+	unsigned ea = vR(EA);
+	
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	unsigned r = rR(D);
+
+	___ldr_x(core, r++, ea);
+	ea += sizeof(uint32_t);
+	vR(D) = ___ldr_x(core, r & 0x0f, ea);
+}
+
+static inline void __ldrh(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	if((vR(EA) & 1) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	vR(D) = soc_core_read(core, vR(EA), sizeof(uint16_t));
+	
+	soc_core_reg_set(core, rR(D), vR(D));
+}
+
+static inline void __ldrsb(soc_core_p core)
+{
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	vR(D) = (int8_t)soc_core_read(core, vR(EA), sizeof(int8_t));
+
+	soc_core_reg_set(core, rR(D), vR(D));
+}
+
+static inline void __ldrsh(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	if((vR(EA) & 1) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+
+	_setup_rR_dst(core, rRD, ARM_IR_RD);
+	vR(D) = (int16_t)soc_core_read(core, vR(EA), sizeof(uint16_t));
+	
+	soc_core_reg_set(core, rR(D), vR(D));
+}
+
+static inline void __str(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	if((vR(EA) & 3) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+
+	_setup_rR_vR_src(core, rRD, ARM_IR_RD);
+	soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
+}
+
+static inline void __strb(soc_core_p core)
+{
+	_setup_rR_vR_src(core, rRD, ARM_IR_RD);
+	soc_core_write(core, vR(EA), sizeof(uint8_t), vR(D));
+}
+
+static inline void __strd(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	if((vR(EA) & 3) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+
+	unsigned ea = vR(EA);
+	unsigned r = ARM_IR_RD;
+
+	___str_x(core, r++, ea);
+	ea += sizeof(uint32_t);
+	___str_x(core, r & 0xf, ea);
+}
+
+static inline void __strh(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	if((vR(EA) & 1) && CP15_reg1_bit(a))
+		soc_core_exception(core, _EXCEPTION_DataAbort);
+
+	_setup_rR_vR_src(core, rRD, ARM_IR_RD);
+	soc_core_write(core, vR(EA), sizeof(uint16_t), vR(D));
 }
 
 /* **** */
 
-static void _arm_ldst(soc_core_p core, uint32_t ea)
+static inline void _arm_ldst_b(soc_core_p core)
 {
+	if(LDST_BIT(l20))
+		__ldrb(core);
+	else
+		__strb(core);
+}
+
+static inline void _arm_ldst_w(soc_core_p core)
+{
+//	const csx_p csx = core->csx;
+
+	if(LDST_BIT(l20))
+		__ldr(core);
+	else
+		__str(core);
+}
+
+/* **** */
+
+static void _arm_ldst(soc_core_p core)
+{
+	assert(LDST_BIT(p24) || (0 == LDST_BIT(w21)));
+	assert(!((0 == LDST_BIT(p24)) && (1 == LDST_BIT_w21)));
+
 	if(CCx.e) {
 		if(LDST_BIT(b22))
-			_arm_ldst_bh(core, ea, sizeof(uint8_t));
+			_arm_ldst_b(core);
 		else
-			_arm_ldst_w(core, ea);
+			_arm_ldst_w(core);
 	}
 }
 
-static uint32_t _arm_ldst_ea(soc_core_p core)
+static void _arm_ldst_ea(soc_core_p core)
 {
-	vR(EA) = vR(N);
+	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+
+	unsigned wb_ea = vR(N);
 
 	if(LDST_BIT(u23))
-		vR(EA) += vR(N_OFFSET);
+		wb_ea += vR(SOP);
 	else
-		vR(EA) -= vR(N_OFFSET);
+		wb_ea -= vR(SOP);
 
 	if(CCx.e) {
 		if((0 == LDST_BIT(p24)) || LDST_BIT(w21))
-			soc_core_reg_set(core, rR(N), vR(EA));
+			soc_core_reg_set(core, rR(N), wb_ea);
 	}
 
-	if(LDST_BIT(p24))
-		return(vR(EA));
-
-	return(vR(N));
+	vR(EA) = LDST_BIT(p24) ? wb_ea : vR(N);
 }
 
-static void _arm_ldst_sh(soc_core_p core, uint32_t ea)
+static void _arm_ldst_sh(soc_core_p core)
 {
-	if(CCx.e) {
-		if(BTST(IR, 6)) {
-			if(LDST_BIT(l20)) {
-				if(BTST(IR, 5))
-					_arm_ldst_ldr_sh(core, ea);
-				else
-					_arm_ldst_ldr_sb(core, ea);
-			} else
-				_arm_ldst_d(core, ea);
-		} if(BTST(IR, 5))
-			_arm_ldst_bh(core, ea, sizeof(uint16_t));
-		else {
-			DECODE_FAULT
-		}
+#if 1
+	const unsigned bwh = BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5);
+
+	switch(bwh) {
+		case 1:
+			__strh(core);
+			break;
+		case 2:
+			__ldrd(core);
+			break;
+		case 3:
+			__strd(core);
+			break;
+		case 5:
+			__ldrh(core);
+			break;
+		case 6:
+			__ldrsb(core);
+			break;
+		case 7:
+			__ldrsh(core);
+			break;
+		default:
+			UNDEFINED;
+			break;
 	}
+#else
+	if(LDST_BIT(l20)) {
+		if(LDST_BIT(s6)) {
+			if(LDST_BIT(h5))
+				__ldrsh(core);
+			else
+				__ldrsb(core);
+		} else if(LDST_BIT(h5))
+			__ldrh(core);
+	} else {
+		if(LDST_BIT(s6)) {
+			if(LDST_BIT(h5))
+				__strd(core);
+			else
+				__ldrd(core);
+		} else
+			__strh(core);
+	}
+#endif
 }
