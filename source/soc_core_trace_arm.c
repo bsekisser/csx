@@ -216,4 +216,5 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 #endif
 
 	CORE_TRACE_END();
+	UNUSED(_ldst_lsh_size);
 }

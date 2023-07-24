@@ -703,12 +703,12 @@ static void soc_core_thumb_step_unimplimented(soc_core_p core)
 	UNUSED(core);
 }
 
-static void soc_core_thumb_step_unpredictable(soc_core_p core)
+/*static void soc_core_thumb_step_unpredictable(soc_core_p core)
 {
 	UNPREDICTABLE;
 
 	UNUSED(core);
-}
+}*/
 
 /* **** */
 

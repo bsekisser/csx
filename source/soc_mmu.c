@@ -232,8 +232,7 @@ static uint32_t _soc_mmu_cp15_access_ttbr(soc_mmu_p mmu, uint32_t* write, unsign
 		_LOG_(" %c", BEXT(data, 1) ? 'S' : 's');
 		LOG_END(" %c", BEXT(data, 0) ? 'C' : 'c');
 
-		mmu->ttbr[r] = data;
-//		mmu->ttbr[r] = data & mask;
+		mmu->ttbr[r] = data & mask;
 	} else {
 		DEBUG(LOG("READ -- Translation Table Base %01u", r));
 	}

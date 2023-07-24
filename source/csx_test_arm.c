@@ -122,6 +122,7 @@ static unsigned _test_xres_res(csx_test_p t, unsigned xres, unsigned res)
 	}
 
 	return(result);
+	UNUSED(t);
 }
 
 static void csx_test_arm_adcs(csx_test_p t)

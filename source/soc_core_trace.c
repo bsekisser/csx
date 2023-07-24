@@ -53,7 +53,7 @@ void soc_core_trace_dump_regs(soc_core_p core)
 	LOG_START("\n");
 	unsigned i = 0;
 	do {
-		_LOG_("%04s == 0x%08x", _reg_name(i), GPR(i));
+		_LOG_("%s == 0x%08x", reg_name[1][i], GPR(i));
 		i++;
 		if(i < 16) {
 			_LOG_("%s", (3 & i) ? ", " : "\n");

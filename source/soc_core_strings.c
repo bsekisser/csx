@@ -16,9 +16,9 @@ const char* creg_name[16] = {
 };
 
 
-const char* reg_name[16] = {
-	"r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7",
-	"r8", "r9", "r10", "r11", "r12", "rSP", "rLR", "rPC",
+const char* reg_name[2][16] = {
+	{ "r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "r12", "rSP", "rLR", "rPC", },
+	{ " r0", " r1", " r2", " r3", " r4", " r5", " r6", " r7", " r8", " r9", "r10", "r11", "r12", "rSP", "rLR", "rPC", },
 };
 
 const char* shift_op_string[2][6] = {
