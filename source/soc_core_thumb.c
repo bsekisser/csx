@@ -8,6 +8,7 @@
 
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
+#include "soc_core_ldst.h"
 #include "soc_core_psr.h"
 #include "soc_core_strings.h"
 #include "soc_core_trace.h"
@@ -320,52 +321,53 @@ static void soc_core_thumb_ldst_bwh_o_rn_rd(soc_core_p core)
 {
 //	struct {
 		const int bit_b = BEXT(IR, 12);
+		const int bit_h = BEXT(IR, 15);
 		const int bit_l = BEXT(IR, 11);
 //	}bit;
-
-	const uint8_t imm5 = mlBFEXT(IR, 10, 6);
 
 	soc_core_decode_src(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
-	const char *ss = "";
-	size_t size = 0;
-
-	if(SOC_CORE_THUMB_LDST_BW_O_RN_RD == (IR & SOC_CORE_THUMB_LDST_BW_O_RN_RD_MASK))
-	{
+	if(bit_h)
+		_setup_rR_vR(M, ~0, mlBFMOV(IR, 10, 6, 1));
+	else {
 		if(bit_b)
-		{
-			ss = "b";
-			size = sizeof(uint8_t);
-		}
+			_setup_rR_vR(M, ~0, mlBFEXT(IR, 10, 6));
 		else
-		{
-			size = sizeof(uint32_t);
+			_setup_rR_vR(M, ~0, mlBFMOV(IR, 10, 6, 2));
+	}
+
+	vR(EA) = vR(N) + vR(M);
+
+	const char* ss = "";
+
+	if(bit_h) {
+		ss = "h";
+
+		if(bit_l)
+			__ldrh(core);
+		else
+			__strh(core);
+	} else {
+		ss = bit_b ? "b" : "";
+
+		switch(mlBFEXT(IR, 12, 11)) {
+			case 0:
+				__str(core);
+				break;
+			case 1:
+				__ldr(core);
+				break;
+			case 2:
+				__strb(core);
+				break;
+			case 3:
+				__ldrb(core);
 		}
 	}
-	else
-	{
-		ss = "h";
-		size = sizeof(uint16_t);
-	}
-
-	assert(size != 0);
-
-	const uint16_t offset = imm5 << (size >> 1);
-	const uint32_t ea = vR(N) + offset;
-
-	if(bit_l)
-		vR(D) = soc_core_read(core, ea, size);
-	else
-		vR(D) = soc_core_reg_get(core, rR(D));
 
 	CORE_TRACE("%sr%s(%s, %s[0x%03x]); /* [(0x%08x + 0x%03x) = 0x%08x](0x%08x) */",
-		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), offset, vR(N), offset, ea, vR(D));
-
-	if(bit_l)
-		soc_core_reg_set(core, rR(D), vR(D));
-	else
-		soc_core_write(core, ea, size, vR(D));
+		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), vR(M), vR(N), vR(M), vR(EA), vR(D));
 }
 
 static void soc_core_thumb_ldst_rd_i(soc_core_p core)
@@ -418,27 +420,36 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 	soc_core_decode_src(core, rRN, 5, 3);
 	soc_core_decode_dst(core, rRD, 2, 0);
 
-	const char *ss = "";
-	size_t size = 0;
+	vR(EA) = vR(N) + vR(M);
+
+	static const char *_ss[8] = { "", "h", "b", "sb", "", "h", "b", "sh" };
 
 	switch(bwh)
 	{
 		case 0x00:
-		case 0x04:
-			size = sizeof(uint32_t);
-		break;
+			__str(core);
+			break;
 		case 0x01:
-		case 0x05:
-		case 0x07:
-			ss = ((7 == bwh) ? "sh" : "h");
-			size = sizeof(uint16_t);
-		break;
+			__strh(core);
+			break;
 		case 0x02:
+			__strb(core);
+			break;
 		case 0x03:
+			__ldrsb(core);
+			break;
+		case 0x04:
+			__ldr(core);
+			break;
+		case 0x05:
+			__ldrh(core);
+			break;
 		case 0x06:
-			ss = ((3 == bwh) ? "sb" : "b");
-			size = sizeof(uint8_t);
-		break;
+			__ldrb(core);
+			break;
+		case 0x07:
+			__ldrsh(core);
+			break;
 		default:
 			LOG("bwh = 0x%01x", bwh);
 			soc_core_disasm_thumb(core, IP, IR);
@@ -446,29 +457,8 @@ static void soc_core_thumb_ldst_rm_rn_rd(soc_core_p core)
 			break;
 	}
 
-	uint32_t ea = vR(N) + vR(M);
-
-	if(bit_l)
-		vR(D) = soc_core_read(core, ea, size);
-	else
-		vR(D) = soc_core_reg_get(core, rR(D));
-
-	switch(bwh) {
-		case 0x03:
-			vR(D) = (int8_t)vR(D);
-			break;
-		case 0x07:
-			vR(D) = (int16_t)vR(D);
-			break;
-	}
-
 	CORE_TRACE("%sr%s(%s, %s, %s); /* 0x%08x[0x%08x](0x%08x) = 0x%08x */",
-		bit_l ? "ld" : "st", ss, rR_NAME(D), rR_NAME(N), rR_NAME(M), vR(N), vR(M), ea, vR(D));
-
-	if(bit_l)
-		soc_core_reg_set(core, rR(D), vR(D));
-	else
-		soc_core_write(core, ea, size, vR(D));
+		bit_l ? "ld" : "st", _ss[bwh], rR_NAME(D), rR_NAME(N), rR_NAME(M), vR(N), vR(M), vR(EA), vR(D));
 }
 
 static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
