@@ -171,6 +171,136 @@ static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
 	}
 }
 
+static const uint32_t soc_core_msr_priv_mask[] =
+	{ 0x0000000f, 0x0000000f, 0x0000000f, 0x0000000f, 0x000001df };
+static const uint32_t soc_core_msr_state_mask[] =
+	{ 0x00000000, 0x00000020, 0x00000020, 0x01000020, 0x01000020 };
+static const uint32_t soc_core_msr_unalloc_mask[] =
+	{ 0x0fffff20, 0x0fffff00, 0x07ffff00, 0x06ffff00, 0x06f0fc00 };
+static const uint32_t soc_core_msr_user_mask[] =
+	{ 0xf0000000, 0xf0000000, 0xf8000000, 0xf8000000, 0xf80f0200 };
+
+static void _arm_inst_msr(soc_core_p core)
+{
+	csx_p csx = core->csx; (void)csx;
+
+	uint32_t test = 0, result = 0;
+
+	const int tsbo = _check_sbo(IR, 15, 12, &test, &result);
+	if(tsbo) {
+		LOG("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", IR, test, result, tsbo);
+		UNPREDICTABLE;
+	}
+
+//	struct {
+		const int bit_i = BEXT(IR, 25);
+		const int bit_r = BEXT(IR, 22);
+//	}bit;
+
+	const uint8_t field_mask = mlBFEXT(IR, 19, 16);
+	const uint32_t unalloc_mask = soc_core_msr_unalloc_mask[arm_v5tej];
+	if(0) LOG("unalloc_mask = 0x%08x", unalloc_mask);
+
+	if(vR(SOP) & unalloc_mask)
+	{
+		/* TODO: UNPREDICTABLE
+		 *
+		 * till further notice, fail silently...  fuck it!
+		 */
+	}
+
+	const uint32_t byte_mask =
+		(BTST(field_mask, 0) ? (0xff << 0) : 0)
+		| (BTST(field_mask, 1) ? (0xff << 8) : 0)
+		| (BTST(field_mask, 2) ? (0xff << 16) : 0)
+		| (BTST(field_mask, 3) ? (0xff << 24) : 0);
+
+	const uint32_t state_mask = soc_core_msr_state_mask[arm_v5tej];
+	const uint32_t user_mask = soc_core_msr_user_mask[arm_v5tej];
+	const uint32_t priv_mask = soc_core_msr_priv_mask[arm_v5tej];
+
+	if(0) LOG("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
+		state_mask, user_mask, priv_mask);
+
+	if(0) LOG("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
+
+	uint32_t saved_psr = 0, new_psr = 0;
+
+	uint32_t mask = 0;
+	if(bit_r)
+	{
+		if(core->spsr)
+		{
+			mask = byte_mask & (user_mask | priv_mask | state_mask);
+
+			saved_psr = *core->spsr;
+			new_psr = (saved_psr & ~mask) | (vR(SOP) & mask);
+
+			if(CCx.e)
+				*core->spsr = new_psr;
+		}
+		else
+		{
+			UNPREDICTABLE;
+		}
+	}
+	else
+	{
+		if(soc_core_in_a_privaleged_mode(core))
+		{
+			if(vR(SOP) & state_mask)
+			{
+				UNPREDICTABLE;
+			}
+			else
+				mask = byte_mask & (user_mask | priv_mask);
+		}
+		else
+			mask = byte_mask & user_mask;
+
+		saved_psr = CPSR;
+		new_psr = (saved_psr & ~mask) | (vR(SOP) & mask);
+
+		if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
+
+		if(BTST(saved_psr, SOC_CORE_PSR_BIT_T) != BTST(new_psr, SOC_CORE_PSR_BIT_T))
+			CORE_TRACE_THUMB;
+
+		if(CCx.e)
+			soc_core_psr_mode_switch(core, new_psr);
+	}
+
+	uint8_t cpsrs[5];
+	cpsrs[0] = BTST(field_mask, 3) ? 'F' : 'f';
+	cpsrs[1] = BTST(field_mask, 2) ? 'S' : 's';
+	cpsrs[2] = BTST(field_mask, 1) ? 'X' : 'x';
+	cpsrs[3] = BTST(field_mask, 0) ? 'C' : 'c';
+	cpsrs[4] = 0;
+
+	const uint8_t cs = bit_r ? 'S' : 'C';
+
+//	soc_core_trace_psr(core, 0, saved_psr);
+
+	const uint32_t operand_masked = vR(SOP) & mask;
+
+	if(bit_i)
+	{
+		CORE_TRACE("msr(%cPSR_%s, 0x%08x) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
+			cs, cpsrs, vR(SOP), vR(SOP), mask, operand_masked, new_psr);
+	}
+	else
+	{
+		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
+			cs, cpsrs, rR_NAME(M), vR(SOP), mask, operand_masked, new_psr);
+	}
+
+	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
+
+//	soc_core_trace_psr(core, 0, new_psr);
+}
+
+/* **** */
+
 static void arm_inst_b_bl(soc_core_p core)
 {
 	const int link = BEXT(IR, ARM_INST_BIT_LINK);
@@ -272,7 +402,7 @@ static void arm_inst_ldst_immediate_offset_sh(soc_core_p core)
 static void arm_inst_ldst_register_offset_sh(soc_core_p core)
 {
 	assert(0 == mlBFEXT(IR, 11, 8));
-	
+
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 	vR(SOP) = vR(M);
 
@@ -517,159 +647,37 @@ static void arm_inst_mrs(soc_core_p core)
 		soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static const uint32_t soc_core_msr_priv_mask[] =
-	{ 0x0000000f, 0x0000000f, 0x0000000f, 0x0000000f, 0x000001df };
-static const uint32_t soc_core_msr_state_mask[] =
-	{ 0x00000000, 0x00000020, 0x00000020, 0x01000020, 0x01000020 };
-static const uint32_t soc_core_msr_unalloc_mask[] =
-	{ 0x0fffff20, 0x0fffff00, 0x07ffff00, 0x06ffff00, 0x06f0fc00 };
-static const uint32_t soc_core_msr_user_mask[] =
-	{ 0xf0000000, 0xf0000000, 0xf8000000, 0xf8000000, 0xf80f0200 };
-
-static void arm_inst_msr(soc_core_p core)
+static void arm_inst_msr_immediate(soc_core_p core)
 {
-	csx_p csx = core->csx; (void)csx;
+	_setup_rR_vR(M, ~0, mlBFEXT(IR, 7, 0));
+	_setup_rR_vR(S, ~0, mlBFMOV(IR, 11, 8, 1));
+	_setup_rR_vR(SOP, ~0, _ror(vR(M), vR(S)));
 
-	uint32_t test = 0, result = 0;
+	return(_arm_inst_msr(core));
+}
 
-	const int tsbo = _check_sbo(IR, 15, 12, &test, &result);
-	if(tsbo) {
-		LOG("!! sbo(opcode = 0x%08x, 15, 12, =0x%08x, =0x%08x (%u))", IR, test, result, tsbo);
-		UNPREDICTABLE;
-	}
-
-//	struct {
-		const int bit_i = BEXT(IR, 25);
-		const int bit_r = BEXT(IR, 22);
-//	}bit;
-
-	const uint8_t field_mask = mlBFEXT(IR, 19, 16);
-
-	uint8_t rotate_imm = 0, imm8 = 0;
-	uint8_t operand = 0;
-
-	if(bit_i)
+static void arm_inst_msr_register(soc_core_p core)
+{
+	if(0 == mlBFEXT(IR, 7, 4))
 	{
-		rotate_imm = mlBFEXT(IR, 11, 8);
-		imm8 = mlBFEXT(IR, 7, 0);
-		operand = _ror(imm8, (rotate_imm << 1));
-	}
-	else
-	{
-		if(0 == mlBFEXT(IR, 7, 4))
+		uint32_t test = 0, result = 0;
+
+		const int tsbz = _check_sbz(IR, 11, 8, &test, &result);
+		if(tsbz)
 		{
-			const int tsbz = _check_sbz(IR, 11, 8, &test, &result);
-			if(tsbz)
-			{
-				LOG("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", IR, test, result, tsbz);
-				UNPREDICTABLE;
-			}
-
-			_setup_rR_vR_src(core, rRM, ARM_IR_RM);
-			operand = vR(M);
-		}
-		else
-		{
-			UNIMPLIMENTED;
-		}
-	}
-
-	const uint32_t unalloc_mask = soc_core_msr_unalloc_mask[arm_v5tej];
-	if(0) LOG("unalloc_mask = 0x%08x", unalloc_mask);
-
-	if(operand & unalloc_mask)
-	{
-		UNPREDICTABLE;
-	}
-
-	const uint32_t byte_mask =
-		(BTST(field_mask, 0) ? (0xff << 0) : 0)
-		| (BTST(field_mask, 1) ? (0xff << 8) : 0)
-		| (BTST(field_mask, 2) ? (0xff << 16) : 0)
-		| (BTST(field_mask, 3) ? (0xff << 24) : 0);
-
-	const uint32_t state_mask = soc_core_msr_state_mask[arm_v5tej];
-	const uint32_t user_mask = soc_core_msr_user_mask[arm_v5tej];
-	const uint32_t priv_mask = soc_core_msr_priv_mask[arm_v5tej];
-
-	if(0) LOG("state_mask = 0x%08x, user_mask = 0x%08x, priv_mask = 0x%08x",
-		state_mask, user_mask, priv_mask);
-
-	if(0) LOG("field_mask = 0x%08x, byte_mask = 0x%08x", field_mask, byte_mask);
-
-	uint32_t saved_psr = 0, new_psr = 0;
-
-	uint32_t mask = 0;
-	if(bit_r)
-	{
-		if(core->spsr)
-		{
-			mask = byte_mask & (user_mask | priv_mask | state_mask);
-
-			saved_psr = *core->spsr;
-			new_psr = (saved_psr & ~mask) | (operand & mask);
-
-			if(CCx.e)
-				*core->spsr = new_psr;
-		}
-		else
-		{
+			LOG("!! sbz(opcode = 0x%08x, 11, 8, =0x%08x, =0x%08x (%u))", IR, test, result, tsbz);
 			UNPREDICTABLE;
 		}
+
+		_setup_rR_vR_src(core, rRM, ARM_IR_RM);
+		_setup_rR_vR(SOP, ~0, vR(M));
 	}
 	else
 	{
-		if(soc_core_in_a_privaleged_mode(core))
-		{
-			if(operand & state_mask)
-			{
-				UNPREDICTABLE;
-			}
-			else
-				mask = byte_mask & (user_mask | priv_mask);
-		}
-		else
-			mask = byte_mask & user_mask;
-
-		saved_psr = CPSR;
-		new_psr = (saved_psr & ~mask) | (operand & mask);
-
-		if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
-
-		if(BTST(saved_psr, SOC_CORE_PSR_BIT_T) != BTST(new_psr, SOC_CORE_PSR_BIT_T))
-			CORE_TRACE_THUMB;
-
-		if(CCx.e)
-			soc_core_psr_mode_switch(core, new_psr);
+		UNIMPLIMENTED;
 	}
 
-	uint8_t cpsrs[5];
-	cpsrs[0] = BTST(field_mask, 3) ? 'F' : 'f';
-	cpsrs[1] = BTST(field_mask, 2) ? 'S' : 's';
-	cpsrs[2] = BTST(field_mask, 1) ? 'X' : 'x';
-	cpsrs[3] = BTST(field_mask, 0) ? 'C' : 'c';
-	cpsrs[4] = 0;
-
-	const uint8_t cs = bit_r ? 'S' : 'C';
-
-//	soc_core_trace_psr(core, 0, saved_psr);
-
-	const uint32_t operand_masked = operand & mask;
-
-	if(bit_i)
-	{
-		CORE_TRACE("msr(%cPSR_%s, 0x%08x) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
-			cs, cpsrs, operand, operand, mask, operand_masked, new_psr);
-	}
-	else
-	{
-		CORE_TRACE("msr(%cPSR_%s, %s) /* 0x%08x & 0x%08x -> 0x%08x, 0x%08x */",
-			cs, cpsrs, rR_NAME(M), operand, mask, operand_masked, new_psr);
-	}
-
-	if(0) LOG("sp = 0x%08x, lr = 0x%08x, pc = 0x%08x", SP, LR, IP);
-
-//	soc_core_trace_psr(core, 0, new_psr);
+	return(_arm_inst_msr(core));
 }
 
 static void arm_inst_smull(soc_core_p core)
@@ -776,9 +784,10 @@ static void soc_core_arm_step_group0_misc(soc_core_p core)
 		return(arm_inst_bx(core));
 	if(ARM_INST_MRS == (IR & ARM_INST_MRS_MASK))
 		return(arm_inst_mrs(core));
-	if((ARM_INST_MSR_I == (IR & ARM_INST_MSR_I_MASK))
-		|| (ARM_INST_MSR_R == (IR & ARM_INST_MSR_R_MASK)))
-			return(arm_inst_msr(core));
+	if(ARM_INST_MSR_I == (IR & ARM_INST_MSR_I_MASK))
+		return(arm_inst_msr_immediate(core));
+	if(ARM_INST_MSR_R == (IR & ARM_INST_MSR_R_MASK))
+		return(arm_inst_msr_register(core));
 
 	UNIMPLIMENTED;
 }
