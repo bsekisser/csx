@@ -77,7 +77,7 @@ typedef struct soc_core_inst_t {
 
 	struct {
 		const char*				s;
-		int						e:1;
+		unsigned				e:1;
 								}ccx;
 #define CCx	SCIx->ccx
 }soc_core_inst_t;
@@ -104,7 +104,7 @@ typedef struct soc_core_t {
 	csx_soc_p			soc;
 	soc_core_step_fn	step;
 
-	uint				trace:1;
+	unsigned			trace:1;
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;

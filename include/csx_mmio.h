@@ -73,7 +73,7 @@ typedef struct csx_mmio_trace_t {
 	}
 
 #define MMIO_HILO(_hi, _lo) \
-	((_lo) | ((_hi) << 16))
+	((_lo) | (((uint32_t)(_hi)) << 16))
 
 #define MMIO_ENUM(_ahi, _alo, _dhi, _dlo, _name, ...) \
 	_name = MMIO_HILO(_ahi, _alo),
