@@ -273,7 +273,7 @@ static void csx_test_arm_b(csx_test_p t)
 	arm_blx(t, offset);
 	expect_lr = pc(t);
 
-	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
+	t->start_pc = t->pc = csx_test_run(t, 1) & ~3U;
 	assert(new_pc == PC);
 	assert(expect_lr == LR);
 	assert(CPSR & SOC_CORE_PSR_BIT_T);
@@ -286,7 +286,7 @@ static void csx_test_arm_b(csx_test_p t)
 	arm_blx(t, offset);
 	expect_lr = pc(t);
 
-	t->start_pc = t->pc = csx_test_run(t, 1) & ~3;
+	t->start_pc = t->pc = csx_test_run(t, 1) & ~3U;
 	assert(new_pc == PC);
 	assert(expect_lr == LR);
 	assert(CPSR & SOC_CORE_PSR_BIT_T);

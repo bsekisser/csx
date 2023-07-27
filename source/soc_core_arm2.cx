@@ -15,8 +15,8 @@
 
 /* **** */
 
-#define ARM_IP_NEXT ((IP + 4) & ~3)
-#define ARM_PC ((IP + 8) & ~3)
+#define ARM_IP_NEXT ((IP + 4) & ~3U)
+#define ARM_PC ((IP + 8) & ~3U)
 
 /* **** */
 

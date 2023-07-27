@@ -155,7 +155,7 @@ static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
 
 	const int splat = _trace_bx_0 && !blx && (new_pc == ARM_IP_NEXT);
 	CORE_TRACE("b%s%s(0x%08x) /* %c(%s0x%08x) hl = %01u */",
-		link ? "l" : "", blx ? "x" : "", new_pc & ~1, thumb ? 'T' : 'A', splat ? "x" : "", offset, blx_hl);
+		link ? "l" : "", blx ? "x" : "", new_pc & ~1U, thumb ? 'T' : 'A', splat ? "x" : "", offset, blx_hl);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -329,7 +329,7 @@ static void arm_inst_bx(soc_core_p core)
 	const int thumb = new_pc & 1;
 
 	CORE_TRACE("b%sx(%s) /* %c(0x%08x) */",
-		link ? "l" : "", rR_NAME(M), thumb ? 'T' : 'A', new_pc & ~1);
+		link ? "l" : "", rR_NAME(M), thumb ? 'T' : 'A', new_pc & ~1U);
 
 	if(link)
 		CORE_TRACE_LINK(PC);
@@ -504,7 +504,7 @@ static void arm_inst_ldstm(soc_core_p core)
 				soc_core_exception(core, _EXCEPTION_DataAbort);
 		}
 		else
-			vR(EA) &= ~3;
+			vR(EA) &= ~3U;
 
 		for(rR(D) = 0; rR(D) < 15; rR(D)++)
 		{
@@ -523,7 +523,7 @@ static void arm_inst_ldstm(soc_core_p core)
 				if(_arm_version >= arm_v5t)
 					soc_core_reg_set_pcx(core, vR(D));
 				else
-					PC = vR(D) & ~3;
+					PC = vR(D) & ~3U;
 			}
 			else
 			{

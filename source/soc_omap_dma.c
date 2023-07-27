@@ -613,7 +613,7 @@ uint32_t _soc_omap_dma_lcd_b_bot(void* param, uint32_t ppa, size_t size, uint32_
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
 
 	if(write) {
-		lcd_b->bot &= ~1;
+		lcd_b->bot &= ~1U;
 
 		if(_trace_mmio_dma_lcd) {
 			LOG("DMA: LCD Bottom Address B%0u %c Register -- 0x%08x\n\t",
@@ -742,7 +742,7 @@ uint32_t _soc_omap_dma_lcd_b_top(void* param, uint32_t ppa, size_t size, uint32_
 		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
 
 	if(write) {
-		lcd_b->top &= ~1;
+		lcd_b->top &= ~1U;
 
 		if(_trace_mmio_dma_lcd) {
 			LOG("DMA: LCD Top Address B%01u %c Register -- 0x%08x\n\t",

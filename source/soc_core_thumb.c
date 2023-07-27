@@ -39,7 +39,7 @@ static void soc_core_thumb_add_rd_pcsp_i(soc_core_p core)
 	if(pcsp)
 		_setup_rR_vR(N, rSP, SP);
 	else
-		_setup_rR_vR(N, rPC, THUMB_PC & ~3);
+		_setup_rR_vR(N, rPC, THUMB_PC & ~3U);
 
 	const uint16_t imm8 = mlBFMOV(IR, 7, 0, 2);
 
@@ -165,8 +165,8 @@ static void soc_core_thumb_bcc(soc_core_p core)
 
 	const uint32_t new_pc = THUMB_PC + imm8;
 
-	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x */", new_pc & ~1, THUMB_PC, imm8);
-//	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1, THUMB_PC, imm8, CCx.e);
+	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x */", new_pc & ~1U, THUMB_PC, imm8);
+//	CORE_TRACE("b(0x%08x); /* 0x%08x + 0x%03x cce = 0x%08x */", new_pc & ~1U, THUMB_PC, imm8, CCx.e);
 
 	CORE_TRACE_BRANCH_CC(new_pc);
 
@@ -191,7 +191,7 @@ static void soc_core_thumb_bx(soc_core_p core)
 
 	CORE_TRACE("b%sx(%s); /* %c(0x%08x) */",
 		link ? "l" : "", rR_NAME(M),
-		thumb ? 'T' : 'A', new_pc & ~1);
+		thumb ? 'T' : 'A', new_pc & ~1U);
 
 	if(link) {
 		const uint32_t new_lr = THUMB_IP_NEXT | 1;
@@ -211,7 +211,7 @@ static void soc_core_thumb_bxx_b(soc_core_p core)
 
 	int splat = _trace_bx_0 && (new_pc == THUMB_IP_NEXT);
 	CORE_TRACE("b(0x%08x); /* 0x%08x + %s0x%03x*/",
-		new_pc & ~1, PC, splat ? "x" : "", eao);
+		new_pc & ~1U, PC, splat ? "x" : "", eao);
 
 	PC = new_pc & ~1U;
 }
@@ -226,7 +226,7 @@ static void soc_core_thumb_bxx__bl_blx(soc_core_p core, uint32_t eao, unsigned b
 
 	int splat = _trace_bx_0 && (new_pc == THUMB_PC);
 	CORE_TRACE("bl%s(0x%08x); /* 0x%08x + %s0x%08x, LR = 0x%08x */",
-		blx ? "x" : "", new_pc & ~1, PC, splat ? "x" : "", eao, LR & ~1);
+		blx ? "x" : "", new_pc & ~1U, PC, splat ? "x" : "", eao, LR & ~1U);
 
 	PC = new_pc;
 	soc_core_reg_set_thumb(core, 1 >> blx);
@@ -259,7 +259,7 @@ static void soc_core_thumb_bxx_prefix(soc_core_p core)
 		DECODE_FAULT;
 	}
 
-	const uint32_t ir_suffix = soc_core_ifetch(core, PC & ~1, sizeof(uint16_t));
+	const uint32_t ir_suffix = soc_core_ifetch(core, PC & ~1U, sizeof(uint16_t));
 
 	if(0xe800 == (ir_suffix & 0xe800)) {
 		const int blx = 1 ^ BEXT(ir_suffix, 12);
@@ -555,7 +555,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		soc_core_exception(core, _EXCEPTION_DataAbort);
 	}
 
-	uint32_t ea = start_address & ~3;
+	uint32_t ea = start_address & ~3U;
 
 	uint32_t rxx_v = 0;
 	char reglist[9] = "\0\0\0\0\0\0\0\0\0";

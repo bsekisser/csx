@@ -80,7 +80,7 @@ uint32_t soc_core_reg_pc_fetch_step_arm(soc_core_p core)
 
 uint32_t soc_core_reg_pc_fetch_step_thumb(soc_core_p core)
 {
-	IP = PC & ~1;
+	IP = PC & ~1U;
 	PC += 2;
 
 	return(soc_core_ifetch(core, IP, sizeof(uint16_t)));
