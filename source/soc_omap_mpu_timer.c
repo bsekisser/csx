@@ -13,6 +13,7 @@
 #include "err_test.h"
 #include "handle.h"
 #include "log.h"
+#include "sub64.h"
 
 /* **** system includes */
 
@@ -148,19 +149,10 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 		LOG_END();
 	}
 
-	const unsigned elapsed_cycles = csx->cycle - sotu->cycle;
+	const int64_t elapsed_cycles = sub64(csx->cycle, sotu->cycle);
 	sotu->cycle = csx->cycle;
 
-/*
- * NOTE: produces wrong expected value.
- *		compiler error? typesize promotion fault?
- *
- *		gcc version 10.2.1 20210110 (Raspbian 10.2.1-6+rpi1)
- *
- * int64_t delta64_count = sot->count - elapsed_cycles;
- */
-
-	const unsigned delta_count = sotu->count - elapsed_cycles;
+	const int64_t delta_count = sub64(sotu->count, elapsed_cycles);
 
 	if(0) {
 		LOG_START("elapsed_cycles = 0x%016" PRIx64, (uint64_t)elapsed_cycles)
@@ -168,7 +160,7 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 		LOG_END();
 	}
 
-	if(elapsed_cycles >= sotu->count) {
+	if(delta_count < 0) {
 		unsigned cycles_remain = elapsed_cycles - sotu->count;
 		if(sotu->cntl.ar) {
 			sotu->count = sotu->load - cycles_remain;

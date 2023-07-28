@@ -9,10 +9,10 @@
 /* **** */
 
 #define ARM_IR_CC mlBFEXT(IR, 31, 28)
-#define ARM_IR_RD mlBFEXT(IR, 15, 12)
-#define ARM_IR_RM mlBFEXT(IR, 3, 0)
-#define ARM_IR_RN mlBFEXT(IR, 19, 16)
-#define ARM_IR_RS mlBFEXT(IR, 11, 8)
+#define ARM_IR_RD ((soc_core_reg_t)mlBFEXT(IR, 15, 12))
+#define ARM_IR_RM ((soc_core_reg_t)mlBFEXT(IR, 3, 0))
+#define ARM_IR_RN ((soc_core_reg_t)mlBFEXT(IR, 19, 16))
+#define ARM_IR_RS ((soc_core_reg_t)mlBFEXT(IR, 11, 8))
 
 enum {
 	DPI_BIT_i25 = 25,
@@ -46,13 +46,13 @@ enum {
 #define LDSTX						mlBFEXT(IR, 27, 25)
 
 
-#define MCRC_CRm					mlBFEXT(IR, 3, 0)
-#define MCRC_CRn					mlBFEXT(IR, 19, 16)
+#define MCRC_CRm					ARM_IR_RM
+#define MCRC_CRn					ARM_IR_RN
 #define MCRC_CPx					mlBFEXT(IR, 11, 8)
 #define MCRC_L						BEXT(IR, 20)
 #define MCRC_OP1					mlBFEXT(IR, 23, 21)
 #define MCRC_OP2					mlBFEXT(IR, 7, 5)
-#define MCRC_Rd						mlBFEXT(IR, 15, 12)
+#define MCRC_Rd						ARM_IR_RD
 
 /* **** */
 

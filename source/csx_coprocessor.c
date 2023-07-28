@@ -183,14 +183,14 @@ static void _csx_cp15_creg_alloc(csx_coprocessor_p cp)
 {
 	csx_cp15_reg1_p cr1 = &cp->cp15_reg1;
 
-	uint32_t set = _CP15_reg1_bit(r);
+	const uint32_t set = _CP15_reg1_bit(r);
 
-	cr1->on_reset.clear = ~0;
+	cr1->on_reset.clear = ~0U;
 	cr1->on_reset.set = set;
 
 	/* **** */
 
-	uint32_t ivc = _CP15_reg1_bit(a)
+	const uint32_t ivc = _CP15_reg1_bit(a)
 		| _CP15_reg1_bit(b)
 		| _CP15_reg1_bit(r)
 		| _CP15_reg1_bit(l4)
@@ -198,10 +198,10 @@ static void _csx_cp15_creg_alloc(csx_coprocessor_p cp)
 		| _CP15_reg1_bit(v)
 		| _CP15_reg1_bit(ve);
 
-	uint32_t ivs = _CP15_reg1_bit(dt)
+	const uint32_t ivs = _CP15_reg1_bit(dt)
 		| _CP15_reg1_bit(it);
 
-	cr1->invalid.clear = ~0 & ~(ivc | ivs | set);
+	cr1->invalid.clear = ~0U & ~(ivc | ivs | set);
 	cr1->invalid.set = ivs;
 }
 

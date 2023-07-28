@@ -126,7 +126,7 @@ static int __soc_omap_uart_atreset(void* param) {
 static soc_omap_uart_unit_p __uart_unit(soc_omap_uart_p uart, uint32_t ppa) {
 	uint8_t uux = 0;
 
-	switch(ppa & ~0xff) {
+	switch(ppa & ~0xffU) {
 		case SOC_OMAP_UART3:
 			uux++;
 			__attribute__((fallthrough));

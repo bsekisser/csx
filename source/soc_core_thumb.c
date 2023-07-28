@@ -382,7 +382,7 @@ static void soc_core_thumb_ldst_rd_i(soc_core_p core)
 	switch(operation)
 	{
 		case	0x4000:
-			_setup_rR_vR(N, rPC, THUMB_PC & ~0x03);
+			_setup_rR_vR(N, rPC, THUMB_PC & ~3U);
 			break;
 		case	0x9000:
 			_setup_rR_vR(N, rSP, SP);
