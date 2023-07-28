@@ -31,6 +31,7 @@ static void _preflight_tests(void)
 	assert(0x02 == sizeof(uint16_t));
 	assert(0x04 == sizeof(uint32_t));
 	assert(0x08 == sizeof(uint64_t));
+	assert(sizeof(uint32_t) <= sizeof(signed));
 	assert(sizeof(uint32_t) <= sizeof(unsigned));
 
 #if 0
