@@ -64,7 +64,7 @@ static inline void __ldr(soc_core_p core)
 
 static inline void __ldrb(soc_core_p core)
 {
-	vR(D) = soc_core_read(core, vR(EA), sizeof(uint8_t));
+	vR(D) = (uint32_t)(uint8_t)soc_core_read(core, vR(EA), sizeof(uint8_t));
 	
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -91,14 +91,14 @@ static inline void __ldrh(soc_core_p core)
 	if((vR(EA) & 1) && CP15_reg1_bit(a))
 		soc_core_exception(core, _EXCEPTION_DataAbort);
 
-	vR(D) = soc_core_read(core, vR(EA), sizeof(uint16_t));
+	vR(D) = (uint32_t)(uint16_t)soc_core_read(core, vR(EA), sizeof(uint16_t));
 	
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
 static inline void __ldrsb(soc_core_p core)
 {
-	vR(D) = (int8_t)soc_core_read(core, vR(EA), sizeof(int8_t));
+	vR(D) = (int32_t)(int8_t)soc_core_read(core, vR(EA), sizeof(int8_t));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -110,7 +110,7 @@ static inline void __ldrsh(soc_core_p core)
 	if((vR(EA) & 1) && CP15_reg1_bit(a))
 		soc_core_exception(core, _EXCEPTION_DataAbort);
 
-	vR(D) = (int16_t)soc_core_read(core, vR(EA), sizeof(uint16_t));
+	vR(D) = (int32_t)(int16_t)soc_core_read(core, vR(EA), sizeof(uint16_t));
 	
 	soc_core_reg_set(core, rR(D), vR(D));
 }
@@ -129,7 +129,7 @@ static inline void __str(soc_core_p core)
 static inline void __strb(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRD, rR(D));
-	soc_core_write(core, vR(EA), sizeof(uint8_t), vR(D));
+	soc_core_write(core, vR(EA), sizeof(uint8_t), (uint32_t)(uint8_t)vR(D));
 }
 
 static inline void __strd(soc_core_p core)
@@ -155,7 +155,7 @@ static inline void __strh(soc_core_p core)
 		soc_core_exception(core, _EXCEPTION_DataAbort);
 
 	_setup_rR_vR_src(core, rRD, rR(D));
-	soc_core_write(core, vR(EA), sizeof(uint16_t), vR(D));
+	soc_core_write(core, vR(EA), sizeof(uint16_t), (uint32_t)(uint16_t)vR(D));
 }
 
 /* **** */
