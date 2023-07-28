@@ -16,7 +16,9 @@ enum {
 	_CPSR_C_BIT_Thumb = _CPSR_C_BIT_T,
 };
 
-#define CPSR_C(_x) _BV(_CPSR_C_BIT_##_x)
+#define __CPSR_C(_x) (_CPSR_C_BIT_##_x)
+#define CPSR_C(_x) _BV(__CPSR_C(_x))
+#define BEXT_CPSR_C(_x) BEXT(CPSR, __CPSR_C(_x))
 #define IF_CPSR_C(_x) (CPSR_C(_x) & CPSR)
 
 enum {
@@ -28,6 +30,7 @@ enum {
 
 #define __CPSR_F(_x) (_CPSR_F_BIT_##_x)
 #define __CPSR_F_BV(_x) _BV(__CPSR_F(_x))
+#define BEXT_CPSR_F(_x) BEXT(CPSR, __CPSR_F(_x))
 #define IF_CPSR_F(_x) (__CPSR_F_BV(_x) & CPSR)
 
 
