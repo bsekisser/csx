@@ -23,7 +23,7 @@ static uint32_t __arm_ldstm_ea(soc_core_p core, uint32_t* p2ea)
 	UNUSED(core);
 }
 
-static uint32_t __thumb_ldstm_ea(soc_core_p core, uint32_t* p2ea)
+static uint32_t __thumb_ldstmia_ea(soc_core_p core, uint32_t* p2ea)
 {
 	const uint32_t ea = *p2ea;
 	*p2ea += sizeof(uint32_t);
@@ -49,7 +49,7 @@ static void __ldm_pc(soc_core_p core, uint32_t ea)
 		PC = v & (~3U >> BEXT_CPSR_C(Thumb));
 }
 
-static inline void __stm(soc_core_p core, soc_core_reg_t r, uint32_t ea)
+static void __stm(soc_core_p core, soc_core_reg_t r, uint32_t ea)
 {
 	soc_core_write(core, ea, sizeof(uint32_t), GPR(r));
 }
@@ -98,22 +98,22 @@ void _arm_stm_user(soc_core_p core, soc_core_reg_t r, uint32_t* p2ea)
 /* **** */
 
 UNUSED_FN static
-void _thumb_ldm(soc_core_p core, soc_core_reg_t r, uint32_t* p2ea)
+void _thumb_ldmia(soc_core_p core, soc_core_reg_t r, uint32_t* p2ea)
 {
-	const uint32_t ea = __thumb_ldstm_ea(core, p2ea);
+	const uint32_t ea = __thumb_ldstmia_ea(core, p2ea);
 	__ldm(core, r, ea);
 }
 
 UNUSED_FN static
-void _thumb_ldm_pc(soc_core_p core, uint32_t* p2ea)
+void _thumb_ldmia_pc(soc_core_p core, uint32_t* p2ea)
 {
-	const uint32_t ea = __thumb_ldstm_ea(core, p2ea);
+	const uint32_t ea = __thumb_ldstmia_ea(core, p2ea);
 	__ldm_pc(core, ea);
 }
 
 UNUSED_FN static
-void _thumb_stm(soc_core_p core, soc_core_reg_t r, uint32_t* p2ea)
+void _thumb_stmia(soc_core_p core, soc_core_reg_t r, uint32_t* p2ea)
 {
-	const uint32_t ea = __thumb_ldstm_ea(core, p2ea);
+	const uint32_t ea = __thumb_ldstmia_ea(core, p2ea);
 	__stm(core, r, ea);
 }

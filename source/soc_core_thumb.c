@@ -497,9 +497,9 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 			CYCLE++;
 
 			if(bit_l)
-				_thumb_ldm(core, i, &ea);
+				_thumb_ldmia(core, i, &ea);
 			else
-				_thumb_stm(core, i, &ea);
+				_thumb_stmia(core, i, &ea);
 		}
 	}
 
@@ -567,9 +567,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		{
 			CYCLE++;
 			if(bit_l)
-				_thumb_ldm(core, i, &ea);
+				_thumb_ldmia(core, i, &ea);
 			else
-				_thumb_stm(core, i, &ea);
+				_thumb_stmia(core, i, &ea);
 		}
 	}
 
@@ -580,9 +580,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 	if(bit_r)
 	{
 		if(bit_l)
-			_thumb_ldm_pc(core, &ea);
+			_thumb_ldmia_pc(core, &ea);
 		else
-			_thumb_stm(core, rLR, &ea);
+			_thumb_stmia(core, rLR, &ea);
 	}
 
 	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);
