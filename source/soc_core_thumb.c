@@ -9,6 +9,7 @@
 #include "soc_core_disasm.h"
 #include "soc_core_decode.h"
 #include "soc_core_ldst.h"
+#include "soc_core_ldstm.h"
 #include "soc_core_psr.h"
 #include "soc_core_strings.h"
 #include "soc_core_trace.h"
@@ -472,8 +473,11 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 
 	const uint8_t rlist = mlBFEXT(IR, 7, 0);
 
+	const uint8_t _rcount = (uint8_t)__builtin_popcount(rlist);
+	const uint8_t rcount_bytes = _rcount << 2;
+
 	const uint32_t start_address = vR(N);
-	const uint32_t end_address = start_address + (__builtin_popcount(rlist) << 2) - 4;
+	const uint32_t end_address = start_address + rcount_bytes - 4;
 
 	uint32_t ea = start_address;
 
@@ -482,7 +486,7 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 
 	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
 
-	for(int i = 0; i <= 7; i++)
+	for(unsigned i = 0; i <= 7; i++)
 	{
 		const unsigned rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
@@ -530,22 +534,24 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		const int bit_r = BEXT(IR, 8);
 //	}bit;
 
+	const unsigned rrlist = mlBFEXT(IR, 8, 0);
 	const uint8_t rlist = mlBFEXT(IR, 7, 0);
 
-	const uint32_t sp_v = SP;
+	const uint8_t _rcount = (uint8_t)__builtin_popcount(rrlist);
+	const uint8_t rcount_bytes = _rcount << 2;
 
-	const uint8_t rcount = (bit_r + __builtin_popcount(rlist)) << 2;
+	const uint32_t sp_v = SP;
 
 	uint32_t start_address = sp_v;
 	uint32_t end_address = sp_v;
 
 	if(bit_l)
 	{ /* pop */
-		end_address += rcount;
+		end_address += rcount_bytes;
 	}
 	else
 	{ /* push */
-		start_address -= rcount;
+		start_address -= rcount_bytes;
 		end_address -= 4;
 	}
 
@@ -557,10 +563,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 
 	uint32_t ea = start_address & ~3U;
 
-	uint32_t rxx_v = 0;
 	char reglist[9] = "\0\0\0\0\0\0\0\0\0";
 
-	for(int i = 0; i <=7; i++)
+	for(unsigned i = 0; i <= 7; i++)
 	{
 		const unsigned rxx = BEXT(rlist, i);
 		reglist[i] = rxx ? ('0' + i) : '.';
@@ -569,18 +574,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		{
 			CYCLE++;
 			if(bit_l)
-			{ /* pop */
-				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				soc_core_reg_set(core, i, rxx_v);
-			}
+				__ldm(core, i, &ea);
 			else
-			{ /* push */
-				rxx_v = soc_core_reg_get(core, i);
-				if(0) LOG("ea = 0x%08x, r(%u) = 0x%08x", ea, i, rxx_v);
-				soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
-			}
-			ea += sizeof(uint32_t);
+				__stm(core, i, &ea);
 		}
 	}
 
@@ -591,19 +587,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 	if(bit_r)
 	{
 		if(bit_l)
-		{ /* pop */
-			rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-			if(_arm_version >= arm_v5t)
-				soc_core_reg_set_pcx(core, rxx_v);
-			else
-				soc_core_reg_set(core, rPC, rxx_v);
-		}
+			__ldm_pc(core, &ea);
 		else
-		{ /* push */
-			rxx_v = LR;
-			soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
-		}
-		ea += sizeof(uint32_t);
+			__stm(core, rLR, &ea);
 	}
 
 	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);

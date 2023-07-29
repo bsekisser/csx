@@ -12,6 +12,7 @@
 
 #include "soc_core_disasm.h"
 #include "soc_core_ldst.h"
+#include "soc_core_ldstm.h"
 #include "soc_core_psr.h"
 #include "soc_core_shifter.h"
 #include "soc_core_strings.h"
@@ -115,30 +116,17 @@ static void _arm_inst_ldst(soc_core_p core)
 static void _arm_inst_ldstm(soc_core_p core,
 	uint8_t user_mode_regs)
 {
-	if(LDST_BIT(l20))
-	{
-		vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
-
-		if(0) LOG("r(%u)==[0x%08x](0x%08x)", rR(D), vR(EA), vR(D));
-
-		if(user_mode_regs)
-			soc_core_reg_usr(core, rR(D), &vR(D));
+	if(LDST_BIT(l20)) {
+		if((7 < rR(D)) && user_mode_regs)
+			__ldm_user(core, rR(D), &vR(EA));
 		else
-			soc_core_reg_set(core, rR(D), vR(D));
-	}
-	else
-	{
-		if(user_mode_regs)
-			vR(D) = soc_core_reg_usr(core, rR(D), 0);
+			__ldm(core, rR(D), &vR(EA));
+	} else {
+		if((7 < rR(D)) && user_mode_regs)
+			__stm_user(core, rR(D), &vR(EA));
 		else
-			vR(D) = soc_core_reg_get(core, rR(D));
-
-		if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), rR(D), vR(D));
-
-		soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
+			__stm(core, rR(D), &vR(EA));
 	}
-
-	vR(EA) += sizeof(uint32_t);
 }
 
 static void _arm_inst_b_bl_blx(soc_core_p core, int link, int blx_hl)
@@ -433,7 +421,8 @@ static void arm_inst_ldstm(soc_core_p core)
 	_setup_rR_vR(M, ~0, mlBFEXT(IR, 15, 0));
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
 
-	const unsigned rcount = (__builtin_popcount(vR(M)) << 2);
+	const uint8_t _rcount = (uint8_t)__builtin_popcount(vR(M));
+	const uint8_t rcount_bytes = _rcount << 2;
 
 	const uint32_t sp_in = vR(N);
 	uint32_t sp_out = sp_in;
@@ -452,14 +441,14 @@ static void arm_inst_ldstm(soc_core_p core)
 	if(LDST_BIT(u23)) /* increment */
 	{
 		start_address = sp_in + (LDST_BIT(p24) << 2);
-		end_address = start_address + rcount;
-		sp_out += rcount;
+		end_address = start_address + rcount_bytes;
+		sp_out += rcount_bytes;
 	}
 	else /* decrement */
 	{
 		end_address = sp_in + ((0 == LDST_BIT(p24)) << 2);
-		start_address = end_address - rcount;
-		sp_out -= rcount;
+		start_address = end_address - rcount_bytes;
+		sp_out -= rcount_bytes;
 	}
 
 	if(0) LOG("sp_in = 0x%08x, start_address = 0x%08x, end_address = 0x%08x",
@@ -517,20 +506,9 @@ static void arm_inst_ldstm(soc_core_p core)
 
 		if(BTST(vR(M), 15)) {
 			if(LDST_BIT(l20))
-			{
-				vR(D) = soc_core_read(core, vR(EA), sizeof(uint32_t));
-				if(0) LOG("r(%u)==[0x%08x](0x%08x)", 15, vR(EA), vR(D));
-				if(_arm_version >= arm_v5t)
-					soc_core_reg_set_pcx(core, vR(D));
-				else
-					PC = vR(D) & ~3U;
-			}
+				__ldm_pc(core, &vR(EA));
 			else
-			{
-				vR(D) = ARM_PC;
-				if(0) LOG("[0x%08x]==r(%u)(0x%08x)", vR(EA), 15, vR(D));
-				soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
-			}
+				__stm(core, rPC, &vR(EA));
 		}
 
 		if(load_spsr && core->spsr) {
