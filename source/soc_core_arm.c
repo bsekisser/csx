@@ -118,14 +118,14 @@ static void _arm_inst_ldstm(soc_core_p core,
 {
 	if(LDST_BIT(l20)) {
 		if((7 < rR(D)) && user_mode_regs)
-			__ldm_user(core, rR(D), &vR(EA));
+			_arm_ldm_user(core, rR(D), &vR(EA));
 		else
-			__ldm(core, rR(D), &vR(EA));
+			_arm_ldm(core, rR(D), &vR(EA));
 	} else {
 		if((7 < rR(D)) && user_mode_regs)
-			__stm_user(core, rR(D), &vR(EA));
+			_arm_stm_user(core, rR(D), &vR(EA));
 		else
-			__stm(core, rR(D), &vR(EA));
+			_arm_stm(core, rR(D), &vR(EA));
 	}
 }
 
@@ -506,9 +506,9 @@ static void arm_inst_ldstm(soc_core_p core)
 
 		if(BTST(vR(M), 15)) {
 			if(LDST_BIT(l20))
-				__ldm_pc(core, &vR(EA));
+				_arm_ldm_pc(core, &vR(EA));
 			else
-				__stm(core, rPC, &vR(EA));
+				_arm_stm(core, rPC, &vR(EA));
 		}
 
 		if(load_spsr && core->spsr) {

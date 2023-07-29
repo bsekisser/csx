@@ -497,16 +497,9 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 			CYCLE++;
 
 			if(bit_l)
-			{
-				rxx_v = soc_core_read(core, ea, sizeof(uint32_t));
-				soc_core_reg_set(core, i, rxx_v);
-			}
+				_thumb_ldm(core, i, &ea);
 			else
-			{
-				rxx_v = soc_core_reg_get(core, i);
-				soc_core_write(core, ea, sizeof(uint32_t), rxx_v);
-			}
-			ea += sizeof(uint32_t);
+				_thumb_stm(core, i, &ea);
 		}
 	}
 
@@ -574,9 +567,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		{
 			CYCLE++;
 			if(bit_l)
-				__ldm(core, i, &ea);
+				_thumb_ldm(core, i, &ea);
 			else
-				__stm(core, i, &ea);
+				_thumb_stm(core, i, &ea);
 		}
 	}
 
@@ -587,9 +580,9 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 	if(bit_r)
 	{
 		if(bit_l)
-			__ldm_pc(core, &ea);
+			_thumb_ldm_pc(core, &ea);
 		else
-			__stm(core, rLR, &ea);
+			_thumb_stm(core, rLR, &ea);
 	}
 
 	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);
