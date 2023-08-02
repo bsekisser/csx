@@ -214,3 +214,37 @@ extern inline unsigned sub_cf_vf(psr_p psr, unsigned a, unsigned b) {
 	return(result);
 }
 
+#include <stdint.h>
+
+extern inline uint64_t adc64u(uint64_t ir0, uint64_t ir1, uint64_t carry_in) {
+	return(ir0 + ir1 + carry_in);
+}
+
+extern inline int64_t adc64s(int64_t ir0, int64_t ir1, uint64_t carry_in) {
+	return(ir0 + ir1 + carry_in);
+}
+
+extern inline uint32_t add_with_carry(psr_p psr, uint32_t ir0, uint32_t ir1, uint32_t carry_in) {
+	const uint64_t usum = adc64u(ir0, ir1, carry_in);
+	const int64_t ssum = adc64s(ir0, ir1, carry_in);
+
+//	const uint32_t result = (uint32_t)usum;
+	const uint32_t result = ir0 + ir1 + carry_in;
+//	const int32_t signed_result = (int32_t)usum;
+	const int32_t signed_result = ((int32_t)ir0) + ((int32_t)ir1) + carry_in;
+
+	_flags_nz1(psr, result);
+	
+	psr->c = !!(!(usum == result));
+	psr->v = !!(!(ssum == signed_result));
+
+	return(result);
+}
+
+extern inline unsigned do_add(psr_p psr, unsigned ir0, unsigned ir1, unsigned carry_in) {
+	const unsigned result = ir0 + ir1 + carry_in;
+	const unsigned xor = ir0 ^ ir1;
+
+	psr->c = (ir0 & ir1) || (xor & !result);
+	psr->v = !xor && (ir0 ^ result);
+}

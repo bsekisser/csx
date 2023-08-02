@@ -62,6 +62,8 @@ static int _csx_test_set(csx_test_p t,
 	return(1);
 
 _csx_test_set_fail:
+	TRACE_PSR(xpsr);
+	TRACE_PSR(tpsr);
 	LOG("j = 0x%03x, k = 0x%03x, xres = 0x%08x, tres = 0x%08x\n",
 		j, k, xres, tres);
 
@@ -845,6 +847,43 @@ static void csx_test_arm_mov(csx_test_p t)
 
 /* **** */
 
+static uint32_t csx_test_arm_sbcs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	const soc_core_p core = t->core;
+	uint32_t res = 0;
+
+	soc_core_reg_set(core, 0, ir0);
+	soc_core_reg_set(core, 1, ir1);
+	soc_core_reg_set(core, 2, 0);
+
+	t->start_pc = t->pc = 0x10000000;
+	arm_adds_rn_rd_sop(t, 2, 2, arm_dpi_lsl_r_s(2, 0));
+	arm_sbcs_rn_rd_sop(t, 0, 0, arm_dpi_lsl_r_s(1, 0));
+	t->start_pc = t->pc = csx_test_run(t, 2);
+
+	*psr = CPSR;
+
+	res = soc_core_reg_get(core, 0);
+
+	return(res);
+}
+
+static void csx_test_arm_sbcs(csx_test_p t)
+{
+	t->start_pc = t->pc = 0x10000000;
+
+	int savedTrace = _soc_core_test_trace(t->core, 0, 0);
+
+	assert(_csx_test_set(t,
+		csx_test_arm_sbcs_asm, csx_test_arm_sbcs_inst,
+			256, 0));
+
+	_soc_core_test_trace(t->core, 0, &savedTrace);
+}
+
+
+/* **** */
+
 static uint32_t csx_test_arm_subs_inst(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
 {
 	const soc_core_p core = t->core;
@@ -928,6 +967,7 @@ void csx_test_arm(csx_test_p t)
 	csx_test_arm_ldstm(t);
 	csx_test_arm_mov(t);
 ///	csx_test_arm_rsb(t);
+	csx_test_arm_sbcs(t);
 	csx_test_arm_subs(t);
 
 	/* **** */

@@ -91,7 +91,7 @@ uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r)
 	uint32_t res = core->reg[r];
 
 	if(rPC == r) {
-		int thumb = IF_CPSR_C(32) && BEXT(CPSR, SOC_CORE_PSR_BIT_T);
+		int thumb = IF_CPSR_C(32) && BEXT_CPSR_C(T);
 
 		const unsigned pc_msb = (IF_CPSR_C(32) ? 31 : 25);
 		const unsigned pc_lsb = (IF_CPSR_C(32) ? (2 >> thumb) : 0);

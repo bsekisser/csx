@@ -33,7 +33,7 @@ __ALUBOX_STATIC__
 void _alubox_thumb_adcs(soc_core_p core, uint32_t* wb)
 {
 	_setup_rR_vR_src(core, rRN, rR(N));
-	vR(D) = vR(N) + (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
+	vR(D) = vR(N) + (vR(M) + BEXT_CPSR_F(C));
 
 	if(wb)
 		*wb = vR(D);
@@ -233,7 +233,7 @@ __ALUBOX_STATIC__
 void _alubox_thumb_sbcs(soc_core_p core, uint32_t* wb)
 {
 	_setup_rR_vR_src(core, rRN, rR(N));
-	vR(D) = vR(N) - (vR(M) + BEXT(CPSR, SOC_CORE_PSR_BIT_C));
+	vR(D) = vR(N) - (vR(M) + !!(!BEXT_CPSR_F(C)));
 
 	if(wb)
 		*wb = vR(D);

@@ -18,13 +18,27 @@ typedef void (*alubox_fn)(soc_core_p core, uint32_t* wb);
 /* **** */
 
 __ALUBOX_STATIC__
-void _alubox_arm_adc(soc_core_p core, uint32_t* wb)
+void __alubox_arm__rN_sop(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
-
-	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-	
 	__alubox_arm_shift_sop(core);
+}
+
+__ALUBOX_STATIC__
+unsigned __alubox_arm__rN_sop_c(soc_core_p core)
+{
+	const unsigned carry_in = BEXT_CPSR_F(C);
+	__alubox_arm__rN_sop(core);
+	return(carry_in);
+}
+
+/* **** */
+
+__ALUBOX_STATIC__
+void _alubox_arm_adc(soc_core_p core, uint32_t* wb)
+{
+	const unsigned carry_in = __alubox_arm__rN_sop_c(core);
+	
 	vR(D) = vR(N) + (vR(SOP) + carry_in);
 
 	if(0) LOG("0x%08x + 0x%08x + %01u -- 0x%08x",
@@ -54,9 +68,8 @@ void _alubox_arm_adcs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_add(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) + vR(SOP);
 
 	if(0) LOG("0x%08x + 0x%08x -- 0x%08x",
@@ -86,9 +99,8 @@ void _alubox_arm_adds(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_and(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) & vR(SOP);
 
 	UNUSED(wb);
@@ -117,9 +129,8 @@ void _alubox_arm_ands(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_bic(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) & ~vR(SOP);
 
 	UNUSED(wb);
@@ -148,9 +159,8 @@ void _alubox_arm_bics(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_eor(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) ^ vR(SOP);
 
 	UNUSED(wb);
@@ -244,9 +254,8 @@ void _alubox_arm_nop_xx(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_orr(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) | vR(SOP);
 
 	UNUSED(wb);
@@ -275,9 +284,8 @@ void _alubox_arm_orrs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_rsb(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(SOP) - vR(N);
 
 	UNUSED(wb);
@@ -298,18 +306,15 @@ void _alubox_arm_rsbs(soc_core_p core, uint32_t* wb)
 	_alubox_arm_rsb_wb(core, wb);
 
 	if(rPC != rR(D))
-		__alubox__flags_sub(core);
+		__alubox__flags__add_sub(core, vR(D), vR(SOP), ~vR(N));
 }
 
 __ALUBOX_STATIC__
 void _alubox_arm_rsc(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	const unsigned carry_in = __alubox_arm__rN_sop_c(core);
 
-	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-
-	__alubox_arm_shift_sop(core);
-	vR(D) = vR(SOP) - (vR(N) + carry_in);
+	vR(D) = vR(SOP) - (vR(N) + !!(!carry_in));
 
 	UNUSED(wb);
 }
@@ -329,18 +334,16 @@ void _alubox_arm_rscs(soc_core_p core, uint32_t* wb)
 	_alubox_arm_rsc_wb(core, wb);
 
 	if(rPC != rR(D))
-		__alubox__flags_sub(core);
+		__alubox__flags__add_sub(core, vR(D), vR(SOP), ~vR(N));
+//		__alubox__flags__add_sub(core, vR(D), vR(SOP), ~(vR(N) + BEXT_CPSR_F(C)));
 }
 
 __ALUBOX_STATIC__
 void _alubox_arm_sbc(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	const unsigned carry_in = __alubox_arm__rN_sop_c(core);
 
-	const unsigned carry_in = BEXT(CPSR, SOC_CORE_PSR_BIT_C);
-
-	__alubox_arm_shift_sop(core);
-	vR(D) = vR(N) - (vR(SOP) + carry_in);
+	vR(D) = vR(N) - (vR(SOP) + !!(!carry_in));
 
 	UNUSED(wb);
 }
@@ -366,9 +369,8 @@ void _alubox_arm_sbcs(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_arm_sub(soc_core_p core, uint32_t* wb)
 {
-	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
+	__alubox_arm__rN_sop(core);
 
-	__alubox_arm_shift_sop(core);
 	vR(D) = vR(N) - vR(SOP);
 
 	UNUSED(wb);

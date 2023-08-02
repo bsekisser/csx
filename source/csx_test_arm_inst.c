@@ -323,6 +323,11 @@ void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t
 	_c_al(t, opcode | ea);
 }
 
+void arm_sbcs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(SBC), 1, rn, rd, shopt);
+}
+
 void arm_sub_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
 {
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(SUB), 0, rn, rd, shopt);
