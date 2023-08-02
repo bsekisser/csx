@@ -493,7 +493,6 @@ static void soc_core_thumb_ldstm_rn_rxx(soc_core_p core)
 
 		if(rxx)
 		{
-			uint32_t rxx_v = 0;
 			CYCLE++;
 
 			if(bit_l)
@@ -527,16 +526,16 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 		const int bit_r = BEXT(IR, 8);
 //	}bit;
 
+	_setup_rR_vR_src(core, rRN, rSP);
+
 	const unsigned rrlist = mlBFEXT(IR, 8, 0);
 	const uint8_t rlist = mlBFEXT(IR, 7, 0);
 
 	const uint8_t _rcount = (uint8_t)__builtin_popcount(rrlist);
 	const uint8_t rcount_bytes = _rcount << 2;
 
-	const uint32_t sp_v = SP;
-
-	uint32_t start_address = sp_v;
-	uint32_t end_address = sp_v;
+	uint32_t start_address = vR(N);
+	uint32_t end_address = vR(N);
 
 	if(bit_l)
 	{ /* pop */
@@ -575,7 +574,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 
 	CORE_T(const char *pclrs = bit_r ? (bit_l ? ", PC" : ", LR") : "");
 	reglist[8] = 0;
-	CORE_TRACE("%s(rSP, r{%s%s}); /* 0x%08x */", bit_l ? "pop" : "push", reglist, pclrs, sp_v);
+	CORE_TRACE("%s(rSP, r{%s%s}); /* 0x%08x */", bit_l ? "pop" : "push", reglist, pclrs, vR(N));
 
 	if(bit_r)
 	{
@@ -585,7 +584,7 @@ static void soc_core_thumb_pop_push(soc_core_p core)
 			_thumb_stmia(core, rLR, &ea);
 	}
 
-	if(0) LOG("SP = 0x%08x, PC = 0x%08x", sp_v, PC);
+	if(0) LOG("SP = 0x%08x, PC = 0x%08x", vR(N), PC);
 
 	if(bit_l)
 	{ /* pop */

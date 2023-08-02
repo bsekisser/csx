@@ -435,19 +435,21 @@ static void arm_inst_ldstm(soc_core_p core)
 	 *
 	 */
 
-	uint32_t start_address = 0;
-	uint32_t end_address = 0;
+	uint32_t start_address = vR(N);
+	uint32_t end_address = vR(N);
 
 	if(LDST_BIT(u23)) /* increment */
 	{
-		start_address = sp_in + (LDST_BIT(p24) << 2);
-		end_address = start_address + rcount_bytes;
+		start_address += (LDST_BIT(p24) << 2);
+		end_address += rcount_bytes;
+		end_address -= (!LDST_BIT(p24) << 2);
 		sp_out += rcount_bytes;
 	}
 	else /* decrement */
 	{
-		end_address = sp_in + ((0 == LDST_BIT(p24)) << 2);
-		start_address = end_address - rcount_bytes;
+		start_address -= rcount_bytes;
+		start_address += (!LDST_BIT(p24) << 2);
+		end_address -= (LDST_BIT(p24) << 2);
 		sp_out -= rcount_bytes;
 	}
 
@@ -524,8 +526,8 @@ static void arm_inst_ldstm(soc_core_p core)
 		{
 			if(0) LOG("ea = 0x%08x", vR(EA));
 
-//			assert(end_address == vR(EA));
-			if(end_address == vR(EA))
+			assert(end_address == vR(EA) - 4);
+			if(end_address == vR(EA) - 4)
 				soc_core_reg_set(core, rR(N), sp_out);
 			else
 				UNDEFINED;
