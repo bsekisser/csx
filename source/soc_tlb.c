@@ -40,8 +40,8 @@
 
 typedef struct soc_tlbe_t {
 	csx_mem_callback_p				cb;
-	void*							src;
-	void*							dst;
+//	void*							src;
+//	void*							dst;
 	uint32_t						vp:20;
 	uint32_t						u_rwx:3;
 	uint32_t						rwx:3;
@@ -133,8 +133,8 @@ static soc_tlbe_p _tlb_entry(soc_tlbe_p tlbe_table,
 static void _tlb_fill_tlbe(soc_tlbe_p tlbe, uint32_t va) {
 	if(!tlbe->i) {
 		tlbe->cb = 0;
-		tlbe->src = 0;
-		tlbe->dst = 0;
+//		tlbe->src = 0;
+//		tlbe->dst = 0;
 		
 #if 0
 		tlbe->u_rwx = 0;
