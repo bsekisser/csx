@@ -304,6 +304,16 @@ void arm_rsb_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shift
 	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(RSB), 0, rn, rd, shopt);
 }
 
+void arm_rsbs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(RSB), 1, rn, rd, shopt);
+}
+
+void arm_rscs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt)
+{
+	_arm_dp_op_s_rn_rd_sop(t, ARM_INST_DPI(RSC), 1, rn, rd, shopt);
+}
+
 void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset)
 {
 	int u = offset > 0;

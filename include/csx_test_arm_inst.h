@@ -41,6 +41,8 @@ void arm_movs_rd_sop(csx_test_p t, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_ror_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, unsigned shift);
 void arm_rors_rd_imm_is(csx_test_p t, soc_core_reg_t rd, uint8_t imm, unsigned shift);
 void arm_rsb_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
+void arm_rsbs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
+void arm_rscs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_str_rn_rd_i(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, int32_t offset);
 void arm_sbcs_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);
 void arm_sub_rn_rd_sop(csx_test_p t, soc_core_reg_t rn, soc_core_reg_t rd, shifter_operand_t shopt);

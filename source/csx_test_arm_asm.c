@@ -117,6 +117,28 @@ static void _arm_mrs_cpsr_fn(arm_test_fn fn, return_p p2rt, uint32_t rn, uint32_
 	#endif
 }
 
+static void _arm_rsbs_rd_rn_rm(return_p p2rt, uint32_t rn, uint32_t rm) {
+	#if defined(__arm__) && !defined(__aarch64__)
+		asm volatile("rsbs %[result], %[rn], %[rm]\n\t"
+			: [result] "=r" (p2rt->result)
+			: [rn] "r" (rn), [rm] "r" (rm)
+			: "cc");
+	#else
+		p2rt->result = rn - rm;
+	#endif
+}
+
+static void _arm_rscs_rd_rn_rm(return_p p2rt, uint32_t rn, uint32_t rm) {
+	#if defined(__arm__) && !defined(__aarch64__)
+		asm volatile("rscs %[result], %[rn], %[rm]\n\t"
+			: [result] "=r" (p2rt->result)
+			: [rn] "r" (rn), [rm] "r" (rm)
+			: "cc");
+	#else
+		p2rt->result = rn - rm;
+	#endif
+}
+
 static void _arm_sbcs_rd_rn_rm(return_p p2rt, uint32_t rn, uint32_t rm) {
 	#if defined(__arm__) && !defined(__aarch64__)
 		asm volatile("sbcs %[result], %[rn], %[rm]\n\t"
@@ -176,6 +198,28 @@ static uint32_t _test_arm_adds_flags(uint32_t* psr, uint32_t ir0, uint32_t ir1) 
 	uint32_t res = ir0 + ir1;
 	
 	return(_test_arm_add_sub_flags(psr, res, ir0, ir1));
+}
+
+static uint32_t _test_arm_rscs_flags(uint32_t* psr, uint32_t _ir0, uint32_t ir1, uint32_t psr_c) {
+	const unsigned carry_in = !!(!BEXT(psr_c, __CPSR_F(C)));
+
+	const uint32_t ir0 = _ir0 + carry_in;
+	const uint32_t res = ir1 - ir0;
+
+	if(0) {
+		LOG_START("_ir0: 0x%08x", _ir0);
+		LOG_END(", psr_c: 0x%08x", psr_c);
+		LOG_START("ir1: 0x%08x", ir1);
+		_LOG_(", ir0: 0x%08x", ir0);
+		LOG_END(", res: 0x%08x", res);
+	}
+
+	return(_test_arm_add_sub_flags(psr, res, ir1, ~ir0));
+}
+
+static uint32_t _test_arm_rsbs_flags(uint32_t* psr, uint32_t ir0, uint32_t ir1) {
+	return(_test_arm_rscs_flags(psr, ir0, ir1, ~0U));
+//	return(_test_arm_rscs_flags(psr, ir0, ir1, __CPSR_F(C)));
 }
 
 static uint32_t _test_arm_sbcs_flags(uint32_t* psr, uint32_t ir0, uint32_t _ir1, uint32_t psr_c) {
@@ -306,6 +350,70 @@ uint32_t csx_test_arm_eors_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32
 
 	_arm_assert(res == xrt.result);
 	_arm_assert(_test_cpsr_xpsr(t, *psr, xrt.psr));
+
+	return(res);
+
+	UNUSED(t);
+}
+
+uint32_t csx_test_arm_rsbs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	return_t xrt;
+	_arm_mrs_cpsr_fn(_arm_rsbs_rd_rn_rm, &xrt, ir0, ir1);
+
+	const uint32_t res = _test_arm_rsbs_flags(psr, ir0, ir1);
+
+	if(0) {
+		_arm_assert(res == xrt.result);
+		_arm_assert(_test_cpsr_xpsr(t, *psr, xrt.psr));
+	} else {
+		if((res != xrt.result) ||
+			!_test_cpsr_xpsr(t, *psr, xrt.psr))
+		{
+			LOG("xrt.result = 0x%08x, xrt.psr = 0x%08x", xrt.result, xrt.psr);
+			LOG("tres = 0x%08x, tpsr = 0x%08x", res, *psr);
+		}
+	}
+
+	return(res);
+
+	UNUSED(t);
+}
+
+uint32_t csx_test_arm_rscs_asm(csx_test_p t, uint32_t *psr, uint32_t ir0, uint32_t ir1)
+{
+	return_t xrt[2];
+
+	_arm_mrs_cpsr_fn(_arm_adds_rd_rn_rm, &xrt[0], 0, 0);
+	_arm_mrs_cpsr_fn(_arm_rscs_rd_rn_rm, &xrt[1], ir0, ir1);
+
+	uint32_t res = _test_arm_adds_flags(psr, 0, 0);
+
+	if(0) {
+		TRACE_PSR(*psr);
+		TRACE_PSR(xrt[0].psr);
+		LOG_START("ir0: 0x%08x", ir0);
+		_LOG_(", ir1: 0x%08x", ir1);
+		_LOG_(", res: 0x%08x", res);
+		LOG_END(", xrt.result: 0x%08x", xrt[0].result);
+	}
+
+	_arm_assert(res == xrt[0].result);
+	_arm_assert(_test_cpsr_xpsr(t, *psr, xrt[0].psr));
+
+	res = _test_arm_rscs_flags(psr, ir0, ir1, *psr);
+	
+	if(0) {
+		TRACE_PSR(*psr);
+		TRACE_PSR(xrt[1].psr);
+		LOG_START("ir0: 0x%08x", ir0);
+		_LOG_(", ir1: 0x%08x", ir1);
+		_LOG_(", res: 0x%08x", res);
+		LOG_END(", xrt.result: 0x%08x", xrt[1].result);
+	}
+
+	_arm_assert(res == xrt[1].result);
+	_arm_assert(_test_cpsr_xpsr(t, *psr, xrt[1].psr));
 
 	return(res);
 
