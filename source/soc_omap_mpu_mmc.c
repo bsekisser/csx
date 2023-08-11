@@ -71,6 +71,7 @@ static csx_mmio_access_list_t __soc_omap_mpu_mmc_acl[] = {
 	MMIO_TRACE_FN(0xfffb, 0x7804, 0x0000, 0x0000, MPU_MMC_ARGL, _soc_omap_mpu_mmc_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0x7808, 0x0000, 0x0000, MPU_MMC_ARGH, _soc_omap_mpu_mmc_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0x7810, 0x0000, 0x0000, MPU_MMC_STAT, _soc_omap_mpu_mmc_mem_access)
+	{ .ppa = ~0U, },
 };
 
 /* **** */
