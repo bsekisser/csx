@@ -36,7 +36,7 @@ typedef struct soc_omap_misc_t {
 
 /* **** */
 
-int __soc_omap_misc_atexit(void* param)
+static int __soc_omap_misc_atexit(void* param)
 {
 	if(_trace_atexit)
 		LOG();

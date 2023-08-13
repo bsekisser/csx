@@ -96,6 +96,7 @@ void soc_core_flags_nz(soc_core_p core, uint32_t rd_v)
  * 
  */
 
+#if 0
 static void _soc_core_flags_nzcv(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint32_t s2_v)
 {
 	const uint32_t xvec = (s1_v ^ s2_v);
@@ -120,3 +121,4 @@ void soc_core_flags_nzcv_sub(soc_core_p core, uint32_t rd_v, uint32_t s1_v, uint
 {
 	_soc_core_flags_nzcv(core, rd_v, s1_v, ~s2_v);
 }
+#endif

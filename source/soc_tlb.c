@@ -278,7 +278,7 @@ static uint32_t _soc_tlb_cp15_0_8_6_0_invalidate_data(void* param, uint32_t* wri
 	return(data);
 }
 
-uint32_t _soc_tlb_cp15_0_8_7_0_invalidate_all(void* param, uint32_t* write)
+static uint32_t _soc_tlb_cp15_0_8_7_0_invalidate_all(void* param, uint32_t* write)
 {
 	const uint32_t data = write ? *write : 0;
 

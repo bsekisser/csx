@@ -43,7 +43,7 @@ static int __soc_omap_usb_atexit(void* param)
 	return(0);
 }
 
-UNUSED_FN int __soc_omap_usb_atreset(void* param)
+static int __soc_omap_usb_atreset(void* param)
 {
 	if(_trace_atreset) {
 		LOG();

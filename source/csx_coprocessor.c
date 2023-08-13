@@ -104,14 +104,14 @@ static int __csx_coprocessor_atreset(void* param)
 
 /* **** */
 
-csx_coprocessor_access_p _csx_coprocessor_access(csx_coprocessor_p cp, uint32_t ir)
+static csx_coprocessor_access_p _csx_coprocessor_access(csx_coprocessor_p cp, uint32_t ir)
 {
 	return(&cp->cp15[ir_cp_crn(ir)][ir_cp_crm(ir)][ir_cp_op1(ir)][ir_cp_op2(ir)]);
 }
 
 /* **** */
 
-uint32_t _csx_cp15_0_1_0_0_access(void* param, uint32_t* write)
+static uint32_t _csx_cp15_0_1_0_0_access(void* param, uint32_t* write)
 {
 	const csx_coprocessor_p cp = param;
 	const csx_p csx = cp->csx;
