@@ -18,6 +18,26 @@ typedef void (*alubox_fn)(soc_core_p core);
 /* **** */
 
 __ALUBOX_STATIC__
+void __alubox_arm__pc26_p(soc_core_p core)
+{
+	if(IF_CPSR_C(32))
+		return;
+
+	if(rPC != ARM_IR_RD)
+		return;
+
+	LOG_ACTION(assert(!IF_CPSR_C(32) && (rPC == ARM_IR_RD)));
+
+	unsigned mask = SOC_CORE_PSR_NZCV;
+
+	if(0 != (vR(D) & 3))
+		mask = mlBF(32, 26) | 3;
+
+	PC &= ~mask;
+	PC |= vR(D) & mask;
+}
+
+__ALUBOX_STATIC__
 void __alubox_arm__rN_sop(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRN, ARM_IR_RN);
@@ -292,15 +312,33 @@ void alubox_arm_bics(soc_core_p core)
 	__alubox__flags_nz_c(core);
 }
 
+UNUSED_FN __ALUBOX_STATIC__
+void alubox_arm_cmnp(soc_core_p core)
+{
+	_alubox_arm_adds_wb(core, 0);
+	__alubox_arm__pc26_p(core);
+}
+
 __ALUBOX_STATIC__
 void alubox_arm_cmns(soc_core_p core)
 {
+	assert(0 == ARM_IR_RD); /* 1111 -- valid in 26-bit mode -- cmnp */
+
 	_alubox_arm_adds_wb(core, 0);
+}
+
+UNUSED_FN __ALUBOX_STATIC__
+void alubox_arm_cmpp(soc_core_p core)
+{
+	_alubox_arm_subs_wb(core, 0);
+	__alubox_arm__pc26_p(core);
 }
 
 __ALUBOX_STATIC__
 void alubox_arm_cmps(soc_core_p core)
 {
+	assert(0 == ARM_IR_RD); /* 1111 -- valid in 26-bit mode -- cmpp */
+
 	_alubox_arm_subs_wb(core, 0);
 }
 
@@ -445,14 +483,32 @@ void alubox_arm_subs(soc_core_p core)
 	_alubox_arm_subs_wb(core, 1);
 }
 
+UNUSED_FN __ALUBOX_STATIC__
+void alubox_arm_teqp(soc_core_p core)
+{
+	_alubox_arm_eors_wb(core, 0);
+	__alubox_arm__pc26_p(core);
+}
+
 __ALUBOX_STATIC__
 void alubox_arm_teqs(soc_core_p core)
 {
+	assert(0 == ARM_IR_RD); /* 1111 -- valid in 26-bit mode -- teqp */
+	
 	_alubox_arm_eors_wb(core, 0);
+}
+
+UNUSED_FN __ALUBOX_STATIC__
+void alubox_arm_tstp(soc_core_p core)
+{
+	_alubox_arm_ands_wb(core, 0);
+	__alubox_arm__pc26_p(core);
 }
 
 __ALUBOX_STATIC__
 void alubox_arm_tsts(soc_core_p core)
 {
+	assert(0 == ARM_IR_RD); /* 1111 -- valid in 26-bit mode -- tstp */
+
 	_alubox_arm_ands_wb(core, 0);
 }

@@ -23,6 +23,9 @@ static uint32_t* soc_core_psr_mode_regs(soc_core_p core, uint8_t mode, soc_core_
 {
 	*reg = 13;
 
+	const unsigned arm32_mode = CPSR_C(32) | mode;
+
+//	switch(_arm_pc26 ? mode : arm32_mode)
 	switch(mode)
 	{
 		case CPSR_M32(Abort):
@@ -48,10 +51,11 @@ static uint32_t* soc_core_psr_mode_regs(soc_core_p core, uint8_t mode, soc_core_
 		case CPSR_M26(FIQ):
 		case CPSR_M26(IRQ):
 		case CPSR_M26(Supervisor):
+		case CPSR_M26(System):
 		case CPSR_M26(User):
 			LOG("mode = 0x%03x", mode);
-//			LOG_ACTION(return(soc_core_psr_mode_regs(core, 0x10 | mode, reg)));
-			LOG_ACTION(UNIMPLIMENTED);
+			LOG_ACTION(return(soc_core_psr_mode_regs(core, arm32_mode, reg)));
+//			LOG_ACTION(UNIMPLIMENTED);
 			break;
 
 		default:
@@ -70,10 +74,9 @@ uint32_t soc_core_reg_pc_fetch_step_arm(soc_core_p core)
 		assert(PC & 1);
 
 	const unsigned pc_msb = (IF_CPSR_C(32) ? 30 : 25);
-	const unsigned pc_lsb = (IF_CPSR_C(32) ? 2 : 0);
 	
 	IP = mlBFTST(PC, pc_msb, 2);
-	PC = mlBFBIC_MAS(PC, PC + 4, pc_msb, pc_lsb);
+	PC = mlBFBIC_MAS(PC, PC + 4, pc_msb, 2);
 	
 	return(soc_core_ifetch(core, IP, sizeof(uint32_t)));
 }
@@ -86,6 +89,17 @@ uint32_t soc_core_reg_pc_fetch_step_thumb(soc_core_p core)
 	return(soc_core_ifetch(core, IP, sizeof(uint16_t)));
 }
 
+static uint32_t soc_core_reg_get_pc26(soc_core_p core, uint32_t res)
+{
+	const unsigned mask = mlBF(31, 26) | 3;
+	res &= mask;
+	res |= CPSR & mask;
+	BSET_AS(res, 27, BEXT_CPSR_C(IRQ));
+	BSET_AS(res, 26, BEXT_CPSR_C(FIQ));
+
+	return(res);
+}
+
 uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r)
 {
 	uint32_t res = core->reg[r];
@@ -94,9 +108,11 @@ uint32_t soc_core_reg_get(soc_core_p core, soc_core_reg_t r)
 		int thumb = IF_CPSR_C(32) && BEXT_CPSR_C(T);
 
 		const unsigned pc_msb = (IF_CPSR_C(32) ? 31 : 25);
-		const unsigned pc_lsb = (IF_CPSR_C(32) ? (2 >> thumb) : 0);
+		const unsigned pc_lsb = 2 >> thumb;
 
 		res = mlBFBIC_MAS(res, res + (4 >> thumb), pc_msb, pc_lsb);
+		if(_arm_pc26 && (0 == IF_CPSR_C(32)))
+			return(soc_core_reg_get_pc26(core, res));
 	}
 
 	return(res);

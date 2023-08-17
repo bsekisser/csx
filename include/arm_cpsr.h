@@ -42,9 +42,9 @@ enum {
 //
 	_CPSR_M_32 = 0x10,
 //
-	_CPSR_M_Abort = 0x17,
-	_CPSR_M_Undefined = 0x18 | 3,
-	_CPSR_M_System = 0x1f,
+	_CPSR_M_Abort = 0x7,
+	_CPSR_M_Undefined = 0x8 | 3,
+	_CPSR_M_System = 0xf,
 };
 
 #define __CPSR_M(_x) (_CPSR_M_##_x)

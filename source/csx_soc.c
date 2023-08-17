@@ -254,7 +254,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 			csx->firmware.base = csx->loader.base + csx->loader.size;
 
-			csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
+//			csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 		} else
 			csx->firmware.base = 0x10020000;
 	}

@@ -162,24 +162,31 @@ static inline void __strh(soc_core_p core)
 
 UNUSED_FN static void _arm_ldst(soc_core_p core)
 {
-	assert(LDST_BIT(p24) || (0 == LDST_BIT(w21)));
-	assert(!((0 == LDST_BIT(p24)) && (1 == LDST_BIT_w21)));
-
+	const unsigned flag_t = (!LDST_BIT(p24) && LDST_BIT(w21));
+	
 	_setup_rR_dst(core, rRD, ARM_IR_RD);
 
 	if(CCx.e) {
-		switch(LDST_BIT(l20) | (LDST_BIT(b22) << 1)) {
+		switch(LDST_BIT(l20) | (LDST_BIT(b22) << 1) | (flag_t << 2)) {
 			case 0:
+			case 4: /* strt */
 				__str(core);
 				break;
 			case 1:
+			case 5: /* ldrt */
 				__ldr(core);
 				break;
 			case 2:
+			case 6: /* strbt */
 				__strb(core);
 				break;
 			case 3:
+			case 7: /* ldrbt */
 				__ldrb(core);
+				break;
+			default:
+				LOG("p24: %01u, w21: %01u", LDST_BIT(p24), LDST_BIT(w21));
+				UNIMPLIMENTED;
 				break;
 		}
 	}

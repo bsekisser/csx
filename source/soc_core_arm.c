@@ -660,6 +660,13 @@ static void arm_inst_msr_register(soc_core_p core)
 	return(_arm_inst_msr(core));
 }
 
+static void arm_inst_pld(soc_core_p core)
+{
+	CORE_TRACE("pld");
+	exit(-1);
+}
+
+
 static void arm_inst_smull(soc_core_p core)
 {
 	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
@@ -817,12 +824,12 @@ void soc_core_arm_step(soc_core_p core)
 {
 	IR = soc_core_reg_pc_fetch_step_arm(core);
 
-	const unsigned opcode = mlBFEXT(IR, 27, 25);
+	const unsigned ir_27_25 = mlBFEXT(IR, 27, 25);
 
 	CCx.e = soc_core_arm_check_cc(core);
 
 	if(INST_CC_NV != ARM_IR_CC) {
-		switch(opcode)
+		switch(ir_27_25)
 		{
 			case 0x00: /* xxxx 000x xxxx xxxx */
 				return(soc_core_arm_step_group0(core));
@@ -849,21 +856,41 @@ void soc_core_arm_step(soc_core_p core)
 				return(soc_core_arm_step_group7(core));
 				break;
 			default:
-				goto decode_fault;
+				LOG_ACTION(goto decode_fault);
 		}
 	} else if(INST_CC_NV == ARM_IR_CC) {
-		switch(opcode) {
+		switch(ir_27_25) {
 			case 0x05: /* xxxx 101x xxxx xxxx */
 				return(arm_inst_blx(core));
 				break;
 			default:
-				goto decode_fault;
+			switch(IR & (mlBF(27, 26) | _BV(24) | mlBF(22, 20) | mlBF(15, 12))) {
+				case 0xf550f000:
+					return(arm_inst_pld(core));
+				default:
+					LOG_ACTION(goto decode_fault);
+			}
 		}
 	}
 
 decode_fault:
-	LOG("IR[27:25] = %1u", opcode);
+	LOG_START("ARM_IR_CC[IR[31:28]] = 0x%01x", ARM_IR_CC);
+	LOG_END(", IR[27:25] = %1u", ir_27_25);
+	if(INST_CC_NV == ARM_IR_CC) {
+		if(BEXT(IR, 27)) {
+			switch(ir_27_25) {
+				default:
+					LOG("IR[27:25] = 0x%01u", ir_27_25);
+					break;
+			}
+		} else {
+			const unsigned ir_27_20 = mlBFEXT(IR, 27, 20) & 0xd7;
 
+			LOG_START("IR[27:20] = 0x%02x", ir_27_20);
+			LOG_END(", IR[15:12] = 0x%01x", mlBFEXT(IR, 15, 12));
+		}
+	}
+	
 	DECODE_FAULT;
 }
 

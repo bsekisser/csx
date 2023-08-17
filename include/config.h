@@ -1,5 +1,6 @@
 #include "soc_core_arm.h"
 
+#define _arm_pc26 0
 #define _arm_version arm_v5tej
 
 #define _check_pedantic_arm_decode_fault 0
