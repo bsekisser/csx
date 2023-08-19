@@ -24,7 +24,17 @@
 
 /* **** */
 
-static inline uint32_t ___ldr_x(soc_core_p core, soc_core_reg_t r, uint32_t ea)
+static void MemoryAccess(soc_core_p core)
+{
+	const csx_p csx = core->csx;
+
+	assert(0 == CP15_reg1_bit(b));
+	assert(0 == IF_CPSR_C(E));
+}
+
+/* **** */
+
+static uint32_t ___ldr_x(soc_core_p core, soc_core_reg_t r, uint32_t ea)
 {
 	const unsigned v = soc_core_read(core, ea, sizeof(uint32_t));
 
@@ -36,14 +46,16 @@ static inline uint32_t ___ldr_x(soc_core_p core, soc_core_reg_t r, uint32_t ea)
 	return(v);
 }
 
-static inline void ___str_x(soc_core_p core, soc_core_reg_t r, uint32_t ea)
+static void ___str_x(soc_core_p core, soc_core_reg_t r, uint32_t ea)
 {
 	_setup_rR_vR_src(core, rRD, r);
 	soc_core_write(core, ea, sizeof(uint32_t), vR(D));
 }
 
-static inline void __ldr(soc_core_p core)
+static void __ldr(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 	
 	const unsigned ea_xx = vR(EA) & 3;
@@ -62,15 +74,29 @@ static inline void __ldr(soc_core_p core)
 		soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static inline void __ldrb(soc_core_p core)
+static void __ldrt(soc_core_p core)
 {
+	LOG_ACTION(__ldr(core));
+}
+
+static void __ldrb(soc_core_p core)
+{
+	MemoryAccess(core);
+
 	vR(D) = (uint32_t)(uint8_t)soc_core_read(core, vR(EA), sizeof(uint8_t));
 	
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static inline void __ldrd(soc_core_p core)
+static void __ldrbt(soc_core_p core)
 {
+	LOG_ACTION(__ldrb(core));
+}
+
+static void __ldrd(soc_core_p core)
+{
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 3) && CP15_reg1_bit(a))
@@ -84,8 +110,10 @@ static inline void __ldrd(soc_core_p core)
 	vR(D) = ___ldr_x(core, r & 0x0f, ea);
 }
 
-static inline void __ldrh(soc_core_p core)
+static void __ldrh(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 1) && CP15_reg1_bit(a))
@@ -96,15 +124,19 @@ static inline void __ldrh(soc_core_p core)
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static inline void __ldrsb(soc_core_p core)
+static void __ldrsb(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	vR(D) = (uint32_t)((int32_t)(int8_t)soc_core_read(core, vR(EA), sizeof(int8_t)));
 
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static inline void __ldrsh(soc_core_p core)
+static void __ldrsh(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 1) && CP15_reg1_bit(a))
@@ -115,8 +147,10 @@ static inline void __ldrsh(soc_core_p core)
 	soc_core_reg_set(core, rR(D), vR(D));
 }
 
-static inline void __str(soc_core_p core)
+static void __str(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 3) && CP15_reg1_bit(a))
@@ -126,14 +160,28 @@ static inline void __str(soc_core_p core)
 	soc_core_write(core, vR(EA), sizeof(uint32_t), vR(D));
 }
 
-static inline void __strb(soc_core_p core)
+static void __strt(soc_core_p core)
 {
+	LOG_ACTION(return(__str(core)));
+}
+
+static void __strb(soc_core_p core)
+{
+	MemoryAccess(core);
+
 	_setup_rR_vR_src(core, rRD, rR(D));
 	soc_core_write(core, vR(EA), sizeof(uint8_t), (uint32_t)(uint8_t)vR(D));
 }
 
-static inline void __strd(soc_core_p core)
+static void __strbt(soc_core_p core)
 {
+	LOG_ACTION(return(__strb(core)));
+}
+
+static void __strd(soc_core_p core)
+{
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 3) && CP15_reg1_bit(a))
@@ -147,8 +195,10 @@ static inline void __strd(soc_core_p core)
 	___str_x(core, r & 0xf, ea);
 }
 
-static inline void __strh(soc_core_p core)
+static void __strh(soc_core_p core)
 {
+	MemoryAccess(core);
+
 	const csx_p csx = core->csx;
 
 	if((vR(EA) & 1) && CP15_reg1_bit(a))
@@ -169,20 +219,28 @@ UNUSED_FN static void _arm_ldst(soc_core_p core)
 	if(CCx.e) {
 		switch(LDST_BIT(l20) | (LDST_BIT(b22) << 1) | (flag_t << 2)) {
 			case 0:
-			case 4: /* strt */
 				__str(core);
 				break;
+			case 4: /* strt */
+				__strt(core);
+				break;
 			case 1:
-			case 5: /* ldrt */
 				__ldr(core);
 				break;
+			case 5: /* ldrt */
+				__ldrt(core);
+				break;
 			case 2:
-			case 6: /* strbt */
 				__strb(core);
 				break;
+			case 6: /* strbt */
+				__strbt(core);
+				break;
 			case 3:
-			case 7: /* ldrbt */
 				__ldrb(core);
+				break;
+			case 7: /* ldrbt */
+				__ldrbt(core);
 				break;
 			default:
 				LOG("p24: %01u, w21: %01u", LDST_BIT(p24), LDST_BIT(w21));
