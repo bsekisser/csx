@@ -687,7 +687,7 @@ static void arm_inst_smull(soc_core_p core)
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
 
-	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
+	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016" PRIx64 " */",
 		vR(M), vR(S), result);
 
 	CORE_TRACE_END();
@@ -722,7 +722,7 @@ static void arm_inst_umull(soc_core_p core)
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
 
-	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016llx */",
+	_CORE_TRACE_("); /* 0x%08x * 0x%08x = 0x%016" PRIx64 " */",
 		vR(M), vR(S), result);
 
 	CORE_TRACE_END();
