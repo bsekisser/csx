@@ -14,6 +14,9 @@
 #define ARM_IR_RN ((soc_core_reg_t)mlBFEXT(IR, 19, 16))
 #define ARM_IR_RS ((soc_core_reg_t)mlBFEXT(IR, 11, 8))
 
+#define ARM_IR_RDHi ARM_IR_RN
+#define ARM_IR_RDLo ARM_IR_RD
+
 enum {
 	DPI_BIT_i25 = 25,
 	DPI_BIT_s20 = 20,

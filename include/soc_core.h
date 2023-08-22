@@ -59,6 +59,9 @@ enum	{
 	rRSOP,
 //
 	rR_COUNT,
+//
+	rRDLo = rRD,
+	rRDHi = rRN,
 };
 
 typedef struct soc_core_inst_t {

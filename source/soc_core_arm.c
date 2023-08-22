@@ -672,18 +672,18 @@ static void arm_inst_smull(soc_core_p core)
 	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 
-	_setup_rR_dst(core, rRD, ARM_IR_RD);
-	_setup_rR_dst(core, rRN, ARM_IR_RN);
+	_setup_rR_dst(core, rRDLo, ARM_IR_RDLo);
+	_setup_rR_dst(core, rRDHi, ARM_IR_RDHi);
 
 	const int64_t result = (int32_t)vR(M) * (int32_t)vR(S);
 
-	vR(D) = result & 0xffffffff;
-	vR(N) = (result >> 32) & 0xffffffff;
+	vR(DLo) = result & 0xffffffff;
+	vR(DHi) = (result >> 32) & 0xffffffff;
 
 	CORE_TRACE_START();
 	_CORE_TRACE_("smull%s(", DPI_BIT(s20) ? "s" : "");
-	_CORE_TRACE_("%s", rR_NAME(D));
-	_CORE_TRACE_(":%s", rR_NAME(N));
+	_CORE_TRACE_("%s", rR_NAME(DLo));
+	_CORE_TRACE_(":%s", rR_NAME(DHi));
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
 
@@ -693,10 +693,10 @@ static void arm_inst_smull(soc_core_p core)
 	CORE_TRACE_END();
 
 	if(CCx.e) {
-		soc_core_reg_set(core, rR(D), vR(D));
-		soc_core_reg_set(core, rR(D), vR(D));
+		soc_core_reg_set(core, rR(DLo), vR(DLo));
+		soc_core_reg_set(core, rR(DHi), vR(DHi));
 		if(DPI_BIT(s20)) {
-			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(D), 31));
+			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(DHi), 31));
 			BMAS(CPSR, SOC_CORE_PSR_BIT_Z, (0 == result));
 		}
 	}
@@ -707,18 +707,18 @@ static void arm_inst_umull(soc_core_p core)
 	_setup_rR_vR_src(core, rRS, ARM_IR_RS);
 	_setup_rR_vR_src(core, rRM, ARM_IR_RM);
 
-	_setup_rR_dst(core, rRD, ARM_IR_RD);
-	_setup_rR_dst(core, rRN, ARM_IR_RN);
+	_setup_rR_dst(core, rRDLo, ARM_IR_RDLo);
+	_setup_rR_dst(core, rRDHi, ARM_IR_RDHi);
 
 	const uint64_t result = (uint32_t)vR(M) * (uint32_t)vR(S);
 
-	vR(D) = result & 0xffffffff;
-	vR(N) = (result >> 32) & 0xffffffff;
+	vR(DLo) = result & 0xffffffff;
+	vR(DHi) = (result >> 32) & 0xffffffff;
 
 	CORE_TRACE_START();
 	_CORE_TRACE_("umull%s(", DPI_BIT(s20) ? "s" : "");
-	_CORE_TRACE_("%s", rR_NAME(D));
-	_CORE_TRACE_(":%s", rR_NAME(N));
+	_CORE_TRACE_("%s", rR_NAME(DLo));
+	_CORE_TRACE_(":%s", rR_NAME(DHi));
 	_CORE_TRACE_(", %s", rR_NAME(M));
 	_CORE_TRACE_(", %s", rR_NAME(S));
 
@@ -728,10 +728,10 @@ static void arm_inst_umull(soc_core_p core)
 	CORE_TRACE_END();
 
 	if(CCx.e) {
-		soc_core_reg_set(core, rR(D), vR(D));
-		soc_core_reg_set(core, rR(D), vR(D));
+		soc_core_reg_set(core, rR(DLo), vR(DLo));
+		soc_core_reg_set(core, rR(DHi), vR(DHi));
 		if(DPI_BIT(s20)) {
-			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(D), 31));
+			BMAS(CPSR, SOC_CORE_PSR_BIT_N, BEXT(vR(DHi), 31));
 			BMAS(CPSR, SOC_CORE_PSR_BIT_Z, (0 == result));
 		}
 	}
@@ -829,6 +829,9 @@ void soc_core_arm_step(soc_core_p core)
 	CCx.e = soc_core_arm_check_cc(core);
 
 	if(INST_CC_NV != ARM_IR_CC) {
+		if(!CCx.e && !core->trace)
+			return;
+
 		switch(ir_27_25)
 		{
 			case 0x00: /* xxxx 000x xxxx xxxx */
