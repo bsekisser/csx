@@ -59,6 +59,7 @@ void _alubox_thumb_asrs(soc_core_p core, uint32_t* wb)
 	int carry_out = 0;
 	const unsigned valid_rs = vR(M) & 0xff;
 
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = _asr_vc(vR(N), valid_rs, &carry_out);
 
 	if(valid_rs) {
@@ -101,6 +102,7 @@ void _alubox_thumb_lsls(soc_core_p core, uint32_t* wb)
 	unsigned carry_out = 0;
 	const unsigned valid_rs = vR(M) & 0xff;
 
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = _lsl_vc(vR(N), valid_rs, &carry_out);
 
 	if(valid_rs) {
@@ -119,6 +121,7 @@ void _alubox_thumb_lsrs(soc_core_p core, uint32_t* wb)
 	unsigned carry_out = 0;
 	const unsigned valid_rs = vR(M) & 0xff;
 
+	_setup_rR_vR_src(core, rRN, rR(N));
 	vR(D) = _lsr_vc(vR(N), valid_rs, &carry_out);
 
 	if(valid_rs) {
@@ -207,6 +210,8 @@ void _alubox_thumb_rors(soc_core_p core, uint32_t* wb)
 
 	const unsigned valid_rs_mask = thumb_rors_4_0 ? mlBF(4, 0) : mlBF(7, 0);
 	const unsigned valid_rs = vR(M) & valid_rs_mask;
+
+	_setup_rR_vR_src(core, rRN, rR(N));
 
 	unsigned carry_out = 0;
 	vR(D) = _ror_vc(vR(N), valid_rs, &carry_out);
