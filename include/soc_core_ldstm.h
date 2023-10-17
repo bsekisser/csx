@@ -46,7 +46,7 @@ static void __ldm_pc(soc_core_p core, uint32_t ea)
 	if(_arm_version >= arm_v5t)
 		soc_core_reg_set_pcx(core, v);
 	else
-		PC = v & (~3U >> BEXT_CPSR_C(Thumb));
+		PC = v & ~(3 >> BEXT_CPSR_C(Thumb));
 }
 
 static void __stm(soc_core_p core, soc_core_reg_t r, uint32_t ea)
