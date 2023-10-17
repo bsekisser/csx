@@ -176,7 +176,7 @@ uint32_t soc_core_reg_usr(soc_core_p core, soc_core_reg_t r, uint32_t* v)
 void soc_core_psr_mode_switch(soc_core_p core, uint32_t v)
 {
 	const uint8_t old_mode = mlBFEXT(CPSR, 4, 0);
-	const uint8_t new_mode = mlBFEXT(v, 4, 0);
+	const uint8_t new_mode = mlBFEXT(v, 4, 0) | CPSR_C(32);
 
 	if(old_mode == new_mode)
 		return;
