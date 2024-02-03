@@ -13,7 +13,7 @@ SRC_DIR = source
 OBJ_DIR = $(TOP_DIR)/$(BUILD_DIR)
 
 INCLUDE += -Iinclude
-INCLUDE += -I$(TOP_DIR)/../include
+INCLUDE += -I$(TOP_DIR)/../../include
 
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 SRCS += $(TOP_DIR)/../include/callback_qlist.c

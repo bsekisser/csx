@@ -25,6 +25,7 @@
 /* **** */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <string.h>
 
 /* **** */
@@ -150,9 +151,9 @@ static inline int _soc_mmu_l1ptd_02(soc_mmu_p mmu, soc_mmu_ptd_p ptd, uint32_t v
 
 	if(mmu->debug) {
 		if(ptd->is_supersection) {
-			LOG_START("Supersection Base Address: 0x%016llx", ptd->base);
+			LOG_START("Supersection Base Address: 0x%016" PRIx64, ptd->base);
 		} else {
-			LOG_START("Section Base Address: 0x%08llx", ptd->base);
+			LOG_START("Section Base Address: 0x%08" PRIx64, ptd->base);
 		}
 
 		_LOG_(":nG(%01u)", ptd->ng);

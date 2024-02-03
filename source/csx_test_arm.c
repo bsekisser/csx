@@ -551,7 +551,7 @@ static void csx_test_arm_ldstm_assert_check(csx_test_p t,
 
 	if(0) LOG("asp_in = 0x%016" PRIxPTR ", asp_out 0x%016" PRIxPTR ", asp_diff = 0x%08" PRIxPTR,
 		(uintptr_t)l->asp[0], (uintptr_t)l->asp[1], asp_diff);
-	if(0) LOG("esp_in = 0x%016x, esp_out 0x%016x, esp_diff = 0x%08" PRIxPTR,
+	if(0) LOG("esp_in = 0x%016" PRIxPTR ", esp_out 0x%016" PRIxPTR ", esp_diff = 0x%08" PRIxPTR,
 		(uintptr_t)l->esp[0], (uintptr_t)l->esp[1], esp_diff);
 
 	assert(asp_diff == esp_diff);

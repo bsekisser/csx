@@ -56,7 +56,7 @@ void _alubox_thumb_ands(soc_core_p core, uint32_t* wb)
 __ALUBOX_STATIC__
 void _alubox_thumb_asrs(soc_core_p core, uint32_t* wb)
 {
-	int carry_out = 0;
+	uint32_t carry_out = 0;
 	const unsigned valid_rs = vR(M) & 0xff;
 
 	_setup_rR_vR_src(core, rRN, rR(N));
