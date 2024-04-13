@@ -33,6 +33,10 @@ $(TARGET) : $(OBJ_DIR)/$(TARGET)
 
 $(OBJ_DIR)/$(TARGET) : $(GIT_DIR)/libbse/libbse.a
 
+$(OBJ_DIR)/$(TARGET) : $(GIT_DIR)/libarm/libarm.a
+
+$(OBJ_DIR)/$(TARGET) : $(GIT_DIR)/libarmvm/libarmvm.a
+
 $(OBJ_DIR)/$(TARGET) : $(OBJS)
 	$(CC) $(LFLAGS) $^ -o $@ $(LDFLAGS) $(LDLIBS)
 
