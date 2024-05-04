@@ -4,12 +4,15 @@ BUILD_DIR = build-$(shell $(CC) -dumpmachine)
 
 TARGET = csx
 
-#LDFLAGS += -lpthread -lm -lSDL2
-LDFLAGS += -lcapstone
+#LDLIBS += -lpthread -lm -lSDL2
+LDLIBS += -lcapstone
+LDLIBS += -L$(TOP_DIR)/../libbse -lbse
 
 .PHONY: all
 
 all: $(OBJS) $(TARGET)
+
+$(TARGET): $(TOP_DIR)/../libbse/libbse.a
 
 clean:
 	-rm $(OBJ_DIR)/*.d $(OBJ_DIR)/*.o $(TARGET)

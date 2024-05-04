@@ -16,7 +16,7 @@ typedef struct csx_soc_t* csx_soc_p;
 
 /* **** */
 
-#include "callback_qlist.h"
+#include "libbse/include/callback_qlist.h"
 
 /* **** */
 

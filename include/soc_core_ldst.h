@@ -14,8 +14,8 @@
 
 /* **** */
 
-#include "bitfield.h"
-#include "shift_roll.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/shift_roll.h"
 
 /* **** */
 

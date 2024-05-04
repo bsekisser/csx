@@ -3,9 +3,9 @@
 
 /* **** */
 
-#include "bitfield.h"
-#include "capstone_assert_test.h"
-#include "log.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/capstone_assert_test.h"
+#include "libbse/include/log.h"
 
 /* **** */
 

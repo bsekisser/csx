@@ -17,8 +17,8 @@ typedef struct csx_cache_t {
 
 /* **** */
 
-#include "bitfield.h"
-#include "log.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/log.h"
 
 /* **** */
 

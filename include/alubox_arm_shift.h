@@ -7,8 +7,8 @@
 
 /* **** */
 
-#include "log.h"
-#include "shift_roll.h"
+#include "libbse/include/log.h"
+#include "libbse/include/shift_roll.h"
 
 /* **** */
 

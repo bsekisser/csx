@@ -8,10 +8,10 @@
 
 /* **** */
 
-#include "bitfield.h"
-#include "callback_qlist.h"
-#include "handle.h"
-#include "mem_access.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/callback_qlist.h"
+#include "libbse/include/handle.h"
+#include "libbse/include/mem_access.h"
 
 /* **** */
 

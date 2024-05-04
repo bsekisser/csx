@@ -13,7 +13,7 @@ typedef void (*alubox_fn)(soc_core_p core);
 
 /* **** */
 
-#include "log.h"
+#include "libbse/include/log.h"
 
 /* **** */
 

@@ -12,7 +12,7 @@ typedef struct csx_mmio_t* csx_mmio_p;
 
 /* **** local library level includes */
 
-#include "callback_qlist.h"
+#include "libbse/include/callback_qlist.h"
 
 /* **** system level includes */
 /* **** */

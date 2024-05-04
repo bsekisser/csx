@@ -7,8 +7,8 @@ typedef struct csx_data_target_t* csx_data_target_p;
 
 /* **** local library includes */
 
-#include "bitfield.h"
-#include "mem_access_le.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/mem_access_le.h"
 
 /* **** system includes */
 

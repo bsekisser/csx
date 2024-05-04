@@ -19,8 +19,8 @@ typedef uint32_t (*csx_mem_fn)(void* param, uint32_t ppa, size_t size, uint32_t*
 
 /* **** local includes */
 
-#include "page.h"
-#include "queue.h"
+#include "libbse/include/page.h"
+#include "libbse/include/queue.h"
 
 /* **** */
 

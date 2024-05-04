@@ -12,7 +12,7 @@ extern csx_statistics_p statistics;
 
 /* **** */
 
-#include "dtime.h"
+#include "libbse/include/dtime.h"
 
 /* **** */
 

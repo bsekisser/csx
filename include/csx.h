@@ -32,8 +32,8 @@ typedef struct csx_data_t* csx_data_p;
 
 /* **** */
 
-#include "callback_qlist.h"
-#include "unused.h"
+#include "libbse/include/callback_qlist.h"
+#include "libbse/include/unused.h"
 
 /* **** */
 

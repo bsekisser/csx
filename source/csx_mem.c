@@ -8,10 +8,10 @@
 
 /* **** local library includes */
 
-#include "err_test.h"
-#include "handle.h"
-#include "log.h"
-#include "page.h"
+#include "libbse/include/err_test.h"
+#include "libbse/include/handle.h"
+#include "libbse/include/log.h"
+#include "libbse/include/page.h"
 
 /* **** system includes */
 
@@ -75,10 +75,10 @@ static void* _csx_mem_access_l1(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
 	// ->l1->l2->csx_mem_callback_t
 	// l1->l2->csx_mem_callback_t
 	// ->l2->csx_mem_callback_t
-	
+
 	void** p2l1e = &mem->l1[PAGE_OFFSET(PAGE(PAGE(ppa)))];
 	void* p2l2 = *p2l1e;
-	
+
 	if(0) LOG("p2l1e = 0x%08" PRIxPTR ", p2l2 = 0x%08" PRIxPTR,
 		(uintptr_t)p2l1e, (uintptr_t)p2l2);
 
@@ -97,17 +97,17 @@ static csx_mem_callback_p _csx_mem_access_l2(csx_mem_p mem, uint32_t ppa, void* 
 	csx_mem_callback_p l2 = p2l2;
 
 	return(&l2[PAGE_OFFSET(PAGE(ppa))]);
-	
+
 	UNUSED(mem);
 }
 
 static csx_mem_callback_p _csx_mem_access(csx_mem_p mem, uint32_t ppa, void*** h2l1e)
 {
 	void* p2l2 = _csx_mem_access_l1(mem, ppa, h2l1e);
-	
+
 	if(!p2l2)
 		return(0);
-	
+
 	return(_csx_mem_access_l2(mem, ppa, p2l2));
 }
 
@@ -124,9 +124,9 @@ static csx_mem_callback_p _csx_mem_mmap_alloc_free(csx_mem_p mem)
 
 		mem->l2free.head = qel2->next;
 	}
-	
+
 	return(p2l2);
-}	
+}
 
 static csx_mem_callback_p _csx_mem_mmap_alloc_malloc(csx_mem_p mem, size_t l2size)
 {
@@ -150,14 +150,14 @@ static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, unsigned ppa)
 	unsigned l1page = PAGE_OFFSET(PAGE(PAGE(ppa)));
 	unsigned l2page = PAGE_OFFSET(PAGE(ppa));
 	unsigned offset = PAGE_OFFSET(ppa);
-	
+
 	if(0) LOG("ppa = 0x%08x -- %03x:%03x:%03x", ppa, l1page, l2page, offset);
 
 	const size_t l2size = sizeof(csx_mem_callback_t) * PAGE_SIZE;
 
 	void** p2l1e = 0;
 	csx_mem_callback_p p2l2 = _csx_mem_access(mem, ppa, &p2l1e);
-		
+
 	if(!p2l2) {
 		p2l2 = _csx_mem_mmap_alloc_free(mem);
 
@@ -174,7 +174,7 @@ static csx_mem_callback_p _csx_mem_mmap_alloc(csx_mem_p mem, unsigned ppa)
 
 		*p2l1e = p2l2;
 		memset(p2l2, 0, l2size);
-		
+
 		p2l2 = &p2l2[PAGE_OFFSET(PAGE(ppa))];
 	}
 
@@ -189,12 +189,12 @@ static uint32_t _mem_access_generic(void* param, uint32_t ppa, size_t size, uint
 
 	if(0) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
-	
+
 	if(write)
 		csx_data_write(ppat, size, *write);
 	else
 		return(csx_data_read(ppat, size));
-	
+
 	return(0);
 }
 
@@ -227,7 +227,7 @@ static uint32_t _mem_access_generic_pedantic(void* param, uint32_t ppa, size_t s
 //		if(ppa <= cb->end)
 			return(_mem_access_generic(param, ppa, size, write));
 	}
-	
+
 	LOG("generic access failure -- param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
@@ -239,7 +239,7 @@ static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, u
 	const csx_mem_callback_p cb = param;
 
 	uint8_t* ppat = &cb->data[PAGE_OFFSET(ppa)];
-	
+
 	if(1) LOG("param = 0x%08" PRIxPTR ", ppa = 0x%08x, size = 0x%08zx, write = 0x%08" PRIxPTR "(0x%08x)",
 		(uintptr_t)param, ppa, size, (uintptr_t)write, write ? *write : 0);
 
@@ -247,7 +247,7 @@ static uint32_t _mem_access_generic_ro(void* param, uint32_t ppa, size_t size, u
 ;//		csx_data_write(ppat, size, *write);
 	else
 		return(csx_data_read(ppat, size));
-	
+
 	return(0);
 }
 
@@ -258,7 +258,7 @@ UNUSED_FN static uint32_t _mem_access_generic_ro_counted(void* param, uint32_t p
 	} else {
 		CSX_COUNTER_INC(csx_mem_access.generic.ro);
 	}
-	
+
 	return(_mem_access_generic_ro(param, ppa, size, write));
 }
 
@@ -282,7 +282,7 @@ uint32_t csx_mem_access_read(csx_p csx, uint32_t ppa, size_t size, csx_mem_callb
 
 	if(h2cb)
 		*h2cb = cb;
-	
+
 	return(csx_mem_callback_read(cb, ppa, size));
 }
 
@@ -291,7 +291,7 @@ csx_mem_callback_p csx_mem_access_write(csx_p csx, uint32_t ppa, size_t size, ui
 	csx_mem_callback_p cb = _csx_mem_access(csx->mem, ppa, 0);
 
 	csx_mem_callback_write(cb, ppa, size, write);
-	
+
 	return(cb);
 }
 
@@ -318,9 +318,9 @@ csx_mem_p csx_mem_alloc(csx_p csx, csx_mem_h h2mem)
 	/* **** */
 
 	queue_init(&mem->l2free);
-		
+
 	for(uint32_t i = 0; i < PAGE_SIZE; i++)
-		enqueue(&mem->l2free, (qelem_p)&mem->l2heap[i][0]);
+		queue_enqueue((qelem_p)&mem->l2heap[i][0], &mem->l2free);
 
 	memset(&mem->l2alloc, 0, sizeof(mem->l2alloc));
 

@@ -15,12 +15,12 @@
 
 /* **** */
 
-#include "bitfield.h"
-#include "bounds.h"
-#include "err_test.h"
-#include "handle.h"
-#include "log.h"
-#include "page.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/bounds.h"
+#include "libbse/include/err_test.h"
+#include "libbse/include/handle.h"
+#include "libbse/include/log.h"
+#include "libbse/include/page.h"
 
 /* **** */
 

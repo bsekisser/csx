@@ -6,7 +6,7 @@
 
 /* **** */
 
-#include "bitfield.h"
+#include "libbse/include/bitfield.h"
 
 /* **** system includes */
 

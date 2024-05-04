@@ -17,11 +17,11 @@
 
 /* **** local includes */
 
-#include "callback_qlist.h"
-#include "dtime.h"
-#include "err_test.h"
-#include "handle.h"
-#include "log.h"
+#include "libbse/include/callback_qlist.h"
+#include "libbse/include/dtime.h"
+#include "libbse/include/err_test.h"
+#include "libbse/include/handle.h"
+#include "libbse/include/log.h"
 
 /* **** system includes */
 

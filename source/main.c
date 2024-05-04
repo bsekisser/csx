@@ -4,9 +4,9 @@
 
 /* **** local includes */
 
-#include "dtime.h"
-#include "err_test.h"
-#include "log.h"
+#include "libbse/include/dtime.h"
+#include "libbse/include/err_test.h"
+#include "libbse/include/log.h"
 
 /* **** system includes */
 

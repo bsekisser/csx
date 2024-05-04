@@ -26,8 +26,8 @@ typedef void (*soc_core_step_fn)(soc_core_p csx);
 
 /* **** */
 
-#include "bitfield.h"
-#include "callback_qlist.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/callback_qlist.h"
 
 /* **** */
 
