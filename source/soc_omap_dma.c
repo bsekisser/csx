@@ -605,12 +605,14 @@ static uint32_t _soc_omap_dma_lcd_b_bot(void* param, uint32_t ppa, size_t size, 
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
 
 	const uint32_t data = mem_32x_access(&lcd_b->bot, (ppa & 3), size, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write) {
 		lcd_b->bot &= ~1U;
@@ -635,12 +637,14 @@ static uint32_t _soc_omap_dma_lcd_b_src_ei(void* param, uint32_t ppa, size_t siz
 */
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 2)];
 
 	const uint32_t data = mem_16i_access(&lcd_b->src_ei, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Element Index B%01u Register -- 0x%04x\n\t",
@@ -656,12 +660,14 @@ static uint32_t _soc_omap_dma_lcd_b_src_en(void* param, uint32_t ppa, size_t siz
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
 
 	const uint32_t data = mem_32_access(&lcd_b->src_en, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Element Number B%01u Register -- 0x%08x\n\t",
@@ -687,17 +693,18 @@ static uint32_t _soc_omap_dma_lcd_b_src_fi(void* param, uint32_t ppa, size_t siz
 */
 
 	const soc_omap_dma_p dma = param;
+	const csx_p csx = dma->csx;
 
 	const unsigned bit_u = BEXT(ppa, 5);
 	const unsigned bit_b = BEXT(ppa, 2 - bit_u);
-	
+
 	const unsigned offset = (ppa & 1) | (bit_u << 1);
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[bit_b];
 
 	const uint32_t data = mem_32ix_access(&lcd_b->src_fi, offset, size, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Frame Index B%01u %c Register -- 0x%08x\n\t",
@@ -713,12 +720,14 @@ static uint32_t _soc_omap_dma_lcd_b_src_fn(void* param, uint32_t ppa, size_t siz
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
 
 	const uint32_t data = mem_32_access(&lcd_b->src_fn, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Frame Number B%01u Register -- 0x%08x\n\t",
@@ -734,12 +743,14 @@ static uint32_t _soc_omap_dma_lcd_b_top(void* param, uint32_t ppa, size_t size, 
 		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	const soc_omap_dma_lcd_b_p lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
 
 	const uint32_t data = mem_32x_access(&lcd_b->top, (ppa & 3), size, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write) {
 		lcd_b->top &= ~1U;
@@ -759,12 +770,14 @@ static uint32_t _soc_omap_dma_lcd_ccr(void* param, uint32_t ppa, size_t size, ui
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	soc_omap_dma_lcd_p lcd = &dma->lcd;
 
 	const uint32_t data = mem_32_access(&lcd->ccr, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG_START("DMA: LCD Channel Control Register\n\t");
@@ -790,12 +803,14 @@ static uint32_t _soc_omap_dma_lcd_csdp(void* param, uint32_t ppa, size_t size, u
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	soc_omap_dma_lcd_p lcd = &dma->lcd;
 
 	const uint32_t data = mem_32_access(&lcd->csdp, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG_START("DMA: LCD Channel Source Destination Parameters Register\n\t");
@@ -818,12 +833,14 @@ static uint32_t _soc_omap_dma_lcd_ctrl(void* param, uint32_t ppa, size_t size, u
 		assert(sizeof(uint16_t) == size);
 
 	const soc_omap_dma_p dma = param;
+
+	const csx_p csx = dma->csx;
 	soc_omap_dma_lcd_p lcd = &dma->lcd;
 
 	const uint32_t data = mem_32_access(&lcd->ctrl, write);
 
 	if(_trace_mmio_dma_lcd)
-		CSX_MMIO_TRACE_MEM_ACCESS(dma->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG_START("DMA: LCD Control Register\n\t");

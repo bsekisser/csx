@@ -76,7 +76,8 @@ static uint32_t _soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint3
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
 
-	soc_omap_dpll_p dpll = param;
+	const soc_omap_dpll_p dpll = param;
+	const csx_p csx = dpll->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -141,7 +142,7 @@ soc_omap_dpll_p soc_omap_dpll_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h 
 void soc_omap_dpll_init(soc_omap_dpll_p dpll)
 {
 	ERR_NULL(dpll);
-	
+
 	if(_trace_init) {
 		LOG();
 	}

@@ -8,12 +8,18 @@ typedef struct csx_cache_t {
 
 /* **** */
 
-#include "soc_core_psr.h"
+#include "csx.h"
+#include "csx_armvm_glue.h"
 
 /* **** */
 
-#include "csx_coprocessor.h"
-#include "csx.h"
+#include "libarmvm/include/armvm_coprocessor.h"
+#include "libarmvm/include/armvm_coprocessor_glue.h"
+#include "libarmvm/include/armvm_core_exception.h"
+
+#include "libarmvm/include/armvm.h"
+
+#include "libarm/include/arm_cpsr.h"
 
 /* **** */
 
@@ -33,17 +39,16 @@ typedef struct csx_cache_t {
 		LOG_ACTION(_action); \
 	}
 
-#define IS_USER_MODE (0 == soc_core_in_a_privaleged_mode(core))
+#define IS_USER_MODE (0 == soc_core_in_a_privaleged_mode(csx))
 
 /* **** */
 
 static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->soc->core;
 
 	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
+		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
 		LOG("Invalidate ICache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache"));
@@ -55,10 +60,9 @@ static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->soc->core;
 
 	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
+		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
 		LOG("Invalidate DCache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate DCache"));
@@ -71,10 +75,9 @@ static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
 static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->soc->core;
 
 	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
+		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
 		LOG("Invalidate ICache and DCache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache and DCache"));
@@ -85,28 +88,27 @@ static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 
 static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
 {
-	const csx_p csx = param;
-	const soc_core_p core = csx->soc->core;
+//	const csx_p csx = param;
 
 	uint32_t data = write ? *write : 0;
-	
+
 	if(write) {
 		DEBUG(LOG("Cache, Test and Clean"));
 	} else {
 		LOG("Cache, Test and Clean");
-		data = (CPSR & SOC_CORE_PSR_NZCV) | SOC_CORE_PSR_Z;
+		ARM_CPSRx_BSET(data, Z);
 	}
 
 	return(data);
+	UNUSED(param);
 }
 
 static uint32_t _csx_cache_cp15_0_7_10_4_access(void* param, uint32_t* write)
 {
 	const csx_p csx = param;
-	const soc_core_p core = csx->soc->core;
 
 	if(write) {
-		IF_USER_MODE(soc_core_exception(core, _EXCEPTION_UndefinedInstruction));
+		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
 		LOG("Drain write buffer");
 	} else {
 		DEBUG(LOG("XX READ -- Drain write buffer"));
@@ -144,16 +146,16 @@ void csx_cache_init(csx_cache_p cache)
 	}
 
 	const csx_p csx = (void*)cache;
-	const csx_coprocessor_p cp = csx->cp;
+	const armvm_coprocessor_p cp = csx->armvm->coprocessor;
 
-	csx_coprocessor_register_access(cp, cp15(0, 7, 5, 0),
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 5, 0),
 		_csx_cache_cp15_0_7_5_0_access, cache);
-	csx_coprocessor_register_access(cp, cp15(0, 7, 6, 0),
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 6, 0),
 		_csx_cache_cp15_0_7_6_0_access, cache);
-	csx_coprocessor_register_access(cp, cp15(0, 7, 7, 0),
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 7, 0),
 		_csx_cache_cp15_0_7_7_0_access, cache);
-	csx_coprocessor_register_access(cp, cp15(0, 7, 10, 3),
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 10, 3),
 		_csx_cache_cp15_0_7_10_3_access, cache);
-	csx_coprocessor_register_access(cp, cp15(0, 7, 10, 4),
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 10, 4),
 		_csx_cache_cp15_0_7_10_4_access, cache);
 }

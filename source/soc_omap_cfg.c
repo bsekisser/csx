@@ -22,6 +22,11 @@
 
 /* **** */
 
+//#define PEDANTIC(_x)
+#ifndef PEDANTIC
+	#define PEDANTIC(_x) _x
+#endif
+
 typedef struct soc_omap_cfg_t {
 	csx_p csx;
 	csx_mmio_p mmio;
@@ -82,6 +87,8 @@ enum {
 
 static int __soc_omap_cfg_atexit(void* param)
 {
+	ERR_NULL(param);
+
 	if(_trace_atexit) {
 		LOG();
 	}
@@ -96,6 +103,8 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[];
 
 static int __soc_omap_cfg_atreset(void* param)
 {
+	ERR_NULL(param);
+
 	if(_trace_atreset) {
 		LOG();
 	}
@@ -103,6 +112,7 @@ static int __soc_omap_cfg_atreset(void* param)
 	const soc_omap_cfg_p cfg = param;
 
 	if(!cfg->reset) {
+		ERR_NULL(cfg->mmio);
 		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_0, sizeof(uint32_t), cfg->data);
 		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_1, sizeof(uint32_t), &cfg->data[0x100]);
 		cfg->reset = 1;
@@ -118,14 +128,17 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t 
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
+	PEDANTIC(ERR_NULL(param));
 	const soc_omap_cfg_p cfg = param;
+	const csx_p csx = cfg->csx;
+	PEDANTIC(ERR_NULL(csx));
 
 	const uint16_t offset = ppa & 0x1ff;
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
 	if(_trace_mmio_cfg)
-		CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Mondule Configuration Control 1\n\t");
@@ -160,14 +173,17 @@ static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, 
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
+	PEDANTIC(ERR_NULL(param));
 	const soc_omap_cfg_p cfg = param;
+	const csx_p csx = cfg->csx;
+	PEDANTIC(ERR_NULL(csx));
 
 	const uint16_t offset = ppa & 0x1ff;
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
 	if(_trace_mmio_cfg)
-		CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Reset Control Register\n\t");
@@ -189,7 +205,10 @@ static uint32_t _soc_omap_cfg_mem_access(void* param, uint32_t ppa, size_t size,
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
+	PEDANTIC(ERR_NULL(param));
 	const soc_omap_cfg_p cfg = param;
+	const csx_p csx = cfg->csx;
+	PEDANTIC(ERR_NULL(csx));
 
 	switch(ppa) {
 		case MOD_CONF_CTRL_1:
@@ -202,7 +221,7 @@ static uint32_t _soc_omap_cfg_mem_access(void* param, uint32_t ppa, size_t size,
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
-	CSX_MMIO_TRACE_MEM_ACCESS(cfg->csx, ppa, size, write, data);
+	CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	return(data);
 }
@@ -250,12 +269,13 @@ soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2c
 void soc_omap_cfg_init(soc_omap_cfg_p cfg)
 {
 	ERR_NULL(cfg);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
 
 	csx_mmio_p mmio = cfg->mmio;
+	ERR_NULL(mmio);
 
 	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_0, (void*)cfg);
 	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_1, (void*)cfg);

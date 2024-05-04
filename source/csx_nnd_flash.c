@@ -6,6 +6,8 @@
 
 /* **** */
 
+#include "libarmvm/include/armvm_mem.h"
+
 #include "libbse/include/bitfield.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
@@ -192,20 +194,21 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 	/* **** */
 
 	strcpy(&nnd->flash[0x10], "DSKIMG");
+
 	nnd->flash[0x17] = 6;
 	nnd->flash[0x18] = 8;
 	nnd->flash[0x1a] = 12;
 	nnd->flash[0x24] = 8;
 
-
 	/* **** */
 
 	csx_p csx = nnd->csx;
+	armvm_mem_p mem = csx->armvm->mem;
 
-	csx_mem_mmap(csx, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
-	csx_mem_mmap(csx, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
-	csx_mem_mmap(csx, 0x08000000, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
-	csx_mem_mmap(csx, 0x0c000000, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap(mem, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap(mem, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap(mem, 0x08000000, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap(mem, 0x0c000000, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
 
 	/* **** */
 }
@@ -251,7 +254,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 	}
 
 	LOG("addr = 0x%08x, cs = 0x%08x, size = 0x%08zx, cl = 0x%08x:0%08x, value = 0x%08x",
-		addr, cs, size, unit->cl, cl_index, value);
+		addr, cs, size, unit->cl, unit->addr, value);
 
 	return(value);
 }

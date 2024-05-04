@@ -12,6 +12,7 @@ extern csx_statistics_p statistics;
 
 /* **** */
 
+#include "libbse/include/callback_qlist.h"
 #include "libbse/include/dtime.h"
 
 /* **** */
@@ -28,28 +29,9 @@ typedef struct csx_counter_hit_t {
 
 typedef struct csx_statistic_counters_t {
 	struct {
-		struct {
-			uint32_t read;
-			uint32_t write;
-			uint32_t ro;
-			uint32_t ro_write;
-		}generic;
-		struct {
-			uint32_t read;
-			uint32_t write;
-		}sdram;
-	}csx_mem_access;
-	struct {
 		uint32_t read;
 		uint32_t write;
 	}mmio;
-	struct {
-		struct {
-			csx_counter_hit_t ifetch;
-			csx_counter_hit_t read;
-			csx_counter_hit_t write;
-		}tlb;
-	}soc;
 }csx_statistic_counters_t;
 
 /* **** */
@@ -61,27 +43,13 @@ typedef struct csx_profile_stat_t {
 }csx_profile_stat_t;
 
 typedef struct csx_statistic_profile_t {
-	struct {
-		csx_profile_stat_t generic;
-		csx_profile_stat_t generic_ro;
-		csx_profile_stat_t sdram;
-	}csx_mem_access;
-	struct {
-		csx_profile_stat_t ifetch;
-		csx_profile_stat_t read;
-		struct {
-			csx_profile_stat_t arm;
-			csx_profile_stat_t thumb;
-		}step;
-		csx_profile_stat_t write;
-	}soc_core;
 }csx_statistic_profile_t;
 
 typedef struct csx_statistics_t {
 	csx_p csx;
 	csx_statistic_counters_t counters;
 	csx_statistic_profile_t profile;
-	
+
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
 }csx_statistics_t;

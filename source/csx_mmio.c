@@ -24,7 +24,6 @@
 /* **** csx level includes */
 
 #include "csx_data.h"
-#include "csx_mem.h"
 #include "csx_soc_omap.h"
 #include "csx.h"
 
@@ -45,7 +44,7 @@
 
 typedef struct csx_mmio_mem_access_t* csx_mmio_mem_access_p;
 typedef struct csx_mmio_mem_access_t {
-	csx_mem_fn fn;
+	armvm_mem_fn fn;
 	void* param;
 	const char* name;
 	csx_mmio_access_list_p acle;
@@ -58,17 +57,17 @@ typedef struct csx_mmio_t {
 	};
 
 	csx_p csx;
-	
+
 	struct {
 		callback_qlist_t list;
 		callback_qlist_elem_t elem;
 	}atexit;
-	
+
 	struct {
 		callback_qlist_t list;
 		callback_qlist_elem_t elem;
 	}atreset;
-	
+
 	soc_omap_cfg_p cfg;
 	soc_omap_dma_p dma;
 	soc_omap_dpll_p dpll;
@@ -93,13 +92,13 @@ static csx_mmio_mem_access_p __csx_mmio_mem_access(csx_mmio_p mmio, uint32_t ppa
 	return(&mmio->mem_access[ppa - TIPB_MMIO_START]);
 }
 
-static csx_mmio_mem_access_p __csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, csx_mem_fn fn, void* param)
+static csx_mmio_mem_access_p __csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, armvm_mem_fn fn, void* param)
 {
 	csx_mmio_mem_access_p cmmap = __csx_mmio_mem_access(mmio, ppa);
-	
+
 	cmmap->fn = fn;
 	cmmap->param = param;
-	
+
 	return(cmmap);
 }
 
@@ -230,12 +229,12 @@ void csx_mmio_callback_atreset(csx_mmio_p mmio,
 static uint32_t csx_mmio_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	assert(0 != param);
-	
+
 	csx_mmio_p mmio = param;
 
 	csx_mmio_mem_access_p cmmap = __csx_mmio_mem_access(mmio, ppa);
 	uint32_t data = write ? *write : 0;
-	
+
 	if(cmmap->fn)
 		return(cmmap->fn(cmmap->param, ppa, size, write));
 
@@ -259,7 +258,7 @@ void csx_mmio_init(csx_mmio_p mmio)
 
 	/* **** */
 
-	csx_mem_mmap(mmio->csx, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
+	armvm_mem_mmap(mmio->csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
 
 	/* **** */
 
@@ -281,7 +280,7 @@ void csx_mmio_init(csx_mmio_p mmio)
 	soc_omap_watchdog_init(mmio->wdt);
 }
 
-void csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, csx_mem_fn fn, void* param)
+void csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, armvm_mem_fn fn, void* param)
 {
 	if(_trace_mmio) {
 		LOG("ppa 0x%08x, param = 0x%08" PRIxPTR, ppa, (uintptr_t)param);
@@ -294,7 +293,7 @@ void csx_mmio_register_access_list(csx_mmio_p mmio, uint32_t ppa_base, csx_mmio_
 {
 	assert(0 != acl);
 	assert(0 != mmio);
-	
+
 	do {
 		csx_mmio_access_list_p acle = acl++;
 
@@ -315,7 +314,7 @@ void csx_mmio_register_access_list(csx_mmio_p mmio, uint32_t ppa_base, csx_mmio_
 void csx_mmio_trace_mem_access(csx_p csx, uint32_t ppa, size_t size, uint32_t* write, uint32_t read)
 {
 	assert(0 != csx);
-	
+
 	if(write) {
 		CSX_MMIO_TRACE_WRITE(csx, ppa, size, *write);
 	} else {

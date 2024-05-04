@@ -152,9 +152,9 @@ enum {
 	r0, r1, r2, r3, r4, r5, r6, r7,
 	r8, r9, r10, r11, r12, r13, r14, r15,
 //
-//	rLR = r14,
-//	rPC = r15,
-//	rSP = r13,
+	rLR = r14,
+	rPC = r15,
+	rSP = r13,
 };
 
 void csx_soc_brom_init(csx_soc_p const soc, csx_data_p const cdp)

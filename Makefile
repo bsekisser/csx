@@ -5,9 +5,12 @@ GIT_DIR = $(TOP_DIR)/..
 
 TARGET = csx
 
-#LDLIBS += -lpthread -lm -lSDL2
-LDLIBS += -lcapstone
+LDLIBS += -L$(GIT_DIR)/libarmvm -larmvm
+LDLIBS += -L$(GIT_DIR)/libarm -larm
 LDLIBS += -L$(GIT_DIR)/libbse -lbse
+LDLIBS += -lcapstone
+
+LDFLAGS += $(LDLIBS)
 
 .PHONY: all
 

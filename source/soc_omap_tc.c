@@ -13,6 +13,7 @@
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
+#include "libbse/include/mem_access.h" // TODO
 
 /* **** */
 
@@ -24,7 +25,7 @@
 typedef struct soc_omap_tc_t {
 	csx_p			csx;
 	csx_mmio_p		mmio;
-	
+
 	struct {
 		uint32_t sdram_config;
 	}emiff;
@@ -103,13 +104,14 @@ static uint32_t soc_omap_tc_emiff_sdram_config(void* param, uint32_t ppa, size_t
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_tc_p tc = param;
+	const csx_p csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 //	const uint8_t offset = ppa & 0xff;
 
 	if(write) {
 		if(_trace_mmio_tc_emiff) {
-			CSX_MMIO_TRACE_WRITE(tc->csx, ppa, size, data);
+			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("SBZ: %01u", mlBFEXT(data, 31, 30));
 			_LOG_(" LG SDRAM: %01u", mlBFEXT(data, 29, 28));
 			_LOG_(" CLK: %01u", BEXT(data, 27));
@@ -134,6 +136,7 @@ static uint32_t soc_omap_tc_emifs_adv_cs_config(void* param, uint32_t ppa, size_
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_tc_p tc = param;
+	const csx_p csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 	const uint8_t offset = ppa & 0xff;
@@ -142,7 +145,7 @@ static uint32_t soc_omap_tc_emifs_adv_cs_config(void* param, uint32_t ppa, size_
 
 	if(write) {
 		if(_trace_mmio_tc_emifs) {
-			CSX_MMIO_TRACE_WRITE(tc->csx, ppa, size, data);
+			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("BTMODE: %01u", BEXT(data, 9));
 			_LOG_(", ADVHOLD: %01u", BEXT(data, 8));
 			_LOG_(", OEHOLD: %01u", mlBFEXT(data, 7, 4));
@@ -161,6 +164,7 @@ static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t si
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_tc_p tc = param;
+	const csx_p csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 	const uint8_t offset = ppa & 0xff;
@@ -169,7 +173,7 @@ static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t si
 
 	if(write) {
 		if(_trace_mmio_tc_emifs) {
-			CSX_MMIO_TRACE_WRITE(tc->csx, ppa, size, data);
+			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("PGWSTEN: %01u", BEXT(data, 31));
 			_LOG_(", PGWST: %01u", mlBFEXT(data, 30, 27));
 			_LOG_(", BTWST: %01u", mlBFEXT(data, 26, 23));
@@ -208,13 +212,14 @@ static uint32_t soc_omap_tc_ocp_t1_prio(void* param, uint32_t ppa, size_t size, 
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_tc_p tc = param;
+	const csx_p csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 //	const uint8_t offset = ppa & 0xff;
 
 	if(write) {
 		if(_trace_mmio_tc_emifs) {
-			CSX_MMIO_TRACE_WRITE(tc->csx, ppa, size, data);
+			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("OCP_PRIORITY: %01u", mlBFEXT(data, 15, 12));
 			_LOG_(", DMA_PRIORITY: %01u", mlBFEXT(data, 11, 8));
 			_LOG_(", DSP_PRIORITY: %01u", mlBFEXT(data, 6, 4));
@@ -267,12 +272,12 @@ soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
 void soc_omap_tc_init(soc_omap_tc_p tc)
 {
 	ERR_NULL(tc);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
 
-	/* **** */ 
+	/* **** */
 
 	csx_mmio_register_access_list(tc->mmio, 0, _soc_omap_tc_acl, tc);
 }

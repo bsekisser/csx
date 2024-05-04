@@ -1,6 +1,7 @@
 #include "csx_soc.h"
-#include "csx_test.h"
 #include "csx.h"
+
+#include "csx_armvm_glue.h"
 
 /* **** local includes */
 
@@ -11,6 +12,7 @@
 /* **** system includes */
 
 #include <errno.h>
+#include <inttypes.h>
 #include <libgen.h>
 #include <stdint.h>
 #include <string.h>
@@ -37,7 +39,7 @@ static void _preflight_tests(void)
 #if 0
 	/*
 	 * https://stackoverflow.com/a/60023331
-	 * 
+	 *
 	 * >> x promoted to signed int
 	 */
 
@@ -62,56 +64,55 @@ int main(int argc, char **argv)
 {
 	_preflight_tests();
 
-	for(int i = 0; i < argc; i++)
+	if(argc) for(int i = 0; i < argc; i++)
 		printf("%s:%s: argv[%d] == %s\n", __FILE__, __FUNCTION__, i, argv[i]);
 
-	char *name = basename(argv[0]);
+	if(argc) {
+		char *name = basename(argv[0]);
 
-	printf("%s:%s: name == %s\n", __FILE__, __FUNCTION__, name);
+		printf("%s:%s: name == %s\n", __FILE__, __FUNCTION__, name);
+	}
 
 	int core_trace = 0;
 	int loader_firmware = 0;
-	int test = 0;
 
 	for(int i = 1; i < argc; i++) {
 		if(0 == strcmp(argv[i], "-core-trace"))
 			core_trace = 1;
 		else if(0 == strcmp(argv[i], "-firmware"))
 			loader_firmware = 1;
-		else if(0 == strcmp(argv[i], "-test"))
-			test = 1;
 	}
 
-	uint64_t est_host_cps = dtime_calibrate();
+	const uint64_t est_host_cps = dtime_calibrate();
 
 	csx_p csx = csx_init(csx_alloc());
 
 	csx_reset(csx);
 
-	uint64_t dtime_start = get_dtime();
+	const uint64_t dtime_start = get_dtime();
 
-	if(test)
-		csx_test_main(csx, core_trace);
-	else
-		csx_soc_main(csx, core_trace, loader_firmware);
+	csx_soc_main(csx, core_trace, loader_firmware);
 
-	uint64_t dtime_end = get_dtime();
-	uint64_t dtime_run = dtime_end - dtime_start;
+	const uint64_t dtime_end = get_dtime();
+	const uint64_t dtime_run = dtime_end - dtime_start;
 
-	uint64_t dtime_cycle = dtime_run / csx->cycle;
-	uint64_t dtime_insn = dtime_run / csx->insns;
+	const uint64_t cycle = CYCLE;
+	const uint64_t icount = ICOUNT;
+
+	const uint64_t dtime_cycle = dtime_run / cycle;
+	const uint64_t dtime_insn = dtime_run / icount;
 
 	LOG_ERR("cycles = 0x%016" PRIx64 ", insns = 0x%016" PRIx64,
-		csx->cycle, csx->insns);
+		cycle, icount);
 	LOG_ERR("dtime_start = 0x%016" PRIx64 ", dtime_end = 0x%016" PRIx64 ", dtime_run = 0x%016" PRIx64,
 		dtime_start, dtime_end, dtime_run);
 	LOG_ERR("dtime/cycle = 0x%016" PRIx64 ", dtime/insn = 0x%016" PRIx64,
 		dtime_cycle, dtime_insn);
 
-	double ratio = 1.0 / est_host_cps;
-//	double ratio = (double)dtime_run / est_host_cps;
+	const double ratio = 1.0 / est_host_cps;
+//	const double ratio = (double)dtime_run / est_host_cps;
 
-	double dcrt = (double)csx->cycle / dtime_run;
+	const double dcrt = (double)cycle / dtime_run;
 
 	LOG_ERR("\n\n");
 	LOG_ERR("est_host_cps = 0x%016" PRIx64, est_host_cps);
@@ -119,6 +120,7 @@ int main(int argc, char **argv)
 	LOG_ERR("cycle --- %0.05f", ratio * dtime_cycle);
 	LOG_ERR("insn --- %0.05f", ratio * dtime_insn);
 	LOG_ERR("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
-	
+
 	csx_atexit(&csx);
+	(void)argc, (void)argv;
 }

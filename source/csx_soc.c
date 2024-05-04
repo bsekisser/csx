@@ -1,18 +1,19 @@
+#include "csx_armvm_glue.h"
 #include "csx_soc.h"
-
-/* **** soc includes */
-
-#include "soc_core.h"
 
 /* **** csx includes */
 
 #include "csx_data.h"
-#include "csx_mem.h"
 #include "csx_soc_brom.h"
 #include "csx_soc_omap.h"
 #include "csx_statistics.h"
 #include "csx.h"
 #include "csx_state.h"
+
+/* **** */
+
+#include "libarmvm/include/armvm_mem.h"
+#include "libarmvm/include/armvm.h"
 
 /* **** */
 
@@ -35,8 +36,6 @@
 #include <unistd.h>
 
 /* **** */
-
-#define CYCLE csx->cycle
 
 #include "garmin_rgn.h"
 
@@ -183,12 +182,6 @@ csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
 
 	/* **** */
 
-	ERR_NULL(soc_core_alloc(csx, soc, &soc->core));
-	ERR_NULL(soc_mmu_alloc(csx, soc, &soc->mmu));
-	ERR_NULL(soc_tlb_alloc(csx, soc, &soc->tlb));
-
-	/* **** */
-
 	return(soc);
 }
 
@@ -216,32 +209,44 @@ void csx_soc_init(csx_soc_p soc)
 
 	csx_p csx = soc->csx;
 
-	csx_mem_mmap(csx, SOC_BROM_START, SOC_BROM_END, 0, soc->brom);
-	csx_mem_mmap(csx, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
-
-	CYCLE = 0;
-
-	// TODO: fix soc module locations into soc
+	armvm_mem_mmap(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, (void*)~0U, soc->brom);
+	armvm_mem_mmap(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
 
 	/* **** */
+}
 
-	soc_core_init(soc->core);
-	soc_mmu_init(soc->mmu);
-	soc_tlb_init(soc->tlb);
+static int x038201000610(csx_p csx) {
+	switch(PC) {
+		case 0x10020074:
+		case 0x100200f0:
+		case 0x10020168:
+		case 0x1002026c:
+		case 0x10025204:
+		case 0x10025628:
+		case 0x10026146:
+		case 0x1002616a:
+		case 0x10026bb0:
+		case 0x10026dfe:
+		case 0x10026e10:
+		case 0x10026e22:
+		case 0x10027128:
+		case 0x1002a3c0:
+		case 0x100314fc:
+		case 0x10033c66:
+		case 0x10034418:
+			return(1);
+	}
+
+	return(0);
 }
 
 int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 {
+	pARMVM_CORE->config.trace = core_trace;
+
 	int err = 0;
 
-	const soc_core_p core = csx->soc->core;
-
-	core->trace = !!core_trace;
-
-//	csx_soc_reset(csx);
-
 	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
-//	csx->loader.base = 0x10;
 	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 
 //	loader_firmware = 1;
@@ -270,25 +275,45 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		assert(core);
-		assert(core->step);
+		unsigned saved_trace = pARMVM_CORE->config.trace;
+		unsigned pc_skip = 0;
+
+		uint32_t next_pc = 0;
 
 		for(;;) {
-			csx->cycle++;
-			core->step(core);
+			if(pc_skip) {
+				if(PC >= next_pc) {
+					pARMVM_CORE->config.trace = saved_trace;
+					pc_skip = 0;
+				}
+			} else if(pARMVM_CORE->config.trace) {
+				if(0) pc_skip = x038201000610(csx);
+
+				if(pc_skip) {
+					next_pc = PC + (4 >> IF_CPSR(Thumb));
+					armvm_step(pARMVM);
+					saved_trace = pARMVM_CORE->config.trace;
+					pARMVM_CORE->config.trace = 0;
+				}
+			}
+
+			if(0 > armvm_step(pARMVM))
+				break;
 
 			if((csx->state & CSX_STATE_HALT) || (0 == PC))
 			{
 				LOG_ACTION(break);
 			}
 
-			csx->insns++;
-if(0)		if(csx->insns > 0x100000)
-				break;
+			if(0 && (ICOUNT > 0x100000)) break;
+			if(0 && (ICOUNT > 0x0a0d80)) break;
+			if(0 && (ICOUNT > 0x0a0d80)) break;
+			if(0 && (ICOUNT > 0x070000)) break;
+			if(0 && (ICOUNT > 0x000010)) break;
 		}
 	}
 
-	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", csx->cycle, IP, PC);
+	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);
 
 	return(err);
 }

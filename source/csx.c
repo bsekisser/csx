@@ -1,19 +1,16 @@
 #include "csx.h"
 
-/* **** soc_includes */
-
-#include "soc_core_arm.h"
-
 /* **** csx includes */
 
 #include "csx_cache.h"
-#include "csx_coprocessor.h"
-#include "csx_mem.h"
 #include "csx_mmio.h"
-#include "csx_soc_exception.h"
 #include "csx_soc_omap.h"
 #include "csx_soc.h"
 #include "csx_statistics.h"
+
+/* **** */
+
+#include "libarmvm/include/armvm.h"
 
 /* **** local includes */
 
@@ -46,15 +43,12 @@ csx_p csx_alloc(void) {
 
 	/* **** */
 
+	ERR_NULL(armvm_alloc(&csx->armvm));
 	ERR_NULL(csx_cache_alloc(csx, &csx->cache));
-	ERR_NULL(csx_coprocessor_alloc(csx, &csx->cp));
-	ERR_NULL(csx_mem_alloc(csx, &csx->mem));
 	ERR_NULL(csx_mmio_alloc(csx, &csx->mmio));
 	ERR_NULL(csx_nnd_flash_alloc(csx, &csx->nnd));
 	ERR_NULL(csx_soc_alloc(csx, &csx->soc));
 	ERR_NULL(csx_statistics_alloc(csx, &csx->statistics));
-
-	ERR_NULL(csx_soc_exception_alloc(csx, &csx->cxu));
 
 	/* **** */
 
@@ -68,12 +62,14 @@ void csx_atexit(csx_h h2csx)
 	}
 
 	csx_p csx = *h2csx;
-	
+
 	callback_qlist_process(&csx->atexit_list);
 
 	if(_trace_atexit_pedantic) {
 		LOG("--");
 	}
+
+	armvm_exit(csx->armvm);
 
 	handle_free((void**)h2csx);
 
@@ -104,28 +100,20 @@ csx_p csx_init(csx_p csx)
 
 	/* **** */
 
+	armvm_alloc_init(csx->armvm);
 	csx_cache_init(csx->cache);
-	csx_coprocessor_init(csx->cp);
-	csx_mem_init(csx->mem);
 	csx_mmio_init(csx->mmio);
 	csx_nnd_flash_init(csx->nnd);
 	csx_soc_init(csx->soc);
 	csx_statistics_init(csx->statistics);
 
-	csx_soc_exception_init(csx->cxu);
-
 	/* **** */
 
-	csx_mem_mmap(csx, CSX_SDRAM_START, CSX_SDRAM_END, 0, csx->sdram);
+	armvm_mem_mmap(pARMVM_MEM, CSX_SDRAM_START, CSX_SDRAM_END, 0, csx->sdram);
 
 	/* **** */
 
 	return(csx);
-}
-
-uint32_t csx_read(csx_p csx, uint32_t ppa, size_t size)
-{
-	return(csx_mem_access_read(csx, ppa, size, 0));
 }
 
 void csx_reset(csx_p csx)
@@ -134,10 +122,6 @@ void csx_reset(csx_p csx)
 		LOG();
 	}
 
+	armvm_reset(csx->armvm);
 	callback_qlist_process(&csx->atreset_list);
-}
-
-void csx_write(csx_p csx, uint32_t ppa, size_t size, uint32_t write)
-{
-	(void)csx_mem_access_write(csx, ppa, size, &write);
 }

@@ -88,7 +88,7 @@ __mpu_timer_unit(soc_omap_mpu_timer_p sot, uint32_t ppa) {
 	unsigned tu = ppa - SOC_OMAP_MPU_TIMER1;
 	tu >>= 8;
 	tu &= 3;
-	
+
 	return(&sot->unit[tu]);
 }
 
@@ -116,7 +116,7 @@ static int __soc_omap_mpu_timer_atreset(void* param)
 
 	for(unsigned i = 0; i < 3; i++) {
 		soc_omap_mpu_timer_unit_p sotu = &t->unit[i];
-		
+
 		memset(sotu, 0, sizeof(soc_omap_mpu_timer_unit_t));
 //		sotu->cntl_data = 0;
 
@@ -129,7 +129,8 @@ static int __soc_omap_mpu_timer_atreset(void* param)
 
 static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_timer_unit_p sotu)
 {
-	csx_p csx = sot->csx;
+	const csx_p csx = sot->csx;
+	const uint64_t csx_cycle = CYCLE;
 
 #if 0
 	assert(0 != data);
@@ -143,14 +144,14 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 		return(0);
 
 	if(0) {
-		LOG_START("csx->cycle = 0x%016" PRIx64, csx->cycle);
+		LOG_START("csx->cycle = 0x%016" PRIx64, csx_cycle);
 		_LOG_(", sot->cycle = 0x%016" PRIx64, (uint64_t)sotu->cycle);
 		_LOG_(", sot->count = 0x%016" PRIx64, (uint64_t)sotu->count);
 		LOG_END();
 	}
 
-	const int64_t elapsed_cycles = sub64(csx->cycle, sotu->cycle);
-	sotu->cycle = csx->cycle;
+	const int64_t elapsed_cycles = sub64(csx_cycle, sotu->cycle);
+	sotu->cycle = csx_cycle;
 
 	const int64_t delta_count = sub64(sotu->count, elapsed_cycles);
 
@@ -180,7 +181,7 @@ static uint32_t _soc_omap_mpu_timer_cntl(void* param, uint32_t ppa, size_t size,
 {
 	const soc_omap_mpu_timer_p sot = param;
 	const soc_omap_mpu_timer_unit_p sotu = __mpu_timer_unit(sot, ppa);
-	
+
 	const csx_p csx = sot->csx;
 
 	uint32_t data = write ? *write : 0;
@@ -206,7 +207,7 @@ static uint32_t _soc_omap_mpu_timer_cntl(void* param, uint32_t ppa, size_t size,
 		}
 
 		if(start) {
-			sotu->cycle = csx->cycle;
+			sotu->cycle = CYCLE;
 			sotu->count = sotu->load;
 		} else
 			__timer_update_count(sot, sotu);
@@ -224,7 +225,7 @@ static uint32_t _soc_omap_mpu_timer_load(void* param, uint32_t ppa, size_t size,
 
 	if(_trace_mmio_mpu_timer) {
 		LOG_START("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
-			csx->cycle, size, ppa, *write);
+			CYCLE, size, ppa, *write);
 		LOG_END(", count = 0x%08x", sotu->count);
 	}
 
@@ -247,7 +248,7 @@ static uint32_t _soc_omap_mpu_timer_read(void* param, uint32_t ppa, size_t size,
 		CSX_MMIO_TRACE_READ(csx, ppa, size, count);
 
 	return(count);
-	
+
 	UNUSED(write);
 }
 
@@ -283,7 +284,7 @@ soc_omap_mpu_timer_p soc_omap_mpu_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_om
 void soc_omap_mpu_timer_init(soc_omap_mpu_timer_p t)
 {
 	ERR_NULL(t);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
@@ -299,7 +300,7 @@ void soc_omap_mpu_timer_init(soc_omap_mpu_timer_p t)
 			_MPU_TIMER_ACLE(i, READ, _soc_omap_mpu_timer_read)
 			{ .ppa = ~0U, }
 		};
-		
+
 		csx_mmio_register_access_list(mmio, 0, _soc_omap_mpu_timer_acl, t);
 	}
 }

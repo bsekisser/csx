@@ -68,7 +68,7 @@ static int __soc_omap_watchdog_atreset(void* param)
 	sow->cntl = 0x00000e02;
 	sow->load = 0x0000ffff;
 	sow->mode = 0x00008000;
-	
+
 	return(0);
 }
 
@@ -83,12 +83,13 @@ static uint32_t _soc_omap_watchdog_timer_mode(void* param,
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
+	const csx_p csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
 		if(_trace_mmio_watchdog) {
-			CSX_MMIO_TRACE_WRITE(sow->csx, ppa, size, data);
+			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 		}
 		sow->mode = data;
 	} else
@@ -106,11 +107,12 @@ static uint32_t _soc_omap_watchdog_wspr(void* param,
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
+	const csx_p csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
 	if(_trace_mmio_watchdog)
-		CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data)
 
 	return(data);
 }
@@ -124,11 +126,12 @@ static uint32_t _soc_omap_watchdog_wwps(void* param,
 		assert(sizeof(uint32_t) == size);
 
 	const soc_omap_watchdog_p sow = param;
+	const csx_p csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
 	if(_trace_mmio_watchdog)
-		CSX_MMIO_TRACE_MEM_ACCESS(sow->csx, ppa, size, write, data)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data)
 
 	return(data);
 }
@@ -179,7 +182,7 @@ void soc_omap_watchdog_init(soc_omap_watchdog_p sow)
 		LOG();
 	}
 
-	/* **** */ 
+	/* **** */
 
 	csx_mmio_register_access_list(sow->mmio, 0, _soc_omap_watchdog_acl, sow);
 

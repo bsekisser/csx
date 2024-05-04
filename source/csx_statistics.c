@@ -22,20 +22,23 @@ csx_statistics_p statistics;
 
 /* **** */
 
+UNUSED_FN
 static void _stat_profile_assert_zero(csx_profile_stat_p s, const char* name) {
 	int fail = (0 != s->count);
 	fail |= (0 != s->elapsed);
-	
+
 	if(fail) {
 		LOG("assert(fail -- %s)", name);
 	}
 }
 
+UNUSED_FN
 static void _stat_profile_clear(csx_profile_stat_p s) {
 	s->count = 0;
 	s->elapsed = 0;
 }
 
+UNUSED_FN
 static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
 	uint32_t count = s->count ?: 1;
 
@@ -47,22 +50,14 @@ static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
 
 #define PROFILE_LIST_ASSERT_ZERO(_member) \
 	_stat_profile_assert_zero(&CSX_PROFILE_MEMBER(_member), _PROFILE_NAME(_member));
-	
+
 #define PROFILE_LIST_LOG(_member) \
 	_stat_profile_log(&CSX_PROFILE_MEMBER(_member), _PROFILE_NAME(_member));
 
 #define PROFILE_LIST_ZERO(_member) \
 	_stat_profile_clear(&CSX_PROFILE_MEMBER(_member));
 
-#define PROFILE_LIST(_action) \
-	PROFILE_LIST_ ## _action(csx_mem_access.sdram) \
-	PROFILE_LIST_ ## _action(csx_mem_access.generic) \
-	PROFILE_LIST_ ## _action(csx_mem_access.generic_ro) \
-	PROFILE_LIST_ ## _action(soc_core.ifetch) \
-	PROFILE_LIST_ ## _action(soc_core.read) \
-	PROFILE_LIST_ ## _action(soc_core.step.arm) \
-	PROFILE_LIST_ ## _action(soc_core.step.thumb) \
-	PROFILE_LIST_ ## _action(soc_core.write) \
+#define PROFILE_LIST(_action)
 
 /* **** */
 
@@ -94,19 +89,8 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 	COUNTER_LIST_ZERO(_member.miss) \
 
 #define COUNTER_LIST(_action) \
-	COUNTER_LIST_ ## _action(csx_mem_access.sdram.read) \
-	COUNTER_LIST_ ## _action(csx_mem_access.sdram.write) \
-	COUNTER_LIST_ ## _action(csx_mem_access.generic.read) \
-	COUNTER_LIST_ ## _action(csx_mem_access.generic.write) \
-	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro) \
-	COUNTER_LIST_ ## _action(csx_mem_access.generic.ro_write) \
-	\
 	COUNTER_LIST_ ## _action(mmio.read) \
-	COUNTER_LIST_ ## _action(mmio.write) \
-	\
-	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.ifetch) \
-	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.read) \
-	COUNTER_LIST_ ## _action ## _HIT(soc.tlb.write) \
+	COUNTER_LIST_ ## _action(mmio.write)
 
 /* **** */
 
@@ -129,7 +113,7 @@ static int _csx_statistics_atexit(void* param) {
 	} else {
 		PROFILE_LIST(ASSERT_ZERO);
 	}
-	
+
 	if(_trace_atexit_pedantic) {
 		LOG("--");
 	}
@@ -157,13 +141,13 @@ static int _csx_statistics_atreset(void* param) {
 	UNUSED(param);
 }
 
-/* **** */ 
+/* **** */
 
 csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s)
 {
 	statistics = handle_calloc((void**)h2s, 1, sizeof(csx_statistics_t));
 	ERR_NULL(statistics);
-	
+
 	statistics->csx = csx;
 
 	/* **** */
