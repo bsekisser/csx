@@ -10,6 +10,7 @@
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
+#include "libbse/include/mem_access_le.h"
 
 /* **** */
 
@@ -20,18 +21,21 @@
 
 typedef struct csx_nnd_unit_t* csx_nnd_unit_p;
 typedef struct csx_nnd_unit_t {
-	csx_p							csx;
-	csx_nnd_p						nnd;
+	uint32_t						addr;
 	uint32_t						cl;
-	unsigned						cl_index;
 	unsigned						cs;
 	uint32_t						status;
+//
+	csx_p							csx;
+	csx_nnd_p						nnd;
 }csx_nnd_unit_t;
 
 typedef struct csx_nnd_t {
 	csx_p							csx;
 
 	csx_nnd_unit_t					unit[16];
+
+	char							flash[1 << 12];
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
@@ -64,8 +68,8 @@ const uint8_t csx_nnd_flash_manufacturer_code[] = {
 const uint8_t csx_nnd_flash_id[16][5] = {
 //	[0x4] = { 0xec, 0x77, 0x51, 0x95, 0x58 },
 //	[0x8] = { 0xec, 0x73, 0x51, 0x95, 0x58 },
-	[0xc] = { 0xec, 0x00, 0x51, 0x95, 0x58 },
-//	[0xc] = { 0xec, 0x77, 0x51, 0x95, 0x58 }, // <<!
+//	[0xc] = { 0xec, 0x00, 0x51, 0x95, 0x58 },
+	[0xc] = { 0xec, 0x77 + 8, 0x51, 0x95, 0x58 }, // <<!
 //	[0xc] = { 0xec, 0x78, 0x51, 0x95, 0x58 },
 //
 //	0xec, 0xd3, 0x51, 0x95, 0x58
@@ -187,12 +191,23 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 
 	/* **** */
 
+	strcpy(&nnd->flash[0x10], "DSKIMG");
+	nnd->flash[0x17] = 6;
+	nnd->flash[0x18] = 8;
+	nnd->flash[0x1a] = 12;
+	nnd->flash[0x24] = 8;
+
+
+	/* **** */
+
 	csx_p csx = nnd->csx;
 
 	csx_mem_mmap(csx, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x08000000, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
 	csx_mem_mmap(csx, 0x0c000000, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
+
+	/* **** */
 }
 
 uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
@@ -212,7 +227,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 		return(0);
 	}
 
-	unsigned cl_index = unit->cl_index;
+	unsigned cl_index = unit->addr;
 	unsigned value =  addr & 0xff;
 
 	switch(offset) {
@@ -222,17 +237,16 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 					value = unit->status;
 				break;
 				case 0x90: /* read id */
-					value = csx_nnd_flash_id[cs][cl_index++];
-					unit->cl_index = cl_index < 5 ? cl_index : 0;
+					value = mem_access_le((void *const)&csx_nnd_flash_id[cs][cl_index], size, 0);
+					cl_index += size;
+					unit->addr = cl_index < 5 ? cl_index : 0;
 				break;
 			}
 			break;
-		case 0x10:
-			value = htobe32('DSKI');
-			break;
 		default:
-			LOG("addr = 0x%08x, cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x",
-				addr, cs, value, size, unit->cl);
+			value = mem_access_le(&nnd->flash[addr & 0xfff], size, 0);
+//			LOG("addr = 0x%08x, cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x",
+//				addr, cs, value, size, unit->cl);
 			break;
 	}
 
@@ -245,19 +259,19 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 static void csx_nnd_flash_write_cle(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t size, uint32_t value)
 {
 	unsigned cs = unit->cs;
-	
+
 	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
 
 	if(0xff == value) { /* reset */
+		unit->addr = 0;
 		unit->cl = 0;
-		unit->cl_index = 0;
 		unit->status = 0;
 		BSET(unit->status, 7); /* not write protected */
 		BSET(unit->status, 6); /* device ready */
 	} else {
+//		unit->addr = 0;
 		unit->cl <<= 8;
 		unit->cl |= (value & 0xff);
-		unit->cl_index = 0;
 	}
 
 	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
@@ -280,6 +294,9 @@ void csx_nnd_flash_write(csx_nnd_p nnd, uint32_t addr, size_t size, uint32_t val
 	}
 
 	switch(offset) {
+		case ALE:
+			unit->addr = value;
+			break;
 		case CLE:
 			if(0) LOG("CLE: value = 0x%08x, size = 0x%08zx", value, size);
 			csx_nnd_flash_write_cle(nnd, unit, size, value);
