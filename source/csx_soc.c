@@ -8,6 +8,7 @@
 
 #include "csx_data.h"
 #include "csx_mem.h"
+#include "csx_soc_brom.h"
 #include "csx_soc_omap.h"
 #include "csx_statistics.h"
 #include "csx.h"
@@ -69,7 +70,7 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, u
 {
 	if(start > cdp->base)
 		return(0);
-	
+
 	if(end < cdp->base)
 		return(0);
 
@@ -101,7 +102,7 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, u
 static void __csx_soc_init_cdp(csx_p csx, csx_data_p cdp)
 {
 	csx_soc_p soc = csx->soc;
-	
+
 	__csx_soc_init__cdp_copy(csx->sdram, cdp,
 		CSX_SDRAM_START, CSX_SDRAM_END);
 
@@ -242,7 +243,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
 //	csx->loader.base = 0x10;
 	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
-	
+
 //	loader_firmware = 1;
 
 	if(loader_firmware) {
@@ -261,13 +262,9 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
-//	soc_core_psr_mode_switch(core, CPSR_M32(Supervisor));
-
 	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
-	soc_core_reg_set_pcx(core, cdp->base);
 
-	if(0)
-		soc_core_reg_set(core, 12, 1);
+	csx_soc_brom_init(csx->soc, cdp);
 
 	if(!err)
 	{
