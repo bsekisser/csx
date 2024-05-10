@@ -25,7 +25,7 @@
 typedef struct soc_omap_misc_t {
 	csx_p csx;
 	csx_mmio_p mmio;
-	
+
 	struct {
 		unsigned syss;
 	}i2c;
@@ -45,24 +45,45 @@ static int __soc_omap_misc_atexit(void* param)
 {
 	if(_trace_atexit)
 		LOG();
-	
+
 	handle_free(param);
 	return(0);
 }
 
 /* **** */
 
+static uint32_t _soc_omap_misc_fb_78_mem_access(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
+{
+	const soc_omap_misc_p misc = param;
+	const csx_p csx = misc->csx;
+
+	uint32_t data = write ? *write : 0xdeadbeef;
+
+	switch(ppa) {
+		case 0xfffb7868:
+			if(!write)
+				data = 1;
+		break;
+	}
+
+	if(_trace_mmio_misc)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
+	return(data);
+}
+
 static uint32_t _soc_omap_misc_fe_60_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
 {
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
-	
+
 	csx_data_target_t target = {
 		.base = misc->x_fe_60,
 		.offset = ppa & 0xff,
 		.size = sizeof(uint32_t),
 	};
-	
+
 	uint32_t data = csx_data_target_mem_access(&target, size, write);
 
 	switch(ppa) {
@@ -81,13 +102,13 @@ static uint32_t _soc_omap_misc_fe_68_mem_access(void* param, uint32_t ppa, size_
 {
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
-	
+
 	csx_data_target_t target = {
 		.base = misc->x_fe_68,
 		.offset = ppa & 0xff,
 		.size = sizeof(uint32_t),
 	};
-	
+
 	uint32_t data = csx_data_target_mem_access(&target, size, write);
 	unsigned rmw = 0;
 
@@ -113,13 +134,13 @@ static uint32_t _soc_omap_misc_fe_78_mem_access(void* param, uint32_t ppa, size_
 {
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
-	
+
 	csx_data_target_t target = {
 		.base = misc->x_fe_78,
 		.offset = ppa & 0xff,
 		.size = sizeof(uint32_t),
 	};
-	
+
 	uint32_t data = csx_data_target_mem_access(&target, size, write);
 
 	if(_trace_mmio_misc)
@@ -166,13 +187,13 @@ static uint32_t _soc_omap_misc_sossi_mem_access(void* param, uint32_t ppa, size_
 {
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
-	
+
 	csx_data_target_t target = {
 		.base = misc->sossi,
 		.offset = ppa & 0xff,
 		.size = sizeof(uint16_t),
 	};
-	
+
 	uint32_t data = csx_data_target_mem_access(&target, size, write);
 
 	if(_trace_mmio_misc)
@@ -185,13 +206,13 @@ static uint32_t _soc_omap_misc_spi_mem_access(void* param, uint32_t ppa, size_t 
 {
 	const soc_omap_misc_p misc = param;
 	const csx_p csx = misc->csx;
-	
+
 	csx_data_target_t target = {
 		.base = misc->spi,
 		.offset = ppa & 0xff,
 		.size = sizeof(uint16_t),
 	};
-	
+
 	uint32_t data = csx_data_target_mem_access(&target, size, write);
 
 	switch(ppa) {
@@ -210,9 +231,11 @@ static uint32_t _soc_omap_misc_spi_mem_access(void* param, uint32_t ppa, size_t 
 
 static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
 	MMIO_TRACE_FN(0xfffb, 0x0c14, 0x0000, 0x0000, spi1_ssr, _soc_omap_misc_spi_mem_access)
-//	
+//
 	MMIO_TRACE_FN(0xfffb, 0x3810, 0x0000, 0x0000, xfffb_3810, _soc_omap_misc_i2c_syss)
 	MMIO_TRACE_FN(0xfffb, 0x3820, 0x0000, 0x0000, xfffb_3810, _soc_omap_misc_i2c_sysc)
+//
+	MMIO_TRACE_FN(0xfffb, 0x7868, 0x0000, 0x0000, xfffb_7868, _soc_omap_misc_fb_78_mem_access)
 //
 	MMIO_TRACE_FN(0xfffb, 0xac00, 0x0000, 0x0000, xfffb_ac00, _soc_omap_misc_sossi_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0xac04, 0x0000, 0x0000, xfffb_ac04, _soc_omap_misc_sossi_mem_access)
@@ -248,7 +271,7 @@ static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
 	MMIO_TRACE_FN(0xfffe, 0x7816, 0x0000, 0x0000, xfffe_7816, _soc_omap_misc_fe_78_mem_access)
 	MMIO_TRACE_FN(0xfffe, 0x7818, 0x0000, 0x0000, xfffe_7818, _soc_omap_misc_fe_78_mem_access)
 	MMIO_TRACE_FN(0xfffe, 0x781a, 0x0000, 0x0000, xfffe_781a, _soc_omap_misc_fe_78_mem_access)
-
+//
 	{ .ppa = ~0U, },
 };
 
@@ -257,7 +280,7 @@ soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h 
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
 	ERR_NULL(h2misc);
-	
+
 	if(_trace_alloc) {
 		LOG();
 	}
@@ -266,7 +289,7 @@ soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h 
 
 	soc_omap_misc_p misc = handle_calloc((void**)h2misc, 1, sizeof(soc_omap_misc_t));
 	ERR_NULL(misc);
-	
+
 	misc->csx = csx;
 	misc->mmio = mmio;
 
@@ -275,14 +298,14 @@ soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h 
 	csx_mmio_callback_atexit(mmio, &misc->atexit, __soc_omap_misc_atexit, h2misc);
 
 	/* **** */
-	
+
 	return(misc);
 }
 
 void soc_omap_misc_init(soc_omap_misc_p misc)
 {
 	ERR_NULL(misc);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
