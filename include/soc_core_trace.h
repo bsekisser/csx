@@ -33,10 +33,14 @@
 #define CORE_TRACE_BRANCH_CC(_pc) ({})
 #define CORE_TRACE_THUMB ({})
 
-void soc_core_trace(soc_core_p core, const char* format, ...);
+void soc_core_trace(soc_core_p core, const char* format, ...)
+	__attribute__((format (printf, 2, 3)));
+
 void soc_core_trace_dump_regs(soc_core_p core);
 void soc_core_trace_end(soc_core_p core);
-void soc_core_trace_out(soc_core_p core, const char* format, ...);
+void soc_core_trace_out(soc_core_p core, const char* format, ...)
+		__attribute__((format (printf, 2, 3)));
+;
 void soc_core_trace_psr(soc_core_p core, const char* pfn, uint32_t psr);
 void soc_core_trace_psr_change(soc_core_p core, const char* pfn, uint32_t saved_psr, uint32_t new_psr);
 void soc_core_trace_start(soc_core_p core);
