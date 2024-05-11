@@ -154,6 +154,8 @@ static void _csx_soc_exception(csx_p csx, soc_core_p core, unsigned type)
 				PC |= ~0xffffU;
 			break;
 	}
+
+	soc_core_reg_set_thumb(core, IF_CPSR_C(Thumb));
 }
 
 static int _csx_soc_exception_atexit(void* param)

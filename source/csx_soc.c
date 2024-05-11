@@ -273,6 +273,9 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	{
 		csx->state = CSX_STATE_RUN;
 
+		assert(core);
+		assert(core->step);
+
 		for(;;) {
 			csx->cycle++;
 			core->step(core);

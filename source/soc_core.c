@@ -97,9 +97,9 @@ void soc_core_init(soc_core_p core)
 	if(_trace_init) {
 		LOG();
 	}
-	
+
 	/* **** */
-	
+
 	core->mmu = core->soc->mmu;
 }
 
