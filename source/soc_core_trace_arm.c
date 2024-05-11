@@ -43,7 +43,7 @@ static void _dpi_mov_s_s(soc_core_p core)
 {
 	if(!DPI_BIT(i25)) {
 		if(mlBFEXT(IR, 11, 4)) {
-			_CORE_TRACE_("; /* %s(0x%08x, %03u) = 0x%08x */", 
+			_CORE_TRACE_("; /* %s(0x%08x, %03u) = 0x%08x */",
 				shift_op_string[1][DPI_SHIFT_OP],
 					vR(M), vR(S), vR(D));
 		}
@@ -53,7 +53,7 @@ static void _dpi_mov_s_s(soc_core_p core)
 		}
 	} else {
 		if(vR(S)) {
-			_CORE_TRACE_("; /* ROR(0x%08x, %03u) = 0x%08x */", 
+			_CORE_TRACE_("; /* ROR(0x%08x, %03u) = 0x%08x */",
 				vR(M), vR(S), vR(D));
 		} else {
 			_CORE_TRACE_("; /* 0x%08x */", vR(D));
@@ -93,14 +93,14 @@ void soc_core_trace_inst_dpi(soc_core_p core)
 	else
 	{
 		const char* sos = shift_op_string[1][DPI_SHIFT_OP];
-		
+
 		if(DPI_BIT(x4))
 			_CORE_TRACE_(", %s(%s, %s)", sos, rR_NAME(M), rR_NAME(S));
 		else {
 			switch(DPI_SHIFT_OP) {
 				case SOC_CORE_SHIFTER_OP_ROR:
 					if(!vR(S))
-						_CORE_TRACE_(", RRX(%s)", sos, rR_NAME(M));
+						_CORE_TRACE_(", RRX(%s)", rR_NAME(M));
 					break;
 				default:
 					if(!mlBFEXT(IR, 11, 4))
@@ -187,7 +187,7 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 			}
 		} else {
 			const unsigned bwh = BMOV(IR, LDST_BIT_l20, 2) | mlBFEXT(IR, 6, 5);
-			
+
 			rws = _ldst_lsh_text[bwh];
 #ifdef size
 			size = _ldst_lsh_size[bwh];
@@ -207,7 +207,7 @@ void soc_core_trace_inst_ldst(soc_core_p core)
 		_CORE_TRACE_("[0]");
 
 	_CORE_TRACE_(")");
-	
+
 	if(CCx.e)
 #ifdef size
 		_CORE_TRACE_(" /* %02zu:[0x%08x](0x%08x) */", size, vR(EA), vR(D));
