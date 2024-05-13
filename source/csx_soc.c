@@ -216,12 +216,13 @@ void csx_soc_init(csx_soc_p soc)
 }
 
 static int x038201000610(csx_p csx) {
-	switch(PC) {
+	switch(IP & ~1U) {
 		case 0x10020074:
 		case 0x100200f0:
 		case 0x10020168:
 		case 0x1002026c:
 		case 0x10025204:
+		case 0x10025488:
 		case 0x10025628:
 		case 0x10026146:
 		case 0x1002616a:
@@ -230,6 +231,7 @@ static int x038201000610(csx_p csx) {
 		case 0x10026e10:
 		case 0x10026e22:
 		case 0x10027128:
+		case 0x1002737a:
 		case 0x1002a3c0:
 		case 0x100314fc:
 		case 0x10033c66:
@@ -281,17 +283,19 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 		uint32_t next_pc = 0;
 
 		for(;;) {
+			const int thumb = IF_CPSR(Thumb);
 			if(pc_skip) {
 				if(PC >= next_pc) {
 					pARMVM_CORE->config.trace = saved_trace;
 					pc_skip = 0;
 				}
 			} else if(pARMVM_CORE->config.trace) {
-				if(0) pc_skip = x038201000610(csx);
+				if(1) pc_skip = x038201000610(csx);
 
 				if(pc_skip) {
-					next_pc = PC + (4 >> IF_CPSR(Thumb));
-					armvm_step(pARMVM);
+//					armvm_step(pARMVM);
+//					next_pc = PC + (4 >> IF_CPSR(Thumb));
+					next_pc = IP + (4 >> thumb);
 					saved_trace = pARMVM_CORE->config.trace;
 					pARMVM_CORE->config.trace = 0;
 				}

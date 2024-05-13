@@ -16,6 +16,7 @@ typedef struct csx_cache_t {
 #include "libarmvm/include/armvm_coprocessor.h"
 #include "libarmvm/include/armvm_coprocessor_glue.h"
 #include "libarmvm/include/armvm_core_exception.h"
+#include "libarmvm/include/armvm_exception.h"
 
 #include "libarmvm/include/armvm.h"
 
@@ -42,6 +43,17 @@ typedef struct csx_cache_t {
 #define IS_USER_MODE (0 == soc_core_in_a_privaleged_mode(csx))
 
 /* **** */
+
+static uint32_t _csx_cache_cp15_0_7_0_4_access(void* param, uint32_t* write)
+{
+	const csx_p csx = param;
+
+//	armvm_exception_fiq(csx->armvm);
+//	armvm_exception_irq(csx->armvm);
+	armvm_core_exception_reset(csx->armvm->core);
+//	armvm_core_exception_swi(csx->armvm->core);
+	return(0);
+}
 
 static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 {
@@ -148,6 +160,8 @@ void csx_cache_init(csx_cache_p cache)
 	const csx_p csx = (void*)cache;
 	const armvm_coprocessor_p cp = csx->armvm->coprocessor;
 
+	armvm_coprocessor_register_callback(cp, cp15(0, 7, 0, 4),
+		_csx_cache_cp15_0_7_0_4_access, cache);
 	armvm_coprocessor_register_callback(cp, cp15(0, 7, 5, 0),
 		_csx_cache_cp15_0_7_5_0_access, cache);
 	armvm_coprocessor_register_callback(cp, cp15(0, 7, 6, 0),
