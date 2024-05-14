@@ -230,6 +230,32 @@ void csx_soc_init(csx_soc_p soc)
 	soc_tlb_init(soc->tlb);
 }
 
+static int x038201000610(soc_core_p core) {
+	switch(IP & ~1U) {
+		case 0x10020074:
+		case 0x100200f0:
+		case 0x10020168:
+		case 0x1002026c:
+		case 0x10025204:
+		case 0x10025488:
+		case 0x10025628:
+		case 0x10026146:
+		case 0x1002616a:
+		case 0x10026bb0:
+		case 0x10026dfe:
+		case 0x10026e10:
+		case 0x10026e22:
+		case 0x10027128:
+		case 0x1002737a:
+		case 0x1002a3c0:
+		case 0x100314fc:
+		case 0x10033c66:
+		case 0x10034418:
+			return(1);
+	}
+	return(0);
+}
+
 int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 {
 	int err = 0;
@@ -268,12 +294,35 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	if(!err)
 	{
+		unsigned saved_trace = core->trace;
+		unsigned pc_skip = 0;
+
+		uint32_t next_pc = 0;
+
 		csx->state = CSX_STATE_RUN;
 
 		assert(core);
 		assert(core->step);
 
 		for(;;) {
+			const int thumb = IF_CPSR_C(Thumb);
+			if(pc_skip) {
+				if(PC >= next_pc) {
+					core->trace = saved_trace;
+					pc_skip = 0;
+				}
+			} else if(core->trace) {
+				if(1) pc_skip = x038201000610(core);
+
+				if(pc_skip) {
+//					core->step(pARMVM);
+//					next_pc = PC + (4 >> IF_CPSR(Thumb));
+					next_pc = IP + (4 >> thumb);
+					saved_trace = core->trace;
+					core->trace = 0;
+				}
+			}
+
 			csx->cycle++;
 			core->step(core);
 
