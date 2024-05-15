@@ -29,7 +29,8 @@
 #endif
 
 #ifndef CPSR
-	#define CPSR armvm_spr32(pARMVM, ARMVM_SPR32(CPSR))
+//	#define CPSR armvm_spr32(pARMVM, ARMVM_SPR32(CPSR))
+	#define CPSR pARMVM_CORE->alu.cpsr
 #endif
 
 #ifndef IP
