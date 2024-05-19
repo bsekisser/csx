@@ -50,8 +50,13 @@ static uint32_t _csx_cache_cp15_0_7_0_4_access(void* param, uint32_t* write)
 
 //	armvm_exception_fiq(csx->armvm);
 //	armvm_exception_irq(csx->armvm);
-	armvm_core_exception_reset(csx->armvm->core);
+//	armvm_core_exception_reset(csx->armvm->core);
 //	armvm_core_exception_swi(csx->armvm->core);
+
+	const uint32_t new_pc = PC + 8;
+	armvm_gpr(pARMVM, ARMVM_GPR(PC), &new_pc);
+
+
 	return(0);
 }
 
