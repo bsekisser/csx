@@ -37,7 +37,7 @@ static void _preflight_tests(void)
 #if 0
 	/*
 	 * https://stackoverflow.com/a/60023331
-	 * 
+	 *
 	 * >> x promoted to signed int
 	 */
 
@@ -82,7 +82,8 @@ int main(int argc, char **argv)
 			test = 1;
 	}
 
-	uint64_t est_host_cps = dtime_calibrate();
+	const uint64_t dtime_second = dtime_calibrate();
+	const double dtime_ratio = 1.0 / dtime_second;
 
 	csx_p csx = csx_init(csx_alloc());
 
@@ -108,17 +109,28 @@ int main(int argc, char **argv)
 	LOG_ERR("dtime/cycle = 0x%016" PRIx64 ", dtime/insn = 0x%016" PRIx64,
 		dtime_cycle, dtime_insn);
 
-	double ratio = 1.0 / est_host_cps;
-//	double ratio = (double)dtime_run / est_host_cps;
-
-	double dcrt = (double)csx->cycle / dtime_run;
-
 	LOG_ERR("\n\n");
-	LOG_ERR("est_host_cps = 0x%016" PRIx64, est_host_cps);
-	LOG_ERR("ratio --- %0.05f", ratio);
-	LOG_ERR("cycle --- %0.05f", ratio * dtime_cycle);
-	LOG_ERR("insn --- %0.05f", ratio * dtime_insn);
-	LOG_ERR("dcrt -- %0.05f, dcrt*host --- %0.05f", dcrt, ratio * dcrt);
-	
+
+	const double kips_ratio = 1.0 / KHz(1.0);
+	const double mips_ratio = 1.0 / MHz(1.0);
+
+//	LOG_ERR("kips_ratio = %016f", kips_ratio);
+//	LOG_ERR("mips_ratio = %016f", mips_ratio);
+
+	const double seconds = (double)dtime_run * dtime_ratio;
+	const uint64_t icount_second = csx->insns / seconds;
+
+	LOG_ERR("seconds: %0.16f", seconds);
+
+	LOG_ERR("    dtime_run = 0x%016" PRIx64, dtime_run);
+	LOG_ERR(" dtime/second = 0x%016" PRIx64, dtime_second);
+	LOG_ERR("icount/second = 0x%016" PRIx64, icount_second);
+
+	if(icount_second < MHz(1)) {
+		LOG_ERR("est kips = %0.16f", icount_second * kips_ratio);
+	} else {
+		LOG_ERR("est mips = %0.16f", icount_second * mips_ratio);
+	}
+
 	csx_atexit(&csx);
 }
