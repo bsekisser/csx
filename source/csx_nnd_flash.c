@@ -253,7 +253,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 			break;
 	}
 
-	LOG("addr = 0x%08x, cs = 0x%08x, size = 0x%08zx, cl = 0x%08x:0%08x, value = 0x%08x",
+	if(0) LOG("addr = 0x%08x, cs = 0x%08x, size = 0x%08zx, cl = 0x%08x:0%08x, value = 0x%08x",
 		addr, cs, size, unit->cl, unit->addr, value);
 
 	return(value);
@@ -263,7 +263,7 @@ static void csx_nnd_flash_write_cle(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t s
 {
 	unsigned cs = unit->cs;
 
-	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
+	if(0) LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
 
 	if(0xff == value) { /* reset */
 		unit->addr = 0;
@@ -277,7 +277,7 @@ static void csx_nnd_flash_write_cle(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t s
 		unit->cl |= (value & 0xff);
 	}
 
-	LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
+	if(0) LOG("cs = 0x%08x, value = 0x%08x, size = 0x%08zx, cl = 0x%08x", cs, value, size, unit->cl);
 
 	UNUSED(nnd);
 }

@@ -34,7 +34,7 @@ static void cc_org(cc_p p2cc, const uint32_t cs)
 	p2cc->p2cs = p2cc->sdp + cs;
 	p2cc->pc = 0;
 
-	LOG("sdp: 0x%016" PRIxPTR ", p2cs: 0x%016" PRIxPTR,
+	if(0) LOG("sdp: 0x%016" PRIxPTR ", p2cs: 0x%016" PRIxPTR,
 		(uintptr_t)p2cc->sdp, (uintptr_t)p2cc->p2cs);
 }
 
@@ -45,7 +45,7 @@ static void cc_org_data(cc_p p2cc, const uint32_t ds)
 	p2cc->p2ds = p2cc->sdp + ds;
 	p2cc->dp = 0;
 
-	LOG("sdp: 0x%016" PRIxPTR ", p2ds: 0x%016" PRIxPTR,
+	if(0) LOG("sdp: 0x%016" PRIxPTR ", p2ds: 0x%016" PRIxPTR,
 		(uintptr_t)p2cc->sdp, (uintptr_t)p2cc->p2ds);
 }
 
@@ -69,10 +69,12 @@ static uint32_t cc(cc_p p2cc, const uint32_t ir)
 	const uint32_t cs_ip = p2cc->cs + p2cc->ip;
 	const uint32_t cs_pc = p2cc->cs + p2cc->pc;
 
-	LOG_START("(cs: 0x%08x, ip: 0x%08x): 0x%08x", p2cc->cs, p2cc->ip, cs_ip);
-	_LOG_(", pc: 0x%08x", p2cc->pc);
-	_LOG_(", (cs + pc): 0x%08x", cs_pc);
-	LOG_END(", ir: 0x%08x", ir);
+	if(0) {
+		LOG_START("(cs: 0x%08x, ip: 0x%08x): 0x%08x", p2cc->cs, p2cc->ip, cs_ip);
+		_LOG_(", pc: 0x%08x", p2cc->pc);
+		_LOG_(", (cs + pc): 0x%08x", cs_pc);
+		LOG_END(", ir: 0x%08x", ir);
+	}
 
 	uint32_t* p = p2cc->p2cs + (p2cc->ip & 0xffff);
 	*p = ir;
@@ -87,8 +89,10 @@ static uint32_t cc_dw(cc_p p2cc, const uint32_t data)
 
 	const uint32_t ds_dp = p2cc->ds + dp;
 
-	LOG_START("(ds: 0x%08x, dp: 0x%08x): 0x%08x", p2cc->ds, dp, ds_dp);
-	LOG_END(", data: 0x%08x", data);
+	if(0) {
+		LOG_START("(ds: 0x%08x, dp: 0x%08x): 0x%08x", p2cc->ds, dp, ds_dp);
+		LOG_END(", data: 0x%08x", data);
+	}
 
 	uint32_t* p = p2cc->p2ds + (dp & 0xffff);
 	*p = data;
@@ -106,13 +110,15 @@ static uint32_t arm_b(cc_p p2cc, const uint32_t pat)
 {
 	const uint32_t cs_pc = p2cc->cs + p2cc->pc;
 
-	LOG("(cs: 0x%08x, pc: 0x%08x): 0x%08x", p2cc->cs, p2cc->pc, cs_pc);
+	if(0) LOG("(cs: 0x%08x, pc: 0x%08x): 0x%08x", p2cc->cs, p2cc->pc, cs_pc);
 
 	const uint32_t offset = ((-8 + (pat - cs_pc)) >> 2);
 	const uint32_t offset_masked = offset & 0x00ffffff;
 
-	LOG_START("offset: 0x%08x", offset);
-	LOG_END(", offset_masked: 0x%08x", offset_masked);
+	if(0) {
+		LOG_START("offset: 0x%08x", offset);
+		LOG_END(", offset_masked: 0x%08x", offset_masked);
+	}
 
 	assert(offset == offset_masked);
 
@@ -124,20 +130,24 @@ static uint32_t arm_b(cc_p p2cc, const uint32_t pat)
 
 static uint32_t arm_ldr(cc_p p2cc, const unsigned rd, const unsigned rn, const uint32_t pat)
 {
-	LOG_START("rd: %u", rd);
-	_LOG_(", rn: %u", rn);
-	LOG_END(", pat: 0x%08x", pat);
+	if(0) {
+		LOG_START("rd: %u", rd);
+		_LOG_(", rn: %u", rn);
+		LOG_END(", pat: 0x%08x", pat);
+	}
 
 	const uint32_t cs_pc = p2cc->cs + p2cc->pc;
 
-	LOG("(cs: 0x%08x, pc: 0x%08x): 0x%08x", p2cc->cs, p2cc->pc, cs_pc);
+	if(0) LOG("(cs: 0x%08x, pc: 0x%08x): 0x%08x", p2cc->cs, p2cc->pc, cs_pc);
 
 //	const uint32_t offset = ((-8 + (pat - cs_pc)) >> 2);
 	const uint32_t offset = -8 + (pat - cs_pc);
 	const uint32_t offset_masked = offset & 0x00000fff;
 
-	LOG_START("offset: 0x%08x", offset);
-	LOG_END(", offset_masked: 0x%08x", offset_masked);
+	if(0) {
+		LOG_START("offset: 0x%08x", offset);
+		LOG_END(", offset_masked: 0x%08x", offset_masked);
+	}
 
 	assert(offset == offset_masked);
 

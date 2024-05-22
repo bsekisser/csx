@@ -53,7 +53,8 @@ static uint32_t _csx_cache_cp15_0_7_0_4_access(void* param, uint32_t* write)
 //	armvm_core_exception_reset(csx->armvm->core);
 //	armvm_core_exception_swi(csx->armvm->core);
 
-	const uint32_t new_pc = PC + 8;
+//	const uint32_t new_pc = PC + 8;
+	const uint32_t new_pc = 0;
 	armvm_gpr(pARMVM, ARMVM_GPR(PC), &new_pc);
 
 
@@ -66,7 +67,7 @@ static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
-		LOG("Invalidate ICache");
+//		LOG("Invalidate ICache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache"));
 	}
@@ -80,7 +81,7 @@ static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
-		LOG("Invalidate DCache");
+//		LOG("Invalidate DCache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate DCache"));
 	}
@@ -95,7 +96,7 @@ static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
-		LOG("Invalidate ICache and DCache");
+//		LOG("Invalidate ICache and DCache");
 	} else {
 		DEBUG(LOG("XX READ -- Invalidate ICache and DCache"));
 	}
@@ -110,7 +111,7 @@ static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
-		DEBUG(LOG("Cache, Test and Clean"));
+//		DEBUG(LOG("Cache, Test and Clean"));
 	} else {
 		LOG("Cache, Test and Clean");
 		ARM_CPSRx_BSET(data, Z);
@@ -126,7 +127,7 @@ static uint32_t _csx_cache_cp15_0_7_10_4_access(void* param, uint32_t* write)
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
-		LOG("Drain write buffer");
+//		LOG("Drain write buffer");
 	} else {
 		DEBUG(LOG("XX READ -- Drain write buffer"));
 	}
