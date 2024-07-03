@@ -17,10 +17,13 @@
 
 /* **** */
 
+#include <endian.h>
 #include <errno.h>
 #include <string.h>
 
 /* **** */
+
+#define kDSKIMG "038201000610.dskimg"
 
 typedef char page_t[2112];
 typedef page_t* page_p;
@@ -28,12 +31,12 @@ typedef page_p* page_h;
 typedef page_p block_t[64];
 typedef page_p* block_p;
 typedef page_p** block_h;
-typedef block_p device_t[2048];
+typedef block_p device_t[(0xffffff + 1) >> 6];
 
 typedef struct csx_nnd_unit_t* csx_nnd_unit_p;
 typedef struct csx_nnd_unit_t {
-	page_t							data_register;
 	device_t						device;
+	page_t							data_register;
 //	page_p							page_register;
 
 	uint16_t						column; // byte in page
@@ -104,20 +107,40 @@ static int __csx_nnd_flash_atexit(void* param)
 	const csx_nnd_p nnd = (csx_nnd_p)*(void**)param;
 	const csx_nnd_unit_p unit = &nnd->unit[12];
 
-if(1) for(unsigned block = 0; block < 2048; block++) {
-		for(unsigned page = 0; page < 64; page++) {
-			const uint32_t bpa = block << 6 | page;
-			const uint32_t ppa = bpa << 11;
+	int write_dskimg = 0;
 
-			page_p p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
+	if(1 || write_dskimg) {
+		FILE* fp = 0;
+		if(write_dskimg) {
+			fp = fopen(kDSKIMG, "w");
+			fputs("DSKIMG", fp);
+		}
 
-			if(p) {
-if(0)			LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%02x, 0x%016" PRIxPTR,
-					ppa, block, page, (uintptr_t)p);
+		const size_t block_count = sizeof(device_t) / sizeof(unit->device[0]);
+		for(unsigned block = 0; block < block_count; block++) {
+			for(unsigned page = 0; page < 64; page++) {
+				const uint32_t bpa = block << 6 | page;
+				const uint32_t ppa = bpa << 11;
 
-				dump_hex((void*)p, ppa, sizeof(page_t), 24, 1);
+				page_p p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
+
+				if(p) {
+					if(write_dskimg) {
+						htole32(bpa);
+						fwrite(&bpa, 4, 1, fp);
+						le32toh(bpa);
+
+						for(unsigned x = 0; x < sizeof(page_t); x++)
+							fputc(((char*)p)[x], fp);
+					} else if(0) {
+						dump_hex(p, ppa, sizeof(page_t), 16, 1);
+					}
+				}
 			}
 		}
+
+		if(fp)
+			fclose(fp);
 	}
 
 	handle_free(param);
@@ -132,7 +155,8 @@ if(0)			LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%02x, 0x%016" PRIxPTR,
 static block_h __csx_nnd_flash_h2block(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
 	const uint32_t row)
 {
-	const uint32_t block = (row & 0xffffc0) >> 6;
+	const uint32_t block = row >> 6;
+//	const uint32_t block = (row & 0xffffc0) >> 6;
 
 	assert(block < sizeof(unit->device) / sizeof(unit->device[0]));
 
@@ -143,7 +167,8 @@ static block_h __csx_nnd_flash_h2block(csx_nnd_p const nnd, csx_nnd_unit_p const
 static page_p __csx_nnd_flash_p2page(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
 	const uint32_t row, uint32_t *const write)
 {
-	const unsigned block = (row & 0xffffc0) >> 6;
+	const uint32_t block = row >> 6;
+//	const unsigned block = (row & 0xffffc0) >> 6;
 	const unsigned page = row & 0x3f;
 
 	const block_h h2block = __csx_nnd_flash_h2block(nnd, unit, row);
@@ -200,7 +225,7 @@ static void _csx_nnd_flash_page_program(csx_nnd_p const nnd, csx_nnd_unit_p cons
 	page_p p = __csx_nnd_flash_p2page(nnd, unit, ppa, (void*)0xfeedface);
 	assert(p);
 
-if(0) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
+if(1) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
 			ppa, block, page, (uintptr_t)p, (uintptr_t)unit->data_register);
 
 	if(p)
@@ -233,7 +258,8 @@ static uint32_t _csx_nnd_flash_rwd_ppa(csx_nnd_p const nnd, csx_nnd_unit_p const
 	const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	const uint16_t column = ppa & 0x7ff;
-	const uint32_t row = (ppa >> 11) & 0x7fffff;
+	const uint32_t row = ppa >> 11;
+//	const uint32_t row = (ppa >> 11) & 0x7fffff;
 
 	return(_csx_nnd_flash_rwd(nnd, unit, row, column, size, write));
 }
@@ -304,6 +330,38 @@ csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
 	return(nnd);
 }
 
+static void csx_nnd_flash_init_dskimg(csx_nnd_p nnd)
+{
+	csx_nnd_unit_p unit = &nnd->unit[12];
+	FILE* fp = fopen(kDSKIMG, "r");
+
+	if(fp) {
+		const char* src = fgets(unit->data_register, 7, fp);
+		unit->data_register[7] = 0;
+
+		if(src) {
+			const int match = strncmp("DSKIMG", src, 16);
+//			LOG("match: %d -- %s", match, src);
+
+			if(0 == match) {
+				do {
+					size_t count = fread(&unit->row, 4, 1, fp);
+//					LOG("count: 0x%08zx, row: 0x%08x", count, unit->row);
+					if(feof(fp) || !count)
+						break;
+
+					count = fread(&unit->data_register, 1, sizeof(page_t), fp);
+//					LOG("count: 0x%08zx", count);
+					if(count)
+						_csx_nnd_flash_page_program(nnd, unit, unit->row);
+				}while(!feof(fp));
+			}
+		}
+
+		fclose(fp);
+	}
+}
+
 void csx_nnd_flash_init(csx_nnd_p nnd)
 {
 	if(0) {
@@ -325,6 +383,8 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 	}
 
 	/* **** */
+
+	csx_nnd_flash_init_dskimg(nnd);
 
 	csx_p csx = nnd->csx;
 	armvm_mem_p mem = csx->armvm->mem;
@@ -398,6 +458,8 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 	switch(offset) {
 		case ALE:
 		case CLE:
+			LOG("addr = 0x%08x, cs = 0x%02x, offset = 0x%08x, size = 0x%02zx",
+				addr, cs, offset, size);
 			LOG_ACTION(exit(-1));
 			break;
 		case RWD:
@@ -558,7 +620,8 @@ void csx_nnd_flash_write(csx_nnd_p nnd, uint32_t addr, size_t size, uint32_t val
 				unit->cl, value, size, unit->row, unit->column);
 			return(csx_nnd_flash_write_ale(nnd, unit, size, value));
 		case CLE:
-			if(0) LOG("CLE: value = 0x%08x, size = 0x%02zx", value, size);
+			if(0) LOG("CLE: cl = 0x%08x, value = 0x%08x, size = 0x%02zx, row = 0x%06x, column = 0x%03x",
+				unit->cl, value, size, unit->row, unit->column);
 			return(csx_nnd_flash_write_cle(nnd, unit, size, value));
 		case RWD:
 			if(0) LOG("RWD: cl = 0x%08x, value = 0x%08x, size = 0x%02zx, row = 0x%06x, column = 0x%03x",
