@@ -23,7 +23,10 @@
 
 /* **** */
 
-#define kDSKIMG "038201000610.dskimg"
+#define kDSKIMG "git/garmin/038201000610.dskimg"
+const int dskimg_load = 1;
+const int dskimg_write = 0;
+
 
 typedef char page_t[2112];
 typedef page_t* page_p;
@@ -107,11 +110,9 @@ static int __csx_nnd_flash_atexit(void* param)
 	const csx_nnd_p nnd = (csx_nnd_p)*(void**)param;
 	const csx_nnd_unit_p unit = &nnd->unit[12];
 
-	int write_dskimg = 0;
-
-	if(1 || write_dskimg) {
+	if(1 || dskimg_write) {
 		FILE* fp = 0;
-		if(write_dskimg) {
+		if(dskimg_write) {
 			fp = fopen(kDSKIMG, "w");
 			fputs("DSKIMG", fp);
 		}
@@ -125,7 +126,7 @@ static int __csx_nnd_flash_atexit(void* param)
 				page_p p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
 
 				if(p) {
-					if(write_dskimg) {
+					if(dskimg_write) {
 						htole32(bpa);
 						fwrite(&bpa, 4, 1, fp);
 						le32toh(bpa);
@@ -250,6 +251,7 @@ static uint32_t _csx_nnd_flash_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const uni
 
 	if(page)
 		return(mem_access_le(&page[column], size, write));
+//		return(mem_access_le(&page[0][column], size, write));
 
 	return(0);
 }
@@ -384,7 +386,8 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 
 	/* **** */
 
-	csx_nnd_flash_init_dskimg(nnd);
+	if(dskimg_load)
+		csx_nnd_flash_init_dskimg(nnd);
 
 	csx_p csx = nnd->csx;
 	armvm_mem_p mem = csx->armvm->mem;
