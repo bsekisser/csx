@@ -17,4 +17,11 @@ all: $(TARGET_EXE)
 
 
 include git/libbse/makefile.setup
+
+$(OBJ_TARGET_EXE): git/libarmvm/libarmvm.a
+
+$(OBJ_TARGET_EXE): git/libarm/libarm.a
+
+$(OBJ_TARGET_EXE): git/libbse/libbse.a
+
 include git/libbse/makefile.build
