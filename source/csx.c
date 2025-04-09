@@ -109,7 +109,7 @@ csx_p csx_init(csx_p csx)
 
 	/* **** */
 
-	armvm_mem_mmap(pARMVM_MEM, CSX_SDRAM_START, CSX_SDRAM_END, 0, csx->sdram);
+	armvm_mem_mmap_rw(pARMVM_MEM, CSX_SDRAM_START, CSX_SDRAM_END, csx->sdram);
 
 	/* **** */
 

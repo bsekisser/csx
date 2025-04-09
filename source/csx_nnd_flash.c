@@ -392,10 +392,14 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 	csx_p csx = nnd->csx;
 	armvm_mem_ref mem = csx->armvm->mem;
 
-	armvm_mem_mmap(mem, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
-	armvm_mem_mmap(mem, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
-	armvm_mem_mmap(mem, 0x08000000, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
-	armvm_mem_mmap(mem, 0x0c000000, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x02000000, 0x02000fff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x02000fff, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x04000000, 0x04000fff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x04000fff, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x08000000, 0x08000fff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x08000fff, 0x0bffffff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x0c000000, 0x0c000fff, _csx_nnd_flash_mem_access, nnd);
+	armvm_mem_mmap_cb(mem, 0x0c000fff, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
 
 	/* **** */
 }

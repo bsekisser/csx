@@ -209,8 +209,8 @@ void csx_soc_init(csx_soc_p soc)
 
 	csx_p csx = soc->csx;
 
-	armvm_mem_mmap(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, (void*)~0U, soc->brom);
-	armvm_mem_mmap(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, 0, soc->sram);
+	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
+	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
 
 	/* **** */
 }

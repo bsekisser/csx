@@ -258,7 +258,7 @@ void csx_mmio_init(csx_mmio_p mmio)
 
 	/* **** */
 
-	armvm_mem_mmap(mmio->csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
+	armvm_mem_mmap_cb(mmio->csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
 
 	/* **** */
 
