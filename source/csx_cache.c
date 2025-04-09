@@ -146,7 +146,7 @@ void csx_cache_init(csx_cache_p cache)
 	}
 
 	const csx_p csx = (void*)cache;
-	const armvm_coprocessor_p cp = csx->armvm->coprocessor;
+	armvm_coprocessor_ref cp = csx->armvm->coprocessor;
 
 	armvm_coprocessor_register_callback(cp, cp15(0, 7, 5, 0),
 		_csx_cache_cp15_0_7_5_0_access, cache);

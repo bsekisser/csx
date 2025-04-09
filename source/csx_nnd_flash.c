@@ -390,7 +390,7 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 		csx_nnd_flash_init_dskimg(nnd);
 
 	csx_p csx = nnd->csx;
-	armvm_mem_p mem = csx->armvm->mem;
+	armvm_mem_ref mem = csx->armvm->mem;
 
 	armvm_mem_mmap(mem, 0x02000000, 0x03ffffff, _csx_nnd_flash_mem_access, nnd);
 	armvm_mem_mmap(mem, 0x04000000, 0x07ffffff, _csx_nnd_flash_mem_access, nnd);
