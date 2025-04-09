@@ -51,7 +51,7 @@ typedef struct csx_data_t {
 }csx_data_t;
 
 typedef struct csx_t {
-	armvm_p							armvm;
+	armvm_ptr						armvm;
 	armvm_trace_t					armvm_trace;
 
 	csx_cache_p						cache;
