@@ -92,8 +92,11 @@ static uint32_t _soc_omap_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint3
 
 	const uint32_t data = mem_32_access(&lcd->r.ctrl, write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Control Register << 0x%08x\n\t", data);
+		LOG_START("LCD: Control Register\n\t");
 		_LOG_("RESERVED[31:25]: 0x%02x", mlBFEXT(data, 31, 25));
 		_LOG_(", STN_565: %01u", BEXT(data, 24));
 		_LOG_(", TFT_Map: %01u", BEXT(data, 23));
@@ -128,8 +131,11 @@ static uint32_t _soc_omap_lcd_display_status(void* param, uint32_t ppa, size_t s
 
 	const uint32_t data = mem_32_access(&lcd->r.display_status, 0);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: [RO] Display Status Register << 0x%08x\n\t", data);
+		LOG_START("LCD: [RO] Display Status Register\n\t");
 		_LOG_("RESERVED[31:10]: 0x%04x", mlBFEXT(data, 31, 10));
 		LOG_END(", LINE_NUMBER: %04u", mlBFEXT(data, 9, 0));
 	}
@@ -148,8 +154,11 @@ static uint32_t _soc_omap_lcd_lineint(void* param, uint32_t ppa, size_t size, ui
 
 	const uint32_t data = mem_32_access(&lcd->r.lineint, write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Line Interrupt Register << 0x%08x\n\t", data);
+		LOG_START("LCD: Line Interrupt Register\n\t");
 		_LOG_("RESERVED[31:10]: 0x%04x", mlBFEXT(data, 31, 10));
 		LOG_END(", LINE_INT_NUMBER: %04u", mlBFEXT(data, 9, 0));
 	}
@@ -168,12 +177,18 @@ static uint32_t _soc_omap_lcd_timing0(void* param, uint32_t ppa, size_t size, ui
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[0], write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Timing 0 Register << 0x%08x\n\t", data);
+		const unsigned ppl_raw = mlBFEXT(data, 9, 0);
+		const unsigned ppl = (1 + ppl_raw);
+
+		LOG_START("LCD: Timing 0 Register\n\t");
 		_LOG_("HBP: 0x%02x", mlBFEXT(data, 31, 24));
 		_LOG_(", HFP: 0x%02x", mlBFEXT(data, 23, 16));
 		_LOG_(", HSW: 0x%02x", mlBFEXT(data, 15, 10));
-		LOG_END(", PPL: %4u", mlBFEXT(data, 9, 0));
+		LOG_END(", PPL: 0x%03x (%4u)", ppl_raw, ppl);
 	}
 
 	return(data);
@@ -190,12 +205,18 @@ static uint32_t _soc_omap_lcd_timing1(void* param, uint32_t ppa, size_t size, ui
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[1], write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Timing 1 Register << 0x%08x\n\t", data);
+		const unsigned lpp_raw = mlBFEXT(data, 9, 0);
+		const unsigned lpp = 1 + lpp_raw;
+
+		LOG_START("LCD: Timing 1 Register\n\t");
 		_LOG_("VBP: 0x%02x", mlBFEXT(data, 31, 24));
 		_LOG_(", VFP: 0x%02x", mlBFEXT(data, 23, 16));
 		_LOG_(", VSW: 0x%02x", mlBFEXT(data, 15, 10));
-		LOG_END(", LPP: %4u", mlBFEXT(data, 9, 0));
+		LOG_END(", LPP: 0x%03x (%4u)", lpp_raw, lpp);
 	}
 
 	return(data);
@@ -212,8 +233,11 @@ static uint32_t _soc_omap_lcd_timing2(void* param, uint32_t ppa, size_t size, ui
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[2], write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Timing 2 Register << 0x%08x\n\t", data);
+		LOG_START("LCD: Timing 2 Register\n\t");
 		_LOG_("RESERVED[31:26]: 0x%02x", mlBFEXT(data, 31, 26));
 		_LOG_(", ON_OFF: %01u", BEXT(data, 25));
 		_LOG_(", RF: %01u", BEXT(data, 24));
@@ -240,8 +264,11 @@ static uint32_t _soc_omap_lcd_status(void* param, uint32_t ppa, size_t size, uin
 
 	const uint32_t data = mem_32_access(&lcd->r.status, write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Status Register << 0x%08x\n\t", data);
+		LOG_START("LCD: Status Register\n\t");
 		_LOG_("RESERVED[31:7]: 0x%02x", mlBFEXT(data, 31, 7));
 		_LOG_(", LP: %01u", BEXT(data, 6));
 		_LOG_(", FUF: %01u", BEXT(data, 5));
@@ -266,8 +293,11 @@ static uint32_t _soc_omap_lcd_subpanel(void* param, uint32_t ppa, size_t size, u
 
 	const uint32_t data = mem_32_access(&lcd->r.subpanel, write);
 
+	if(_trace_mmio_lcd)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+
 	if(_trace_mmio_lcd && write) {
-		LOG_START("LCD: Subpanel Register << 0x%08x\n\t", data);
+		LOG_START("LCD: Subpanel Register\n\t");
 		_LOG_("SPEN: %01u", BEXT(data, 31));
 		_LOG_(", RESERVED[30]: %01u", BEXT(data, 30));
 		_LOG_(", HOLS: %01u", BEXT(data, 29));
