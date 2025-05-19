@@ -21,13 +21,13 @@
 
 /* **** */
 
-typedef struct soc_omap_os_timer_t {
-	csx_p csx;
-	csx_mmio_p mmio;
-	
+typedef struct soc_omap_os_timer_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
+
 	uint64_t base;
 	uint32_t ctrl;
-	
+
 	struct {
 		uint32_t cntr;
 		uint32_t val;
@@ -39,27 +39,27 @@ typedef struct soc_omap_os_timer_t {
 
 /* **** */
 
-static int __soc_omap_os_timer_atexit(void* param)
+static int __soc_omap_os_timer_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_os_timer_h h2ost = param;
-//	soc_omap_os_timer_p ost = *h2ost;
+//	soc_omap_os_timer_href h2ost = param;
+//	soc_omap_os_timer_ref ost = *h2ost;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int __soc_omap_os_timer_atreset(void* param)
+static int __soc_omap_os_timer_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_os_timer_p ost = param;
+	soc_omap_os_timer_ref ost = param;
 
 	ost->base = 0;
 	ost->ctrl = 0x00000008;
@@ -81,16 +81,16 @@ enum {
 
 /* **** */
 
-static uint32_t _soc_omap_os_timer_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_os_timer_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
-	
-	const soc_omap_os_timer_p ost = param;
-	const csx_p csx = ost->csx;
-	
+
+	soc_omap_os_timer_ref ost = param;
+	csx_ref csx = ost->csx;
+
 	uint32_t data = write ? *write : 0;
-	
+
 	if(write)
 		ost->ctrl = data;
 	else
@@ -102,16 +102,16 @@ static uint32_t _soc_omap_os_timer_ctrl(void* param, uint32_t ppa, size_t size, 
 	return(data);
 }
 
-static uint32_t _soc_omap_os_timer_tick_val(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_os_timer_tick_val(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
-	
-	const soc_omap_os_timer_p ost = param;
-	const csx_p csx = ost->csx;
-	
+
+	soc_omap_os_timer_ref ost = param;
+	csx_ref csx = ost->csx;
+
 	uint32_t data = write ? *write : 0;
-	
+
 	if(write)
 		ost->tick.val = data;
 	else
@@ -132,7 +132,7 @@ static csx_mmio_access_list_t _soc_omap_os_timer_acl[] = {
 
 /* **** */
 
-soc_omap_os_timer_p soc_omap_os_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_os_timer_h h2ost)
+soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -141,10 +141,10 @@ soc_omap_os_timer_p soc_omap_os_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 	if(_trace_alloc) {
 		LOG();
 	}
-	
+
 	/* **** */
 
-	soc_omap_os_timer_p ost = handle_calloc((void**)h2ost, 1, sizeof(soc_omap_os_timer_t));
+	soc_omap_os_timer_ref ost = handle_calloc((void**)h2ost, 1, sizeof(soc_omap_os_timer_t));
 	ERR_NULL(ost);
 
 	ost->csx = csx;
@@ -160,10 +160,10 @@ soc_omap_os_timer_p soc_omap_os_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 	return(ost);
 }
 
-void soc_omap_os_timer_init(soc_omap_os_timer_p ost)
+void soc_omap_os_timer_init(soc_omap_os_timer_ref ost)
 {
 	ERR_NULL(ost);
-	
+
 	if(_trace_init) {
 		LOG();
 	}

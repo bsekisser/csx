@@ -15,7 +15,7 @@
 
 /* **** */
 
-typedef struct soc_omap_lcd_t {
+typedef struct soc_omap_lcd_tag {
 	struct {
 		unsigned ctrl;
 		unsigned display_status;
@@ -25,8 +25,8 @@ typedef struct soc_omap_lcd_t {
 		unsigned subpanel;
 	}r;
 
-	csx_p csx;
-	csx_mmio_p mmio;
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
@@ -49,7 +49,7 @@ enum {
 
 /* **** */
 
-static int __soc_omap_lcd_atexit(void* param)
+static int __soc_omap_lcd_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
@@ -59,13 +59,13 @@ static int __soc_omap_lcd_atexit(void* param)
 	return(0);
 }
 
-static int __soc_omap_lcd_atreset(void* param)
+static int __soc_omap_lcd_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_lcd_p lcd = param;
+	soc_omap_lcd_ref lcd = param;
 
 	lcd->r.ctrl = 0;
 	lcd->r.lineint = 0;
@@ -82,13 +82,13 @@ static int __soc_omap_lcd_atreset(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.ctrl, write);
 
@@ -121,13 +121,13 @@ static uint32_t _soc_omap_lcd_ctrl(void* param, uint32_t ppa, size_t size, uint3
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_display_status(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_display_status(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.display_status, 0);
 
@@ -144,13 +144,13 @@ static uint32_t _soc_omap_lcd_display_status(void* param, uint32_t ppa, size_t s
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_lineint(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_lineint(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.lineint, write);
 
@@ -167,13 +167,13 @@ static uint32_t _soc_omap_lcd_lineint(void* param, uint32_t ppa, size_t size, ui
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing0(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_timing0(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[0], write);
 
@@ -195,13 +195,13 @@ static uint32_t _soc_omap_lcd_timing0(void* param, uint32_t ppa, size_t size, ui
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing1(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_timing1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[1], write);
 
@@ -223,13 +223,13 @@ static uint32_t _soc_omap_lcd_timing1(void* param, uint32_t ppa, size_t size, ui
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing2(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_timing2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.timing[2], write);
 
@@ -254,13 +254,13 @@ static uint32_t _soc_omap_lcd_timing2(void* param, uint32_t ppa, size_t size, ui
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_status(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_status(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.status, write);
 
@@ -283,13 +283,13 @@ static uint32_t _soc_omap_lcd_status(void* param, uint32_t ppa, size_t size, uin
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_subpanel(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_lcd_subpanel(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_lcd_p lcd = param;
-//	const csx_p csx = lcd->csx;
+	soc_omap_lcd_ref lcd = param;
+	csx_ref csx = lcd->csx;
 
 	const uint32_t data = mem_32_access(&lcd->r.subpanel, write);
 
@@ -312,7 +312,7 @@ static uint32_t _soc_omap_lcd_subpanel(void* param, uint32_t ppa, size_t size, u
 
 /* **** */
 
-soc_omap_lcd_p soc_omap_lcd_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_lcd_h h2lcd)
+soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd_href h2lcd)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -324,7 +324,7 @@ soc_omap_lcd_p soc_omap_lcd_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_lcd_h h2l
 
 	/* **** */
 
-	soc_omap_lcd_p lcd = handle_calloc((void**)h2lcd, 1, sizeof(soc_omap_lcd_t));
+	soc_omap_lcd_ref lcd = handle_calloc((void**)h2lcd, 1, sizeof(soc_omap_lcd_t));
 	ERR_NULL(lcd);
 
 	lcd->csx = csx;
@@ -339,7 +339,7 @@ soc_omap_lcd_p soc_omap_lcd_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_lcd_h h2l
 }
 
 
-void soc_omap_lcd_init(soc_omap_lcd_p lcd)
+void soc_omap_lcd_init(soc_omap_lcd_ref lcd)
 {
 	ERR_NULL(lcd);
 
@@ -349,7 +349,7 @@ void soc_omap_lcd_init(soc_omap_lcd_p lcd)
 
 	/* **** */
 
-	csx_mmio_p mmio = lcd->mmio;
+	csx_mmio_ref mmio = lcd->mmio;
 
 	csx_mmio_register_access(mmio, LCDr(_CTRL), _soc_omap_lcd_ctrl, lcd);
 	csx_mmio_register_access(mmio, LCDr(_DISPLAY_STATUS), _soc_omap_lcd_display_status, lcd);

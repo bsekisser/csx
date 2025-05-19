@@ -27,8 +27,10 @@
 
 /* **** */
 
-typedef struct soc_omap_uart_unit_t* soc_omap_uart_unit_p;
-typedef struct soc_omap_uart_unit_t {
+typedef struct soc_omap_uart_unit_tag* soc_omap_uart_unit_ptr;
+typedef soc_omap_uart_unit_ptr const soc_omap_uart_unit_ref;
+
+typedef struct soc_omap_uart_unit_tag {
 	uint8_t efr;
 	uint8_t fcr;
 	uint8_t lcr;
@@ -40,10 +42,10 @@ typedef struct soc_omap_uart_unit_t {
 	uint8_t tlr;
 }soc_omap_uart_unit_t;
 
-typedef struct soc_omap_uart_t {
-	csx_p csx;
-	csx_mmio_p mmio;
-	
+typedef struct soc_omap_uart_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
+
 	soc_omap_uart_unit_t unit[3];
 
 	callback_qlist_elem_t atexit;
@@ -89,41 +91,41 @@ enum {
 
 /* **** */
 
-static int __soc_omap_uart_atexit(void* param)
+static int __soc_omap_uart_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_uart_h h2uart = param;
-//	soc_omap_uart_p uart = *h2uart;
+//	soc_omap_uart_href h2uart = param;
+//	soc_omap_uart_ref uart = *h2uart;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_p uu) {
+static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 	memset(uu, 0, sizeof(soc_omap_uart_unit_t));
-	
+
 	BSET(uu->syss, SYSS_ResetDone);
-	
+
 	return(0);
 }
 
-static int __soc_omap_uart_atreset(void* param) {
+static int __soc_omap_uart_atreset(void *const param) {
 	if(_trace_atreset)
 		LOG();
 
-	soc_omap_uart_p uart = param;
+	soc_omap_uart_ref uart = param;
 
 	for(unsigned uux = 0; uux < 3; uux++)
 		__soc_omap_uart_unit_reset(&uart->unit[uux]);
-	
+
 	return(0);
 }
 
-static soc_omap_uart_unit_p __uart_unit(soc_omap_uart_p uart, uint32_t ppa) {
+static soc_omap_uart_unit_ptr __uart_unit(soc_omap_uart_ref uart, const uint32_t ppa) {
 	uint8_t uux = 0;
 
 	switch(ppa & ~0xffU) {
@@ -145,13 +147,13 @@ static soc_omap_uart_unit_p __uart_unit(soc_omap_uart_p uart, uint32_t ppa) {
 
 /* **** */
 
-static uint32_t _soc_omap_uart_lcr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_lcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
 
-	const soc_omap_uart_p uart = param;
-//	const csx_p csx = uart->csx;
+	soc_omap_uart_ref uart = param;
+//	csx_ref csx = uart->csx;
 
 	uint32_t data = csx_data_mem_access(&__uart_unit(uart, ppa)->lcr, size, write);
 
@@ -169,12 +171,12 @@ static uint32_t _soc_omap_uart_lcr(void* param, uint32_t ppa, size_t size, uint3
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_scr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_scr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
 
-	const soc_omap_uart_p uart = param;
+	soc_omap_uart_ref uart = param;
 
 	uint32_t data = csx_data_mem_access(&__uart_unit(uart, ppa)->scr, size, write);
 
@@ -192,13 +194,13 @@ static uint32_t _soc_omap_uart_scr(void* param, uint32_t ppa, size_t size, uint3
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_sysc(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_sysc(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
-	
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
+
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
 
 	uint32_t data = write ? *write : uart_unit->sysc;
 
@@ -223,28 +225,28 @@ static uint32_t _soc_omap_uart_sysc(void* param, uint32_t ppa, size_t size, uint
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_syss(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_syss(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
-	
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
+
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
 
 	// read only register
 
 	return(uart_unit->syss);
-	
+
 	UNUSED(write);
 }
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x08_efr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x08_efr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x08
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
-	
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
+
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
 			assert(sizeof(uint8_t) == size);
@@ -265,11 +267,11 @@ static uint32_t _soc_omap_uart_x08_efr(void* param, uint32_t ppa, size_t size, u
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x08_fcr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x08_fcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x08
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
-	
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
+
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
 			assert(sizeof(uint8_t) == size);
@@ -298,13 +300,13 @@ static uint32_t _soc_omap_uart_x08_fcr(void* param, uint32_t ppa, size_t size, u
 	return(0);
 }
 
-static uint32_t _soc_omap_uart_x08(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x08(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // efr, fcr, iir
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
 
-	soc_omap_uart_unit_p uart_unit = __uart_unit(param, ppa);
-	
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
+
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
 		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
 
@@ -324,11 +326,11 @@ static uint32_t _soc_omap_uart_x08(void* param, uint32_t ppa, size_t size, uint3
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x10_mcr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x10_mcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
-	
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
+
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
 			assert(sizeof(uint8_t) == size);
@@ -339,7 +341,7 @@ static uint32_t _soc_omap_uart_x10_mcr(void* param, uint32_t ppa, size_t size, u
 
 	if(write) {
 		const uint8_t mask = BTST(uart_unit->efr, 4) ? 0xff : mlBF(4, 0);
-		
+
 		if(_trace_mmio_uart) {
 			LOG_START("UART Modem Control Register\n\t");
 			_LOG_("RESERVED: %01u", BEXT(data, 7));
@@ -358,13 +360,13 @@ static uint32_t _soc_omap_uart_x10_mcr(void* param, uint32_t ppa, size_t size, u
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x10(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x10(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // mcr, xon1
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
 
-	soc_omap_uart_unit_p uart_unit = __uart_unit(param, ppa);
-	
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
+
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
 		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
 
@@ -380,10 +382,10 @@ static uint32_t _soc_omap_uart_x10(void* param, uint32_t ppa, size_t size, uint3
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x1c_spr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x1c_spr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
 
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
@@ -401,10 +403,10 @@ static uint32_t _soc_omap_uart_x1c_spr(void* param, uint32_t ppa, size_t size, u
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x1c_tlr(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x1c_tlr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x1c
-	const soc_omap_uart_p uart = param;
-	const soc_omap_uart_unit_p uart_unit = __uart_unit(uart, ppa);
+	soc_omap_uart_ref uart = param;
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
 
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
@@ -425,16 +427,16 @@ static uint32_t _soc_omap_uart_x1c_tlr(void* param, uint32_t ppa, size_t size, u
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x1c(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_uart_x1c(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // spr, tlr, xoff2
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
 
-	soc_omap_uart_unit_p uart_unit = __uart_unit(param, ppa);
-	
+	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
+
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
 		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
-	
+
 	if(BTST(uart_unit->efr, 4) && BTST(uart_unit->mcr, 6)) {
 			return(_soc_omap_uart_x1c_tlr(param, ppa, size, write));
 	} else {
@@ -467,7 +469,7 @@ static csx_mmio_access_list_t __soc_omap_uart_acl[] = {
 
 /* **** */
 
-soc_omap_uart_p soc_omap_uart_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h h2uart)
+soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_uart_href h2uart)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -479,7 +481,7 @@ soc_omap_uart_p soc_omap_uart_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h 
 
 	/* **** */
 
-	soc_omap_uart_p uart = handle_calloc((void**)h2uart, 1, sizeof(soc_omap_uart_t));
+	soc_omap_uart_ref uart = handle_calloc((void**)h2uart, 1, sizeof(soc_omap_uart_t));
 	ERR_NULL(uart);
 
 	uart->csx = csx;
@@ -493,17 +495,17 @@ soc_omap_uart_p soc_omap_uart_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_uart_h 
 	return(uart);
 }
 
-void soc_omap_uart_init(soc_omap_uart_p uart)
+void soc_omap_uart_init(soc_omap_uart_ref uart)
 {
 	ERR_NULL(uart);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
 
 	/* **** */
 
-	csx_mmio_p mmio = uart->mmio;
+	csx_mmio_ref mmio = uart->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_UART1, __soc_omap_uart_acl, uart);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_UART2, __soc_omap_uart_acl, uart);

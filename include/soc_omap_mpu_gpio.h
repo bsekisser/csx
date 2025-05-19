@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_gpio_t** soc_omap_mpu_gpio_h;
-typedef struct soc_omap_mpu_gpio_t* soc_omap_mpu_gpio_p;
+typedef struct soc_omap_mpu_gpio_tag** soc_omap_mpu_gpio_hptr;
+typedef soc_omap_mpu_gpio_hptr const soc_omap_mpu_gpio_href;
+
+typedef struct soc_omap_mpu_gpio_tag* soc_omap_mpu_gpio_ptr;
+typedef soc_omap_mpu_gpio_ptr const soc_omap_mpu_gpio_ref;
 
 /* **** */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_mpu_gpio_t* soc_omap_mpu_gpio_p;
 
 /* **** */
 
-soc_omap_mpu_gpio_p soc_omap_mpu_gpio_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_gpio_h h2gpio);
-void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_p gpio);
+soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_gpio_href h2gpio);
+void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_ref gpio);

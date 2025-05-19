@@ -21,9 +21,9 @@
 
 /* **** */
 
-typedef struct soc_omap_dpll_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_dpll_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	uint32_t ctl_reg;
 
@@ -33,7 +33,7 @@ typedef struct soc_omap_dpll_t {
 
 /* **** */
 
-static int __soc_omap_dpll_atexit(void* param) {
+static int __soc_omap_dpll_atexit(void *const param) {
 	if(_trace_atexit) {
 		LOG();
 	}
@@ -42,12 +42,12 @@ static int __soc_omap_dpll_atexit(void* param) {
 	return(0);
 }
 
-static int __soc_omap_dpll_atreset(void* param) {
+static int __soc_omap_dpll_atreset(void *const param) {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_dpll_p dpll = param;
+	soc_omap_dpll_ref dpll = param;
 
 	/* **** */
 
@@ -69,15 +69,15 @@ enum {
 	DPLL1_CTL_PLL_ENABLE = 0x04,
 };
 
-static uint32_t _soc_omap_dpll_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_dpll_ctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 //	LOG("size = 0x%08zx", size);
 
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
 
-	const soc_omap_dpll_p dpll = param;
-	const csx_p csx = dpll->csx;
+	soc_omap_dpll_ref dpll = param;
+	csx_ref csx = dpll->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -111,7 +111,7 @@ static csx_mmio_access_list_t _soc_omap_dpll_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_dpll_p soc_omap_dpll_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h h2dpll)
+soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dpll_href h2dpll)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -123,7 +123,7 @@ soc_omap_dpll_p soc_omap_dpll_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h 
 
 	/* **** */
 
-	soc_omap_dpll_p dpll = handle_calloc((void**)h2dpll, 1, sizeof(soc_omap_dpll_t));
+	soc_omap_dpll_ref dpll = handle_calloc((void**)h2dpll, 1, sizeof(soc_omap_dpll_t));
 	ERR_NULL(dpll);
 
 	dpll->csx = csx;
@@ -139,7 +139,7 @@ soc_omap_dpll_p soc_omap_dpll_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dpll_h 
 	return(dpll);
 }
 
-void soc_omap_dpll_init(soc_omap_dpll_p dpll)
+void soc_omap_dpll_init(soc_omap_dpll_ref dpll)
 {
 	ERR_NULL(dpll);
 

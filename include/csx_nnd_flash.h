@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct csx_nnd_t* csx_nnd_p;
-typedef struct csx_nnd_t** csx_nnd_h;
+typedef struct csx_nnd_tag** csx_nnd_hptr;
+typedef csx_nnd_hptr const csx_nnd_href;
+
+typedef struct csx_nnd_tag* csx_nnd_ptr;
+typedef csx_nnd_ptr const csx_nnd_ref;
 
 /* **** */
 
@@ -11,8 +14,8 @@ typedef struct csx_nnd_t** csx_nnd_h;
 
 /* **** */
 
-csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h nnd);
-void csx_nnd_flash_init(csx_nnd_p nnd);
-uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size);
-void csx_nnd_flash_write(csx_nnd_p nnd, uint32_t addr, size_t size, uint32_t value);
+csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href nnd);
+void csx_nnd_flash_init(csx_nnd_ref nnd);
+uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t addr, const size_t size);
+void csx_nnd_flash_write(csx_nnd_ref nnd, const uint32_t addr, const size_t size, const uint32_t value);
 

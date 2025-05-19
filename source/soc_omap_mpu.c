@@ -20,10 +20,10 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_t {
-	csx_p csx;
-	csx_mmio_p mmio;
-	
+typedef struct soc_omap_mpu_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
+
 	uint32_t ckctl;
 	uint32_t idlct[2];
 	uint32_t rstct[2];
@@ -43,26 +43,26 @@ typedef struct soc_omap_mpu_t {
 
 /* **** */
 
-static int __soc_omap_mpu_atexit(void* param)
+static int __soc_omap_mpu_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
 	handle_free(param);
-	
+
 	return(0);
 }
 
 /* **** */
 
-static uint32_t soc_omap_mpu_ckctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_mpu_ckctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_mpu_p mpu = param;
-	const csx_p csx = mpu->csx;
+	soc_omap_mpu_ref mpu = param;
+	csx_ref csx = mpu->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -87,13 +87,13 @@ static uint32_t soc_omap_mpu_ckctl(void* param, uint32_t ppa, size_t size, uint3
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_idlct1(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_mpu_idlct1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_mpu_p mpu = param;
-	const csx_p csx = mpu->csx;
+	soc_omap_mpu_ref mpu = param;
+	csx_ref csx = mpu->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -118,13 +118,13 @@ static uint32_t soc_omap_mpu_idlct1(void* param, uint32_t ppa, size_t size, uint
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_idlct2(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_mpu_idlct2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_mpu_p mpu = param;
-	const csx_p csx = mpu->csx;
+	soc_omap_mpu_ref mpu = param;
+	csx_ref csx = mpu->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -148,13 +148,13 @@ static uint32_t soc_omap_mpu_idlct2(void* param, uint32_t ppa, size_t size, uint
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_rstct2(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_mpu_rstct2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_mpu_p mpu = param;
-	const csx_p csx = mpu->csx;
+	soc_omap_mpu_ref mpu = param;
+	csx_ref csx = mpu->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -171,13 +171,13 @@ static uint32_t soc_omap_mpu_rstct2(void* param, uint32_t ppa, size_t size, uint
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_sysst(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_mpu_sysst(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_mpu_p mpu = param;
-	const csx_p csx = mpu->csx;
+	soc_omap_mpu_ref mpu = param;
+	csx_ref csx = mpu->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -207,7 +207,7 @@ static csx_mmio_access_list_t _soc_omap_mpu_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_mpu_p soc_omap_mpu_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2mpu)
+soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_href h2mpu)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -219,7 +219,7 @@ soc_omap_mpu_p soc_omap_mpu_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2m
 
 	/* **** */
 
-	soc_omap_mpu_p mpu = handle_calloc((void**)h2mpu, 1, sizeof(soc_omap_mpu_t));
+	soc_omap_mpu_ref mpu = handle_calloc((void**)h2mpu, 1, sizeof(soc_omap_mpu_t));
 	ERR_NULL(mpu);
 
 	mpu->csx = csx;
@@ -234,10 +234,10 @@ soc_omap_mpu_p soc_omap_mpu_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_h h2m
 	return(mpu);
 }
 
-void soc_omap_mpu_init(soc_omap_mpu_p mpu)
+void soc_omap_mpu_init(soc_omap_mpu_ref mpu)
 {
 	ERR_NULL(mpu);
-	
+
 	if(_trace_init) {
 		LOG();
 	}

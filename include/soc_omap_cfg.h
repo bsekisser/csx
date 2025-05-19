@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct soc_omap_cfg_t** soc_omap_cfg_h;
-typedef struct soc_omap_cfg_t* soc_omap_cfg_p;
+typedef struct soc_omap_cfg_tag** soc_omap_cfg_hptr;
+typedef soc_omap_cfg_hptr const soc_omap_cfg_href;
+
+typedef struct soc_omap_cfg_tag* soc_omap_cfg_ptr;
+typedef soc_omap_cfg_ptr const soc_omap_cfg_ref;
 
 /* **** */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_cfg_t* soc_omap_cfg_p;
 
 /* **** */
 
-soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2cfg);
-void soc_omap_cfg_init(soc_omap_cfg_p cfg);
+soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg_href h2cfg);
+void soc_omap_cfg_init(soc_omap_cfg_ref cfg);

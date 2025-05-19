@@ -29,18 +29,24 @@ const int dskimg_write = 0;
 
 
 typedef char page_t[2112];
-typedef page_t* page_p;
-typedef page_p* page_h;
-typedef page_p block_t[64];
-typedef page_p* block_p;
-typedef page_p** block_h;
-typedef block_p device_t[(0xffffff + 1) >> 6];
+typedef page_t* page_ptr;
+typedef page_ptr const page_ref;
+typedef page_ptr* page_hptr;
+typedef page_hptr const page_href;
+typedef page_ptr block_t[64];
+typedef page_hptr block_ptr;
+typedef block_ptr const block_ref;
+typedef block_ptr* block_hptr;
+typedef block_hptr const block_href;
+typedef block_ptr device_t[(0xffffff + 1) >> 6];
 
-typedef struct csx_nnd_unit_t* csx_nnd_unit_p;
-typedef struct csx_nnd_unit_t {
+typedef struct csx_nnd_unit_tag* csx_nnd_unit_ptr;
+typedef csx_nnd_unit_ptr const csx_nnd_unit_ref;
+
+typedef struct csx_nnd_unit_tag {
 	device_t						device;
 	page_t							data_register;
-//	page_p							page_register;
+//	page_ptr						page_register;
 
 	uint16_t						column; // byte in page
 	uint32_t						row; // block & page
@@ -52,14 +58,14 @@ typedef struct csx_nnd_unit_t {
 	unsigned						cs;
 	uint32_t						status;
 //
-	csx_p							csx;
-	csx_nnd_p						nnd;
+	csx_ptr							csx;
+	csx_nnd_ptr						nnd;
 }csx_nnd_unit_t;
 
-typedef struct csx_nnd_t {
+typedef struct csx_nnd_tag {
 	csx_nnd_unit_t					unit[16];
 
-	csx_p							csx;
+	csx_ptr							csx;
 
 	callback_qlist_elem_t atexit;
 	callback_qlist_elem_t atreset;
@@ -98,17 +104,17 @@ const uint8_t csx_nnd_flash_id[16][8] = {
 
 /* **** */
 
-static page_p __csx_nnd_flash_p2page(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static page_ptr __csx_nnd_flash_p2page(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, uint32_t *const write);
 
-static int __csx_nnd_flash_atexit(void* param)
+static int __csx_nnd_flash_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG(">>");
 	}
 
-	const csx_nnd_p nnd = (csx_nnd_p)*(void**)param;
-	const csx_nnd_unit_p unit = &nnd->unit[12];
+	csx_nnd_ref nnd = param;
+	csx_nnd_unit_ref unit = &nnd->unit[12];
 
 	if(1 || dskimg_write) {
 		FILE* fp = 0;
@@ -123,7 +129,7 @@ static int __csx_nnd_flash_atexit(void* param)
 				const uint32_t bpa = block << 6 | page;
 				const uint32_t ppa = bpa << 11;
 
-				page_p p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
+				page_ref p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
 
 				if(p) {
 					if(dskimg_write) {
@@ -153,7 +159,7 @@ static int __csx_nnd_flash_atexit(void* param)
 	return(0);
 }
 
-static block_h __csx_nnd_flash_h2block(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static block_hptr __csx_nnd_flash_h2block(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row)
 {
 	const uint32_t block = row >> 6;
@@ -165,14 +171,14 @@ static block_h __csx_nnd_flash_h2block(csx_nnd_p const nnd, csx_nnd_unit_p const
 	UNUSED(nnd);
 }
 
-static page_p __csx_nnd_flash_p2page(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static page_ptr __csx_nnd_flash_p2page(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, uint32_t *const write)
 {
 	const uint32_t block = row >> 6;
 //	const unsigned block = (row & 0xffffc0) >> 6;
 	const unsigned page = row & 0x3f;
 
-	const block_h h2block = __csx_nnd_flash_h2block(nnd, unit, row);
+	block_href h2block = __csx_nnd_flash_h2block(nnd, unit, row);
 
 	if(write) {
 		if(!h2block[0]) {
@@ -183,8 +189,8 @@ if(0)		LOG("row: 0x%08x, block: 0x%06x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR,
 		}
 	}
 
-	const block_p p2block = h2block[0];
-	const page_h h2page = p2block ? &p2block[page] : 0;
+	block_ref p2block = h2block[0];
+	page_href h2page = p2block ? &p2block[page] : 0;
 
 	if(write) {
 		if(!h2page[0]) {
@@ -195,26 +201,26 @@ if(0)		LOG("row: 0x%08x, block: 0x%06x, page: 0x%02x, 0x%016" PRIxPTR,
 		}
 	}
 
-	const page_p p2page = h2page ? *h2page : 0;
+	page_ref p2page = h2page ? *h2page : 0;
 
 	return(p2page);
 }
 
-static void _csx_nnd_flash_block_erase(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static void _csx_nnd_flash_block_erase(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t ppa)
 {
 	for(unsigned pages = 64; pages; pages--) {
-		page_p p = __csx_nnd_flash_p2page(nnd, unit, ppa + pages - 1, 0);
+		page_ref p = __csx_nnd_flash_p2page(nnd, unit, ppa + pages - 1, 0);
 
 		if(p)
 			memset(p, 0, sizeof(page_t));
 	}
 }
 
-static uint32_t _csx_nnd_flash_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static uint32_t _csx_nnd_flash_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, const uint16_t column, const size_t size, uint32_t *const write);
 
-static void _csx_nnd_flash_page_program(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static void _csx_nnd_flash_page_program(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t ppa)
 {
 	assert(nnd);
@@ -223,7 +229,7 @@ static void _csx_nnd_flash_page_program(csx_nnd_p const nnd, csx_nnd_unit_p cons
 	const uint32_t block = ppa >> 6;
 	const uint32_t page = ppa & 0x3f;
 
-	page_p p = __csx_nnd_flash_p2page(nnd, unit, ppa, (void*)0xfeedface);
+	page_ref p = __csx_nnd_flash_p2page(nnd, unit, ppa, (void*)0xfeedface);
 	assert(p);
 
 if(1) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
@@ -233,7 +239,7 @@ if(1) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016"
 		memcpy(p, unit->data_register, sizeof(page_t));
 }
 
-static uint32_t _csx_nnd_flash_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write) {
+static uint32_t _csx_nnd_flash_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write) {
 	if(write)
 		csx_nnd_flash_write(param, ppa, size, *write);
 	else
@@ -242,12 +248,12 @@ static uint32_t _csx_nnd_flash_mem_access(void* param, uint32_t ppa, size_t size
 	return(0);
 }
 
-static uint32_t _csx_nnd_flash_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static uint32_t _csx_nnd_flash_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, const uint16_t column, const size_t size, uint32_t *const write)
 {
 	assert(column < sizeof(page_t));
 
-	page_p page = __csx_nnd_flash_p2page(nnd, unit, row, write);
+	page_ref page = __csx_nnd_flash_p2page(nnd, unit, row, write);
 
 	if(page)
 		return(mem_access_le(&page[column], size, write));
@@ -256,7 +262,7 @@ static uint32_t _csx_nnd_flash_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const uni
 	return(0);
 }
 
-static uint32_t _csx_nnd_flash_rwd_ppa(csx_nnd_p const nnd, csx_nnd_unit_p const unit,
+static uint32_t _csx_nnd_flash_rwd_ppa(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	const uint16_t column = ppa & 0x7ff;
@@ -266,7 +272,7 @@ static uint32_t _csx_nnd_flash_rwd_ppa(csx_nnd_p const nnd, csx_nnd_unit_p const
 	return(_csx_nnd_flash_rwd(nnd, unit, row, column, size, write));
 }
 
-static csx_nnd_unit_p _csx_nnd_flash_unit(csx_nnd_p nnd, uint32_t addr, unsigned* p2cs)
+static csx_nnd_unit_ptr _csx_nnd_flash_unit(csx_nnd_ref nnd, const uint32_t addr, unsigned *const p2cs)
 {
 	const unsigned cs = addr >> CSx_LSB;
 
@@ -276,7 +282,7 @@ static csx_nnd_unit_p _csx_nnd_flash_unit(csx_nnd_p nnd, uint32_t addr, unsigned
 		*p2cs = cs;
 
 //	return(0);
-	const csx_nnd_unit_p unit = &nnd->unit[cs];
+	csx_nnd_unit_ref unit = &nnd->unit[cs];
 
 	if(0) {
 		LOG_START("");
@@ -298,7 +304,7 @@ static csx_nnd_unit_p _csx_nnd_flash_unit(csx_nnd_p nnd, uint32_t addr, unsigned
 
 /* **** */
 
-csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
+csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
 {
 	ERR_NULL(csx);
 	ERR_NULL(h2nnd);
@@ -309,7 +315,7 @@ csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
 
 	/* **** */
 
-	csx_nnd_p nnd = HANDLE_CALLOC(h2nnd, 1, sizeof(csx_nnd_t));
+	csx_nnd_ref nnd = HANDLE_CALLOC(h2nnd, 1, sizeof(csx_nnd_t));
 	ERR_NULL(nnd);
 
 	nnd->csx = csx;
@@ -321,7 +327,7 @@ csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
 	/* **** */
 
 	for(unsigned cs = 0; cs < 16; cs++) {
-		csx_nnd_unit_p unit = &nnd->unit[cs];
+		csx_nnd_unit_ref unit = &nnd->unit[cs];
 		unit->cs = cs;
 		unit->csx = csx;
 		unit->nnd = nnd;
@@ -332,9 +338,9 @@ csx_nnd_p csx_nnd_flash_alloc(csx_p csx, csx_nnd_h h2nnd)
 	return(nnd);
 }
 
-static void csx_nnd_flash_init_dskimg(csx_nnd_p nnd)
+static void csx_nnd_flash_init_dskimg(csx_nnd_ref nnd)
 {
-	csx_nnd_unit_p unit = &nnd->unit[12];
+	csx_nnd_unit_ref unit = &nnd->unit[12];
 	FILE* fp = fopen(kDSKIMG, "r");
 
 	if(fp) {
@@ -364,7 +370,7 @@ static void csx_nnd_flash_init_dskimg(csx_nnd_p nnd)
 	}
 }
 
-void csx_nnd_flash_init(csx_nnd_p nnd)
+void csx_nnd_flash_init(csx_nnd_ref nnd)
 {
 	if(0) {
 		device_t device;
@@ -389,7 +395,7 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 	if(dskimg_load)
 		csx_nnd_flash_init_dskimg(nnd);
 
-	csx_p csx = nnd->csx;
+	csx_ref csx = nnd->csx;
 	armvm_mem_ref mem = csx->armvm->mem;
 
 	armvm_mem_mmap_cb(mem, 0x02000000, 0x02000fff, _csx_nnd_flash_mem_access, nnd);
@@ -404,7 +410,7 @@ void csx_nnd_flash_init(csx_nnd_p nnd)
 	/* **** */
 }
 
-static uint32_t csx_nnd_flash_read_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const unit, const uint32_t addr, const size_t size)
+static uint32_t csx_nnd_flash_read_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit, const uint32_t addr, const size_t size)
 {
 	const uint32_t column = unit->column;
 
@@ -445,7 +451,7 @@ static uint32_t csx_nnd_flash_read_rwd(csx_nnd_p const nnd, csx_nnd_unit_p const
 	return(0);
 }
 
-uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
+uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t addr, const size_t size)
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
@@ -453,7 +459,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 		addr, offset, size);
 
 	unsigned cs = 0;
-	const csx_nnd_unit_p unit = _csx_nnd_flash_unit(nnd, addr, &cs);
+	csx_nnd_unit_ref unit = _csx_nnd_flash_unit(nnd, addr, &cs);
 
 	if(0 == unit) {
 		LOG("addr = 0x%08x, cs = 0x%02x, offset = 0x%08x, size = 0x%02zx",
@@ -478,7 +484,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_p nnd, uint32_t addr, size_t size)
 	return(0);
 }
 
-static void csx_nnd_flash_write_ale(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t size, uint32_t value)
+static void csx_nnd_flash_write_ale(csx_nnd_ref nnd, csx_nnd_unit_ref unit, const size_t size, const uint32_t value)
 {
 	assert(1 == size);
 
@@ -511,11 +517,11 @@ static void csx_nnd_flash_write_ale(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t s
 	UNUSED(nnd);
 }
 
-static void csx_nnd_flash_write_cle(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t size, uint32_t value)
+static void csx_nnd_flash_write_cle(csx_nnd_ref nnd, csx_nnd_unit_ref unit, const size_t size, const uint32_t value)
 {
 	assert(1 == size);
 
-	unsigned cs = unit->cs;
+	const unsigned cs = unit->cs;
 
 	if(0) LOG("cs = 0x%02x, value = 0x%08x, size = 0x%02zx, cl = 0x%08x", cs, value, size, unit->cl);
 
@@ -579,7 +585,7 @@ if(1) 					LOG("cs = 0x%02x, value = 0x%08x, size = 0x%02zx, cl = 0x%08x, row = 
 	UNUSED(nnd);
 }
 
-static void csx_nnd_flash_write_rwd(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t size, uint32_t value)
+static void csx_nnd_flash_write_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit, const size_t size, const uint32_t value)
 {
 	assert(nnd);
 	assert(unit);
@@ -607,12 +613,12 @@ static void csx_nnd_flash_write_rwd(csx_nnd_p nnd, csx_nnd_unit_p unit, size_t s
 	UNUSED(nnd);
 }
 
-void csx_nnd_flash_write(csx_nnd_p nnd, uint32_t addr, size_t size, uint32_t value)
+void csx_nnd_flash_write(csx_nnd_ref nnd, const uint32_t addr, const size_t size, const uint32_t value)
 {
 	const uint32_t offset = mlBFEXT(addr, OFFSET_MSB, 0);
 
 	unsigned cs = 0;
-	const csx_nnd_unit_p unit = _csx_nnd_flash_unit(nnd, addr, &cs);
+	csx_nnd_unit_ref unit = _csx_nnd_flash_unit(nnd, addr, &cs);
 
 	if(0 == unit) {
 		LOG("addr = 0x%08x, cs = 0x%02x, offset = 0x%08x, size = 0x%02zx, value = 0x%08x",

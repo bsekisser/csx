@@ -1,9 +1,12 @@
 #pragma once
 
-typedef struct csx_statistics_t** csx_statistics_h;
-typedef struct csx_statistics_t* csx_statistics_p;
+typedef struct csx_statistics_tag** csx_statistics_hptr;
+typedef csx_statistics_hptr const csx_statistics_href;
 
-extern csx_statistics_p statistics;
+typedef struct csx_statistics_tag* csx_statistics_ptr;
+typedef csx_statistics_ptr const csx_statistics_ref;
+
+extern csx_statistics_ptr statistics;
 
 /* **** */
 
@@ -21,13 +24,15 @@ extern csx_statistics_p statistics;
 
 /* **** */
 
-typedef struct csx_counter_hit_t* csx_counter_hit_p;
-typedef struct csx_counter_hit_t {
+typedef struct csx_counter_hit_tag* csx_counter_hit_ptr;
+typedef csx_counter_hit_ptr const csx_counter_hit_ref;
+
+typedef struct csx_counter_hit_tag {
 	uint32_t hit;
 	uint32_t miss;
 }csx_counter_hit_t;
 
-typedef struct csx_statistic_counters_t {
+typedef struct csx_statistic_counters_tag {
 	struct {
 		uint32_t read;
 		uint32_t write;
@@ -36,17 +41,19 @@ typedef struct csx_statistic_counters_t {
 
 /* **** */
 
-typedef struct csx_profile_stat_t* csx_profile_stat_p;
-typedef struct csx_profile_stat_t {
+typedef struct csx_profile_stat_tag* csx_profile_stat_ptr;
+typedef csx_profile_stat_ptr const csx_profile_stat_ref;
+
+typedef struct csx_profile_stat_tag {
 	uint32_t count;
 	uint64_t elapsed;
 }csx_profile_stat_t;
 
-typedef struct csx_statistic_profile_t {
+typedef struct csx_statistic_profile_tag {
 }csx_statistic_profile_t;
 
-typedef struct csx_statistics_t {
-	csx_p csx;
+typedef struct csx_statistics_tag {
+	csx_ptr csx;
 	csx_statistic_counters_t counters;
 	csx_statistic_profile_t profile;
 
@@ -56,8 +63,8 @@ typedef struct csx_statistics_t {
 
 /* **** */
 
-csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s);
-void csx_statistics_init(csx_statistics_p s);
+csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s);
+void csx_statistics_init(csx_statistics_ref s);
 
 static inline void csx_counter_add(uint32_t* c, unsigned add) {
 	if(_csx_statistical_counters)
@@ -69,7 +76,7 @@ static inline void csx_counter_inc(uint32_t* c) {
 		(*c)++;
 }
 
-static inline void csx_counter_hit_if(csx_counter_hit_p c, unsigned test) {
+static inline void csx_counter_hit_if(csx_counter_hit_ref c, unsigned test) {
 	if(_csx_statistical_counters) {
 		if(test)
 			c->hit++;
@@ -97,7 +104,7 @@ static inline void csx_counter_hit_if(csx_counter_hit_p c, unsigned test) {
 
 /* **** */
 
-static inline void csx_profile_stat_count(csx_profile_stat_p s, uint64_t dtime) {
+static inline void csx_profile_stat_count(csx_profile_stat_ref s, uint64_t dtime) {
 	if(_csx_statistical_counters) {
 		s->count++;
 		s->elapsed += _get_dtime_elapsed(dtime);

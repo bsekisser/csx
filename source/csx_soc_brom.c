@@ -17,8 +17,10 @@
 
 /* **** */
 
-typedef struct cc_t* cc_p;
-typedef struct cc_t {
+typedef struct cc_tag* cc_ptr;
+typedef cc_ptr const cc_ref;
+
+typedef struct cc_tag {
 	uint32_t cs, ip, pc;
 	uint32_t ds, dp;
 //
@@ -27,7 +29,7 @@ typedef struct cc_t {
 
 /* **** */
 
-static void cc_org(cc_p p2cc, const uint32_t cs)
+static void cc_org(cc_ref p2cc, const uint32_t cs)
 {
 	p2cc->cs = cs;
 
@@ -38,7 +40,7 @@ static void cc_org(cc_p p2cc, const uint32_t cs)
 		(uintptr_t)p2cc->sdp, (uintptr_t)p2cc->p2cs);
 }
 
-static void cc_org_data(cc_p p2cc, const uint32_t ds)
+static void cc_org_data(cc_ref p2cc, const uint32_t ds)
 {
 	p2cc->ds = ds;
 
@@ -49,7 +51,7 @@ static void cc_org_data(cc_p p2cc, const uint32_t ds)
 		(uintptr_t)p2cc->sdp, (uintptr_t)p2cc->p2ds);
 }
 
-static cc_p cc_start(void *const sdp, const uint32_t cs, const uint32_t ds)
+static cc_ptr cc_start(void *const sdp, const uint32_t cs, const uint32_t ds)
 {
 	static cc_t cc;
 
@@ -61,7 +63,7 @@ static cc_p cc_start(void *const sdp, const uint32_t cs, const uint32_t ds)
 	return(&cc);
 }
 
-static uint32_t cc(cc_p p2cc, const uint32_t ir)
+static uint32_t cc(cc_ref p2cc, const uint32_t ir)
 {
 	p2cc->ip = p2cc->pc;
 	p2cc->pc += 4;
@@ -80,7 +82,7 @@ static uint32_t cc(cc_p p2cc, const uint32_t ir)
 	return(cs_pc);
 }
 
-static uint32_t cc_dw(cc_p p2cc, const uint32_t data)
+static uint32_t cc_dw(cc_ref p2cc, const uint32_t data)
 {
 	const uint32_t dp = p2cc->dp;
 	p2cc->dp += 4;
@@ -90,7 +92,7 @@ static uint32_t cc_dw(cc_p p2cc, const uint32_t data)
 	LOG_START("(ds: 0x%08x, dp: 0x%08x): 0x%08x", p2cc->ds, dp, ds_dp);
 	LOG_END(", data: 0x%08x", data);
 
-	uint32_t* p = p2cc->p2ds + (dp & 0xffff);
+	uint32_t *const p = p2cc->p2ds + (dp & 0xffff);
 	*p = data;
 
 	return(ds_dp);
@@ -102,7 +104,7 @@ static uint32_t _arm_ir_rd(const unsigned rd)
 static uint32_t _arm_ir_rn(const unsigned rn)
 { return(pbBFMOV(rn, 0, 4, 16)); }
 
-static uint32_t arm_b(cc_p p2cc, const uint32_t pat)
+static uint32_t arm_b(cc_ref p2cc, const uint32_t pat)
 {
 	const uint32_t cs_pc = p2cc->cs + p2cc->pc;
 
@@ -122,7 +124,7 @@ static uint32_t arm_b(cc_p p2cc, const uint32_t pat)
 	return(cc(p2cc, ir));
 }
 
-static uint32_t arm_ldr(cc_p p2cc, const unsigned rd, const unsigned rn, const uint32_t pat)
+static uint32_t arm_ldr(cc_ref p2cc, const unsigned rd, const unsigned rn, const uint32_t pat)
 {
 	LOG_START("rd: %u", rd);
 	_LOG_(", rn: %u", rn);
@@ -157,12 +159,12 @@ enum {
 	rSP = r13,
 };
 
-void csx_soc_brom_init(csx_soc_p const soc, csx_data_p const cdp)
+void csx_soc_brom_init(csx_soc_ref soc, csx_data_ref cdp)
 {
 	ERR_NULL(soc);
 	ERR_NULL(cdp);
 
-	cc_p cc = cc_start(soc->brom, 0x00000000, 0x00001000);
+	cc_ref cc = cc_start(soc->brom, 0x00000000, 0x00001000);
 	const uint32_t base_dw = cc_dw(cc, cdp->base);
 	const uint32_t sp_dw = cc_dw(cc, SOC_SRAM_END);
 

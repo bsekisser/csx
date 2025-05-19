@@ -44,5 +44,5 @@
 	#define PC armvm_gpr(pARMVM, ARMVM_GPR(PC), 0)
 #endif
 
-static inline int soc_core_in_a_privaleged_mode(csx_p const csx)
+static inline int soc_core_in_a_privaleged_mode(csx_ref csx)
 { return(0 != mlBFEXT(CPSR, 3, 0)); }

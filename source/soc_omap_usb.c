@@ -22,9 +22,9 @@
 
 /* **** */
 
-typedef struct soc_omap_usb_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_usb_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	struct {
 		uint32_t syscon1;
@@ -38,12 +38,12 @@ typedef struct soc_omap_usb_t {
 
 /* **** */
 
-//static void ___set_reset_done(soc_omap_usb_p const usb, const int set)
+//static void ___set_reset_done(soc_omap_usb_ref usb, const int set)
 //{ BMAS(usb>syscon_1, 2, set); }
 
 /* **** */
 
-static int __soc_omap_usb_atexit(void* param)
+static int __soc_omap_usb_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
@@ -53,13 +53,13 @@ static int __soc_omap_usb_atexit(void* param)
 	return(0);
 }
 
-static int __soc_omap_usb_atreset(void* param)
+static int __soc_omap_usb_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-//	soc_omap_usb_p usb = param;
+//	soc_omap_usb_ref usb = param;
 //	___set_reset_done(param, 1);
 
 	return(0);
@@ -68,13 +68,13 @@ static int __soc_omap_usb_atreset(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_usb_client_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_usb_client_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
 
-	const soc_omap_usb_p usb = param;
-	const csx_p csx = usb->csx;
+	soc_omap_usb_ref usb = param;
+	csx_ref csx = usb->csx;
 
 	const uint8_t offset = ppa & 0xff;
 
@@ -86,13 +86,13 @@ static uint32_t _soc_omap_usb_client_mem_access(void* param, uint32_t ppa, size_
 	return(data);
 }
 
-static uint32_t _soc_omap_usb_otg_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_usb_otg_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_usb_p usb = param;
-	const csx_p csx = usb->csx;
+	soc_omap_usb_ref usb = param;
+	csx_ref csx = usb->csx;
 
 	uint32_t data = 0xdeadbeef;
 	const uint8_t offset = ppa & 0xff;
@@ -118,7 +118,7 @@ static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb)
+soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb_href h2usb)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -130,7 +130,7 @@ soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2u
 
 	/* **** */
 
-	soc_omap_usb_p usb = handle_calloc((void**)h2usb, 1, sizeof(soc_omap_usb_t));
+	soc_omap_usb_ref usb = handle_calloc((void**)h2usb, 1, sizeof(soc_omap_usb_t));
 	ERR_NULL(usb);
 
 	usb->csx = csx;
@@ -145,7 +145,7 @@ soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2u
 }
 
 
-void soc_omap_usb_init(soc_omap_usb_p usb)
+void soc_omap_usb_init(soc_omap_usb_ref usb)
 {
 	ERR_NULL(usb);
 

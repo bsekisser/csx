@@ -2,8 +2,11 @@
 
 /* **** forward declarations/definitions */
 
-typedef struct soc_omap_dma_t** soc_omap_dma_h;
-typedef struct soc_omap_dma_t* soc_omap_dma_p;
+typedef struct soc_omap_dma_tag** soc_omap_dma_hptr;
+typedef soc_omap_dma_hptr const soc_omap_dma_href;
+
+typedef struct soc_omap_dma_tag* soc_omap_dma_ptr;
+typedef soc_omap_dma_ptr const soc_omap_dma_ref;
 
 /* **** csx level includes */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_dma_t* soc_omap_dma_p;
 
 /* **** */
 
-soc_omap_dma_p soc_omap_dma_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_dma_h h2dma);
-void soc_omap_dma_init(soc_omap_dma_p dma);
+soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma_href h2dma);
+void soc_omap_dma_init(soc_omap_dma_ref dma);

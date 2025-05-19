@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct csx_mmio_t** csx_mmio_h;
-typedef struct csx_mmio_t* csx_mmio_p;
+typedef struct csx_mmio_tag** csx_mmio_hptr;
+typedef csx_mmio_hptr const csx_mmio_href;
+
+typedef struct csx_mmio_tag* csx_mmio_ptr;
+typedef csx_mmio_ptr const csx_mmio_ref;
 
 /* **** */
 /* **** csx level includes */
@@ -21,8 +24,10 @@ typedef struct csx_mmio_t* csx_mmio_p;
 /* **** system level includes */
 /* **** */
 
-typedef struct csx_mmio_access_list_t* csx_mmio_access_list_p;
-typedef struct csx_mmio_access_list_t {
+typedef struct csx_mmio_access_list_tag* csx_mmio_access_list_ptr;
+typedef csx_mmio_access_list_ptr const csx_mmio_access_list_ref;
+
+typedef struct csx_mmio_access_list_tag {
 	armvm_mem_fn fn;
 	const char* name;
 
@@ -30,19 +35,21 @@ typedef struct csx_mmio_access_list_t {
 	uint32_t reset_value;
 }csx_mmio_access_list_t;
 
-csx_mmio_p csx_mmio_alloc(csx_p csx, csx_mmio_h h2mmio);
-void csx_mmio_access_list_reset(csx_mmio_p mmio, csx_mmio_access_list_p acl, size_t size, void* param);
-void csx_mmio_callback_atexit(csx_mmio_p mmio, callback_qlist_elem_p cble, callback_fn fn, void* param);
-void csx_mmio_callback_atreset(csx_mmio_p mmio, callback_qlist_elem_p cble, callback_fn fn, void* param);
-void csx_mmio_init(csx_mmio_p mmio);
-void csx_mmio_register_access(csx_mmio_p mmio, uint32_t ppa, armvm_mem_fn fn, void* param);
-void csx_mmio_register_access_list(csx_mmio_p mmio, uint32_t ppa_base, csx_mmio_access_list_p acl, void* param);
-void csx_mmio_trace_mem_access(csx_p csx, uint32_t ppa, size_t size, uint32_t* write, uint32_t read);
+csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio);
+void csx_mmio_access_list_reset(csx_mmio_ref mmio, csx_mmio_access_list_ref acl, const size_t size, void *const param);
+void csx_mmio_callback_atexit(csx_mmio_ref mmio, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
+void csx_mmio_callback_atreset(csx_mmio_ref mmio, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
+void csx_mmio_init(csx_mmio_ref mmio);
+void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param);
+void csx_mmio_register_access_list(csx_mmio_ref mmio, const uint32_t ppa_base, csx_mmio_access_list_ref acl, void *const param);
+void csx_mmio_trace_mem_access(csx_ref csx, const uint32_t ppa, const size_t size, uint32_t *const write, const uint32_t read);
 
 /* **** */
 
-typedef struct csx_mmio_trace_t* csx_mmio_trace_p;
-typedef struct csx_mmio_trace_t {
+typedef struct csx_mmio_trace_tag* csx_mmio_trace_ptr;
+typedef csx_mmio_trace_ptr const csx_mmio_trace_ref;
+
+typedef struct csx_mmio_trace_tag {
 	const char* function;
 	int line;
 }csx_mmio_trace_t;

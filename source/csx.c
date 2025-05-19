@@ -28,12 +28,12 @@
 
 /* **** */
 
-csx_p csx_alloc(void) {
+csx_ptr csx_alloc(void) {
 	if(_trace_alloc) {
 		LOG();
 	}
 
-	csx_p csx = calloc(1, sizeof(csx_t));
+	csx_ref csx = calloc(1, sizeof(csx_t));
 	ERR_NULL(csx);
 
 	/* **** */
@@ -55,13 +55,13 @@ csx_p csx_alloc(void) {
 	return(csx);
 }
 
-void csx_atexit(csx_h h2csx)
+void csx_atexit(csx_href h2csx)
 {
 	if(_trace_atexit) {
 		LOG(">>");
 	}
 
-	csx_p csx = *h2csx;
+	csx_ref csx = *h2csx;
 
 	callback_qlist_process(&csx->atexit_list);
 
@@ -78,19 +78,19 @@ void csx_atexit(csx_h h2csx)
 	}
 }
 
-void csx_callback_atexit(csx_p csx,
-	callback_qlist_elem_p cble, callback_fn fn, void* param)
+void csx_callback_atexit(csx_ref csx,
+	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
 {
 	callback_qlist_setup_and_register_callback(&csx->atexit_list, cble, fn, param);
 }
 
-void csx_callback_atreset(csx_p csx,
-	callback_qlist_elem_p cble, callback_fn fn, void* param)
+void csx_callback_atreset(csx_ref csx,
+	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
 {
 	callback_qlist_setup_and_register_callback(&csx->atreset_list, cble, fn, param);
 }
 
-csx_p csx_init(csx_p csx)
+csx_ptr csx_init(csx_ref csx)
 {
 	ERR_NULL(csx);
 
@@ -116,7 +116,7 @@ csx_p csx_init(csx_p csx)
 	return(csx);
 }
 
-void csx_reset(csx_p csx)
+void csx_reset(csx_ref csx)
 {
 	if(_trace_atreset) {
 		LOG();

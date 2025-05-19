@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct soc_omap_tc_t** soc_omap_tc_h;
-typedef struct soc_omap_tc_t* soc_omap_tc_p;
+typedef struct soc_omap_tc_tag** soc_omap_tc_hptr;
+typedef soc_omap_tc_hptr soc_omap_tc_href;
+
+typedef struct soc_omap_tc_tag* soc_omap_tc_ptr;
+typedef soc_omap_tc_ptr soc_omap_tc_ref;
 
 /* **** */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_tc_t* soc_omap_tc_p;
 
 /* **** */
 
-soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc);
-void soc_omap_tc_init(soc_omap_tc_p tc);
+soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_href h2tc);
+void soc_omap_tc_init(soc_omap_tc_ref tc);

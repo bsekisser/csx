@@ -23,8 +23,10 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_timer_unit_t* soc_omap_mpu_timer_unit_p;
-typedef struct soc_omap_mpu_timer_unit_t {
+typedef struct soc_omap_mpu_timer_unit_tag* soc_omap_mpu_timer_unit_ptr;
+typedef soc_omap_mpu_timer_unit_ptr const soc_omap_mpu_timer_unit_ref;
+
+typedef struct soc_omap_mpu_timer_unit_tag {
 		uint64_t cycle;
 
 		uint32_t cntl_data;
@@ -40,9 +42,9 @@ typedef struct soc_omap_mpu_timer_unit_t {
 		}cntl;
 }soc_omap_mpu_timer_unit_t;
 
-typedef struct soc_omap_mpu_timer_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_mpu_timer_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	soc_omap_mpu_timer_unit_t unit[3];
 
@@ -74,7 +76,7 @@ enum {
 
 /* **** */
 
-static void __mpu_timer_cntl_write(soc_omap_mpu_timer_unit_p sotu, uint32_t data)
+static void __mpu_timer_cntl_write(soc_omap_mpu_timer_unit_ref sotu, const uint32_t data)
 {
 	sotu->cntl.ar = BEXT(data, _MPU_CNTL_TIMER_AR);
 	sotu->cntl.clock_enable = BEXT(data, _MPU_CNTL_TIMER_CLOCK_ENABLE);
@@ -83,8 +85,8 @@ static void __mpu_timer_cntl_write(soc_omap_mpu_timer_unit_p sotu, uint32_t data
 	sotu->cntl.st = BEXT(data, _MPU_CNTL_TIMER_ST);
 }
 
-static soc_omap_mpu_timer_unit_p
-__mpu_timer_unit(soc_omap_mpu_timer_p sot, uint32_t ppa) {
+static soc_omap_mpu_timer_unit_ptr
+__mpu_timer_unit(soc_omap_mpu_timer_ref sot, const uint32_t ppa) {
 	unsigned tu = ppa - SOC_OMAP_MPU_TIMER1;
 	tu >>= 8;
 	tu &= 3;
@@ -92,30 +94,30 @@ __mpu_timer_unit(soc_omap_mpu_timer_p sot, uint32_t ppa) {
 	return(&sot->unit[tu]);
 }
 
-static int __soc_omap_mpu_timer_atexit(void* param)
+static int __soc_omap_mpu_timer_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_mpu_timer_h h2t = param;
-//	soc_omap_mpu_timer_p t = *h2t;
+//	soc_omap_mpu_timer_href h2t = param;
+//	soc_omap_mpu_timer_ref t = *h2t;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int __soc_omap_mpu_timer_atreset(void* param)
+static int __soc_omap_mpu_timer_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_mpu_timer_p t = param;
+	soc_omap_mpu_timer_ref t = param;
 
 	for(unsigned i = 0; i < 3; i++) {
-		soc_omap_mpu_timer_unit_p sotu = &t->unit[i];
+		soc_omap_mpu_timer_unit_ref sotu = &t->unit[i];
 
 		memset(sotu, 0, sizeof(soc_omap_mpu_timer_unit_t));
 //		sotu->cntl_data = 0;
@@ -127,9 +129,9 @@ static int __soc_omap_mpu_timer_atreset(void* param)
 	return(0);
 }
 
-static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_timer_unit_p sotu)
+static uint32_t __timer_update_count(soc_omap_mpu_timer_ref sot, soc_omap_mpu_timer_unit_ref sotu)
 {
-	const csx_p csx = sot->csx;
+	csx_ref csx = sot->csx;
 	const uint64_t csx_cycle = CYCLE;
 
 #if 0
@@ -162,7 +164,7 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 	}
 
 	if(delta_count < 0) {
-		unsigned cycles_remain = elapsed_cycles - sotu->count;
+		const unsigned cycles_remain = elapsed_cycles - sotu->count;
 		if(sotu->cntl.ar) {
 			sotu->count = sotu->load - cycles_remain;
 		} else {
@@ -177,21 +179,21 @@ static uint32_t __timer_update_count(soc_omap_mpu_timer_p sot, soc_omap_mpu_time
 
 /* **** */
 
-static uint32_t _soc_omap_mpu_timer_cntl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_mpu_timer_cntl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_mpu_timer_p sot = param;
-	const soc_omap_mpu_timer_unit_p sotu = __mpu_timer_unit(sot, ppa);
+	soc_omap_mpu_timer_ref sot = param;
+	soc_omap_mpu_timer_unit_ref sotu = __mpu_timer_unit(sot, ppa);
 
-	const csx_p csx = sot->csx;
+	csx_ref csx = sot->csx;
 
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
-		unsigned was_st = sotu->cntl.st;
+		const unsigned was_st = sotu->cntl.st;
 
 		__mpu_timer_cntl_write(sotu, data);
 
-		unsigned start = sotu->cntl.st && was_st ^ sotu->cntl.st;
+		const unsigned start = sotu->cntl.st && was_st ^ sotu->cntl.st;
 
 		sotu->cntl_data = data;
 
@@ -217,11 +219,11 @@ static uint32_t _soc_omap_mpu_timer_cntl(void* param, uint32_t ppa, size_t size,
 	return(data);
 }
 
-static uint32_t _soc_omap_mpu_timer_load(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_mpu_timer_load(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_mpu_timer_p sot = param;
-	const soc_omap_mpu_timer_unit_p sotu = __mpu_timer_unit(sot, ppa);
-	const csx_p csx = sot->csx;
+	soc_omap_mpu_timer_ref sot = param;
+	soc_omap_mpu_timer_unit_ref sotu = __mpu_timer_unit(sot, ppa);
+	csx_ref csx = sot->csx;
 
 	if(_trace_mmio_mpu_timer) {
 		LOG_START("cycle = 0x%016" PRIx64 ", %02zu:[0x%08x] << 0x%08x",
@@ -236,13 +238,13 @@ static uint32_t _soc_omap_mpu_timer_load(void* param, uint32_t ppa, size_t size,
 	return(*write);
 }
 
-static uint32_t _soc_omap_mpu_timer_read(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_mpu_timer_read(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_mpu_timer_p sot = param;
-	const soc_omap_mpu_timer_unit_p sotu = __mpu_timer_unit(sot, ppa);
-	const csx_p csx = sot->csx;
+	soc_omap_mpu_timer_ref sot = param;
+	soc_omap_mpu_timer_unit_ref sotu = __mpu_timer_unit(sot, ppa);
+	csx_ref csx = sot->csx;
 
-	uint32_t count = __timer_update_count(sot, sotu);
+	const uint32_t count = __timer_update_count(sot, sotu);
 
 	if(_trace_mmio_mpu_timer)
 		CSX_MMIO_TRACE_READ(csx, ppa, size, count);
@@ -255,7 +257,7 @@ static uint32_t _soc_omap_mpu_timer_read(void* param, uint32_t ppa, size_t size,
 #define _MPU_TIMER_ACLE(_i, _name, _fn) \
 	{ __MMIO_TRACE_FN(MPU_TIMER_(_i, _name), 0, MPU_TIMER_NAME(_i, _name), _fn) },
 
-soc_omap_mpu_timer_p soc_omap_mpu_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_timer_h h2t)
+soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_timer_href h2t)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -267,7 +269,7 @@ soc_omap_mpu_timer_p soc_omap_mpu_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_om
 
 	/* **** */
 
-	soc_omap_mpu_timer_p t = handle_calloc((void**)h2t, 1, sizeof(soc_omap_mpu_timer_t));
+	soc_omap_mpu_timer_ref t = handle_calloc((void**)h2t, 1, sizeof(soc_omap_mpu_timer_t));
 	ERR_NULL(t);
 
 	t->csx = csx;
@@ -281,7 +283,7 @@ soc_omap_mpu_timer_p soc_omap_mpu_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_om
 	return(t);
 }
 
-void soc_omap_mpu_timer_init(soc_omap_mpu_timer_p t)
+void soc_omap_mpu_timer_init(soc_omap_mpu_timer_ref t)
 {
 	ERR_NULL(t);
 
@@ -289,7 +291,7 @@ void soc_omap_mpu_timer_init(soc_omap_mpu_timer_p t)
 		LOG();
 	}
 
-	csx_mmio_p mmio = t->mmio;
+	csx_mmio_ref mmio = t->mmio;
 
 	/* **** */
 

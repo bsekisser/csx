@@ -21,9 +21,9 @@
 
 /* **** */
 
-typedef struct soc_omap_gp_timer_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_gp_timer_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	uint32_t tclr;
 	uint32_t tiocp_cfg;
@@ -54,14 +54,14 @@ enum {
 
 /* **** */
 
-static int __soc_omap_gp_timer_atexit(void* param)
+static int __soc_omap_gp_timer_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_gp_timer_h h2gpt = param;
-//	soc_omap_gp_timer_p gpt = *h2gpt;
+//	soc_omap_gp_timer_href h2gpt = param;
+//	soc_omap_gp_timer_ref gpt = *h2gpt;
 
 	handle_free(param);
 
@@ -77,13 +77,13 @@ static int __soc_omap_gp_timer_atexit(void* param)
  */
 
 #define SOC_OMAP_GP_TIMER_VAR_FN(_name) \
-	static uint32_t _soc_omap_gp_timer_ ## _name(void* param, uint32_t ppa, size_t size, uint32_t* write) \
+	static uint32_t _soc_omap_gp_timer_ ## _name(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write) \
 	{ \
 		if(_check_pedantic_mmio_size) \
 			assert(sizeof(uint32_t) == size); \
 	\
-		const soc_omap_gp_timer_p gpt = param; \
-		const csx_p csx = gpt->csx; \
+		soc_omap_gp_timer_ref gpt = param; \
+		csx_ref csx = gpt->csx; \
 	\
 		csx_data_target_t target = { \
 			.base = &gpt->_name, \
@@ -122,7 +122,7 @@ static csx_mmio_access_list_t __soc_omap_gp_timer_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_gp_timer_p soc_omap_gp_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_gp_timer_h h2gpt)
+soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_gp_timer_href h2gpt)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -134,7 +134,7 @@ soc_omap_gp_timer_p soc_omap_gp_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 
 	/* **** */
 
-	soc_omap_gp_timer_p gpt = handle_calloc((void**)h2gpt, 1, sizeof(soc_omap_gp_timer_t));
+	soc_omap_gp_timer_ref gpt = handle_calloc((void**)h2gpt, 1, sizeof(soc_omap_gp_timer_t));
 	ERR_NULL(gpt);
 
 	gpt->csx = csx;
@@ -147,17 +147,17 @@ soc_omap_gp_timer_p soc_omap_gp_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 	return(gpt);
 }
 
-void soc_omap_gp_timer_init(soc_omap_gp_timer_p gpt)
+void soc_omap_gp_timer_init(soc_omap_gp_timer_ref gpt)
 {
 	ERR_NULL(gpt);
-	
+
 	if(_trace_init) {
 		LOG();
 	}
 
 	/* **** */
 
-	csx_mmio_p mmio = gpt->mmio;
+	csx_mmio_ref mmio = gpt->mmio;
 
 	for(unsigned i = 0; i < 8; i++)
 		csx_mmio_register_access_list(mmio, SOC_OMAP_GP_TIMER_BASE(i),

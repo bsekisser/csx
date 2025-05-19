@@ -16,14 +16,14 @@
 
 /* **** */
 
-csx_statistics_p statistics;
+csx_statistics_ptr statistics;
 
 #define STRINGIFY(_x) #_x
 
 /* **** */
 
 UNUSED_FN
-static void _stat_profile_assert_zero(csx_profile_stat_p s, const char* name) {
+static void _stat_profile_assert_zero(csx_profile_stat_ref s, const char* name) {
 	int fail = (0 != s->count);
 	fail |= (0 != s->elapsed);
 
@@ -33,14 +33,14 @@ static void _stat_profile_assert_zero(csx_profile_stat_p s, const char* name) {
 }
 
 UNUSED_FN
-static void _stat_profile_clear(csx_profile_stat_p s) {
+static void _stat_profile_clear(csx_profile_stat_ref s) {
 	s->count = 0;
 	s->elapsed = 0;
 }
 
 UNUSED_FN
-static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
-	uint32_t count = s->count ?: 1;
+static void _stat_profile_log(csx_profile_stat_ref s, const char* name) {
+	const uint32_t count = s->count ?: 1;
 
 	LOG_ERR("count = 0x%08x, elapsed = 0x%016" PRIx64 " dtime/count = 0x%016" PRIx64 " -- %s",
 		s->count, s->elapsed, (s->elapsed / count), name);
@@ -61,7 +61,7 @@ static void _stat_profile_log(csx_profile_stat_p s, const char* name) {
 
 /* **** */
 
-static void _stat_counter_log(uint32_t c, const char* name) {
+static void _stat_counter_log(const uint32_t c, const char* name) {
 	LOG_ERR("0x%08x -- %s", c, name);
 }
 
@@ -94,13 +94,13 @@ static void _stat_counter_log(uint32_t c, const char* name) {
 
 /* **** */
 
-static int _csx_statistics_atexit(void* param) {
+static int _csx_statistics_atexit(void *const param) {
 	if(_trace_atexit) {
 		LOG(">>");
 	}
 
-//	csx_statistics_h h2c = param;
-//	csx_statistics_p c = *h2c;
+//	csx_statistics_href h2c = param;
+//	csx_statistics_ref c = *h2c;
 
 	if(_csx_statistical_counters) {
 		COUNTER_LIST(LOG);
@@ -127,12 +127,12 @@ static int _csx_statistics_atexit(void* param) {
 	return(0);
 }
 
-static int _csx_statistics_atreset(void* param) {
+static int _csx_statistics_atreset(void *const param) {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-//	csx_statistics_p c = param;
+//	csx_statistics_ref c = param;
 
 	COUNTER_LIST(ZERO);
 	PROFILE_LIST(ZERO);
@@ -143,7 +143,7 @@ static int _csx_statistics_atreset(void* param) {
 
 /* **** */
 
-csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s)
+csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 {
 	statistics = handle_calloc((void**)h2s, 1, sizeof(csx_statistics_t));
 	ERR_NULL(statistics);
@@ -158,7 +158,7 @@ csx_statistics_p csx_statistics_alloc(csx_p csx, csx_statistics_h h2s)
 	return(statistics);
 }
 
-void csx_statistics_init(csx_statistics_p s)
+void csx_statistics_init(csx_statistics_ref s)
 {
 	UNUSED(s);
 }

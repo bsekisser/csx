@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	const uint64_t dtime_second = dtime_calibrate();
 	const double dtime_second_ratio = 1.0 / dtime_second;
 
-	csx_p csx = csx_init(csx_alloc());
+	csx_ref csx = csx_init(csx_alloc());
 
 	csx_reset(csx);
 

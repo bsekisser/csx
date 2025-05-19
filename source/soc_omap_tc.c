@@ -22,9 +22,9 @@
 
 /* **** */
 
-typedef struct soc_omap_tc_t {
-	csx_p			csx;
-	csx_mmio_p		mmio;
+typedef struct soc_omap_tc_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	struct {
 		uint32_t sdram_config;
@@ -69,27 +69,27 @@ enum {
 
 /* **** */
 
-static int _soc_omap_tc_atexit(void* param)
+static int _soc_omap_tc_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_tc_h h2tc = param;
-//	soc_omap_tc_p tc = *h2tc;
+//	soc_omap_tc_href h2tc = param;
+//	soc_omap_tc_ref tc = *h2tc;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int _soc_omap_tc_atreset(void* param)
+static int _soc_omap_tc_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	const soc_omap_tc_p tc = param;
+	soc_omap_tc_ref tc = param;
 
 	tc->emiff.sdram_config = 0x00618800;
 
@@ -98,13 +98,13 @@ static int _soc_omap_tc_atreset(void* param)
 
 /* **** */
 
-static uint32_t soc_omap_tc_emiff_sdram_config(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_tc_emiff_sdram_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_tc_p tc = param;
-	const csx_p csx = tc->csx;
+	soc_omap_tc_ref tc = param;
+	csx_ref csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 //	const uint8_t offset = ppa & 0xff;
@@ -130,13 +130,13 @@ static uint32_t soc_omap_tc_emiff_sdram_config(void* param, uint32_t ppa, size_t
 	return(0);
 }
 
-static uint32_t soc_omap_tc_emifs_adv_cs_config(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_tc_emifs_adv_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_tc_p tc = param;
-	const csx_p csx = tc->csx;
+	soc_omap_tc_ref tc = param;
+	csx_ref csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 	const uint8_t offset = ppa & 0xff;
@@ -158,13 +158,13 @@ static uint32_t soc_omap_tc_emifs_adv_cs_config(void* param, uint32_t ppa, size_
 	return(0);
 }
 
-static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_tc_p tc = param;
-	const csx_p csx = tc->csx;
+	soc_omap_tc_ref tc = param;
+	csx_ref csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 	const uint8_t offset = ppa & 0xff;
@@ -206,13 +206,13 @@ static uint32_t soc_omap_tc_emifs_cs_config(void* param, uint32_t ppa, size_t si
 	return(0);
 }
 
-static uint32_t soc_omap_tc_ocp_t1_prio(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t soc_omap_tc_ocp_t1_prio(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_tc_p tc = param;
-	const csx_p csx = tc->csx;
+	soc_omap_tc_ref tc = param;
+	csx_ref csx = tc->csx;
 
 	uint32_t data = write ? *write : 0;
 //	const uint8_t offset = ppa & 0xff;
@@ -241,7 +241,7 @@ static csx_mmio_access_list_t _soc_omap_tc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
+soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_href h2tc)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -253,7 +253,7 @@ soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
 
 	/* **** */
 
-	soc_omap_tc_p tc = handle_calloc((void**)h2tc, 1, sizeof(soc_omap_tc_t));
+	soc_omap_tc_ref tc = handle_calloc((void**)h2tc, 1, sizeof(soc_omap_tc_t));
 	ERR_NULL(tc);
 
 	tc->csx = csx;
@@ -269,7 +269,7 @@ soc_omap_tc_p soc_omap_tc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_tc_h h2tc)
 	return(tc);
 }
 
-void soc_omap_tc_init(soc_omap_tc_p tc)
+void soc_omap_tc_init(soc_omap_tc_ref tc)
 {
 	ERR_NULL(tc);
 

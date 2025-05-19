@@ -41,14 +41,14 @@
 
 /* **** */
 
-static int _csx_soc_atexit(void* param)
+static int _csx_soc_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG(">>");
 	}
 
-	csx_soc_h h2soc = param;
-	csx_soc_p soc = *h2soc;
+	csx_soc_href h2soc = param;
+	csx_soc_ref soc = *h2soc;
 
 	callback_qlist_process(&soc->atexit.list);
 
@@ -65,7 +65,7 @@ static int _csx_soc_atexit(void* param)
 	return(0);
 }
 
-static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, uint32_t end)
+static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t start, const uint32_t end)
 {
 	if(start > cdp->base)
 		return(0);
@@ -75,7 +75,7 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, u
 
 	LOG("base: 0x%08x, start: 0x%08x, end: 0x%08x", cdp->base, start, end);
 
-	void* dst_start = dst + (cdp->base - start);
+	const void* dst_start = dst + (cdp->base - start);
 	const void* src = cdp->data;
 
 	const void* dst_limit = dst + (end - start);
@@ -98,9 +98,9 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_p cdp, uint32_t start, u
 	return(1);
 }
 
-static void __csx_soc_init_cdp(csx_p csx, csx_data_p cdp)
+static void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
 {
-	csx_soc_p soc = csx->soc;
+	csx_soc_ref soc = csx->soc;
 
 	__csx_soc_init__cdp_copy(csx->sdram, cdp,
 		CSX_SDRAM_START, CSX_SDRAM_END);
@@ -112,7 +112,7 @@ static void __csx_soc_init_cdp(csx_p csx, csx_data_p cdp)
 		SOC_BROM_START, SOC_BROM_END);
 }
 
-static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* file_name)
+static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_name)
 {
 	int fd;
 
@@ -126,7 +126,7 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	struct stat sb;
 	ERR(fstat(fd, &sb));
 
-	void *data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+	void *const data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	ERR_NULL(data);
 
 	cdp->data = data;
@@ -140,14 +140,14 @@ static void _csx_soc_init_load_rgn_file(csx_p csx, csx_data_p cdp, const char* f
 	close(fd);
 }
 
-static int _csx_soc_atreset(void* param)
+static int _csx_soc_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	csx_soc_p soc = param;
-//	csx_p csx = soc->csx;
+	csx_soc_ref soc = param;
+//	csx_ref csx = soc->csx;
 
 	callback_qlist_process(&soc->atreset.list);
 
@@ -156,7 +156,7 @@ static int _csx_soc_atreset(void* param)
 
 /* **** */
 
-csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
+csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 {
 	ERR_NULL(csx);
 	ERR_NULL(h2soc);
@@ -167,7 +167,7 @@ csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
 
 	/* **** */
 
-	csx_soc_p soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
+	csx_soc_ref soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
 	ERR_NULL(soc);
 
 	soc->csx = csx;
@@ -185,19 +185,19 @@ csx_soc_p csx_soc_alloc(csx_p csx, csx_soc_h h2soc)
 	return(soc);
 }
 
-void csx_soc_callback_atexit(csx_soc_p soc,
-	callback_qlist_elem_p cble, callback_fn fn, void* param)
+void csx_soc_callback_atexit(csx_soc_ptr soc,
+	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
 {
 	callback_qlist_setup_and_register_callback(&soc->atexit.list, cble, fn, param);
 }
 
-void csx_soc_callback_atreset(csx_soc_p soc,
-	callback_qlist_elem_p cble, callback_fn fn, void* param)
+void csx_soc_callback_atreset(csx_soc_ptr soc,
+	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
 {
 	callback_qlist_setup_and_register_callback(&soc->atreset.list, cble, fn, param);
 }
 
-void csx_soc_init(csx_soc_p soc)
+void csx_soc_init(csx_soc_ref soc)
 {
 	ERR_NULL(soc);
 
@@ -207,7 +207,7 @@ void csx_soc_init(csx_soc_p soc)
 
 	/* **** */
 
-	csx_p csx = soc->csx;
+	csx_ref csx = soc->csx;
 
 	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
 	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
@@ -215,7 +215,7 @@ void csx_soc_init(csx_soc_p soc)
 	/* **** */
 }
 
-static int x038201000610(csx_p csx) {
+static int x038201000610(csx_ref csx) {
 	switch(PC) {
 		case 0x10020074:
 		case 0x100200f0:
@@ -240,7 +240,7 @@ static int x038201000610(csx_p csx) {
 	return(0);
 }
 
-int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
+int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 {
 	pARMVM_CORE->config.trace = core_trace;
 
@@ -267,7 +267,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 
 	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
-	csx_data_p cdp = loader_firmware ? &csx->firmware : &csx->loader;
+	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
 
 	csx_soc_brom_init(csx->soc, cdp);
 
@@ -318,7 +318,7 @@ int csx_soc_main(csx_p csx, int core_trace, int loader_firmware)
 	return(err);
 }
 
-void csx_soc_reset(csx_p csx)
+void csx_soc_reset(csx_ref csx)
 {
 	if(_trace_atreset) {
 		LOG();

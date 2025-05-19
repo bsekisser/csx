@@ -2,10 +2,14 @@
 
 /* **** */
 
-typedef struct csx_t* csx_p;
-typedef struct csx_t** csx_h;
+typedef struct csx_tag* csx_ptr;
+typedef csx_ptr const csx_ref;
 
-typedef struct csx_data_t* csx_data_p;
+typedef struct csx_tag** csx_hptr;
+typedef csx_hptr const csx_href;
+
+typedef struct csx_data_tag* csx_data_ptr;
+typedef csx_data_ptr const csx_data_ref;
 
 /* **** */
 
@@ -44,24 +48,25 @@ typedef struct csx_data_t* csx_data_p;
 
 /* **** */
 
-typedef struct csx_data_t {
+typedef struct csx_data_tag {
 		uint32_t					base;
 		void*						data;
 		size_t						size;
 }csx_data_t;
 
-typedef struct csx_t {
+typedef struct csx_tag {
 	armvm_ptr						armvm;
 	armvm_trace_t					armvm_trace;
 
-	csx_cache_p						cache;
-	csx_mmio_p						mmio;
-	csx_nnd_p						nnd;
-	csx_soc_p						soc;
-	csx_statistics_p				statistics;
+	csx_cache_ptr					cache;
+	csx_mmio_ptr					mmio;
+	csx_nnd_ptr						nnd;
+	csx_soc_ptr						soc;
+	csx_statistics_ptr				statistics;
 
 	csx_state_t						state;
 
+	csx_data_t						x0x10000000;
 	csx_data_t						loader;
 	csx_data_t						firmware;
 
@@ -75,12 +80,12 @@ typedef struct csx_t {
 
 #include "config.h"
 
-csx_p csx_alloc(void);
-void csx_atexit(csx_h h2csx);
-void csx_callback_atexit(csx_p csx, callback_qlist_elem_p cble, callback_fn fn, void* param);
-void csx_callback_atreset(csx_p csx, callback_qlist_elem_p cble, callback_fn fn, void* param);
-csx_p csx_init(csx_p csx);
-void csx_reset(csx_p csx);
+csx_ptr csx_alloc(void);
+void csx_atexit(csx_href h2csx);
+void csx_callback_atexit(csx_ref csx, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
+void csx_callback_atreset(csx_ref csx, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
+csx_ptr csx_init(csx_ref csx);
+void csx_reset(csx_ref csx);
 
 /* **** */
 

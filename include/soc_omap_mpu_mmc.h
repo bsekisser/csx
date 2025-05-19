@@ -1,7 +1,10 @@
 #pragma once
 
-typedef struct soc_omap_mpu_mmc_t** soc_omap_mpu_mmc_h;
-typedef struct soc_omap_mpu_mmc_t* soc_omap_mpu_mmc_p;
+typedef struct soc_omap_mpu_mmc_tag** soc_omap_mpu_mmc_hptr;
+typedef soc_omap_mpu_mmc_hptr const soc_omap_mpu_mmc_href;
+
+typedef struct soc_omap_mpu_mmc_tag* soc_omap_mpu_mmc_ptr;
+typedef soc_omap_mpu_mmc_ptr const soc_omap_mpu_mmc_ref;
 
 /* **** */
 
@@ -10,5 +13,5 @@ typedef struct soc_omap_mpu_mmc_t* soc_omap_mpu_mmc_p;
 
 /* **** */
 
-soc_omap_mpu_mmc_p soc_omap_mpu_mmc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_mmc_h h2mpu_mmc);
-void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_p mmc);
+soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_mmc_href h2mmc);
+void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_ref mmc);

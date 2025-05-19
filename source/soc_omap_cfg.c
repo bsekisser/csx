@@ -27,9 +27,9 @@
 	#define PEDANTIC(_x) _x
 #endif
 
-typedef struct soc_omap_cfg_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_cfg_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	uint8_t data[0x0200];
 	uint8_t reset;
@@ -85,7 +85,7 @@ enum {
 
 /* **** */
 
-static int __soc_omap_cfg_atexit(void* param)
+static int __soc_omap_cfg_atexit(void *const param)
 {
 	ERR_NULL(param);
 
@@ -101,7 +101,7 @@ static int __soc_omap_cfg_atexit(void* param)
 static csx_mmio_access_list_t _soc_omap_cfg_acl_0[];
 static csx_mmio_access_list_t _soc_omap_cfg_acl_1[];
 
-static int __soc_omap_cfg_atreset(void* param)
+static int __soc_omap_cfg_atreset(void *const param)
 {
 	ERR_NULL(param);
 
@@ -109,7 +109,7 @@ static int __soc_omap_cfg_atreset(void* param)
 		LOG();
 	}
 
-	const soc_omap_cfg_p cfg = param;
+	soc_omap_cfg_ref cfg = param;
 
 	if(!cfg->reset) {
 		ERR_NULL(cfg->mmio);
@@ -123,14 +123,14 @@ static int __soc_omap_cfg_atreset(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
 	PEDANTIC(ERR_NULL(param));
-	const soc_omap_cfg_p cfg = param;
-	const csx_p csx = cfg->csx;
+	soc_omap_cfg_ref cfg = param;
+	csx_ref csx = cfg->csx;
 	PEDANTIC(ERR_NULL(csx));
 
 	const uint16_t offset = ppa & 0x1ff;
@@ -168,14 +168,14 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void* param, uint32_t ppa, size_t 
 	return(data);
 }
 
-static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_cfg_reset_ctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
 	PEDANTIC(ERR_NULL(param));
-	const soc_omap_cfg_p cfg = param;
-	const csx_p csx = cfg->csx;
+	soc_omap_cfg_ref cfg = param;
+	csx_ref csx = cfg->csx;
 	PEDANTIC(ERR_NULL(csx));
 
 	const uint16_t offset = ppa & 0x1ff;
@@ -200,14 +200,14 @@ static uint32_t _soc_omap_cfg_reset_ctl(void* param, uint32_t ppa, size_t size, 
 	return(data);
 }
 
-static uint32_t _soc_omap_cfg_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_cfg_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
 	PEDANTIC(ERR_NULL(param));
-	const soc_omap_cfg_p cfg = param;
-	const csx_p csx = cfg->csx;
+	soc_omap_cfg_ref cfg = param;
+	csx_ref csx = cfg->csx;
 	PEDANTIC(ERR_NULL(csx));
 
 	switch(ppa) {
@@ -238,7 +238,7 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[] = {
 	{ .ppa = ~0U, }
 };
 
-soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2cfg)
+soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg_href h2cfg)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -250,7 +250,7 @@ soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2c
 
 	/* **** */
 
-	soc_omap_cfg_p cfg = handle_calloc((void**)h2cfg, 1, sizeof(soc_omap_cfg_t));
+	soc_omap_cfg_ref cfg = handle_calloc((void**)h2cfg, 1, sizeof(soc_omap_cfg_t));
 	ERR_NULL(cfg);
 
 	cfg->csx = csx;
@@ -266,7 +266,7 @@ soc_omap_cfg_p soc_omap_cfg_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_cfg_h h2c
 	return(cfg);
 }
 
-void soc_omap_cfg_init(soc_omap_cfg_p cfg)
+void soc_omap_cfg_init(soc_omap_cfg_ref cfg)
 {
 	ERR_NULL(cfg);
 
@@ -274,7 +274,7 @@ void soc_omap_cfg_init(soc_omap_cfg_p cfg)
 		LOG();
 	}
 
-	csx_mmio_p mmio = cfg->mmio;
+	csx_mmio_ref mmio = cfg->mmio;
 	ERR_NULL(mmio);
 
 	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_0, (void*)cfg);

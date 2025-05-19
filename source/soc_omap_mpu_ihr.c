@@ -23,9 +23,9 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_ihr_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_mpu_ihr_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	struct {
 		struct {
@@ -77,7 +77,7 @@ enum {
 	_L2_STATUS = 0xa0,
 	_L2_OCP_CFG = 0xa4,
 	_L2_INTH_REV = 0xa8,
-	
+
 };
 
 #define ILRx(_x) ((_ILR0 << 2) + ((_x) << 2))
@@ -100,7 +100,7 @@ enum {
 	_MMIO(_CONTROL, l1_control, l1.control) \
 	_MMIO(_ISR, l1_isr, l1.isr) \
 	_MMIO(_L1_ENHANCED_CNTL, l1_enhanced_cntl, l1.enhanced_cntl)
-	
+
 #define SOC_OMAP_MPU_IHR_L2_ACL0(_MMIO) \
 	_MMIO(_SIR_FIQ, l2_sir_fiq, l2.sir.fiq) \
 	_MMIO(_SIR_IRQ, l2_sir_irq, l2.sir.irq) \
@@ -115,28 +115,28 @@ enum {
 
 /* **** */
 
-static int __soc_omap_mpu_ihr_atexit(void* param)
+static int __soc_omap_mpu_ihr_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_mpu_ihr_h h2ihr = param;
-//	soc_omap_mpu_ihr_p ihr = *h2ihr;
-	
+//	soc_omap_mpu_ihr_href h2ihr = param;
+//	soc_omap_mpu_ihr_ref ihr = *h2ihr;
+
 	handle_free(param);
-	
+
 	return(0);
 }
 
-static int __soc_omap_mpu_ihr_atreset(void* param)
+static int __soc_omap_mpu_ihr_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_mpu_ihr_p ihr = param;
-	
+	soc_omap_mpu_ihr_ref ihr = param;
+
 	ihr->l1.mir = 0xffffffff;
 	ihr->l2.mir[0] = 0xffffffff;
 	ihr->l2.mir[1] = 0xffffffff;
@@ -150,13 +150,13 @@ static int __soc_omap_mpu_ihr_atreset(void* param)
 /* **** */
 
 #define SOC_OMAP_MPU_IHR_MEM_ACCESS_VAR(_enum, _name, _var) \
-	UNUSED_FN static uint32_t _soc_omap_mpu_ihr_ ## _name(void* param, uint32_t ppa, size_t size, uint32_t* write) \
+	UNUSED_FN static uint32_t _soc_omap_mpu_ihr_ ## _name(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write) \
 	{ \
 		if(_check_pedantic_mmio_size) \
 			assert(sizeof(uint32_t) == size); \
 	\
-		soc_omap_mpu_ihr_p ihr = param; \
-		csx_p csx = ihr->csx; \
+		soc_omap_mpu_ihr_ref ihr = param; \
+		csx_ref csx = ihr->csx; \
 	\
 		csx_data_target_t target = { \
 			.base = &ihr->_var, \
@@ -195,7 +195,7 @@ static csx_mmio_access_list_t __soc_omap_mpu_ihr_l2_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_mpu_ihr_p soc_omap_mpu_ihr_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_ihr_h h2ihr)
+soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_ihr_href h2ihr)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -207,7 +207,7 @@ soc_omap_mpu_ihr_p soc_omap_mpu_ihr_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_m
 
 	/* **** */
 
-	soc_omap_mpu_ihr_p ihr = handle_calloc((void**)h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
+	soc_omap_mpu_ihr_ref ihr = handle_calloc((void**)h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
 	ERR_NULL(ihr);
 
 	ihr->csx = csx;
@@ -219,11 +219,11 @@ soc_omap_mpu_ihr_p soc_omap_mpu_ihr_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_m
 	csx_mmio_callback_atreset(mmio, &ihr->atreset, __soc_omap_mpu_ihr_atreset, ihr);
 
 	/* **** */
-	
+
 	return(ihr);
 }
 
-void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_p ihr)
+void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_ref ihr)
 {
 	ERR_NULL(ihr);
 
@@ -233,12 +233,12 @@ void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_p ihr)
 
 	/* **** */
 
-	csx_mmio_p mmio = ihr->mmio;
+	csx_mmio_ref mmio = ihr->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L1, __soc_omap_mpu_ihr_l1_acl, ihr);
 
 	for(unsigned i = 0; i < 32; i++) {
-		uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(1, 0, i);
+		const uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(1, 0, i);
 		csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);
 	}
 
@@ -255,7 +255,7 @@ void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_p ihr)
 			__soc_omap_mpu_ihr_l2x_acl, ihr);
 
 		for(unsigned k = 0; k < 32; k++) {
-			uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(2, j, k);
+			const uint32_t ppa = SOC_OMAP_MPU_IHR_Lx_BANKx_ILRx(2, j, k);
 
 			csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);
 		}

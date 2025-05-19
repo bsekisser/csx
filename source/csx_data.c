@@ -15,7 +15,7 @@
 
 /* **** */
 
-void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, unsigned set)
+void csx_data_bit_bmas(void *const p2dst, csx_data_bit_ref sdbp, const unsigned set)
 {
 	unsigned value = csx_data_offset_read(p2dst, sdbp->offset, sdbp->size);
 	BMAS(value, sdbp->bit, set);
@@ -23,7 +23,7 @@ void csx_data_bit_bmas(void* p2dst, csx_data_bit_p sdbp, unsigned set)
 	csx_data_offset_write(p2dst, sdbp->offset, sdbp->size, value);
 }
 
-unsigned csx_data_bit_read(void* p2src, csx_data_bit_p sdbp)
+unsigned csx_data_bit_read(void *const p2src, csx_data_bit_ref sdbp)
 {
 	const unsigned value = csx_data_offset_read(p2src, sdbp->offset, sdbp->size);
 

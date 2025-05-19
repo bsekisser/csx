@@ -2,8 +2,11 @@
 
 /* **** */
 
-typedef struct soc_omap_os_timer_t** soc_omap_os_timer_h;
-typedef struct soc_omap_os_timer_t* soc_omap_os_timer_p;
+typedef struct soc_omap_os_timer_tag** soc_omap_os_timer_hptr;
+typedef soc_omap_os_timer_hptr const soc_omap_os_timer_href;
+
+typedef struct soc_omap_os_timer_tag* soc_omap_os_timer_ptr;
+typedef soc_omap_os_timer_ptr const soc_omap_os_timer_ref;
 
 /* **** */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_os_timer_t* soc_omap_os_timer_p;
 
 /* **** */
 
-soc_omap_os_timer_p soc_omap_os_timer_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_os_timer_h h2ost);
-void soc_omap_os_timer_init(soc_omap_os_timer_p ost);
+soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost);
+void soc_omap_os_timer_init(soc_omap_os_timer_ref ost);

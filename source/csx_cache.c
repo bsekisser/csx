@@ -2,7 +2,7 @@
 
 /* **** */
 
-typedef struct csx_cache_t {
+typedef struct csx_cache_tag {
 	// empty
 }csx_cache_t;
 
@@ -43,9 +43,9 @@ typedef struct csx_cache_t {
 
 /* **** */
 
-static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
+static uint32_t _csx_cache_cp15_0_7_5_0_access(void *const param, uint32_t *const write)
 {
-	const csx_p csx = param;
+	csx_ref csx = param;
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
@@ -57,9 +57,9 @@ static uint32_t _csx_cache_cp15_0_7_5_0_access(void* param, uint32_t* write)
 	return(0);
 }
 
-static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
+static uint32_t _csx_cache_cp15_0_7_6_0_access(void *const param, uint32_t *const write)
 {
-	const csx_p csx = param;
+	csx_ref csx = param;
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
@@ -72,9 +72,9 @@ static uint32_t _csx_cache_cp15_0_7_6_0_access(void* param, uint32_t* write)
 }
 
 
-static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
+static uint32_t _csx_cache_cp15_0_7_7_0_access(void *const param, uint32_t *const write)
 {
-	const csx_p csx = param;
+	csx_ref csx = param;
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
@@ -86,9 +86,9 @@ static uint32_t _csx_cache_cp15_0_7_7_0_access(void* param, uint32_t* write)
 	return(0);
 }
 
-static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
+static uint32_t _csx_cache_cp15_0_7_10_3_access(void *const param, uint32_t *const write)
 {
-//	const csx_p csx = param;
+//	csx_ref csx = param;
 
 	uint32_t data = write ? *write : 0;
 
@@ -103,9 +103,9 @@ static uint32_t _csx_cache_cp15_0_7_10_3_access(void* param, uint32_t* write)
 	UNUSED(param);
 }
 
-static uint32_t _csx_cache_cp15_0_7_10_4_access(void* param, uint32_t* write)
+static uint32_t _csx_cache_cp15_0_7_10_4_access(void *const param, uint32_t *const write)
 {
-	const csx_p csx = param;
+	csx_ref csx = param;
 
 	if(write) {
 		IF_USER_MODE(armvm_core_exception_undefined_instruction(csx->armvm->core));
@@ -119,7 +119,7 @@ static uint32_t _csx_cache_cp15_0_7_10_4_access(void* param, uint32_t* write)
 
 /* **** */
 
-csx_cache_p csx_cache_alloc(csx_p csx, csx_cache_h h2cache)
+csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache)
 {
 	ERR_NULL(csx);
 	ERR_NULL(h2cache);
@@ -137,7 +137,7 @@ csx_cache_p csx_cache_alloc(csx_p csx, csx_cache_h h2cache)
 	return((void*)csx);
 }
 
-void csx_cache_init(csx_cache_p cache)
+void csx_cache_init(csx_cache_ref cache)
 {
 	ERR_NULL(cache);
 
@@ -145,7 +145,7 @@ void csx_cache_init(csx_cache_p cache)
 		LOG();
 	}
 
-	const csx_p csx = (void*)cache;
+	csx_ref csx = (void*)cache;
 	armvm_coprocessor_ref cp = csx->armvm->coprocessor;
 
 	armvm_coprocessor_register_callback(cp, cp15(0, 7, 5, 0),

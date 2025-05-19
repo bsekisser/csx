@@ -2,8 +2,11 @@
 
 /* **** forward declarations */
 
-typedef struct soc_omap_watchdog_t** soc_omap_watchdog_h;
-typedef struct soc_omap_watchdog_t* soc_omap_watchdog_p;
+typedef struct soc_omap_watchdog_tag** soc_omap_watchdog_hptr;
+typedef soc_omap_watchdog_hptr const soc_omap_watchdog_href;
+
+typedef struct soc_omap_watchdog_tag* soc_omap_watchdog_ptr;
+typedef soc_omap_watchdog_ptr const soc_omap_watchdog_ref;
 
 /* **** csx includes */
 
@@ -16,6 +19,6 @@ typedef struct soc_omap_watchdog_t* soc_omap_watchdog_p;
 
 /* **** */
 
-soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
-	csx_mmio_p mmio, soc_omap_watchdog_h h2sow);
-void soc_omap_watchdog_init(soc_omap_watchdog_p sow);
+soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
+	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow);
+void soc_omap_watchdog_init(soc_omap_watchdog_ref sow);

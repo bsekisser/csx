@@ -22,10 +22,10 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_mmc_t {
-	csx_p csx;
-	csx_mmio_p mmio;
-	
+typedef struct soc_omap_mpu_mmc_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
+
 	uint8_t data[0x100];
 
 	callback_qlist_elem_t atexit;
@@ -33,14 +33,14 @@ typedef struct soc_omap_mpu_mmc_t {
 
 /* **** */
 
-static int __soc_omap_mpu_mmc_atexit(void* param)
+static int __soc_omap_mpu_mmc_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_mpu_mmc_h h2mmc = param;
-//	soc_omap_mpu_mmc_p mmc = *h2mmc;
+//	soc_omap_mpu_mmc_href h2mmc = param;
+//	soc_omap_mpu_mmc_ref mmc = *h2mmc;
 
 	handle_free(param);
 
@@ -49,18 +49,18 @@ static int __soc_omap_mpu_mmc_atexit(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_mpu_mmc_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_mpu_mmc_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
 
-	const soc_omap_mpu_mmc_p mmc = param;
-	const csx_p csx = mmc->csx;
+	soc_omap_mpu_mmc_ref mmc = param;
+	csx_ref csx = mmc->csx;
 
 	uint32_t data = csx_data_offset_mem_access(mmc->data, ppa, size, write);
-	
+
 	CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
-	
+
 	return(data);
 }
 
@@ -76,7 +76,7 @@ static csx_mmio_access_list_t __soc_omap_mpu_mmc_acl[] = {
 
 /* **** */
 
-soc_omap_mpu_mmc_p soc_omap_mpu_mmc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_mmc_h h2mmc)
+soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_mmc_href h2mmc)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -88,7 +88,7 @@ soc_omap_mpu_mmc_p soc_omap_mpu_mmc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_m
 
 	/* **** */
 
-	soc_omap_mpu_mmc_p mmc = handle_calloc((void**)h2mmc, 1, sizeof(soc_omap_mpu_mmc_t));
+	soc_omap_mpu_mmc_ref mmc = handle_calloc((void**)h2mmc, 1, sizeof(soc_omap_mpu_mmc_t));
 	ERR_NULL(mmc);
 
 	mmc->csx = csx;
@@ -104,7 +104,7 @@ soc_omap_mpu_mmc_p soc_omap_mpu_mmc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_m
 }
 
 
-void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_p mmc)
+void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_ref mmc)
 {
 	ERR_NULL(mmc);
 

@@ -2,8 +2,11 @@
 
 /* **** forward declarations/definitions */
 
-typedef struct soc_omap_usb_t** soc_omap_usb_h;
-typedef struct soc_omap_usb_t* soc_omap_usb_p;
+typedef struct soc_omap_usb_tag** soc_omap_usb_hptr;
+typedef soc_omap_usb_hptr const soc_omap_usb_href;
+
+typedef struct soc_omap_usb_tag* soc_omap_usb_ptr;
+typedef soc_omap_usb_ptr const soc_omap_usb_ref;
 
 /* **** csx level includes */
 
@@ -12,5 +15,5 @@ typedef struct soc_omap_usb_t* soc_omap_usb_p;
 
 /* **** */
 
-soc_omap_usb_p soc_omap_usb_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_usb_h h2usb);
-void soc_omap_usb_init(soc_omap_usb_p usb);
+soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb_href h2usb);
+void soc_omap_usb_init(soc_omap_usb_ref usb);

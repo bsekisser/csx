@@ -22,9 +22,9 @@
 
 /* **** */
 
-typedef struct soc_omap_misc_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_misc_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	struct {
 		unsigned syss;
@@ -41,7 +41,7 @@ typedef struct soc_omap_misc_t {
 
 /* **** */
 
-static int __soc_omap_misc_atexit(void* param)
+static int __soc_omap_misc_atexit(void *const param)
 {
 	if(_trace_atexit)
 		LOG();
@@ -55,8 +55,8 @@ static int __soc_omap_misc_atexit(void* param)
 static uint32_t _soc_omap_misc_fb_78_mem_access(void *const param, const uint32_t ppa,
 	const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	uint32_t data = write ? *write : 0xdeadbeef;
 
@@ -73,10 +73,10 @@ static uint32_t _soc_omap_misc_fb_78_mem_access(void *const param, const uint32_
 	return(data);
 }
 
-static uint32_t _soc_omap_misc_fe_60_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_fe_60_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	csx_data_target_t target = {
 		.base = misc->x_fe_60,
@@ -98,10 +98,10 @@ static uint32_t _soc_omap_misc_fe_60_mem_access(void* param, uint32_t ppa, size_
 	return(data);
 }
 
-static uint32_t _soc_omap_misc_fe_68_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_fe_68_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	csx_data_target_t target = {
 		.base = misc->x_fe_68,
@@ -130,10 +130,10 @@ static uint32_t _soc_omap_misc_fe_68_mem_access(void* param, uint32_t ppa, size_
 	return(data);
 }
 
-static uint32_t _soc_omap_misc_fe_78_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_fe_78_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	csx_data_target_t target = {
 		.base = misc->x_fe_78,
@@ -151,10 +151,10 @@ static uint32_t _soc_omap_misc_fe_78_mem_access(void* param, uint32_t ppa, size_
 
 /* **** */
 
-static uint32_t _soc_omap_misc_i2c_sysc(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_i2c_sysc(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	const unsigned data = write ? *write : 0;
 	if(write && BEXT(data, 1))
@@ -166,10 +166,10 @@ static uint32_t _soc_omap_misc_i2c_sysc(void* param, uint32_t ppa, size_t size, 
 	return(data);
 }
 
-static uint32_t _soc_omap_misc_i2c_syss(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_i2c_syss(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	const unsigned data = misc->i2c.syss;
 	if(!write)
@@ -183,10 +183,10 @@ static uint32_t _soc_omap_misc_i2c_syss(void* param, uint32_t ppa, size_t size, 
 
 /* **** */
 
-static uint32_t _soc_omap_misc_sossi_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_sossi_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	csx_data_target_t target = {
 		.base = misc->sossi,
@@ -202,10 +202,10 @@ static uint32_t _soc_omap_misc_sossi_mem_access(void* param, uint32_t ppa, size_
 	return(data);
 }
 
-static uint32_t _soc_omap_misc_spi_mem_access(void* param, uint32_t ppa, size_t size, uint32_t* write)
+static uint32_t _soc_omap_misc_spi_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
-	const soc_omap_misc_p misc = param;
-	const csx_p csx = misc->csx;
+	soc_omap_misc_ref misc = param;
+	csx_ref csx = misc->csx;
 
 	csx_data_target_t target = {
 		.base = misc->spi,
@@ -275,7 +275,7 @@ static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h h2misc)
+soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_misc_href h2misc)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -287,7 +287,7 @@ soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h 
 
 	/* **** */
 
-	soc_omap_misc_p misc = handle_calloc((void**)h2misc, 1, sizeof(soc_omap_misc_t));
+	soc_omap_misc_ref misc = handle_calloc((void**)h2misc, 1, sizeof(soc_omap_misc_t));
 	ERR_NULL(misc);
 
 	misc->csx = csx;
@@ -302,7 +302,7 @@ soc_omap_misc_p soc_omap_misc_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_misc_h 
 	return(misc);
 }
 
-void soc_omap_misc_init(soc_omap_misc_p misc)
+void soc_omap_misc_init(soc_omap_misc_ref misc)
 {
 	ERR_NULL(misc);
 

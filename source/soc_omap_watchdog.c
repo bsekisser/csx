@@ -20,9 +20,9 @@
 
 /* **** */
 
-typedef struct soc_omap_watchdog_t {
-	csx_p csx;
-	csx_mmio_p mmio;
+typedef struct soc_omap_watchdog_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 
 	uint32_t cntl;
 	uint32_t load;
@@ -43,27 +43,27 @@ enum {
 
 /* **** */
 
-static int __soc_omap_watchdog_atexit(void* param)
+static int __soc_omap_watchdog_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_watchdog_h h2sow = param;
-//	soc_omap_watchdog_p sow = *h2sow;
+//	soc_omap_watchdog_href h2sow = param;
+//	soc_omap_watchdog_ref sow = *h2sow;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int __soc_omap_watchdog_atreset(void* param)
+static int __soc_omap_watchdog_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_watchdog_p sow = param;
+	soc_omap_watchdog_ref sow = param;
 
 	sow->cntl = 0x00000e02;
 	sow->load = 0x0000ffff;
@@ -74,16 +74,16 @@ static int __soc_omap_watchdog_atreset(void* param)
 
 /* **** */
 
-static uint32_t _soc_omap_watchdog_timer_mode(void* param,
-	uint32_t ppa,
-	size_t size,
-	uint32_t* write)
+static uint32_t _soc_omap_watchdog_timer_mode(void *const param,
+	const uint32_t ppa,
+	const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_watchdog_p sow = param;
-	const csx_p csx = sow->csx;
+	soc_omap_watchdog_ref sow = param;
+	csx_ref csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -98,16 +98,16 @@ static uint32_t _soc_omap_watchdog_timer_mode(void* param,
 	return(data);
 }
 
-static uint32_t _soc_omap_watchdog_wspr(void* param,
-	uint32_t ppa,
-	size_t size,
-	uint32_t* write)
+static uint32_t _soc_omap_watchdog_wspr(void *const param,
+	const uint32_t ppa,
+	const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_watchdog_p sow = param;
-	const csx_p csx = sow->csx;
+	soc_omap_watchdog_ref sow = param;
+	csx_ref csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -117,16 +117,16 @@ static uint32_t _soc_omap_watchdog_wspr(void* param,
 	return(data);
 }
 
-static uint32_t _soc_omap_watchdog_wwps(void* param,
-	uint32_t ppa,
-	size_t size,
-	uint32_t* write)
+static uint32_t _soc_omap_watchdog_wwps(void *const param,
+	const uint32_t ppa,
+	const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
 
-	const soc_omap_watchdog_p sow = param;
-	const csx_p csx = sow->csx;
+	soc_omap_watchdog_ref sow = param;
+	csx_ref csx = sow->csx;
 
 	uint32_t data = write ? *write : 0;
 
@@ -147,8 +147,8 @@ static csx_mmio_access_list_t _soc_omap_watchdog_acl[] = {
 
 
 
-soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
-	csx_mmio_p mmio, soc_omap_watchdog_h h2sow)
+soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
+	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -160,7 +160,7 @@ soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
 
 	/* **** */
 
-	soc_omap_watchdog_p sow = handle_calloc((void**)h2sow, 1, sizeof(soc_omap_watchdog_t));
+	soc_omap_watchdog_ref sow = handle_calloc((void**)h2sow, 1, sizeof(soc_omap_watchdog_t));
 	ERR_NULL(sow);
 
 	sow->csx = csx;
@@ -174,7 +174,7 @@ soc_omap_watchdog_p soc_omap_watchdog_alloc(csx_p csx,
 	return(sow);
 }
 
-void soc_omap_watchdog_init(soc_omap_watchdog_p sow)
+void soc_omap_watchdog_init(soc_omap_watchdog_ref sow)
 {
 	ERR_NULL(sow);
 

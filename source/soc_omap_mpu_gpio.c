@@ -24,8 +24,10 @@
 
 /* **** */
 
-typedef struct soc_omap_mpu_gpio_unit_t* soc_omap_mpu_gpio_unit_p;
-typedef struct soc_omap_mpu_gpio_unit_t {
+typedef struct soc_omap_mpu_gpio_unit_tag* soc_omap_mpu_gpio_unit_ptr;
+typedef soc_omap_mpu_gpio_unit_ptr const soc_omap_mpu_gpio_unit_ref;
+
+typedef struct soc_omap_mpu_gpio_unit_tag {
 	uint32_t clear_dataout;
 	uint32_t datain;
 	uint32_t dataout;
@@ -37,10 +39,10 @@ typedef struct soc_omap_mpu_gpio_unit_t {
 	uint32_t xxxx_xxc0;
 }soc_omap_mpu_gpio_unit_t;
 
-typedef struct soc_omap_mpu_gpio_t {
-	csx_p csx;
-	csx_mmio_p mmio;
-	
+typedef struct soc_omap_mpu_gpio_tag {
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
+
 	soc_omap_mpu_gpio_unit_t unit[4];
 
 	callback_qlist_elem_t atexit;
@@ -49,41 +51,41 @@ typedef struct soc_omap_mpu_gpio_t {
 
 /* **** */
 
-static int __soc_omap_mpu_gpio_atexit(void* param)
+static int __soc_omap_mpu_gpio_atexit(void *const param)
 {
 	if(_trace_atexit) {
 		LOG();
 	}
 
-//	soc_omap_mpu_gpio_h h2gpio = param;
-//	soc_omap_mpu_gpio_p gpio = *h2gpio;
+//	soc_omap_mpu_gpio_href h2gpio = param;
+//	soc_omap_mpu_gpio_ref gpio = *h2gpio;
 
 	handle_free(param);
 
 	return(0);
 }
 
-static int __soc_omap_mpu_gpio_atreset(void* param)
+static int __soc_omap_mpu_gpio_atreset(void *const param)
 {
 	if(_trace_atreset) {
 		LOG();
 	}
 
-	soc_omap_mpu_gpio_p gpio = param;
+	soc_omap_mpu_gpio_ref gpio = param;
 
 	for(unsigned i = 0; i < 4; i++) {
-		soc_omap_mpu_gpio_unit_p unit = &gpio->unit[i];
-		
+		soc_omap_mpu_gpio_unit_ref unit = &gpio->unit[i];
+
 		memset(unit, 0, sizeof(soc_omap_mpu_gpio_unit_t));
-		
+
 		unit->direction = 0x0000ffff;
 	}
 
 	return(0);
 }
 
-static soc_omap_mpu_gpio_unit_p __soc_omap_mpu_gpio_unit(
-	soc_omap_mpu_gpio_p gpio, uint32_t ppa)
+static soc_omap_mpu_gpio_unit_ptr __soc_omap_mpu_gpio_unit(
+	soc_omap_mpu_gpio_ref gpio, const uint32_t ppa)
 {
 	const uint32_t unit = (((ppa >> 13) & 2) | ((ppa >> 11) & 1)) ^ 3;
 
@@ -93,17 +95,17 @@ static soc_omap_mpu_gpio_unit_p __soc_omap_mpu_gpio_unit(
 /* **** */
 
 #define SOC_OMAP_MPU_GPIO_VAR(_x) \
-	static uint32_t _soc_omap_mpu_gpio_##_x(void* param, \
-		uint32_t ppa, size_t size, uint32_t* write) \
+	static uint32_t _soc_omap_mpu_gpio_##_x(void *const param, \
+		const uint32_t ppa, const size_t size, uint32_t *const write) \
 	{ \
 		if(_check_pedantic_mmio_size) { \
 			assert((sizeof(uint32_t) | sizeof(uint16_t)) & size); \
 		} \
 	\
-		const soc_omap_mpu_gpio_p gpio = param; \
-		const csx_p csx = gpio->csx; \
+		soc_omap_mpu_gpio_ref gpio = param; \
+		csx_ref csx = gpio->csx; \
 	\
-		const soc_omap_mpu_gpio_unit_p unit = __soc_omap_mpu_gpio_unit(gpio, ppa); \
+		soc_omap_mpu_gpio_unit_ref unit = __soc_omap_mpu_gpio_unit(gpio, ppa); \
 	\
 		csx_data_target_t target = { \
 			.base = &unit->_x, \
@@ -148,7 +150,7 @@ static csx_mmio_access_list_t __soc_omap_mpu_gpio_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_mpu_gpio_p soc_omap_mpu_gpio_alloc(csx_p csx, csx_mmio_p mmio, soc_omap_mpu_gpio_h h2gpio)
+soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_gpio_href h2gpio)
 {
 	ERR_NULL(csx);
 	ERR_NULL(mmio);
@@ -160,7 +162,7 @@ soc_omap_mpu_gpio_p soc_omap_mpu_gpio_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 
 	/* **** */
 
-	soc_omap_mpu_gpio_p gpio = handle_calloc((void**)h2gpio, 1, sizeof(soc_omap_mpu_gpio_t));
+	soc_omap_mpu_gpio_ref gpio = handle_calloc((void**)h2gpio, 1, sizeof(soc_omap_mpu_gpio_t));
 	ERR_NULL(gpio);
 
 	gpio->csx = csx;
@@ -172,11 +174,11 @@ soc_omap_mpu_gpio_p soc_omap_mpu_gpio_alloc(csx_p csx, csx_mmio_p mmio, soc_omap
 	csx_mmio_callback_atreset(mmio, &gpio->atreset, __soc_omap_mpu_gpio_atreset, gpio);
 
 	/* **** */
-	
+
 	return(gpio);
 }
 
-void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_p gpio)
+void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_ref gpio)
 {
 	ERR_NULL(gpio);
 
@@ -186,7 +188,7 @@ void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_p gpio)
 
 	/* **** */
 
-	csx_mmio_p mmio = gpio->mmio;
+	csx_mmio_ref mmio = gpio->mmio;
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO1, __soc_omap_mpu_gpio_acl, gpio);
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO2, __soc_omap_mpu_gpio_acl, gpio);
