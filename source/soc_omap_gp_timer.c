@@ -56,9 +56,7 @@ enum {
 
 static int __soc_omap_gp_timer_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_gp_timer_href h2gpt = param;
 //	soc_omap_gp_timer_ref gpt = *h2gpt;
@@ -128,9 +126,7 @@ soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 	ERR_NULL(mmio);
 	ERR_NULL(h2gpt);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -149,11 +145,8 @@ soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 void soc_omap_gp_timer_init(soc_omap_gp_timer_ref gpt)
 {
+	ACTION_LOG(init);
 	ERR_NULL(gpt);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

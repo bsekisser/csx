@@ -43,24 +43,14 @@
 
 static int _csx_soc_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG(">>");
-	}
+	ACTION_LOG(exit);
 
 	csx_soc_href h2soc = param;
 	csx_soc_ref soc = *h2soc;
 
 	callback_qlist_process(&soc->atexit.list);
 
-	if(_trace_atexit_pedantic) {
-		LOG("--");
-	}
-
 	handle_free(param);
-
-	if(_trace_atexit_pedantic) {
-		LOG("<<");
-	}
 
 	return(0);
 }
@@ -142,9 +132,7 @@ static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const cha
 
 static int _csx_soc_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	csx_soc_ref soc = param;
 //	csx_ref csx = soc->csx;
@@ -161,9 +149,7 @@ csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 	ERR_NULL(csx);
 	ERR_NULL(h2soc);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -199,11 +185,8 @@ void csx_soc_callback_atreset(csx_soc_ptr soc,
 
 void csx_soc_init(csx_soc_ref soc)
 {
+	ACTION_LOG(init);
 	ERR_NULL(soc);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 
@@ -320,9 +303,7 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 
 void csx_soc_reset(csx_ref csx)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	_csx_soc_atreset(csx->soc);
 }

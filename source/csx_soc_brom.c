@@ -161,6 +161,8 @@ enum {
 
 void csx_soc_brom_init(csx_soc_ref soc, csx_data_ref cdp)
 {
+	ACTION_LOG(init);
+
 	ERR_NULL(soc);
 	ERR_NULL(cdp);
 

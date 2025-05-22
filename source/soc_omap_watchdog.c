@@ -45,9 +45,7 @@ enum {
 
 static int __soc_omap_watchdog_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_watchdog_href h2sow = param;
 //	soc_omap_watchdog_ref sow = *h2sow;
@@ -59,9 +57,7 @@ static int __soc_omap_watchdog_atexit(void *const param)
 
 static int __soc_omap_watchdog_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_watchdog_ref sow = param;
 
@@ -154,9 +150,7 @@ soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 	ERR_NULL(mmio);
 	ERR_NULL(h2sow);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -176,11 +170,8 @@ soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 
 void soc_omap_watchdog_init(soc_omap_watchdog_ref sow)
 {
+	ACTION_LOG(init);
 	ERR_NULL(sow);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

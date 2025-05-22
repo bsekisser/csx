@@ -117,9 +117,7 @@ enum {
 
 static int __soc_omap_mpu_ihr_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_mpu_ihr_href h2ihr = param;
 //	soc_omap_mpu_ihr_ref ihr = *h2ihr;
@@ -131,9 +129,7 @@ static int __soc_omap_mpu_ihr_atexit(void *const param)
 
 static int __soc_omap_mpu_ihr_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_mpu_ihr_ref ihr = param;
 
@@ -201,9 +197,7 @@ soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 	ERR_NULL(mmio);
 	ERR_NULL(h2ihr);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -225,11 +219,8 @@ soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 
 void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_ref ihr)
 {
+	ACTION_LOG(init);
 	ERR_NULL(ihr);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

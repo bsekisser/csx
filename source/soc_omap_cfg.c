@@ -87,11 +87,7 @@ enum {
 
 static int __soc_omap_cfg_atexit(void *const param)
 {
-	ERR_NULL(param);
-
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 	handle_free(param);
 
@@ -103,11 +99,7 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[];
 
 static int __soc_omap_cfg_atreset(void *const param)
 {
-	ERR_NULL(param);
-
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_cfg_ref cfg = param;
 
@@ -244,9 +236,7 @@ soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg
 	ERR_NULL(mmio);
 	ERR_NULL(h2cfg);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -268,11 +258,8 @@ soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg
 
 void soc_omap_cfg_init(soc_omap_cfg_ref cfg)
 {
+	ACTION_LOG(init);
 	ERR_NULL(cfg);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	csx_mmio_ref mmio = cfg->mmio;
 	ERR_NULL(mmio);

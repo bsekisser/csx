@@ -43,8 +43,7 @@ typedef struct soc_omap_misc_tag {
 
 static int __soc_omap_misc_atexit(void *const param)
 {
-	if(_trace_atexit)
-		LOG();
+	ACTION_LOG(exit);
 
 	handle_free(param);
 	return(0);
@@ -281,9 +280,7 @@ soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_m
 	ERR_NULL(mmio);
 	ERR_NULL(h2misc);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -304,11 +301,8 @@ soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_m
 
 void soc_omap_misc_init(soc_omap_misc_ref misc)
 {
+	ACTION_LOG(init);
 	ERR_NULL(misc);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

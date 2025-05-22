@@ -107,31 +107,20 @@ static csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, con
 /* **** */
 
 static int _csx_mmio_atexit(void *const param) {
-	if(_trace_atexit) {
-		LOG(">>");
-	}
+	ACTION_LOG(exit);
 
 	csx_mmio_href h2mmio = param;
 	csx_mmio_ref mmio = *h2mmio;
 
 	callback_qlist_process(&mmio->atexit.list);
 
-	if(_trace_atexit_pedantic) {
-		LOG("--");
-	}
-
 	handle_free(param);
-
-	if(_trace_atexit_pedantic) {
-		LOG("<<");
-	}
 
 	return(0);
 }
 
 static int _csx_mmio_atreset(void *const param) {
-	if(_trace_atreset)
-		LOG();
+	ACTION_LOG(reset);
 
 	csx_mmio_ref mmio = param;
 
@@ -159,9 +148,7 @@ csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
 	ERR_NULL(csx);
 	ERR_NULL(h2mmio);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	csx_mmio_ref mmio = HANDLE_CALLOC(h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
@@ -254,9 +241,7 @@ void csx_mmio_init(csx_mmio_ref mmio)
 {
 	ERR_NULL(mmio);
 
-	if(_trace_init) {
-		LOG();
-	}
+	ACTION_LOG(init);
 
 	/* **** */
 

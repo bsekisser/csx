@@ -109,9 +109,7 @@ static page_ptr __csx_nnd_flash_p2page(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 
 static int __csx_nnd_flash_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG(">>");
-	}
+	ACTION_LOG(exit);
 
 	csx_nnd_ref nnd = param;
 	csx_nnd_unit_ref unit = &nnd->unit[12];
@@ -151,10 +149,6 @@ static int __csx_nnd_flash_atexit(void *const param)
 	}
 
 	handle_free(param);
-
-	if(_trace_atexit_pedantic) {
-		LOG("<<");
-	}
 
 	return(0);
 }
@@ -309,9 +303,7 @@ csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
 	ERR_NULL(csx);
 	ERR_NULL(h2nnd);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -386,9 +378,7 @@ void csx_nnd_flash_init(csx_nnd_ref nnd)
 
 	ERR_NULL(nnd);
 
-	if(_trace_init) {
-		LOG();
-	}
+	ACTION_LOG(init);
 
 	/* **** */
 

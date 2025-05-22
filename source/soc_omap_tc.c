@@ -71,9 +71,7 @@ enum {
 
 static int _soc_omap_tc_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_tc_href h2tc = param;
 //	soc_omap_tc_ref tc = *h2tc;
@@ -85,9 +83,7 @@ static int _soc_omap_tc_atexit(void *const param)
 
 static int _soc_omap_tc_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_tc_ref tc = param;
 
@@ -247,9 +243,7 @@ soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_hr
 	ERR_NULL(mmio);
 	ERR_NULL(h2tc);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -271,11 +265,8 @@ soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_hr
 
 void soc_omap_tc_init(soc_omap_tc_ref tc)
 {
+	ACTION_LOG(init);
 	ERR_NULL(tc);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

@@ -124,9 +124,7 @@ csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache)
 	ERR_NULL(csx);
 	ERR_NULL(h2cache);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -139,11 +137,8 @@ csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache)
 
 void csx_cache_init(csx_cache_ref cache)
 {
+	ACTION_LOG(init);
 	ERR_NULL(cache);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	csx_ref csx = (void*)cache;
 	armvm_coprocessor_ref cp = csx->armvm->coprocessor;

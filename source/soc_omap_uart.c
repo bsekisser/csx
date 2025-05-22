@@ -93,9 +93,7 @@ enum {
 
 static int __soc_omap_uart_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_uart_href h2uart = param;
 //	soc_omap_uart_ref uart = *h2uart;
@@ -114,8 +112,7 @@ static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 }
 
 static int __soc_omap_uart_atreset(void *const param) {
-	if(_trace_atreset)
-		LOG();
+	ACTION_LOG(reset);
 
 	soc_omap_uart_ref uart = param;
 
@@ -475,9 +472,7 @@ soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_u
 	ERR_NULL(mmio);
 	ERR_NULL(h2uart);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -497,11 +492,8 @@ soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_u
 
 void soc_omap_uart_init(soc_omap_uart_ref uart)
 {
+	ACTION_LOG(init);
 	ERR_NULL(uart);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

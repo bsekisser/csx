@@ -34,18 +34,14 @@ typedef struct soc_omap_dpll_tag {
 /* **** */
 
 static int __soc_omap_dpll_atexit(void *const param) {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 	handle_free(param);
 	return(0);
 }
 
 static int __soc_omap_dpll_atreset(void *const param) {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_dpll_ref dpll = param;
 
@@ -117,9 +113,7 @@ soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_d
 	ERR_NULL(mmio);
 	ERR_NULL(h2dpll);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -141,11 +135,8 @@ soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_d
 
 void soc_omap_dpll_init(soc_omap_dpll_ref dpll)
 {
+	ACTION_LOG(init);
 	ERR_NULL(dpll);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

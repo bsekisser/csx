@@ -62,6 +62,8 @@ static void _preflight_tests(void)
 
 int main(int argc, char **argv)
 {
+	action_log.raw_flags = ~0U;
+
 	_preflight_tests();
 
 	if(argc) for(int i = 0; i < argc; i++)

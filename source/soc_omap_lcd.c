@@ -51,9 +51,7 @@ enum {
 
 static int __soc_omap_lcd_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 	handle_free(param);
 	return(0);
@@ -61,9 +59,7 @@ static int __soc_omap_lcd_atexit(void *const param)
 
 static int __soc_omap_lcd_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_lcd_ref lcd = param;
 
@@ -318,9 +314,7 @@ soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd
 	ERR_NULL(mmio);
 	ERR_NULL(h2lcd);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -341,11 +335,8 @@ soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd
 
 void soc_omap_lcd_init(soc_omap_lcd_ref lcd)
 {
+	ACTION_LOG(init);
 	ERR_NULL(lcd);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

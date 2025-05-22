@@ -45,9 +45,7 @@ typedef struct soc_omap_mpu_tag {
 
 static int __soc_omap_mpu_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 	handle_free(param);
 
@@ -213,9 +211,7 @@ soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu
 	ERR_NULL(mmio);
 	ERR_NULL(h2mpu);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -236,11 +232,8 @@ soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu
 
 void soc_omap_mpu_init(soc_omap_mpu_ref mpu)
 {
+	ACTION_LOG(init);
 	ERR_NULL(mpu);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

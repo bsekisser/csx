@@ -95,9 +95,7 @@ static void _stat_counter_log(const uint32_t c, const char* name) {
 /* **** */
 
 static int _csx_statistics_atexit(void *const param) {
-	if(_trace_atexit) {
-		LOG(">>");
-	}
+	ACTION_LOG(exit);
 
 //	csx_statistics_href h2c = param;
 //	csx_statistics_ref c = *h2c;
@@ -114,23 +112,13 @@ static int _csx_statistics_atexit(void *const param) {
 		PROFILE_LIST(ASSERT_ZERO);
 	}
 
-	if(_trace_atexit_pedantic) {
-		LOG("--");
-	}
-
 	handle_free(param);
-
-	if(_trace_atexit_pedantic) {
-		LOG("<<");
-	}
 
 	return(0);
 }
 
 static int _csx_statistics_atreset(void *const param) {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 //	csx_statistics_ref c = param;
 
@@ -145,6 +133,8 @@ static int _csx_statistics_atreset(void *const param) {
 
 csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 {
+	ACTION_LOG(alloc);
+
 	statistics = handle_calloc((void**)h2s, 1, sizeof(csx_statistics_t));
 	ERR_NULL(statistics);
 
@@ -160,5 +150,8 @@ csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 
 void csx_statistics_init(csx_statistics_ref s)
 {
+	ACTION_LOG(init);
+	ERR_NULL(s);
+
 	UNUSED(s);
 }

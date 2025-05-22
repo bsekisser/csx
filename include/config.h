@@ -15,12 +15,6 @@
 
 #define IF_PROFILING(_x) (_csx_statistical_profile ? (_x) : 0)
 
-#define _trace_alloc 0
-#define _trace_atexit 0
-#define _trace_atexit_pedantic 0
-#define _trace_atreset 0
-#define _trace_init 0
-
 #define _trace_mmio 0
 
 #define IF_TRACE_MMIO(_x) (_trace_mmio ? (_x) : 0)

@@ -96,9 +96,7 @@ __mpu_timer_unit(soc_omap_mpu_timer_ref sot, const uint32_t ppa) {
 
 static int __soc_omap_mpu_timer_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_mpu_timer_href h2t = param;
 //	soc_omap_mpu_timer_ref t = *h2t;
@@ -110,9 +108,7 @@ static int __soc_omap_mpu_timer_atexit(void *const param)
 
 static int __soc_omap_mpu_timer_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_mpu_timer_ref t = param;
 
@@ -263,9 +259,7 @@ soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, 
 	ERR_NULL(mmio);
 	ERR_NULL(h2t);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -285,11 +279,8 @@ soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, 
 
 void soc_omap_mpu_timer_init(soc_omap_mpu_timer_ref t)
 {
+	ACTION_LOG(init);
 	ERR_NULL(t);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	csx_mmio_ref mmio = t->mmio;
 

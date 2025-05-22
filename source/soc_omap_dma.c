@@ -180,9 +180,7 @@ enum {
 
 static int __soc_omap_dma_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 	handle_free(param);
 
@@ -191,9 +189,7 @@ static int __soc_omap_dma_atexit(void *const param)
 
 static int __soc_omap_dma_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_dma_ref dma = param;
 
@@ -891,9 +887,7 @@ soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma
 	ERR_NULL(mmio);
 	ERR_NULL(h2dma);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -917,11 +911,8 @@ soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma
 
 void soc_omap_dma_init(soc_omap_dma_ref dma)
 {
+	ACTION_LOG(init);
 	ERR_NULL(dma);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

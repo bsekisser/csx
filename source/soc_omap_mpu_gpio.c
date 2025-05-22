@@ -53,9 +53,7 @@ typedef struct soc_omap_mpu_gpio_tag {
 
 static int __soc_omap_mpu_gpio_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_mpu_gpio_href h2gpio = param;
 //	soc_omap_mpu_gpio_ref gpio = *h2gpio;
@@ -67,9 +65,7 @@ static int __soc_omap_mpu_gpio_atexit(void *const param)
 
 static int __soc_omap_mpu_gpio_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_mpu_gpio_ref gpio = param;
 
@@ -156,9 +152,7 @@ soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, so
 	ERR_NULL(mmio);
 	ERR_NULL(h2gpio);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -180,11 +174,8 @@ soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_ref gpio)
 {
+	ACTION_LOG(init);
 	ERR_NULL(gpio);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

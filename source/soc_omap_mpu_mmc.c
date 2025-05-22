@@ -35,9 +35,7 @@ typedef struct soc_omap_mpu_mmc_tag {
 
 static int __soc_omap_mpu_mmc_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_mpu_mmc_href h2mmc = param;
 //	soc_omap_mpu_mmc_ref mmc = *h2mmc;
@@ -82,9 +80,7 @@ soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 	ERR_NULL(mmio);
 	ERR_NULL(h2mmc);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -106,11 +102,8 @@ soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 
 void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_ref mmc)
 {
+	ACTION_LOG(init);
 	ERR_NULL(mmc);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

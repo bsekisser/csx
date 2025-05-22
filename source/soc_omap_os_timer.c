@@ -41,9 +41,7 @@ typedef struct soc_omap_os_timer_tag {
 
 static int __soc_omap_os_timer_atexit(void *const param)
 {
-	if(_trace_atexit) {
-		LOG();
-	}
+	ACTION_LOG(exit);
 
 //	soc_omap_os_timer_href h2ost = param;
 //	soc_omap_os_timer_ref ost = *h2ost;
@@ -55,9 +53,7 @@ static int __soc_omap_os_timer_atexit(void *const param)
 
 static int __soc_omap_os_timer_atreset(void *const param)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	soc_omap_os_timer_ref ost = param;
 
@@ -138,9 +134,7 @@ soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 	ERR_NULL(mmio);
 	ERR_NULL(h2ost);
 
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	/* **** */
 
@@ -162,11 +156,8 @@ soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 void soc_omap_os_timer_init(soc_omap_os_timer_ref ost)
 {
+	ACTION_LOG(init);
 	ERR_NULL(ost);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 

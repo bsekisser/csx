@@ -29,9 +29,7 @@
 /* **** */
 
 csx_ptr csx_alloc(void) {
-	if(_trace_alloc) {
-		LOG();
-	}
+	ACTION_LOG(alloc);
 
 	csx_ref csx = calloc(1, sizeof(csx_t));
 	ERR_NULL(csx);
@@ -57,25 +55,15 @@ csx_ptr csx_alloc(void) {
 
 void csx_atexit(csx_href h2csx)
 {
-	if(_trace_atexit) {
-		LOG(">>");
-	}
+	ACTION_LOG(exit);
 
 	csx_ref csx = *h2csx;
 
 	callback_qlist_process(&csx->atexit_list);
 
-	if(_trace_atexit_pedantic) {
-		LOG("--");
-	}
-
 	armvm_exit(csx->armvm);
 
 	handle_free((void**)h2csx);
-
-	if(_trace_atexit_pedantic) {
-		LOG("<<");
-	}
 }
 
 void csx_callback_atexit(csx_ref csx,
@@ -92,11 +80,8 @@ void csx_callback_atreset(csx_ref csx,
 
 csx_ptr csx_init(csx_ref csx)
 {
+	ACTION_LOG(init);
 	ERR_NULL(csx);
-
-	if(_trace_init) {
-		LOG();
-	}
 
 	/* **** */
 
@@ -118,9 +103,7 @@ csx_ptr csx_init(csx_ref csx)
 
 void csx_reset(csx_ref csx)
 {
-	if(_trace_atreset) {
-		LOG();
-	}
+	ACTION_LOG(reset);
 
 	armvm_reset(csx->armvm);
 	callback_qlist_process(&csx->atreset_list);
