@@ -50,7 +50,7 @@ static int _csx_soc_atexit(void *const param)
 
 	callback_qlist_process(&soc->atexit.list);
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -153,7 +153,7 @@ csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 
 	/* **** */
 
-	csx_soc_ref soc = HANDLE_CALLOC(h2soc, 1, sizeof(csx_soc_t));
+	csx_soc_ref soc = handle_calloc(h2soc, 1, sizeof(csx_soc_t));
 	ERR_NULL(soc);
 
 	soc->csx = csx;

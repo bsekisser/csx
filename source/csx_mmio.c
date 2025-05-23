@@ -114,7 +114,7 @@ static int _csx_mmio_atexit(void *const param) {
 
 	callback_qlist_process(&mmio->atexit.list);
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -150,7 +150,7 @@ csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
 
 	ACTION_LOG(alloc);
 
-	csx_mmio_ref mmio = HANDLE_CALLOC(h2mmio, 1, sizeof(csx_mmio_t));
+	csx_mmio_ref mmio = handle_calloc(h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
 
 	mmio->csx = csx;

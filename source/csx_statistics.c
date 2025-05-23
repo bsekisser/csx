@@ -112,7 +112,7 @@ static int _csx_statistics_atexit(void *const param) {
 		PROFILE_LIST(ASSERT_ZERO);
 	}
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -135,7 +135,7 @@ csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 {
 	ACTION_LOG(alloc);
 
-	statistics = handle_calloc((void**)h2s, 1, sizeof(csx_statistics_t));
+	statistics = handle_calloc(h2s, 1, sizeof(csx_statistics_t));
 	ERR_NULL(statistics);
 
 	statistics->csx = csx;

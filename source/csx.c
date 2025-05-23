@@ -63,7 +63,7 @@ void csx_atexit(csx_href h2csx)
 
 	armvm_exit(csx->armvm);
 
-	handle_free((void**)h2csx);
+	handle_ptrfree(h2csx);
 }
 
 void csx_callback_atexit(csx_ref csx,

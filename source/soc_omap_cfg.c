@@ -89,7 +89,7 @@ static int __soc_omap_cfg_atexit(void *const param)
 {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -240,7 +240,7 @@ soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg
 
 	/* **** */
 
-	soc_omap_cfg_ref cfg = handle_calloc((void**)h2cfg, 1, sizeof(soc_omap_cfg_t));
+	soc_omap_cfg_ref cfg = handle_calloc(h2cfg, 1, sizeof(soc_omap_cfg_t));
 	ERR_NULL(cfg);
 
 	cfg->csx = csx;

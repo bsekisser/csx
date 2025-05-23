@@ -148,7 +148,7 @@ static int __csx_nnd_flash_atexit(void *const param)
 			fclose(fp);
 	}
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -307,7 +307,7 @@ csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
 
 	/* **** */
 
-	csx_nnd_ref nnd = HANDLE_CALLOC(h2nnd, 1, sizeof(csx_nnd_t));
+	csx_nnd_ref nnd = handle_calloc(h2nnd, 1, sizeof(csx_nnd_t));
 	ERR_NULL(nnd);
 
 	nnd->csx = csx;

@@ -47,7 +47,7 @@ static int __soc_omap_usb_atexit(void *const param)
 {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 	return(0);
 }
 
@@ -124,7 +124,7 @@ soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb
 
 	/* **** */
 
-	soc_omap_usb_ref usb = handle_calloc((void**)h2usb, 1, sizeof(soc_omap_usb_t));
+	soc_omap_usb_ref usb = handle_calloc(h2usb, 1, sizeof(soc_omap_usb_t));
 	ERR_NULL(usb);
 
 	usb->csx = csx;

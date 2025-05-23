@@ -58,7 +58,7 @@ static int __soc_omap_mpu_gpio_atexit(void *const param)
 //	soc_omap_mpu_gpio_href h2gpio = param;
 //	soc_omap_mpu_gpio_ref gpio = *h2gpio;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -156,7 +156,7 @@ soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 	/* **** */
 
-	soc_omap_mpu_gpio_ref gpio = handle_calloc((void**)h2gpio, 1, sizeof(soc_omap_mpu_gpio_t));
+	soc_omap_mpu_gpio_ref gpio = handle_calloc(h2gpio, 1, sizeof(soc_omap_mpu_gpio_t));
 	ERR_NULL(gpio);
 
 	gpio->csx = csx;

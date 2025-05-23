@@ -122,7 +122,7 @@ static int __soc_omap_mpu_ihr_atexit(void *const param)
 //	soc_omap_mpu_ihr_href h2ihr = param;
 //	soc_omap_mpu_ihr_ref ihr = *h2ihr;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -201,7 +201,7 @@ soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 
 	/* **** */
 
-	soc_omap_mpu_ihr_ref ihr = handle_calloc((void**)h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
+	soc_omap_mpu_ihr_ref ihr = handle_calloc(h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
 	ERR_NULL(ihr);
 
 	ihr->csx = csx;

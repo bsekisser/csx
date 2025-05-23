@@ -101,7 +101,7 @@ static int __soc_omap_mpu_timer_atexit(void *const param)
 //	soc_omap_mpu_timer_href h2t = param;
 //	soc_omap_mpu_timer_ref t = *h2t;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -263,7 +263,7 @@ soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, 
 
 	/* **** */
 
-	soc_omap_mpu_timer_ref t = handle_calloc((void**)h2t, 1, sizeof(soc_omap_mpu_timer_t));
+	soc_omap_mpu_timer_ref t = handle_calloc(h2t, 1, sizeof(soc_omap_mpu_timer_t));
 	ERR_NULL(t);
 
 	t->csx = csx;

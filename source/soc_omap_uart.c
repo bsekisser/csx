@@ -98,7 +98,7 @@ static int __soc_omap_uart_atexit(void *const param)
 //	soc_omap_uart_href h2uart = param;
 //	soc_omap_uart_ref uart = *h2uart;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -476,7 +476,7 @@ soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_u
 
 	/* **** */
 
-	soc_omap_uart_ref uart = handle_calloc((void**)h2uart, 1, sizeof(soc_omap_uart_t));
+	soc_omap_uart_ref uart = handle_calloc(h2uart, 1, sizeof(soc_omap_uart_t));
 	ERR_NULL(uart);
 
 	uart->csx = csx;

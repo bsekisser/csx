@@ -47,7 +47,7 @@ static int __soc_omap_mpu_atexit(void *const param)
 {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -215,7 +215,7 @@ soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu
 
 	/* **** */
 
-	soc_omap_mpu_ref mpu = handle_calloc((void**)h2mpu, 1, sizeof(soc_omap_mpu_t));
+	soc_omap_mpu_ref mpu = handle_calloc(h2mpu, 1, sizeof(soc_omap_mpu_t));
 	ERR_NULL(mpu);
 
 	mpu->csx = csx;

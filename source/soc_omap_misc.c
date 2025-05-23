@@ -45,7 +45,7 @@ static int __soc_omap_misc_atexit(void *const param)
 {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 	return(0);
 }
 
@@ -284,7 +284,7 @@ soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_m
 
 	/* **** */
 
-	soc_omap_misc_ref misc = handle_calloc((void**)h2misc, 1, sizeof(soc_omap_misc_t));
+	soc_omap_misc_ref misc = handle_calloc(h2misc, 1, sizeof(soc_omap_misc_t));
 	ERR_NULL(misc);
 
 	misc->csx = csx;

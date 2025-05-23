@@ -50,7 +50,7 @@ static int __soc_omap_watchdog_atexit(void *const param)
 //	soc_omap_watchdog_href h2sow = param;
 //	soc_omap_watchdog_ref sow = *h2sow;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -154,7 +154,7 @@ soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 
 	/* **** */
 
-	soc_omap_watchdog_ref sow = handle_calloc((void**)h2sow, 1, sizeof(soc_omap_watchdog_t));
+	soc_omap_watchdog_ref sow = handle_calloc(h2sow, 1, sizeof(soc_omap_watchdog_t));
 	ERR_NULL(sow);
 
 	sow->csx = csx;

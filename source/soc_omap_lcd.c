@@ -53,7 +53,7 @@ static int __soc_omap_lcd_atexit(void *const param)
 {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 	return(0);
 }
 
@@ -318,7 +318,7 @@ soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd
 
 	/* **** */
 
-	soc_omap_lcd_ref lcd = handle_calloc((void**)h2lcd, 1, sizeof(soc_omap_lcd_t));
+	soc_omap_lcd_ref lcd = handle_calloc(h2lcd, 1, sizeof(soc_omap_lcd_t));
 	ERR_NULL(lcd);
 
 	lcd->csx = csx;

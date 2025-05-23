@@ -36,7 +36,7 @@ typedef struct soc_omap_dpll_tag {
 static int __soc_omap_dpll_atexit(void *const param) {
 	ACTION_LOG(exit);
 
-	handle_free(param);
+	handle_ptrfree(param);
 	return(0);
 }
 
@@ -117,7 +117,7 @@ soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_d
 
 	/* **** */
 
-	soc_omap_dpll_ref dpll = handle_calloc((void**)h2dpll, 1, sizeof(soc_omap_dpll_t));
+	soc_omap_dpll_ref dpll = handle_calloc(h2dpll, 1, sizeof(soc_omap_dpll_t));
 	ERR_NULL(dpll);
 
 	dpll->csx = csx;

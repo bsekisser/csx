@@ -76,7 +76,7 @@ static int _soc_omap_tc_atexit(void *const param)
 //	soc_omap_tc_href h2tc = param;
 //	soc_omap_tc_ref tc = *h2tc;
 
-	handle_free(param);
+	handle_ptrfree(param);
 
 	return(0);
 }
@@ -247,7 +247,7 @@ soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_hr
 
 	/* **** */
 
-	soc_omap_tc_ref tc = handle_calloc((void**)h2tc, 1, sizeof(soc_omap_tc_t));
+	soc_omap_tc_ref tc = handle_calloc(h2tc, 1, sizeof(soc_omap_tc_t));
 	ERR_NULL(tc);
 
 	tc->csx = csx;
