@@ -8,8 +8,8 @@
 
 /* **** local library level includes*/
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -22,39 +22,13 @@
 /* **** */
 
 typedef struct soc_omap_dpll_tag {
+	uint32_t ctl_reg;
+//
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	uint32_t ctl_reg;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }soc_omap_dpll_t;
 
 /* **** */
-
-static int __soc_omap_dpll_atexit(void *const param) {
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-	return(0);
-}
-
-static int __soc_omap_dpll_atreset(void *const param) {
-	ACTION_LOG(reset);
-
-	soc_omap_dpll_ref dpll = param;
-
-	/* **** */
-
-	dpll->ctl_reg = 0x00002002;
-
-	/* **** */
-
-	return(0);
-
-	UNUSED(param);
-}
 
 enum {
 	DPLL1_CTL_REG = 0x00,
@@ -107,6 +81,66 @@ static csx_mmio_access_list_t _soc_omap_dpll_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+/* **** */
+
+static
+int soc_omap_dpll_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_dpll_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_dpll_ref dpll = param;
+
+	/* **** */
+
+	ERR_NULL(dpll->mmio);
+	csx_mmio_register_access_list(dpll->mmio, 0, _soc_omap_dpll_acl, dpll);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_dpll_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_dpll_ref dpll = param;
+
+	/* **** */
+
+	dpll->ctl_reg = 0x00002002;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_dpll_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_dpll_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_dpll_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_dpll_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
 soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dpll_href h2dpll)
 {
 	ERR_NULL(csx);
@@ -125,20 +159,5 @@ soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_d
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &dpll->atexit, __soc_omap_dpll_atexit, h2dpll);
-	csx_mmio_callback_atreset(mmio, &dpll->atreset, __soc_omap_dpll_atreset, dpll);
-
-	/* **** */
-
 	return(dpll);
-}
-
-void soc_omap_dpll_init(soc_omap_dpll_ref dpll)
-{
-	ACTION_LOG(init);
-	ERR_NULL(dpll);
-
-	/* **** */
-
-	csx_mmio_register_access_list(dpll->mmio, 0, _soc_omap_dpll_acl, dpll);
 }

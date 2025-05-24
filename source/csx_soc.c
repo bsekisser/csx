@@ -17,9 +17,9 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
 #include "libbse/include/bounds.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -40,20 +40,6 @@
 #include "garmin_rgn.h"
 
 /* **** */
-
-static int _csx_soc_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	csx_soc_href h2soc = param;
-	csx_soc_ref soc = *h2soc;
-
-	callback_qlist_process(&soc->atexit.list);
-
-	handle_ptrfree(param);
-
-	return(0);
-}
 
 static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t start, const uint32_t end)
 {
@@ -130,19 +116,48 @@ static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const cha
 	close(fd);
 }
 
-static int _csx_soc_atreset(void *const param)
+/* **** */
+
+static
+int csx_soc_action_exit(int err, void *const param, action_ref)
 {
-	ACTION_LOG(reset);
+	ACTION_LOG(exit);
 
-	csx_soc_ref soc = param;
-//	csx_ref csx = soc->csx;
+	/* **** */
 
-	callback_qlist_process(&soc->atreset.list);
+	handle_ptrfree(param);
 
-	return(0);
+	/* **** */
+
+	return(err);
 }
 
-/* **** */
+static
+int csx_soc_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	csx_soc_ref soc = param;
+
+	/* **** */
+
+	csx_ref csx = soc->csx;
+
+	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
+	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t csx_soc_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ csx_soc_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ csx_soc_action_init }, { 0 }, 0 },
+	}
+};
 
 csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 {
@@ -158,44 +173,7 @@ csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 
 	soc->csx = csx;
 
-	callback_qlist_init(&soc->atexit.list, LIST_LIFO);
-	callback_qlist_init(&soc->atreset.list, LIST_FIFO);
-
-	/* **** */
-
-	csx_callback_atexit(csx, &soc->atexit.elem, _csx_soc_atexit, h2soc);
-	csx_callback_atreset(csx, &soc->atreset.elem, _csx_soc_atreset, soc);
-
-	/* **** */
-
 	return(soc);
-}
-
-void csx_soc_callback_atexit(csx_soc_ptr soc,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	callback_qlist_setup_and_register_callback(&soc->atexit.list, cble, fn, param);
-}
-
-void csx_soc_callback_atreset(csx_soc_ptr soc,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	callback_qlist_setup_and_register_callback(&soc->atreset.list, cble, fn, param);
-}
-
-void csx_soc_init(csx_soc_ref soc)
-{
-	ACTION_LOG(init);
-	ERR_NULL(soc);
-
-	/* **** */
-
-	csx_ref csx = soc->csx;
-
-	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
-	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
-
-	/* **** */
 }
 
 static int x038201000610(csx_ref csx) {
@@ -299,11 +277,4 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);
 
 	return(err);
-}
-
-void csx_soc_reset(csx_ref csx)
-{
-	ACTION_LOG(reset);
-
-	_csx_soc_atreset(csx->soc);
 }

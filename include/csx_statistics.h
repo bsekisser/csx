@@ -15,7 +15,7 @@ extern csx_statistics_ptr statistics;
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/dtime.h"
 
 /* **** */
@@ -56,15 +56,13 @@ typedef struct csx_statistics_tag {
 	csx_ptr csx;
 	csx_statistic_counters_t counters;
 	csx_statistic_profile_t profile;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }csx_statistics_t;
 
 /* **** */
 
+extern action_list_t csx_statistics_action_list;
+
 csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s);
-void csx_statistics_init(csx_statistics_ref s);
 
 static inline void csx_counter_add(uint32_t* c, unsigned add) {
 	if(_csx_statistical_counters)

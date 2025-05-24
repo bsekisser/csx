@@ -10,9 +10,15 @@ typedef soc_omap_gp_timer_ptr const soc_omap_gp_timer_ref;
 
 /* **** */
 
+#include "csx_mmio.h"
 #include "csx.h"
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t soc_omap_gp_timer_action_list;
+
 soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_gp_timer_href h2gpt);
-void soc_omap_gp_timer_init(soc_omap_gp_timer_ref gpt);

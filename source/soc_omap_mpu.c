@@ -7,8 +7,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -21,15 +21,13 @@
 /* **** */
 
 typedef struct soc_omap_mpu_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	uint32_t ckctl;
 	uint32_t idlct[2];
 	uint32_t rstct[2];
 	uint32_t sysst;
-
-	callback_qlist_elem_t atexit;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_mpu_t;
 
 /* **** */
@@ -40,17 +38,6 @@ typedef struct soc_omap_mpu_tag {
 	_MMIO(0xfffe, 0xce08, 0x0000, 0x0100, ARM_IDLECT2, soc_omap_mpu_idlct2) \
 	_MMIO(0xfffe, 0xce14, 0x0000, 0x0000, ARM_RSTCT2, soc_omap_mpu_rstct2) \
 	_MMIO(0xfffe, 0xce18, 0x0000, 0x0038, ARM_SYSST, soc_omap_mpu_sysst)
-
-/* **** */
-
-static int __soc_omap_mpu_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-
-	return(0);
-}
 
 /* **** */
 
@@ -205,6 +192,49 @@ static csx_mmio_access_list_t _soc_omap_mpu_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+/* **** */
+
+static
+int soc_omap_mpu_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_mpu_ref mpu = param;
+
+	/* **** */
+
+	ERR_NULL(mpu->mmio);
+	csx_mmio_register_access_list(mpu->mmio, 0, _soc_omap_mpu_acl, mpu);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_mpu_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_mpu_action_exit }, { 0 }, 0, },
+		[_ACTION_INIT] = {{ soc_omap_mpu_action_init }, { 0 }, 0, },
+	}
+};
+
+/* **** */
+
 soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_href h2mpu)
 {
 	ERR_NULL(csx);
@@ -223,19 +253,5 @@ soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &mpu->atexit, __soc_omap_mpu_atexit, h2mpu);
-
-	/* **** */
-
 	return(mpu);
-}
-
-void soc_omap_mpu_init(soc_omap_mpu_ref mpu)
-{
-	ACTION_LOG(init);
-	ERR_NULL(mpu);
-
-	/* **** */
-
-	csx_mmio_register_access_list(mpu->mmio, 0, _soc_omap_mpu_acl, mpu);
 }

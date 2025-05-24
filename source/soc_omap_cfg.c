@@ -9,8 +9,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -28,14 +28,11 @@
 #endif
 
 typedef struct soc_omap_cfg_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	uint8_t data[0x0200];
 	uint8_t reset;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_cfg_t;
 
 #define SOC_OMAP_CFG_ACL_LIST_ACLE(_ahi, _alo, _dhi, _dlo, _name) \
@@ -85,33 +82,8 @@ enum {
 
 /* **** */
 
-static int __soc_omap_cfg_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
 static csx_mmio_access_list_t _soc_omap_cfg_acl_0[];
 static csx_mmio_access_list_t _soc_omap_cfg_acl_1[];
-
-static int __soc_omap_cfg_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_cfg_ref cfg = param;
-
-	if(!cfg->reset) {
-		ERR_NULL(cfg->mmio);
-		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_0, sizeof(uint32_t), cfg->data);
-		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_1, sizeof(uint32_t), &cfg->data[0x100]);
-		cfg->reset = 1;
-	}
-
-	return(0);
-}
 
 /* **** */
 
@@ -213,7 +185,8 @@ static uint32_t _soc_omap_cfg_mem_access(void *const param, const uint32_t ppa, 
 
 	const uint32_t data = csx_data_offset_mem_access(cfg->data, offset, size, write);
 
-	CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
+	if(_trace_mmio_cfg)
+		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);
 
 	return(data);
 }
@@ -229,6 +202,73 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[] = {
 	SOC_OMAP_CFG_ACL_LIST_1(SOC_OMAP_CFG_ACL_LIST_ACLE)
 	{ .ppa = ~0U, }
 };
+
+/* **** */
+
+static
+int soc_omap_cfg_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_cfg_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_cfg_ref cfg = param;
+
+	/* **** */
+
+	csx_mmio_ref mmio = cfg->mmio;
+	ERR_NULL(mmio);
+
+	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_0, (void*)cfg);
+	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_1, (void*)cfg);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_cfg_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	/* **** */
+
+	soc_omap_cfg_ref cfg = param;
+
+	if(!cfg->reset) {
+		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_0, sizeof(uint32_t), cfg->data);
+		csx_mmio_access_list_reset(cfg->mmio, _soc_omap_cfg_acl_1, sizeof(uint32_t), &cfg->data[0x100]);
+		cfg->reset = 1;
+	}
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_cfg_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_cfg_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_cfg_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_cfg_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
 
 soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg_href h2cfg)
 {
@@ -248,22 +288,5 @@ soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &cfg->atexit, __soc_omap_cfg_atexit, h2cfg);
-	csx_mmio_callback_atreset(mmio, &cfg->atreset, __soc_omap_cfg_atreset, cfg);
-
-	/* **** */
-
 	return(cfg);
-}
-
-void soc_omap_cfg_init(soc_omap_cfg_ref cfg)
-{
-	ACTION_LOG(init);
-	ERR_NULL(cfg);
-
-	csx_mmio_ref mmio = cfg->mmio;
-	ERR_NULL(mmio);
-
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_0, (void*)cfg);
-	csx_mmio_register_access_list(mmio, 0, _soc_omap_cfg_acl_1, (void*)cfg);
 }

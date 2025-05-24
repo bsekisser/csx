@@ -8,8 +8,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/mem_access.h"
 
@@ -72,12 +72,9 @@ typedef struct soc_omap_dma_tag {
 		unsigned gcr;
 		unsigned gscr;
 	}gcr;
-
+//
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }soc_omap_dma_t;
 
 /* **** */
@@ -175,45 +172,6 @@ enum {
 #define _DMA_LCDx(_x) (SOC_OMAP_DMA_LCD + _DMA_LCD_(_x))
 
 #define DMA_LCD(_x) _DMA_LCDx(_x)
-
-/* **** */
-
-static int __soc_omap_dma_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_dma_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_dma_ref dma = param;
-
-	dma->gcr.gcr = (dma->gcr.gcr & ~mlBF(15, 5)) | _BV(3);
-	dma->gcr.gscr &= ~_BV(3);
-
-	for(unsigned n = 0; n < SOC_OMAP_DMA_CH_COUNT; n++) {
-		soc_omap_dma_ch_ref ch = &dma->ch[n];
-
-		ch->ccr = 0;
-		ch->cicr = (ch->cicr & ~mlBF(15, 6)) | 3;
-		ch->clnk_ctrl &= ~mlBF(13, 5);
-		ch->csdp = 0;
-		ch->csr = 0;
-		ch->lch_ctrl &= ~mlBF(14, 4);
-	}
-
-	soc_omap_dma_lcd_ref lcd = &dma->lcd;
-
-	lcd->csdp = 0;
-	lcd->ctrl = 0;
-
-	return(0);
-}
 
 /* **** */
 
@@ -881,42 +839,32 @@ static uint32_t _soc_omap_dma_lcd_lch_ctrl(void *const param, const uint32_t ppa
 
 /* **** */
 
-soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma_href h2dma)
+static
+int soc_omap_dma_action_exit(int err, void *const param, action_ref)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2dma);
-
-	ACTION_LOG(alloc);
+	ACTION_LOG(exit);
 
 	/* **** */
 
-	soc_omap_dma_ref dma = handle_calloc(h2dma, 1, sizeof(soc_omap_dma_t));
-	ERR_NULL(dma);
-
-	dma->csx = csx;
-	dma->mmio = mmio;
+	handle_ptrfree(param);
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &dma->atexit, __soc_omap_dma_atexit, h2dma);
-	csx_mmio_callback_atreset(mmio, &dma->atreset, __soc_omap_dma_atreset, dma);
-
-	/* **** */
-
-	return(dma);
+	return(err);
 }
 
-/* **** */
-
-void soc_omap_dma_init(soc_omap_dma_ref dma)
+static
+int soc_omap_dma_action_init(int err, void *const param, action_ref)
 {
 	ACTION_LOG(init);
-	ERR_NULL(dma);
+	ERR_NULL(param);
+
+	soc_omap_dma_ref dma = param;
 
 	/* **** */
 
 	csx_mmio_ref mmio = dma->mmio;
+	ERR_NULL(mmio);
 
 /* global dma control */
 	csx_mmio_register_access(mmio, DMA_GCR, _soc_omap_dma_gcr, dma);
@@ -970,4 +918,72 @@ void soc_omap_dma_init(soc_omap_dma_ref dma)
 	csx_mmio_register_access(mmio, DMA_LCD(TOP_B1_U), _soc_omap_dma_lcd_b_top, dma);
 	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_L), _soc_omap_dma_lcd_b_top, dma);
 	csx_mmio_register_access(mmio, DMA_LCD(TOP_B2_U), _soc_omap_dma_lcd_b_top, dma);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_dma_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_dma_ref dma = param;
+
+	/* **** */
+
+	dma->gcr.gcr = (dma->gcr.gcr & ~mlBF(15, 5)) | _BV(3);
+	dma->gcr.gscr &= ~_BV(3);
+
+	for(unsigned n = 0; n < SOC_OMAP_DMA_CH_COUNT; n++) {
+		soc_omap_dma_ch_ref ch = &dma->ch[n];
+
+		ch->ccr = 0;
+		ch->cicr = (ch->cicr & ~mlBF(15, 6)) | 3;
+		ch->clnk_ctrl &= ~mlBF(13, 5);
+		ch->csdp = 0;
+		ch->csr = 0;
+		ch->lch_ctrl &= ~mlBF(14, 4);
+	}
+
+	soc_omap_dma_lcd_ref lcd = &dma->lcd;
+
+	lcd->csdp = 0;
+	lcd->ctrl = 0;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_dma_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_dma_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_dma_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_dma_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
+soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma_href h2dma)
+{
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2dma);
+
+	ACTION_LOG(alloc);
+
+	/* **** */
+
+	soc_omap_dma_ref dma = handle_calloc(h2dma, 1, sizeof(soc_omap_dma_t));
+	ERR_NULL(dma);
+
+	dma->csx = csx;
+	dma->mmio = mmio;
+
+	/* **** */
+
+	return(dma);
 }

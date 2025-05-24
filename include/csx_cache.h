@@ -14,5 +14,10 @@ typedef csx_cache_ptr const csx_cache_ref;
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t csx_cache_action_list;
+
 csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache);
-void csx_cache_init(csx_cache_ref cache);

@@ -8,8 +8,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -22,9 +22,6 @@
 /* **** */
 
 typedef struct soc_omap_gp_timer_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	uint32_t tclr;
 	uint32_t tiocp_cfg;
 	uint32_t tier;
@@ -33,8 +30,9 @@ typedef struct soc_omap_gp_timer_tag {
 	uint32_t tmar;
 	uint32_t tsicr;
 	uint32_t twer;
-
-	callback_qlist_elem_t atexit;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_gp_timer_t;
 
 /* **** */
@@ -51,20 +49,6 @@ enum {
 };
 
 #define SOC_OMAP_GP_TIMER_BASE(_x) (SOC_OMAP_GP_TIMER + ((_x) * 0x0800))
-
-/* **** */
-
-static int __soc_omap_gp_timer_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_gp_timer_href h2gpt = param;
-//	soc_omap_gp_timer_ref gpt = *h2gpt;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
 
 /* **** */
 
@@ -120,6 +104,53 @@ static csx_mmio_access_list_t __soc_omap_gp_timer_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+/* **** */
+
+static
+int soc_omap_gp_timer_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_gp_timer_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_gp_timer_ref gpt = param;
+
+	/* **** */
+
+	csx_mmio_ref mmio = gpt->mmio;
+	ERR_NULL(mmio);
+
+	for(unsigned i = 0; i < 8; i++)
+		csx_mmio_register_access_list(mmio, SOC_OMAP_GP_TIMER_BASE(i),
+			__soc_omap_gp_timer_acl, gpt);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_gp_timer_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_gp_timer_action_exit }, { 0 }, 0, },
+		[_ACTION_INIT] = {{ soc_omap_gp_timer_action_init }, { 0 }, 0, },
+	}
+};
+
+/* **** */
+
 soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_gp_timer_href h2gpt)
 {
 	ERR_NULL(csx);
@@ -136,23 +167,7 @@ soc_omap_gp_timer_ptr soc_omap_gp_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 	gpt->csx = csx;
 	gpt->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, &gpt->atexit, __soc_omap_gp_timer_atexit, h2gpt);
-
 	/* **** */
 
 	return(gpt);
-}
-
-void soc_omap_gp_timer_init(soc_omap_gp_timer_ref gpt)
-{
-	ACTION_LOG(init);
-	ERR_NULL(gpt);
-
-	/* **** */
-
-	csx_mmio_ref mmio = gpt->mmio;
-
-	for(unsigned i = 0; i < 8; i++)
-		csx_mmio_register_access_list(mmio, SOC_OMAP_GP_TIMER_BASE(i),
-			__soc_omap_gp_timer_acl, gpt);
 }

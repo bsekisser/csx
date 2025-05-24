@@ -15,5 +15,10 @@ typedef soc_omap_os_timer_ptr const soc_omap_os_timer_ref;
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t soc_omap_os_timer_action_list;
+
 soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost);
-void soc_omap_os_timer_init(soc_omap_os_timer_ref ost);

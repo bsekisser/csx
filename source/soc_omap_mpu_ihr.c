@@ -10,8 +10,8 @@
 
 /* **** local library includes */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -24,9 +24,6 @@
 /* **** */
 
 typedef struct soc_omap_mpu_ihr_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	struct {
 		struct {
 			uint32_t control;
@@ -54,9 +51,9 @@ typedef struct soc_omap_mpu_ihr_tag {
 			uint32_t ilr[4][32];
 		}l2;
 	};
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_mpu_ihr_t;
 
 enum {
@@ -115,36 +112,6 @@ enum {
 
 /* **** */
 
-static int __soc_omap_mpu_ihr_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_mpu_ihr_href h2ihr = param;
-//	soc_omap_mpu_ihr_ref ihr = *h2ihr;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_mpu_ihr_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_mpu_ihr_ref ihr = param;
-
-	ihr->l1.mir = 0xffffffff;
-	ihr->l2.mir[0] = 0xffffffff;
-	ihr->l2.mir[1] = 0xffffffff;
-	ihr->l2.mir[2] = 0xffffffff;
-	ihr->l2.mir[3] = 0xffffffff;
-
-	return(0);
-}
-
-
-/* **** */
-
 #define SOC_OMAP_MPU_IHR_MEM_ACCESS_VAR(_enum, _name, _var) \
 	UNUSED_FN static uint32_t _soc_omap_mpu_ihr_ ## _name(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write) \
 	{ \
@@ -191,40 +158,34 @@ static csx_mmio_access_list_t __soc_omap_mpu_ihr_l2_acl[] = {
 	{ .ppa = ~0U, },
 };
 
-soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_ihr_href h2ihr)
+/* **** */
+
+static
+int soc_omap_mpu_ihr_action_exit(int err, void *const param, action_ref)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2ihr);
-
-	ACTION_LOG(alloc);
+	ACTION_LOG(exit);
 
 	/* **** */
 
-	soc_omap_mpu_ihr_ref ihr = handle_calloc(h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
-	ERR_NULL(ihr);
-
-	ihr->csx = csx;
-	ihr->mmio = mmio;
+	handle_ptrfree(param);
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &ihr->atexit, __soc_omap_mpu_ihr_atexit, h2ihr);
-	csx_mmio_callback_atreset(mmio, &ihr->atreset, __soc_omap_mpu_ihr_atreset, ihr);
-
-	/* **** */
-
-	return(ihr);
+	return(err);
 }
 
-void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_ref ihr)
+static
+int soc_omap_mpu_ihr_action_init(int err, void *const param, action_ref)
 {
 	ACTION_LOG(init);
-	ERR_NULL(ihr);
+	ERR_NULL(param);
+
+	soc_omap_mpu_ihr_ref ihr = param;
 
 	/* **** */
 
 	csx_mmio_ref mmio = ihr->mmio;
+	ERR_NULL(mmio);
 
 	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_IHR_L1, __soc_omap_mpu_ihr_l1_acl, ihr);
 
@@ -251,4 +212,59 @@ void soc_omap_mpu_ihr_init(soc_omap_mpu_ihr_ref ihr)
 			csx_mmio_register_access(mmio, ppa, _soc_omap_mpu_ihr_l1_ilr, ihr);
 		}
 	}
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_ihr_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_mpu_ihr_ref ihr = param;
+
+	/* **** */
+
+	ihr->l1.mir = 0xffffffff;
+	ihr->l2.mir[0] = 0xffffffff;
+	ihr->l2.mir[1] = 0xffffffff;
+	ihr->l2.mir[2] = 0xffffffff;
+	ihr->l2.mir[3] = 0xffffffff;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_mpu_ihr_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_mpu_ihr_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_mpu_ihr_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_mpu_ihr_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
+soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_ihr_href h2ihr)
+{
+	ERR_NULL(csx);
+	ERR_NULL(mmio);
+	ERR_NULL(h2ihr);
+
+	ACTION_LOG(alloc);
+
+	/* **** */
+
+	soc_omap_mpu_ihr_ref ihr = handle_calloc(h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
+	ERR_NULL(ihr);
+
+	ihr->csx = csx;
+	ihr->mmio = mmio;
+
+	/* **** */
+
+	return(ihr);
 }

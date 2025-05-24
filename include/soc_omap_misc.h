@@ -15,5 +15,10 @@ typedef soc_omap_misc_ptr const soc_omap_misc_ref;
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t soc_omap_misc_action_list;
+
 soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_misc_href h2misc);
-void soc_omap_misc_init(soc_omap_misc_ref misc);

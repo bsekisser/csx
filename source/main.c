@@ -5,6 +5,7 @@
 
 /* **** local includes */
 
+#include "libbse/include/action.h"
 #include "libbse/include/dtime.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/log.h"
@@ -88,9 +89,13 @@ int main(int argc, char **argv)
 	const uint64_t dtime_second = dtime_calibrate();
 	const double dtime_second_ratio = 1.0 / dtime_second;
 
-	csx_ref csx = csx_init(csx_alloc());
+	csx_ref csx = csx_alloc(0);
+	int err = 0;
 
-	csx_reset(csx);
+//	err |= csx_action(0, (void*)&csx, _ACTION_ALLOC);
+	err |= csx_action(err, csx, _ACTION_ALLOC_INIT);
+	err |= csx_action(err, csx, _ACTION_INIT);
+	err |= csx_action(err, csx, _ACTION_RESET);
 
 	const uint64_t dtime_start = get_dtime();
 
@@ -135,6 +140,6 @@ int main(int argc, char **argv)
 		LOG_ERR("est mips = %0.16f", icount_second * mips_ratio);
 	}
 
-	csx_atexit(&csx);
+	err |= csx_action(err, csx, _ACTION_EXIT);
 	(void)argc, (void)argv;
 }

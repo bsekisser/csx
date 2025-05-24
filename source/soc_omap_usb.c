@@ -8,7 +8,7 @@
 
 /* **** local library level includes */
 
-#include "libbse/include/callback_qlist.h"
+#include "git/libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -23,44 +23,20 @@
 /* **** */
 
 typedef struct soc_omap_usb_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	struct {
 		uint32_t syscon1;
 	}otg;
 
 	uint8_t data[0x100];
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_usb_t;
 
 /* **** */
 
 //static void ___set_reset_done(soc_omap_usb_ref usb, const int set)
 //{ BMAS(usb>syscon_1, 2, set); }
-
-/* **** */
-
-static int __soc_omap_usb_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-	return(0);
-}
-
-static int __soc_omap_usb_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-//	soc_omap_usb_ref usb = param;
-//	___set_reset_done(param, 1);
-
-	return(0);
-	UNUSED(param);
-}
 
 /* **** */
 
@@ -114,6 +90,62 @@ static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+static
+int soc_omap_usb_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_usb_action_init(int err, void *const param, action_ref)
+{
+	ERR_NULL(param);
+
+	ACTION_LOG(init);
+
+	soc_omap_usb_ref usb = param;
+
+	/* **** */
+
+	csx_mmio_register_access_list(usb->mmio, 0, _soc_omap_usb_client_acl, usb);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_usb_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	/* **** */
+
+//	soc_omap_usb_ref usb = param;
+//	___set_reset_done(param, 1);
+
+	/* **** */
+
+	return(err);
+	UNUSED(param);
+}
+
+action_list_t soc_omap_usb_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_usb_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_usb_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_usb_action_reset }, { 0 }, 0 },
+	}
+};
+
 soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb_href h2usb)
 {
 	ERR_NULL(csx);
@@ -130,21 +162,7 @@ soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb
 	usb->csx = csx;
 	usb->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, &usb->atexit, __soc_omap_usb_atexit, h2usb);
-	csx_mmio_callback_atreset(mmio, &usb->atreset, __soc_omap_usb_atreset, usb);
-
 	/* **** */
 
 	return(usb);
-}
-
-
-void soc_omap_usb_init(soc_omap_usb_ref usb)
-{
-	ACTION_LOG(init);
-	ERR_NULL(usb);
-
-	/* **** */
-
-	csx_mmio_register_access_list(usb->mmio, 0, _soc_omap_usb_client_acl, usb);
 }

@@ -23,13 +23,21 @@ typedef struct csx_cache_tag {
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/err_test.h"
 #include "libbse/include/log.h"
+
+/* **** */
+
+#include <stdint.h>
+#include <inttypes.h>
 
 /* **** */
 
 #undef DEBUG
 //#define DEBUG(_x) _x
+
 #ifndef DEBUG
 	#define DEBUG(_x)
 #endif
@@ -119,26 +127,15 @@ static uint32_t _csx_cache_cp15_0_7_10_4_access(void *const param, uint32_t *con
 
 /* **** */
 
-csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache)
+static
+int csx_cache_action_init(int err, void *const param, action_ref)
 {
-	ERR_NULL(csx);
-	ERR_NULL(h2cache);
+	ACTION_LOG(init, "err: 0x%08x, param: 0x%016" PRIxPTR, err, (uintptr_t)param);
+	ERR_NULL(param);
 
-	ACTION_LOG(alloc);
+	csx_cache_ref cache = param;
 
 	/* **** */
-
-	*h2cache = (void*)csx;
-
-	/* **** */
-
-	return((void*)csx);
-}
-
-void csx_cache_init(csx_cache_ref cache)
-{
-	ACTION_LOG(init);
-	ERR_NULL(cache);
 
 	csx_ref csx = (void*)cache;
 	armvm_coprocessor_ref cp = csx->armvm->coprocessor;
@@ -153,4 +150,31 @@ void csx_cache_init(csx_cache_ref cache)
 		_csx_cache_cp15_0_7_10_3_access, cache);
 	armvm_coprocessor_register_callback(cp, cp15(0, 7, 10, 4),
 		_csx_cache_cp15_0_7_10_4_access, cache);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t csx_cache_action_list = {
+	.list = {
+		[_ACTION_INIT] = {{ csx_cache_action_init }, { 0 }, 0 }
+	}
+};
+
+csx_cache_ptr csx_cache_alloc(csx_ref csx, csx_cache_href h2cache)
+{
+	ACTION_LOG(alloc, "csx: 0x%016" PRIxPTR ", h2cache: 0x%016" PRIxPTR,
+		(uintptr_t)csx, (uintptr_t)h2cache);
+
+	ERR_NULL(csx);
+	ERR_NULL(h2cache);
+
+	/* **** */
+
+	*h2cache = (void*)csx;
+
+	/* **** */
+
+	return((void*)csx);
 }

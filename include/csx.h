@@ -33,7 +33,7 @@ typedef csx_data_ptr const csx_data_ref;
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/unused.h"
 
 /* **** */
@@ -71,21 +71,14 @@ typedef struct csx_tag {
 	csx_data_t						firmware;
 
 	uint8_t							sdram[CSX_SDRAM_ALLOC];
-
-	callback_qlist_t				atexit_list;
-	callback_qlist_t				atreset_list;
 }csx_t;
 
 /* **** */
 
 #include "config.h"
 
-csx_ptr csx_alloc(void);
-void csx_atexit(csx_href h2csx);
-void csx_callback_atexit(csx_ref csx, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
-void csx_callback_atreset(csx_ref csx, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
-csx_ptr csx_init(csx_ref csx);
-void csx_reset(csx_ref csx);
+int csx_action(int err, csx_ref csx, action_ref action);
+csx_ptr csx_alloc(csx_href h2csx);
 
 /* **** */
 

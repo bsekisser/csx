@@ -13,7 +13,7 @@ typedef csx_soc_ptr const csx_soc_ref;
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 
 /* **** */
 
@@ -22,22 +22,9 @@ typedef struct csx_soc_tag {
 	uint8_t sram[SOC_SRAM_ALLOC]; /* aka framebuffer */
 
 	csx_ptr csx;
-
-	struct {
-		callback_qlist_t list;
-		callback_qlist_elem_t elem;
-	}atexit;
-
-	struct {
-		callback_qlist_t list;
-		callback_qlist_elem_t elem;
-	}atreset;
 }csx_soc_t;
 
-void csx_soc_callback_atexit(csx_soc_ref soc, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
-void csx_soc_callback_atreset(csx_soc_ref soc, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
+extern action_list_t csx_soc_action_list;
 
 csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc);
-void csx_soc_init(csx_soc_ref soc);
 int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware);
-void csx_soc_reset(csx_ref csx);

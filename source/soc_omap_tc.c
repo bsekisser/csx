@@ -8,8 +8,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -23,9 +23,6 @@
 /* **** */
 
 typedef struct soc_omap_tc_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	struct {
 		uint32_t sdram_config;
 	}emiff;
@@ -39,9 +36,9 @@ typedef struct soc_omap_tc_tag {
 		}t1;
 		struct {}t2;
 	}ocp;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_tc_t;
 
 /* **** */
@@ -66,31 +63,6 @@ enum {
 	SOC_OMAP_TC_EMIFS_ACL(MMIO_ENUM)
 	SOC_OMAP_TC_OCP_T1_ACL(MMIO_ENUM)
 };
-
-/* **** */
-
-static int _soc_omap_tc_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_tc_href h2tc = param;
-//	soc_omap_tc_ref tc = *h2tc;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int _soc_omap_tc_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_tc_ref tc = param;
-
-	tc->emiff.sdram_config = 0x00618800;
-
-	return(0);
-}
 
 /* **** */
 
@@ -237,6 +209,63 @@ static csx_mmio_access_list_t _soc_omap_tc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+
+static
+int soc_omap_tc_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_tc_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_tc_ref tc = param;
+
+	/* **** */
+
+	ERR_NULL(tc->mmio);
+	csx_mmio_register_access_list(tc->mmio, 0, _soc_omap_tc_acl, tc);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_tc_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	/* **** */
+
+	soc_omap_tc_ref tc = param;
+
+	tc->emiff.sdram_config = 0x00618800;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_tc_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_tc_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_tc_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_tc_action_reset }, { 0 }, 0 },
+	}
+};
+
 soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_href h2tc)
 {
 	ERR_NULL(csx);
@@ -255,20 +284,5 @@ soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_hr
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &tc->atexit, _soc_omap_tc_atexit, h2tc);
-	csx_mmio_callback_atreset(mmio, &tc->atreset, _soc_omap_tc_atreset, tc);
-
-	/* **** */
-
 	return(tc);
-}
-
-void soc_omap_tc_init(soc_omap_tc_ref tc)
-{
-	ACTION_LOG(init);
-	ERR_NULL(tc);
-
-	/* **** */
-
-	csx_mmio_register_access_list(tc->mmio, 0, _soc_omap_tc_acl, tc);
 }

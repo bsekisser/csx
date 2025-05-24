@@ -7,8 +7,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -43,13 +43,10 @@ typedef struct soc_omap_uart_unit_tag {
 }soc_omap_uart_unit_t;
 
 typedef struct soc_omap_uart_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	soc_omap_uart_unit_t unit[3];
 
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_uart_t;
 
 /* **** */
@@ -91,33 +88,10 @@ enum {
 
 /* **** */
 
-static int __soc_omap_uart_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_uart_href h2uart = param;
-//	soc_omap_uart_ref uart = *h2uart;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
 static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 	memset(uu, 0, sizeof(soc_omap_uart_unit_t));
 
 	BSET(uu->syss, SYSS_ResetDone);
-
-	return(0);
-}
-
-static int __soc_omap_uart_atreset(void *const param) {
-	ACTION_LOG(reset);
-
-	soc_omap_uart_ref uart = param;
-
-	for(unsigned uux = 0; uux < 3; uux++)
-		__soc_omap_uart_unit_reset(&uart->unit[uux]);
 
 	return(0);
 }
@@ -466,6 +440,67 @@ static csx_mmio_access_list_t __soc_omap_uart_acl[] = {
 
 /* **** */
 
+static
+int soc_omap_uart_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_uart_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_uart_ref uart = param;
+
+	csx_mmio_ref mmio = uart->mmio;
+	ERR_NULL(mmio);
+
+	/* **** */
+
+	csx_mmio_register_access_list(mmio, SOC_OMAP_UART1, __soc_omap_uart_acl, uart);
+	csx_mmio_register_access_list(mmio, SOC_OMAP_UART2, __soc_omap_uart_acl, uart);
+	csx_mmio_register_access_list(mmio, SOC_OMAP_UART3, __soc_omap_uart_acl, uart);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_uart_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_uart_ref uart = param;
+
+	/* **** */
+
+	for(unsigned uux = 0; uux < 3; uux++)
+		__soc_omap_uart_unit_reset(&uart->unit[uux]);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_uart_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_uart_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_uart_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_uart_action_reset }, { 0 }, 0 },
+	}
+};
+
 soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_uart_href h2uart)
 {
 	ERR_NULL(csx);
@@ -484,22 +519,5 @@ soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_u
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &uart->atexit, __soc_omap_uart_atexit, h2uart);
-	csx_mmio_callback_atreset(mmio, &uart->atreset, __soc_omap_uart_atreset, uart);
-
 	return(uart);
-}
-
-void soc_omap_uart_init(soc_omap_uart_ref uart)
-{
-	ACTION_LOG(init);
-	ERR_NULL(uart);
-
-	/* **** */
-
-	csx_mmio_ref mmio = uart->mmio;
-
-	csx_mmio_register_access_list(mmio, SOC_OMAP_UART1, __soc_omap_uart_acl, uart);
-	csx_mmio_register_access_list(mmio, SOC_OMAP_UART2, __soc_omap_uart_acl, uart);
-	csx_mmio_register_access_list(mmio, SOC_OMAP_UART3, __soc_omap_uart_acl, uart);
 }

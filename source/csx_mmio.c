@@ -29,6 +29,7 @@
 
 /* **** local library level includes */
 
+#include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -58,18 +59,6 @@ typedef struct csx_mmio_tag {
 		uint64_t padding[2];
 	};
 
-	csx_ptr csx;
-
-	struct {
-		callback_qlist_t list;
-		callback_qlist_elem_t elem;
-	}atexit;
-
-	struct {
-		callback_qlist_t list;
-		callback_qlist_elem_t elem;
-	}atreset;
-
 	soc_omap_cfg_ptr cfg;
 	soc_omap_dma_ptr dma;
 	soc_omap_dpll_ptr dpll;
@@ -86,6 +75,8 @@ typedef struct csx_mmio_tag {
 	soc_omap_uart_ptr uart;
 	soc_omap_usb_ptr usb;
 	soc_omap_watchdog_ptr wdt;
+//
+	csx_ptr csx;
 }csx_mmio_t;
 
 /* **** */
@@ -106,25 +97,24 @@ static csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, con
 
 /* **** */
 
-static int _csx_mmio_atexit(void *const param) {
-	ACTION_LOG(exit);
-
-	csx_mmio_href h2mmio = param;
-	csx_mmio_ref mmio = *h2mmio;
-
-	callback_qlist_process(&mmio->atexit.list);
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int _csx_mmio_atreset(void *const param) {
-	ACTION_LOG(reset);
+static uint32_t _csx_mmio_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+{
+	assert(0 != param);
 
 	csx_mmio_ref mmio = param;
 
-	callback_qlist_process(&mmio->atreset.list);
+	csx_mmio_mem_access_ref cmmap = __csx_mmio_mem_access(mmio, ppa);
+	uint32_t data = write ? *write : 0;
+
+	if(cmmap->fn)
+		return(cmmap->fn(cmmap->param, ppa, size, write));
+
+	if(cmmap->param)
+		return(0);
+
+	csx_mmio_trace_mem_access(mmio->csx, ppa, size, write, data);
+
+//	LOG_ACTION(exit(-1));
 
 	return(0);
 }
@@ -143,6 +133,72 @@ void csx_mmio_access_list_reset(csx_mmio_ref mmio, csx_mmio_access_list_ref acl,
 	UNUSED(mmio);
 }
 
+/* **** */
+
+static
+int csx_mmio_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int csx_mmio_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	csx_mmio_ref mmio = param;
+	csx_ref csx = mmio->csx;
+	ERR_NULL(csx);
+
+	/* **** */
+
+	armvm_mem_mmap_cb(csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, _csx_mmio_mem_access, mmio);
+
+	/* **** */
+
+	return(err);
+}
+
+static action_handler_t csx_mmio_action_sublist[] = {
+	{{ .list = &soc_omap_cfg_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, cfg) },
+	{{ .list = &soc_omap_dma_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, dma) },
+	{{ .list = &soc_omap_dpll_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, dpll) },
+	{{ .list = &soc_omap_gp_timer_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, gp_timer) },
+	{{ .list = &soc_omap_lcd_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, lcd) },
+	{{ .list = &soc_omap_misc_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, misc) },
+	{{ .list = &soc_omap_mpu_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, mpu) },
+	{{ .list = &soc_omap_mpu_gpio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, mpu_gpio) },
+	{{ .list = &soc_omap_mpu_ihr_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, mpu_ihr) },
+	{{ .list = &soc_omap_mpu_mmc_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, mpu_mmc) },
+	{{ .list = &soc_omap_mpu_timer_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, mpu_timer) },
+	{{ .list = &soc_omap_os_timer_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, os_timer) },
+	{{ .list = &soc_omap_tc_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, tc) },
+	{{ .list = &soc_omap_uart_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, uart) },
+	{{ .list = &soc_omap_usb_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, usb) },
+	{{ .list = &soc_omap_watchdog_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, wdt) },
+	{{0}, { 0 }, 0 },
+};
+
+action_list_t csx_mmio_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ csx_mmio_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ csx_mmio_action_init }, { 0 }, 0 },
+	},
+
+	.sublist = csx_mmio_action_sublist
+};
+
+/* **** */
+
 csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
 {
 	ERR_NULL(csx);
@@ -150,20 +206,12 @@ csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
 
 	ACTION_LOG(alloc);
 
+	/* **** */
+
 	csx_mmio_ref mmio = handle_calloc(h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
 
 	mmio->csx = csx;
-
-	/* **** */
-
-	callback_qlist_init(&mmio->atexit.list, LIST_LIFO);
-	callback_qlist_init(&mmio->atreset.list, LIST_FIFO);
-
-	/* **** */
-
-	csx_callback_atexit(csx, &mmio->atexit.elem, _csx_mmio_atexit, h2mmio);
-	csx_callback_atreset(csx, &mmio->atreset.elem, _csx_mmio_atreset, mmio);
 
 	/* **** */
 
@@ -187,84 +235,6 @@ csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
 	/* **** */
 
 	return(mmio);
-}
-
-void csx_mmio_callback_atexit(csx_mmio_ref mmio,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	if(0) {
-		LOG_START("cbl: 0x%08" PRIxPTR, (uintptr_t)&mmio->atexit.list);
-		_LOG_(", cble: 0x%08" PRIxPTR, (uintptr_t)cble);
-		_LOG_(", fn: 0x%08" PRIxPTR, (uintptr_t)fn);
-		LOG_END(", param: 0x%08" PRIxPTR, (uintptr_t)param);
-	}
-
-	callback_qlist_setup_and_register_callback(&mmio->atexit.list, cble, fn, param);
-}
-
-void csx_mmio_callback_atreset(csx_mmio_ref mmio,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	if(0) {
-		LOG_START("cbl: 0x%08" PRIxPTR, (uintptr_t)&mmio->atreset.list);
-		_LOG_(", cble: 0x%08" PRIxPTR, (uintptr_t)cble);
-		_LOG_(", fn: 0x%08" PRIxPTR, (uintptr_t)fn);
-		LOG_END(", param: 0x%08" PRIxPTR, (uintptr_t)param);
-	}
-
-	callback_qlist_setup_and_register_callback(&mmio->atreset.list, cble, fn, param);
-}
-
-static uint32_t csx_mmio_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
-{
-	assert(0 != param);
-
-	csx_mmio_ref mmio = param;
-
-	csx_mmio_mem_access_ref cmmap = __csx_mmio_mem_access(mmio, ppa);
-	uint32_t data = write ? *write : 0;
-
-	if(cmmap->fn)
-		return(cmmap->fn(cmmap->param, ppa, size, write));
-
-	if(cmmap->param)
-		return(0);
-
-	csx_mmio_trace_mem_access(mmio->csx, ppa, size, write, data);
-
-//	LOG_ACTION(exit(-1));
-
-	return(0);
-}
-
-void csx_mmio_init(csx_mmio_ref mmio)
-{
-	ERR_NULL(mmio);
-
-	ACTION_LOG(init);
-
-	/* **** */
-
-	armvm_mem_mmap_cb(mmio->csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, csx_mmio_mem_access, mmio);
-
-	/* **** */
-
-	soc_omap_cfg_init(mmio->cfg);
-	soc_omap_dma_init(mmio->dma);
-	soc_omap_dpll_init(mmio->dpll);
-	soc_omap_gp_timer_init(mmio->gp_timer);
-	soc_omap_lcd_init(mmio->lcd);
-	soc_omap_misc_init(mmio->misc);
-	soc_omap_mpu_init(mmio->mpu);
-	soc_omap_mpu_gpio_init(mmio->mpu_gpio);
-	soc_omap_mpu_ihr_init(mmio->mpu_ihr);
-	soc_omap_mpu_mmc_init(mmio->mpu_mmc);
-	soc_omap_mpu_timer_init(mmio->mpu_timer);
-	soc_omap_os_timer_init(mmio->os_timer);
-	soc_omap_tc_init(mmio->tc);
-	soc_omap_uart_init(mmio->uart);
-	soc_omap_usb_init(mmio->usb);
-	soc_omap_watchdog_init(mmio->wdt);
 }
 
 void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param)

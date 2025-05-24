@@ -8,6 +8,7 @@
 
 #include "libarmvm/include/armvm_mem.h"
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
 #include "libbse/include/dump_hex.h"
 #include "libbse/include/err_test.h"
@@ -66,9 +67,6 @@ typedef struct csx_nnd_tag {
 	csx_nnd_unit_t					unit[16];
 
 	csx_ptr							csx;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }csx_nnd_t;
 
 /* **** */
@@ -106,52 +104,6 @@ const uint8_t csx_nnd_flash_id[16][8] = {
 
 static page_ptr __csx_nnd_flash_p2page(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, uint32_t *const write);
-
-static int __csx_nnd_flash_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	csx_nnd_ref nnd = param;
-	csx_nnd_unit_ref unit = &nnd->unit[12];
-
-	if(1 || dskimg_write) {
-		FILE* fp = 0;
-		if(dskimg_write) {
-			fp = fopen(kDSKIMG, "w");
-			fputs("DSKIMG", fp);
-		}
-
-		const size_t block_count = sizeof(device_t) / sizeof(unit->device[0]);
-		for(unsigned block = 0; block < block_count; block++) {
-			for(unsigned page = 0; page < 64; page++) {
-				const uint32_t bpa = block << 6 | page;
-				const uint32_t ppa = bpa << 11;
-
-				page_ref p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
-
-				if(p) {
-					if(dskimg_write) {
-						htole32(bpa);
-						fwrite(&bpa, 4, 1, fp);
-						le32toh(bpa);
-
-						for(unsigned x = 0; x < sizeof(page_t); x++)
-							fputc(((char*)p)[x], fp);
-					} else if(0) {
-						dump_hex(p, ppa, sizeof(page_t), 16, 1);
-					}
-				}
-			}
-		}
-
-		if(fp)
-			fclose(fp);
-	}
-
-	handle_ptrfree(param);
-
-	return(0);
-}
 
 static block_hptr __csx_nnd_flash_h2block(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row)
@@ -226,7 +178,7 @@ static void _csx_nnd_flash_page_program(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	page_ref p = __csx_nnd_flash_p2page(nnd, unit, ppa, (void*)0xfeedface);
 	assert(p);
 
-if(1) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
+if(0) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
 			ppa, block, page, (uintptr_t)p, (uintptr_t)unit->data_register);
 
 	if(p)
@@ -298,39 +250,7 @@ static csx_nnd_unit_ptr _csx_nnd_flash_unit(csx_nnd_ref nnd, const uint32_t addr
 
 /* **** */
 
-csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
-{
-	ERR_NULL(csx);
-	ERR_NULL(h2nnd);
-
-	ACTION_LOG(alloc);
-
-	/* **** */
-
-	csx_nnd_ref nnd = handle_calloc(h2nnd, 1, sizeof(csx_nnd_t));
-	ERR_NULL(nnd);
-
-	nnd->csx = csx;
-
-	/* **** */
-
-	csx_callback_atexit(csx, &nnd->atexit, __csx_nnd_flash_atexit, h2nnd);
-
-	/* **** */
-
-	for(unsigned cs = 0; cs < 16; cs++) {
-		csx_nnd_unit_ref unit = &nnd->unit[cs];
-		unit->cs = cs;
-		unit->csx = csx;
-		unit->nnd = nnd;
-	}
-
-	/* **** */
-
-	return(nnd);
-}
-
-static void csx_nnd_flash_init_dskimg(csx_nnd_ref nnd)
+static void csx_nnd_flash_action_init_dskimg(csx_nnd_ref nnd)
 {
 	csx_nnd_unit_ref unit = &nnd->unit[12];
 	FILE* fp = fopen(kDSKIMG, "r");
@@ -362,7 +282,59 @@ static void csx_nnd_flash_init_dskimg(csx_nnd_ref nnd)
 	}
 }
 
-void csx_nnd_flash_init(csx_nnd_ref nnd)
+static
+int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	csx_nnd_ref nnd = param;
+	csx_nnd_unit_ref unit = &nnd->unit[12];
+
+	/* **** */
+
+	if(1 || dskimg_write) {
+		FILE* fp = 0;
+		if(dskimg_write) {
+			fp = fopen(kDSKIMG, "w");
+			fputs("DSKIMG", fp);
+		}
+
+		const size_t block_count = sizeof(device_t) / sizeof(unit->device[0]);
+		for(unsigned block = 0; block < block_count; block++) {
+			for(unsigned page = 0; page < 64; page++) {
+				const uint32_t bpa = block << 6 | page;
+				const uint32_t ppa = bpa << 11;
+
+				page_ref p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
+
+				if(p) {
+					if(dskimg_write) {
+						htole32(bpa);
+						fwrite(&bpa, 4, 1, fp);
+						le32toh(bpa);
+
+						for(unsigned x = 0; x < sizeof(page_t); x++)
+							fputc(((char*)p)[x], fp);
+					} else if(0) {
+						dump_hex(p, ppa, sizeof(page_t), 16, 1);
+					}
+				}
+			}
+		}
+
+		if(fp)
+			fclose(fp);
+	}
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	return(err);
+}
+
+static
+int csx_nnd_flash_action_init(int err, void *const param, action_ref)
 {
 	if(0) {
 		device_t device;
@@ -376,14 +348,15 @@ void csx_nnd_flash_init(csx_nnd_ref nnd)
 		LOG("sizeof page_t: 0x%08zx", sizeof(page_t));
 	}
 
-	ERR_NULL(nnd);
-
 	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	csx_nnd_ref nnd = param;
 
 	/* **** */
 
 	if(dskimg_load)
-		csx_nnd_flash_init_dskimg(nnd);
+		csx_nnd_flash_action_init_dskimg(nnd);
 
 	csx_ref csx = nnd->csx;
 	armvm_mem_ref mem = csx->armvm->mem;
@@ -398,6 +371,43 @@ void csx_nnd_flash_init(csx_nnd_ref nnd)
 	armvm_mem_mmap_cb(mem, 0x0c000fff, 0x0fffffff, _csx_nnd_flash_mem_access, nnd);
 
 	/* **** */
+
+	return(err);
+}
+
+action_list_t csx_nnd_flash_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ csx_nnd_flash_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ csx_nnd_flash_action_init }, { 0 }, 0 },
+	}
+};
+
+csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
+{
+	ERR_NULL(csx);
+	ERR_NULL(h2nnd);
+
+	ACTION_LOG(alloc);
+
+	/* **** */
+
+	csx_nnd_ref nnd = handle_calloc(h2nnd, 1, sizeof(csx_nnd_t));
+	ERR_NULL(nnd);
+
+	nnd->csx = csx;
+
+	/* **** */
+
+	for(unsigned cs = 0; cs < 16; cs++) {
+		csx_nnd_unit_ref unit = &nnd->unit[cs];
+		unit->cs = cs;
+		unit->csx = csx;
+		unit->nnd = nnd;
+	}
+
+	/* **** */
+
+	return(nnd);
 }
 
 static uint32_t csx_nnd_flash_read_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit, const uint32_t addr, const size_t size)

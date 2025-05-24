@@ -7,7 +7,7 @@
 
 /* **** local includes */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -21,15 +21,12 @@
 /* **** */
 
 typedef struct soc_omap_watchdog_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	uint32_t cntl;
 	uint32_t load;
 	uint32_t mode;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_watchdog_t;
 
 #define SOC_OMAP_WATCHDOG_ACL(_MMIO) \
@@ -40,33 +37,6 @@ typedef struct soc_omap_watchdog_tag {
 enum {
 	SOC_OMAP_WATCHDOG_ACL(MMIO_ENUM)
 };
-
-/* **** */
-
-static int __soc_omap_watchdog_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_watchdog_href h2sow = param;
-//	soc_omap_watchdog_ref sow = *h2sow;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_watchdog_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_watchdog_ref sow = param;
-
-	sow->cntl = 0x00000e02;
-	sow->load = 0x0000ffff;
-	sow->mode = 0x00008000;
-
-	return(0);
-}
 
 /* **** */
 
@@ -141,7 +111,63 @@ static csx_mmio_access_list_t _soc_omap_watchdog_acl[] = {
 
 /* **** */
 
+static
+int soc_omap_watchdog_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
 
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_watchdog_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_watchdog_ref sow = param;
+
+	/* **** */
+
+	ERR_NULL(sow->mmio);
+	csx_mmio_register_access_list(sow->mmio, 0, _soc_omap_watchdog_acl, sow);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_watchdog_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_watchdog_ref sow = param;
+
+	/* **** */
+
+	sow->cntl = 0x00000e02;
+	sow->load = 0x0000ffff;
+	sow->mode = 0x00008000;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_watchdog_action_list = {
+	.list = {
+		[_ACTION_EXIT] = { { soc_omap_watchdog_action_exit }, { 0 }, 0, },
+		[_ACTION_INIT] = { { soc_omap_watchdog_action_init }, { 0 }, 0, },
+		[_ACTION_RESET] = { { soc_omap_watchdog_action_reset }, { 0 }, 0, },
+	}
+};
 
 soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow)
@@ -160,22 +186,7 @@ soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 	sow->csx = csx;
 	sow->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, &sow->atexit, __soc_omap_watchdog_atexit, h2sow);
-	csx_mmio_callback_atreset(mmio, &sow->atreset, __soc_omap_watchdog_atreset, sow);
-
 	/* **** */
 
 	return(sow);
-}
-
-void soc_omap_watchdog_init(soc_omap_watchdog_ref sow)
-{
-	ACTION_LOG(init);
-	ERR_NULL(sow);
-
-	/* **** */
-
-	csx_mmio_register_access_list(sow->mmio, 0, _soc_omap_watchdog_acl, sow);
-
-	/* **** */
 }

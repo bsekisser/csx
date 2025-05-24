@@ -8,7 +8,7 @@
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -23,9 +23,6 @@
 /* **** */
 
 typedef struct soc_omap_misc_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	struct {
 		unsigned syss;
 	}i2c;
@@ -35,19 +32,10 @@ typedef struct soc_omap_misc_tag {
 	uint8_t x_fe_60[0x100];
 	uint8_t x_fe_68[0x100];
 	uint8_t x_fe_78[0x100];
-
-	callback_qlist_elem_t atexit;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_misc_t;
-
-/* **** */
-
-static int __soc_omap_misc_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-	return(0);
-}
 
 /* **** */
 
@@ -274,6 +262,49 @@ static csx_mmio_access_list_t __soc_omap_misc_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+/* **** */
+
+static
+int soc_omap_misc_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_misc_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_misc_ref misc = param;
+
+	/* **** */
+
+	ERR_NULL(misc->mmio);
+	csx_mmio_register_access_list(misc->mmio, 0, __soc_omap_misc_acl, misc);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_misc_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_misc_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_misc_action_init }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
 soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_misc_href h2misc)
 {
 	ERR_NULL(csx);
@@ -292,19 +323,5 @@ soc_omap_misc_ptr soc_omap_misc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_m
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &misc->atexit, __soc_omap_misc_atexit, h2misc);
-
-	/* **** */
-
 	return(misc);
-}
-
-void soc_omap_misc_init(soc_omap_misc_ref misc)
-{
-	ACTION_LOG(init);
-	ERR_NULL(misc);
-
-	/* **** */
-
-	csx_mmio_register_access_list(misc->mmio, 0, __soc_omap_misc_acl, misc);
 }

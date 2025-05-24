@@ -10,8 +10,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -40,45 +40,13 @@ typedef struct soc_omap_mpu_gpio_unit_tag {
 }soc_omap_mpu_gpio_unit_t;
 
 typedef struct soc_omap_mpu_gpio_tag {
+	soc_omap_mpu_gpio_unit_t unit[4];
+//
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	soc_omap_mpu_gpio_unit_t unit[4];
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }soc_omap_mpu_gpio_t;
 
 /* **** */
-
-static int __soc_omap_mpu_gpio_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_mpu_gpio_href h2gpio = param;
-//	soc_omap_mpu_gpio_ref gpio = *h2gpio;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_mpu_gpio_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_mpu_gpio_ref gpio = param;
-
-	for(unsigned i = 0; i < 4; i++) {
-		soc_omap_mpu_gpio_unit_ref unit = &gpio->unit[i];
-
-		memset(unit, 0, sizeof(soc_omap_mpu_gpio_unit_t));
-
-		unit->direction = 0x0000ffff;
-	}
-
-	return(0);
-}
 
 static soc_omap_mpu_gpio_unit_ptr __soc_omap_mpu_gpio_unit(
 	soc_omap_mpu_gpio_ref gpio, const uint32_t ppa)
@@ -146,6 +114,77 @@ static csx_mmio_access_list_t __soc_omap_mpu_gpio_acl[] = {
 	{ .ppa = ~0U, },
 };
 
+/* **** */
+
+static
+int soc_omap_mpu_gpio_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_gpio_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_mpu_gpio_ref gpio = param;
+
+	/* **** */
+
+	csx_mmio_ref mmio = gpio->mmio;
+	ERR_NULL(mmio);
+
+	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO1, __soc_omap_mpu_gpio_acl, gpio);
+	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO2, __soc_omap_mpu_gpio_acl, gpio);
+	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO3, __soc_omap_mpu_gpio_acl, gpio);
+	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO4, __soc_omap_mpu_gpio_acl, gpio);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_gpio_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_mpu_gpio_ref gpio = param;
+
+	/* **** */
+
+	for(unsigned i = 0; i < 4; i++) {
+		soc_omap_mpu_gpio_unit_ref unit = &gpio->unit[i];
+
+		memset(unit, 0, sizeof(soc_omap_mpu_gpio_unit_t));
+
+		unit->direction = 0x0000ffff;
+	}
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_mpu_gpio_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_mpu_gpio_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_mpu_gpio_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_mpu_gpio_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
 soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_gpio_href h2gpio)
 {
 	ERR_NULL(csx);
@@ -164,25 +203,5 @@ soc_omap_mpu_gpio_ptr soc_omap_mpu_gpio_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &gpio->atexit, __soc_omap_mpu_gpio_atexit, h2gpio);
-	csx_mmio_callback_atreset(mmio, &gpio->atreset, __soc_omap_mpu_gpio_atreset, gpio);
-
-	/* **** */
-
 	return(gpio);
-}
-
-void soc_omap_mpu_gpio_init(soc_omap_mpu_gpio_ref gpio)
-{
-	ACTION_LOG(init);
-	ERR_NULL(gpio);
-
-	/* **** */
-
-	csx_mmio_ref mmio = gpio->mmio;
-
-	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO1, __soc_omap_mpu_gpio_acl, gpio);
-	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO2, __soc_omap_mpu_gpio_acl, gpio);
-	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO3, __soc_omap_mpu_gpio_acl, gpio);
-	csx_mmio_register_access_list(mmio, SOC_OMAP_MPU_GPIO4, __soc_omap_mpu_gpio_acl, gpio);
 }

@@ -2,7 +2,7 @@
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -94,11 +94,12 @@ static void _stat_counter_log(const uint32_t c, const char* name) {
 
 /* **** */
 
-static int _csx_statistics_atexit(void *const param) {
+static
+int csx_statistics_action_exit(int err, void *const param, action_ref)
+{
 	ACTION_LOG(exit);
 
-//	csx_statistics_href h2c = param;
-//	csx_statistics_ref c = *h2c;
+	/* **** */
 
 	if(_csx_statistical_counters) {
 		COUNTER_LIST(LOG);
@@ -112,24 +113,39 @@ static int _csx_statistics_atexit(void *const param) {
 		PROFILE_LIST(ASSERT_ZERO);
 	}
 
+	/* **** */
+
 	handle_ptrfree(param);
 
-	return(0);
+	return(err);
 }
 
-static int _csx_statistics_atreset(void *const param) {
+static
+int csx_statistics_action_reset(int err, void *const param, action_ref)
+{
 	ACTION_LOG(reset);
+
+	/* **** */
 
 //	csx_statistics_ref c = param;
 
 	COUNTER_LIST(ZERO);
 	PROFILE_LIST(ZERO);
 
-	return(0);
+	/* **** */
+
+	return(err);
 	UNUSED(param);
 }
 
 /* **** */
+
+action_list_t csx_statistics_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ csx_statistics_action_exit }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ csx_statistics_action_reset }, { 0 }, 0, },
+	}
+};
 
 csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 {
@@ -142,16 +158,5 @@ csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 
 	/* **** */
 
-	csx_callback_atexit(csx, &statistics->atexit, _csx_statistics_atexit, h2s);
-	csx_callback_atreset(csx, &statistics->atreset, _csx_statistics_atreset, statistics);
-
 	return(statistics);
-}
-
-void csx_statistics_init(csx_statistics_ref s)
-{
-	ACTION_LOG(init);
-	ERR_NULL(s);
-
-	UNUSED(s);
 }

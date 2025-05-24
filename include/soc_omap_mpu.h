@@ -15,5 +15,10 @@ typedef soc_omap_mpu_ptr const soc_omap_mpu_ref;
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t soc_omap_mpu_action_list;
+
 soc_omap_mpu_ptr soc_omap_mpu_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_href h2mpu);
-void soc_omap_mpu_init(soc_omap_mpu_ref mpu);

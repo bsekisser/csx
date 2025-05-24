@@ -9,8 +9,8 @@
 
 /* **** */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -23,27 +23,11 @@
 /* **** */
 
 typedef struct soc_omap_mpu_mmc_tag {
+	uint8_t data[0x100];
+//
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	uint8_t data[0x100];
-
-	callback_qlist_elem_t atexit;
 }soc_omap_mpu_mmc_t;
-
-/* **** */
-
-static int __soc_omap_mpu_mmc_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_mpu_mmc_href h2mmc = param;
-//	soc_omap_mpu_mmc_ref mmc = *h2mmc;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
 
 /* **** */
 
@@ -74,6 +58,47 @@ static csx_mmio_access_list_t __soc_omap_mpu_mmc_acl[] = {
 
 /* **** */
 
+static
+int soc_omap_mpu_mmc_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_mmc_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_mpu_mmc_ref mmc = param;
+
+	/* **** */
+
+	ERR_NULL(mmc->mmio);
+	csx_mmio_register_access_list(mmc->mmio, 0, __soc_omap_mpu_mmc_acl, mmc);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_mpu_mmc_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_mpu_mmc_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_mpu_mmc_action_init }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
 soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_mmc_href h2mmc)
 {
 	ERR_NULL(csx);
@@ -92,20 +117,5 @@ soc_omap_mpu_mmc_ptr soc_omap_mpu_mmc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &mmc->atexit, __soc_omap_mpu_mmc_atexit, h2mmc);
-
-	/* **** */
-
 	return(mmc);
-}
-
-
-void soc_omap_mpu_mmc_init(soc_omap_mpu_mmc_ref mmc)
-{
-	ACTION_LOG(init);
-	ERR_NULL(mmc);
-
-	/* **** */
-
-	csx_mmio_register_access_list(mmc->mmio, 0, __soc_omap_mpu_mmc_acl, mmc);
 }

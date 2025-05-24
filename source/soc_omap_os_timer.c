@@ -8,8 +8,8 @@
 
 /* **** local library includes */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -22,9 +22,6 @@
 /* **** */
 
 typedef struct soc_omap_os_timer_tag {
-	csx_ptr csx;
-	csx_mmio_ptr mmio;
-
 	uint64_t base;
 	uint32_t ctrl;
 
@@ -32,38 +29,10 @@ typedef struct soc_omap_os_timer_tag {
 		uint32_t cntr;
 		uint32_t val;
 	}tick;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
+//
+	csx_ptr csx;
+	csx_mmio_ptr mmio;
 }soc_omap_os_timer_t;
-
-/* **** */
-
-static int __soc_omap_os_timer_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_os_timer_href h2ost = param;
-//	soc_omap_os_timer_ref ost = *h2ost;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_os_timer_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_os_timer_ref ost = param;
-
-	ost->base = 0;
-	ost->ctrl = 0x00000008;
-	ost->tick.cntr = 0x00ffffff;
-	ost->tick.val = 0x00ffffff;
-
-	return(0);
-}
 
 /* **** */
 
@@ -128,6 +97,65 @@ static csx_mmio_access_list_t _soc_omap_os_timer_acl[] = {
 
 /* **** */
 
+static
+int soc_omap_os_timer_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_os_timer_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_os_timer_ref ost = param;
+
+	/* **** */
+
+	ERR_NULL(ost->mmio);
+	csx_mmio_register_access_list(ost->mmio, 0, _soc_omap_os_timer_acl, ost);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_os_timer_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_os_timer_ref ost = param;
+
+	/* **** */
+
+	ost->base = 0;
+	ost->ctrl = 0x00000008;
+	ost->tick.cntr = 0x00ffffff;
+	ost->tick.val = 0x00ffffff;
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_os_timer_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_os_timer_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_os_timer_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_os_timer_action_reset }, { 0 }, 0 },
+	}
+};
+
 soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost)
 {
 	ERR_NULL(csx);
@@ -146,20 +174,5 @@ soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, so
 
 	/* **** */
 
-	csx_mmio_callback_atexit(mmio, &ost->atexit, __soc_omap_os_timer_atexit, h2ost);
-	csx_mmio_callback_atreset(mmio, &ost->atreset, __soc_omap_os_timer_atreset, ost);
-
-	/* **** */
-
 	return(ost);
-}
-
-void soc_omap_os_timer_init(soc_omap_os_timer_ref ost)
-{
-	ACTION_LOG(init);
-	ERR_NULL(ost);
-
-	/* **** */
-
-	csx_mmio_register_access_list(ost->mmio, 0, _soc_omap_os_timer_acl, ost);
 }

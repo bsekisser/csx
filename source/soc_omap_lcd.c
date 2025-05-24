@@ -8,7 +8,7 @@
 
 /* **** */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/mem_access.h"
@@ -27,9 +27,6 @@ typedef struct soc_omap_lcd_tag {
 
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }soc_omap_lcd_t;
 
 /* **** */
@@ -46,35 +43,6 @@ enum {
 };
 
 #define LCDr(_r) (SOC_OMAP_LCD + (_r))
-
-/* **** */
-
-static int __soc_omap_lcd_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-	handle_ptrfree(param);
-	return(0);
-}
-
-static int __soc_omap_lcd_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_lcd_ref lcd = param;
-
-	lcd->r.ctrl = 0;
-	lcd->r.lineint = 0;
-	lcd->r.display_status = 0x3ff;
-	lcd->r.timing[0] = 0xf;
-	lcd->r.timing[1] = 0;
-	lcd->r.timing[2] = 0;
-	lcd->r.status = 0;
-	lcd->r.subpanel = 0;
-
-	return(0);
-	UNUSED(param);
-}
 
 /* **** */
 
@@ -308,6 +276,80 @@ static uint32_t _soc_omap_lcd_subpanel(void *const param, const uint32_t ppa, co
 
 /* **** */
 
+static
+int soc_omap_lcd_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_lcd_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_lcd_ref lcd = param;
+
+	/* **** */
+
+	lcd->r.ctrl = 0;
+	lcd->r.lineint = 0;
+	lcd->r.display_status = 0x3ff;
+	lcd->r.timing[0] = 0xf;
+	lcd->r.timing[1] = 0;
+	lcd->r.timing[2] = 0;
+	lcd->r.status = 0;
+	lcd->r.subpanel = 0;
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_lcd_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_lcd_ref lcd = param;
+
+	/* **** */
+
+	csx_mmio_ref mmio = lcd->mmio;
+	ERR_NULL(mmio);
+
+	csx_mmio_register_access(mmio, LCDr(_CTRL), _soc_omap_lcd_ctrl, lcd);
+	csx_mmio_register_access(mmio, LCDr(_DISPLAY_STATUS), _soc_omap_lcd_display_status, lcd);
+	csx_mmio_register_access(mmio, LCDr(_LINEINT), _soc_omap_lcd_lineint, lcd);
+	csx_mmio_register_access(mmio, LCDr(_TIMING0), _soc_omap_lcd_timing0, lcd);
+	csx_mmio_register_access(mmio, LCDr(_TIMING1), _soc_omap_lcd_timing1, lcd);
+	csx_mmio_register_access(mmio, LCDr(_TIMING2), _soc_omap_lcd_timing2, lcd);
+	csx_mmio_register_access(mmio, LCDr(_STATUS), _soc_omap_lcd_status, lcd);
+	csx_mmio_register_access(mmio, LCDr(_SUBPANEL), _soc_omap_lcd_subpanel, lcd);
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_lcd_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_lcd_action_exit }, { 0 }, 0, },
+		[_ACTION_INIT] = {{ soc_omap_lcd_action_init }, { 0 }, 0, },
+		[_ACTION_RESET] = {{ soc_omap_lcd_action_reset }, { 0 }, 0, },
+	}
+};
+
+/* **** */
+
 soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd_href h2lcd)
 {
 	ERR_NULL(csx);
@@ -324,30 +366,7 @@ soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd
 	lcd->csx = csx;
 	lcd->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, &lcd->atexit, __soc_omap_lcd_atexit, h2lcd);
-	csx_mmio_callback_atreset(mmio, &lcd->atreset, __soc_omap_lcd_atreset, lcd);
-
 	/* **** */
 
 	return(lcd);
-}
-
-
-void soc_omap_lcd_init(soc_omap_lcd_ref lcd)
-{
-	ACTION_LOG(init);
-	ERR_NULL(lcd);
-
-	/* **** */
-
-	csx_mmio_ref mmio = lcd->mmio;
-
-	csx_mmio_register_access(mmio, LCDr(_CTRL), _soc_omap_lcd_ctrl, lcd);
-	csx_mmio_register_access(mmio, LCDr(_DISPLAY_STATUS), _soc_omap_lcd_display_status, lcd);
-	csx_mmio_register_access(mmio, LCDr(_LINEINT), _soc_omap_lcd_lineint, lcd);
-	csx_mmio_register_access(mmio, LCDr(_TIMING0), _soc_omap_lcd_timing0, lcd);
-	csx_mmio_register_access(mmio, LCDr(_TIMING1), _soc_omap_lcd_timing1, lcd);
-	csx_mmio_register_access(mmio, LCDr(_TIMING2), _soc_omap_lcd_timing2, lcd);
-	csx_mmio_register_access(mmio, LCDr(_STATUS), _soc_omap_lcd_status, lcd);
-	csx_mmio_register_access(mmio, LCDr(_SUBPANEL), _soc_omap_lcd_subpanel, lcd);
 }

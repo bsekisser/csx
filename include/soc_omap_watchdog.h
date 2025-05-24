@@ -14,11 +14,15 @@ typedef soc_omap_watchdog_ptr const soc_omap_watchdog_ref;
 #include "csx.h"
 
 /* **** local includes */
+
+#include "git/libbse/include/action.h"
+
 /* **** system includes */
 /* **** */
 
 /* **** */
 
+extern action_list_t soc_omap_watchdog_action_list;
+
 soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow);
-void soc_omap_watchdog_init(soc_omap_watchdog_ref sow);

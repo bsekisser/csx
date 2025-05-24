@@ -19,7 +19,7 @@ typedef csx_mmio_ptr const csx_mmio_ref;
 
 /* **** local library level includes */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 
 /* **** system level includes */
 /* **** */
@@ -35,11 +35,10 @@ typedef struct csx_mmio_access_list_tag {
 	uint32_t reset_value;
 }csx_mmio_access_list_t;
 
+extern action_list_t csx_mmio_action_list;
+
 csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio);
 void csx_mmio_access_list_reset(csx_mmio_ref mmio, csx_mmio_access_list_ref acl, const size_t size, void *const param);
-void csx_mmio_callback_atexit(csx_mmio_ref mmio, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
-void csx_mmio_callback_atreset(csx_mmio_ref mmio, callback_qlist_elem_p const cble, callback_fn const fn, void *const param);
-void csx_mmio_init(csx_mmio_ref mmio);
 void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param);
 void csx_mmio_register_access_list(csx_mmio_ref mmio, const uint32_t ppa_base, csx_mmio_access_list_ref acl, void *const param);
 void csx_mmio_trace_mem_access(csx_ref csx, const uint32_t ppa, const size_t size, uint32_t *const write, const uint32_t read);

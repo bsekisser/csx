@@ -15,5 +15,10 @@ typedef soc_omap_dma_ptr const soc_omap_dma_ref;
 
 /* **** */
 
+#include "libbse/include/action.h"
+
+/* **** */
+
+extern action_list_t soc_omap_dma_action_list;
+
 soc_omap_dma_ptr soc_omap_dma_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dma_href h2dma);
-void soc_omap_dma_init(soc_omap_dma_ref dma);

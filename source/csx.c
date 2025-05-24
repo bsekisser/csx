@@ -14,7 +14,7 @@
 
 /* **** local includes */
 
-#include "libbse/include/callback_qlist.h"
+#include "libbse/include/action.h"
 #include "libbse/include/dtime.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
@@ -28,16 +28,81 @@
 
 /* **** */
 
-csx_ptr csx_alloc(void) {
-	ACTION_LOG(alloc);
-
-	csx_ref csx = calloc(1, sizeof(csx_t));
-	ERR_NULL(csx);
+static
+int csx_action_alloc(int err, void* const param, action_ref)
+{
+	ACTION_LOG(alloc, "err: 0x%08x, param: 0x%016" PRIxPTR, 0, (uintptr_t)param);
 
 	/* **** */
 
-	callback_qlist_init(&csx->atexit_list, LIST_LIFO);
-	callback_qlist_init(&csx->atreset_list, LIST_FIFO);
+	(void)handle_calloc(param, 1, sizeof(csx_t));
+	ERR_NULL(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int csx_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit, "err: 0x%08x, param: 0x%016" PRIxPTR, err, (uintptr_t)param);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int csx_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init, "err: 0x%08x, param: 0x%016" PRIxPTR, err, (uintptr_t)param);
+	ERR_NULL(param);
+
+	csx_ref csx = param;
+
+	/* **** */
+
+	armvm_mem_mmap_rw(pARMVM_MEM, CSX_SDRAM_START, CSX_SDRAM_END, csx->sdram);
+
+	/* **** */
+
+	return(err);
+}
+
+static action_handler_t csx_action_sublist[] = {
+	{{ .list = &armvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
+	{{ .list = &csx_cache_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, cache) },
+	{{ .list = &csx_mmio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, mmio) },
+	{{ .list = &csx_nnd_flash_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, nnd) },
+	{{ .list = &csx_soc_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, soc) },
+	{{ .list = &csx_statistics_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, statistics) },
+	{{0}, { 0} , 0 }
+};
+
+action_list_t csx_action_list = {
+	.list = {
+//		[_ACTION_ALLOC] = {{ csx_action_alloc }, { 0 }, 0 },
+		[_ACTION_EXIT] = {{ csx_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ csx_action_init }, { 0 }, 0 },
+	},
+
+	.sublist = csx_action_sublist,
+};
+
+int csx_action(int err, csx_ref csx, action_ref action)
+{ return(action_handler(err, csx, action, &csx_action_list)); }
+
+csx_ptr csx_alloc(csx_href h2csx)
+{
+	ACTION_LOG(alloc, "err: 0x%08x, param: 0x%016" PRIxPTR, 0, (uintptr_t)h2csx);
+
+	csx_ref csx = handle_calloc(h2csx, 1, sizeof(csx_t));
+	ERR_NULL(csx);
 
 	/* **** */
 
@@ -51,60 +116,4 @@ csx_ptr csx_alloc(void) {
 	/* **** */
 
 	return(csx);
-}
-
-void csx_atexit(csx_href h2csx)
-{
-	ACTION_LOG(exit);
-
-	csx_ref csx = *h2csx;
-
-	callback_qlist_process(&csx->atexit_list);
-
-	armvm_exit(csx->armvm);
-
-	handle_ptrfree(h2csx);
-}
-
-void csx_callback_atexit(csx_ref csx,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	callback_qlist_setup_and_register_callback(&csx->atexit_list, cble, fn, param);
-}
-
-void csx_callback_atreset(csx_ref csx,
-	callback_qlist_elem_p const cble, callback_fn const fn, void *const param)
-{
-	callback_qlist_setup_and_register_callback(&csx->atreset_list, cble, fn, param);
-}
-
-csx_ptr csx_init(csx_ref csx)
-{
-	ACTION_LOG(init);
-	ERR_NULL(csx);
-
-	/* **** */
-
-	armvm_alloc_init(csx->armvm);
-	csx_cache_init(csx->cache);
-	csx_mmio_init(csx->mmio);
-	csx_nnd_flash_init(csx->nnd);
-	csx_soc_init(csx->soc);
-	csx_statistics_init(csx->statistics);
-
-	/* **** */
-
-	armvm_mem_mmap_rw(pARMVM_MEM, CSX_SDRAM_START, CSX_SDRAM_END, csx->sdram);
-
-	/* **** */
-
-	return(csx);
-}
-
-void csx_reset(csx_ref csx)
-{
-	ACTION_LOG(reset);
-
-	armvm_reset(csx->armvm);
-	callback_qlist_process(&csx->atreset_list);
 }

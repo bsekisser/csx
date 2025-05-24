@@ -8,8 +8,8 @@
 
 /* **** local includes */
 
+#include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
-#include "libbse/include/callback_qlist.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -43,13 +43,10 @@ typedef struct soc_omap_mpu_timer_unit_tag {
 }soc_omap_mpu_timer_unit_t;
 
 typedef struct soc_omap_mpu_timer_tag {
+	soc_omap_mpu_timer_unit_t unit[3];
+//
 	csx_ptr csx;
 	csx_mmio_ptr mmio;
-
-	soc_omap_mpu_timer_unit_t unit[3];
-
-	callback_qlist_elem_t atexit;
-	callback_qlist_elem_t atreset;
 }soc_omap_mpu_timer_t;
 
 enum {
@@ -92,37 +89,6 @@ __mpu_timer_unit(soc_omap_mpu_timer_ref sot, const uint32_t ppa) {
 	tu &= 3;
 
 	return(&sot->unit[tu]);
-}
-
-static int __soc_omap_mpu_timer_atexit(void *const param)
-{
-	ACTION_LOG(exit);
-
-//	soc_omap_mpu_timer_href h2t = param;
-//	soc_omap_mpu_timer_ref t = *h2t;
-
-	handle_ptrfree(param);
-
-	return(0);
-}
-
-static int __soc_omap_mpu_timer_atreset(void *const param)
-{
-	ACTION_LOG(reset);
-
-	soc_omap_mpu_timer_ref t = param;
-
-	for(unsigned i = 0; i < 3; i++) {
-		soc_omap_mpu_timer_unit_ref sotu = &t->unit[i];
-
-		memset(sotu, 0, sizeof(soc_omap_mpu_timer_unit_t));
-//		sotu->cntl_data = 0;
-
-	/* load undefined */
-	/* read undefined */
-	}
-
-	return(0);
 }
 
 static uint32_t __timer_update_count(soc_omap_mpu_timer_ref sot, soc_omap_mpu_timer_unit_ref sotu)
@@ -253,6 +219,85 @@ static uint32_t _soc_omap_mpu_timer_read(void *const param, const uint32_t ppa, 
 #define _MPU_TIMER_ACLE(_i, _name, _fn) \
 	{ __MMIO_TRACE_FN(MPU_TIMER_(_i, _name), 0, MPU_TIMER_NAME(_i, _name), _fn) },
 
+/* **** */
+
+static
+int soc_omap_mpu_timer_action_exit(int err, void *const param, action_ref)
+{
+	ACTION_LOG(exit);
+
+	/* **** */
+
+	handle_ptrfree(param);
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_timer_action_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(init);
+	ERR_NULL(param);
+
+	soc_omap_mpu_timer_ref t = param;
+
+	csx_mmio_ref mmio = t->mmio;
+	ERR_NULL(mmio);
+
+	/* **** */
+
+	for(unsigned i = 0; i < 3; i++) {
+		csx_mmio_access_list_t _soc_omap_mpu_timer_acl[4] = {
+			_MPU_TIMER_ACLE(i, CNTL, _soc_omap_mpu_timer_cntl)
+			_MPU_TIMER_ACLE(i, LOAD, _soc_omap_mpu_timer_load)
+			_MPU_TIMER_ACLE(i, READ, _soc_omap_mpu_timer_read)
+			{ .ppa = ~0U, }
+		};
+
+		csx_mmio_register_access_list(mmio, 0, _soc_omap_mpu_timer_acl, t);
+	}
+
+	/* **** */
+
+	return(err);
+}
+
+static
+int soc_omap_mpu_timer_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	soc_omap_mpu_timer_ref t = param;
+
+	/* **** */
+
+	for(unsigned i = 0; i < 3; i++) {
+		soc_omap_mpu_timer_unit_ref sotu = &t->unit[i];
+
+		memset(sotu, 0, sizeof(soc_omap_mpu_timer_unit_t));
+//		sotu->cntl_data = 0;
+
+	/* load undefined */
+	/* read undefined */
+	}
+
+	/* **** */
+
+	return(err);
+}
+
+action_list_t soc_omap_mpu_timer_action_list = {
+	.list = {
+		[_ACTION_EXIT] = {{ soc_omap_mpu_timer_action_exit }, { 0 }, 0 },
+		[_ACTION_INIT] = {{ soc_omap_mpu_timer_action_init }, { 0 }, 0 },
+		[_ACTION_RESET] = {{ soc_omap_mpu_timer_action_reset }, { 0 }, 0 },
+	}
+};
+
+/* **** */
+
 soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_timer_href h2t)
 {
 	ERR_NULL(csx);
@@ -269,31 +314,7 @@ soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, 
 	t->csx = csx;
 	t->mmio = mmio;
 
-	csx_mmio_callback_atexit(mmio, &t->atexit, __soc_omap_mpu_timer_atexit, h2t);
-	csx_mmio_callback_atreset(mmio, &t->atreset, __soc_omap_mpu_timer_atreset, t);
-
 	/* **** */
 
 	return(t);
-}
-
-void soc_omap_mpu_timer_init(soc_omap_mpu_timer_ref t)
-{
-	ACTION_LOG(init);
-	ERR_NULL(t);
-
-	csx_mmio_ref mmio = t->mmio;
-
-	/* **** */
-
-	for(unsigned i = 0; i < 3; i++) {
-		csx_mmio_access_list_t _soc_omap_mpu_timer_acl[4] = {
-			_MPU_TIMER_ACLE(i, CNTL, _soc_omap_mpu_timer_cntl)
-			_MPU_TIMER_ACLE(i, LOAD, _soc_omap_mpu_timer_load)
-			_MPU_TIMER_ACLE(i, READ, _soc_omap_mpu_timer_read)
-			{ .ppa = ~0U, }
-		};
-
-		csx_mmio_register_access_list(mmio, 0, _soc_omap_mpu_timer_acl, t);
-	}
 }

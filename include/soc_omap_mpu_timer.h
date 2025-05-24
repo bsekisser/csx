@@ -14,9 +14,13 @@ typedef soc_omap_mpu_timer_ptr const soc_omap_mpu_timer_ref;
 #include "csx.h"
 
 /* **** local includes */
+
+#include "libbse/include/action.h"
+
 /* **** system includes */
 /* **** */
 /* **** */
 
+extern action_list_t soc_omap_mpu_timer_action_list;
+
 soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_timer_href h2t);
-void soc_omap_mpu_timer_init(soc_omap_mpu_timer_ref t);
