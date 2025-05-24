@@ -24,7 +24,12 @@
 
 /* **** */
 
-#define kDSKIMG "git/garmin/038201000610.dskimg"
+#define kGARMIN_DIR "git/garmin/"
+#define kGARMIN_IMG kGARMIN_DIR "038201000610"
+
+#define kDSKIMG kGARMIN_IMG ".dskimg"
+#define kDXXIMG kGARMIN_IMG ".dxximg"
+
 const int dskimg_load = 1;
 const int dskimg_write = 0;
 
@@ -167,19 +172,18 @@ static uint32_t _csx_nnd_flash_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 	const uint32_t row, const uint16_t column, const size_t size, uint32_t *const write);
 
 static void _csx_nnd_flash_page_program(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
-	const uint32_t ppa)
+	const uint32_t row)
 {
 	assert(nnd);
 	assert(unit);
 
-	const uint32_t block = ppa >> 6;
-	const uint32_t page = ppa & 0x3f;
+	const uint32_t block = row >> 6;
+	const uint32_t page = row & 0x3f;
 
-	page_ref p = __csx_nnd_flash_p2page(nnd, unit, ppa, (void*)0xfeedface);
+	page_ref p = __csx_nnd_flash_p2page(nnd, unit, row, (void*)0xfeedface);
 	assert(p);
 
-if(0) 	LOG("ppa: 0x%08x, block: 0x%06x, page: 0x%03x, 0x%016" PRIxPTR ", 0x%016" PRIxPTR ,
-			ppa, block, page, (uintptr_t)p, (uintptr_t)unit->data_register);
+if(1) 	LOG("row: 0x%08x --> block: 0x%06x, page: 0x%03x", row, block, page);
 
 	if(p)
 		memcpy(p, unit->data_register, sizeof(page_t));
@@ -199,11 +203,10 @@ static uint32_t _csx_nnd_flash_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 {
 	assert(column < sizeof(page_t));
 
-	page_ref page = __csx_nnd_flash_p2page(nnd, unit, row, write);
+	void *const page = __csx_nnd_flash_p2page(nnd, unit, row, write);
 
 	if(page)
-		return(mem_access_le(&page[column], size, write));
-//		return(mem_access_le(&page[0][column], size, write));
+		return(mem_access_le(page + column, size, write));
 
 	return(0);
 }
@@ -253,10 +256,13 @@ static csx_nnd_unit_ptr _csx_nnd_flash_unit(csx_nnd_ref nnd, const uint32_t addr
 static void csx_nnd_flash_action_init_dskimg(csx_nnd_ref nnd)
 {
 	csx_nnd_unit_ref unit = &nnd->unit[12];
-	FILE* fp = fopen(kDSKIMG, "r");
+	FILE* fp[2] = {
+		fopen(kDXXIMG, "r"),
+		fopen(kDSKIMG, "r")
+	};
 
-	if(fp) {
-		const char* src = fgets(unit->data_register, 7, fp);
+	if(fp[0] && fp[1]) {
+		const char* src = fgets(unit->data_register, 7, fp[0]);
 		unit->data_register[7] = 0;
 
 		if(src) {
@@ -264,22 +270,25 @@ static void csx_nnd_flash_action_init_dskimg(csx_nnd_ref nnd)
 //			LOG("match: %d -- %s", match, src);
 
 			if(0 == match) {
-				do {
-					size_t count = fread(&unit->row, 4, 1, fp);
-//					LOG("count: 0x%08zx, row: 0x%08x", count, unit->row);
-					if(feof(fp) || !count)
-						break;
+				for(;;) {
+					size_t count = fread(&unit->row, 4, 1, fp[0]);
+					if(!count || feof(fp[0])) break;
 
-					count = fread(&unit->data_register, 1, sizeof(page_t), fp);
-//					LOG("count: 0x%08zx", count);
-					if(count)
-						_csx_nnd_flash_page_program(nnd, unit, unit->row);
-				}while(!feof(fp));
+					count = fread(&unit->data_register, 1, 2048, fp[1]);
+					if(!count || feof(fp[1])) break;
+
+					count = fread(&unit->data_register[2048], 1, sizeof(page_t) - 2048, fp[0]);
+					if(!count || feof(fp[1])) break;
+
+					_csx_nnd_flash_page_program(nnd, unit, unit->row);
+				}
 			}
 		}
-
-		fclose(fp);
 	}
+
+	if(fp[0]) fclose(fp[0]);
+	if(fp[1]) fclose(fp[1]);
+
 }
 
 static
@@ -293,10 +302,23 @@ int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
 	/* **** */
 
 	if(1 || dskimg_write) {
-		FILE* fp = 0;
+		FILE *fp[2] = { 0, 0 };
 		if(dskimg_write) {
-			fp = fopen(kDSKIMG, "w");
-			fputs("DSKIMG", fp);
+			fp[0] = fopen(kDXXIMG, "w");
+
+			if(0 == fp[0]) {
+				perror("open for write failed");
+				exit(-1);
+			}
+
+			fp[1] = fopen(kDSKIMG, "w");
+
+			if(0 == fp[1]) {
+				perror("open for write failed");
+				exit(-1);
+			}
+
+			fputs("DSKIMG", fp[0]);
 		}
 
 		const size_t block_count = sizeof(device_t) / sizeof(unit->device[0]);
@@ -305,16 +327,16 @@ int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
 				const uint32_t bpa = block << 6 | page;
 				const uint32_t ppa = bpa << 11;
 
-				page_ref p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
+				void* p = __csx_nnd_flash_p2page(nnd, unit, bpa, 0);
 
 				if(p) {
 					if(dskimg_write) {
 						htole32(bpa);
-						fwrite(&bpa, 4, 1, fp);
+						fwrite(&bpa, 4, 1, fp[0]);
 						le32toh(bpa);
 
-						for(unsigned x = 0; x < sizeof(page_t); x++)
-							fputc(((char*)p)[x], fp);
+						fwrite(p, 1, 2048, fp[1]);
+						fwrite(p + 2048, 1, sizeof(page_t) - 2048, fp[0]);
 					} else if(0) {
 						dump_hex(p, ppa, sizeof(page_t), 16, 1);
 					}
@@ -322,8 +344,10 @@ int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
 			}
 		}
 
-		if(fp)
-			fclose(fp);
+		if(fp[0])
+			fclose(fp[0]);
+		if(fp[1])
+			fclose(fp[1]);
 	}
 
 	/* **** */

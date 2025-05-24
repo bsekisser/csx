@@ -63,7 +63,7 @@ static void _preflight_tests(void)
 
 int main(int argc, char **argv)
 {
-	action_log.raw_flags = ~0U;
+//	action_log.raw_flags = ~0U;
 
 	_preflight_tests();
 
