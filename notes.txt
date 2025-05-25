@@ -1,4 +1,39 @@
-loader deposits to block 4...rows 0x100..0x11b
+0x00000000 -- 0x0000ffff -- 64K boot rom
+0x00010000 -- 0x0003ffff -- 192K boot rom reserved
+0x0c000000 -- 0x0fffffff -- 64M cs3 -- K9K8G08U0A-Y -- 1G*8 NAND
+	0x0c080000 -- 0x0c08dfff -- block 4 -- loader?
+0x10000000 -- 0x13ffffff -- 64M sdram
+	0x10000000 -- 0x11ffffff -- HYB18L256 -- 32M*8
+	0x10000000 -- 0x1000dfff -- loader?
+
+	0x10020000 -- application?
+	0x10400000 -- 0x104368a4 -- bss?
+	0x10436550 -- sp -- fiq
+	0x10436750 -- sp -- irq
+	0x10436790 -- sp -- svc
+	0x10436890 -- sp -- sys
+	0x104368a4 -- _bss_end
+	0x104368a4 -- 0x1043690f -- relocated data segment
+0x20000000 -- 0x2003e7ff -- 250K framebuffer/sram
+	0x20000000 -- ivt?
+0xfffb0000 -- 0xfffeffff -- mmio region
+
+
+
+// 038201000610_loader.rgn
+0x10020000 -- 0x1004510b -- loader
+0x1003682c -- 0x1004422c -- saved to block 4, loaded at 0x10000000
+	0x100450B0 -- 0x1004511c -- data segment
+0x10400000 -- 0x1063daa4 -- bss?
+	0x1063D750 -- sp -- fiq
+	0x1063D950 -- sp -- irq
+	0x1063D990 -- sp -- svc
+	0x1063DA90 -- sp -- sys
+0x1063daa4 -- 0x1063db10 -- relocated data segment
+
+
+
+loader deposits to block 4...rows 0x100..0x11b -- loads at 0x10000000?
 sits at wait for interrupt
 
 
@@ -12,9 +47,6 @@ SIMAVR ... https://github.com/buserror/simavr
 
 * Project organization...
 
-CSX ... CORE / MMIO / SOC / TRACE --- Conceptual parts.
-
-#MOVED TO LIBARM/LIBARMVM
-#CORE ... ARM / THUMB --- Physical core parts.
+CSX ... MMIO / SOC / TRACE --- Conceptual parts.
 
 SOC ... OMAP --- Physical soc parts.
