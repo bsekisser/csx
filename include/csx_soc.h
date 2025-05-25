@@ -18,8 +18,8 @@ typedef csx_soc_ptr const csx_soc_ref;
 /* **** */
 
 typedef struct csx_soc_tag {
-	uint8_t brom[SOC_BROM_ALLOC];
-	uint8_t sram[SOC_SRAM_ALLOC]; /* aka framebuffer */
+	uint8_t (*brom)[SOC_BROM_ALLOC];
+	uint8_t (*sram)[SOC_SRAM_ALLOC]; /* aka framebuffer */
 
 	csx_ptr csx;
 }csx_soc_t;

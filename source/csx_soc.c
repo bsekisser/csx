@@ -6,6 +6,7 @@
 #include "csx_data.h"
 #include "csx_soc_brom.h"
 #include "csx_soc_omap.h"
+#include "csx_soc_sram.h"
 #include "csx_statistics.h"
 #include "csx.h"
 #include "csx_state.h"
@@ -133,30 +134,18 @@ int csx_soc_action_exit(int err, void *const param, action_ref)
 }
 
 static
-int csx_soc_action_init(int err, void *const param, action_ref)
-{
-	ACTION_LOG(init);
-	ERR_NULL(param);
-
-	csx_soc_ref soc = param;
-
-	/* **** */
-
-	csx_ref csx = soc->csx;
-
-	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
-	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
-
-	/* **** */
-
-	return(err);
-}
+action_handler_t csx_soc_action_sublist[] = {
+	{{ .list = &csx_soc_brom_action_list }, { .is_list = 1 }, 0 },
+	{{ .list = &csx_soc_sram_action_list }, { .is_list = 1 }, 0 },
+	{{0}, { 0 }, 0 }
+};
 
 action_list_t csx_soc_action_list = {
 	.list = {
 		[_ACTION_EXIT] = {{ csx_soc_action_exit }, { 0 }, 0 },
-		[_ACTION_INIT] = {{ csx_soc_action_init }, { 0 }, 0 },
-	}
+	},
+
+	.sublist = csx_soc_action_sublist
 };
 
 csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
@@ -207,30 +196,19 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 
 	int err = 0;
 
-	csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
-	_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
-
 //	loader_firmware = 1;
 
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
+		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 	} else {
-		if(1) {
-			csx->loader.base = 0x10020000;
-			__csx_soc_init_cdp(csx, &csx->loader);
-
-			csx->firmware.base = csx->loader.base + csx->loader.size;
-
-//			csx->loader.base = EMIFS_CS0_RESERVED_BOOT_ROM_START;
-		} else
-			csx->firmware.base = 0x10020000;
+		csx->loader.base = 0x10020000;
+		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
 	}
-
-	_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
 
 	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
 
-	csx_soc_brom_init(csx->soc, cdp);
+	armvm_gpr(pARMVM, ARMVM_GPR(PC), &cdp->base);
 
 	if(!err)
 	{

@@ -6,4 +6,4 @@
 
 /* **** */
 
-extern action_list_t csx_soc_brom_action_list;
+extern action_list_t csx_soc_sram_action_list;

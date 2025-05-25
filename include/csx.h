@@ -70,7 +70,7 @@ typedef struct csx_tag {
 	csx_data_t						loader;
 	csx_data_t						firmware;
 
-	uint8_t							sdram[CSX_SDRAM_ALLOC];
+	uint8_t							(*sdram)[CSX_SDRAM_ALLOC];
 }csx_t;
 
 /* **** */
