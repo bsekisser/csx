@@ -21,6 +21,7 @@
 
 /* **** */
 
+static const int prot_w = 0 ? PROT_WRITE : 0;
 
 static
 int csx_soc_brom_action_alloc_init(int err, void *const param, action_ref)
@@ -32,11 +33,10 @@ int csx_soc_brom_action_alloc_init(int err, void *const param, action_ref)
 
 	/* **** */
 
-	int fd = open("boot/rom.bin", O_RDONLY);
+	const int fd = open("boot/rom.bin", O_RDONLY);
 
-	const int flags = (fd < 0) ? (MAP_ANONYMOUS | MAP_PRIVATE) : MAP_SHARED;
-	const int prot = PROT_READ;
-//	const int prot = PROT_READ | PROT_WRITE;
+	const int flags = MAP_PRIVATE | ((fd < 0) ? MAP_ANONYMOUS : 0);
+	const int prot = PROT_READ | prot_w;
 
 	soc->brom = mmap(0, SOC_BROM_ALLOC, prot, flags, fd, 0);
 	ERR_NULL(soc->brom);

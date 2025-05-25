@@ -208,7 +208,7 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 
 	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
 
-	armvm_gpr(pARMVM, ARMVM_GPR(PC), &cdp->base);
+//	armvm_gpr(pARMVM, ARMVM_GPR(PC), &cdp->base);
 
 	if(!err)
 	{

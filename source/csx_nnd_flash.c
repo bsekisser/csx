@@ -33,7 +33,6 @@
 const int dskimg_load = 1;
 const int dskimg_write = 0;
 
-
 typedef char page_t[2112];
 typedef page_t* page_ptr;
 typedef page_ptr const page_ref;
@@ -205,6 +204,8 @@ static uint32_t _csx_nnd_flash_rwd(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 
 	void *const page = __csx_nnd_flash_p2page(nnd, unit, row, write);
 
+if(0) LOG("row: 0x%08x, column: 0x%04x, page: 0x%016" PRIxPTR, row, column, (uintptr_t)page);
+
 	if(page)
 		return(mem_access_le(page + column, size, write));
 
@@ -216,7 +217,6 @@ static uint32_t _csx_nnd_flash_rwd_ppa(csx_nnd_ref nnd, csx_nnd_unit_ref unit,
 {
 	const uint16_t column = ppa & 0x7ff;
 	const uint32_t row = ppa >> 11;
-//	const uint32_t row = (ppa >> 11) & 0x7fffff;
 
 	return(_csx_nnd_flash_rwd(nnd, unit, row, column, size, write));
 }
@@ -502,7 +502,7 @@ uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t addr, const size_t s
 		case RWD:
 			return(csx_nnd_flash_read_rwd(nnd, unit, addr, size));
 		default:
-			return(_csx_nnd_flash_rwd_ppa(nnd, unit, addr, size, 0));
+			return(_csx_nnd_flash_rwd_ppa(nnd, unit, offset, size, 0));
 	}
 
 	return(0);
