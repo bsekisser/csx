@@ -52,7 +52,7 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t 
 
 	LOG("base: 0x%08x, start: 0x%08x, end: 0x%08x", cdp->base, start, end);
 
-	const void* dst_start = dst + (cdp->base - start);
+	void *const dst_start = dst + (cdp->base - start);
 	const void* src = cdp->data;
 
 	const void* dst_limit = dst + (end - start);
@@ -89,16 +89,13 @@ static void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
 		SOC_BROM_START, SOC_BROM_END);
 }
 
-static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_name)
+static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_path)
 {
 	int fd;
 
-	char out[256];
-	snprintf(out, 254, "%s%s%s", LOCAL_RGNDIR, RGNFileName, file_name);
+	LOG("opening %s", file_path);
 
-	LOG("opening %s", out);
-
-	ERR(fd = open(out, O_RDONLY));
+	ERR(fd = open(file_path, O_RDONLY));
 
 	struct stat sb;
 	ERR(fstat(fd, &sb));
@@ -200,15 +197,13 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
-		_csx_soc_init_load_rgn_file(csx, &csx->firmware, FIRMWARE_FileName);
+		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
 	} else {
 		csx->loader.base = 0x10020000;
-		_csx_soc_init_load_rgn_file(csx, &csx->loader, LOADER_FileName);
+		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);
 	}
 
-	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
-
-//	armvm_gpr(pARMVM, ARMVM_GPR(PC), &cdp->base);
+//	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
 
 	if(!err)
 	{

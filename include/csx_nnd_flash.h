@@ -21,6 +21,4 @@ typedef csx_nnd_ptr const csx_nnd_ref;
 extern action_list_t csx_nnd_flash_action_list;
 
 csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href nnd);
-uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t addr, const size_t size);
-void csx_nnd_flash_write(csx_nnd_ref nnd, const uint32_t addr, const size_t size, const uint32_t value);
 
