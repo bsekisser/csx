@@ -22,7 +22,7 @@
 
 // 038201000610_loader.rgn
 0x10020000 -- 0x1004510b -- loader
-0x1003682c -- 0x1004422c -- saved to block 4, loaded at 0x10000000
+	0x1003682c -- 0x1004422c -- saved to block 4, loaded at 0x10000000
 	0x100450B0 -- 0x1004511c -- data segment
 0x10400000 -- 0x1063daa4 -- bss?
 	0x1063D750 -- sp -- fiq
@@ -31,12 +31,22 @@
 	0x1063DA90 -- sp -- sys
 0x1063daa4 -- 0x1063db10 -- relocated data segment
 
-
-
 loader deposits to block 4...rows 0x100..0x11b -- loads at 0x10000000?
 sits at wait for interrupt
 
-
+// 038201000610_fw_all.rgn
+0x10020000 -- 0x10323db8 -- fw_all
+	0x10323D60 -- 0x10323DCC -- data segment
+0x10400000 -- 0x10D0F148 -- bss?
+0x10D0EDB0 -- 0x10D0EDEF -- initialized to 0xff
+	0x10D0EDF0 -- sp -- fiq
+0x10D0EDF0 -- 0x10D0EFEF -- initialized to 0xff
+	0x10D0EFF0 -- sp -- irq
+0x10D0EFF0 -- 0x10D0F02F -- initialized to 0xff
+	0x10D0F030 -- sp -- svc
+0x10D0F030 -- 0x10D0F12F -- initialized to 0xff
+	0x10D0F130 -- sp -- sys
+0x10D0F148 -- 0x10D0F1B4 -- relocated data segment
 
 
 * Credits to inspiring projects, in alphabetical order.
