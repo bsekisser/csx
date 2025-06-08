@@ -4,6 +4,7 @@ LDLIBS += -Lgit/libarmvm -larmvm
 LDLIBS += -Lgit/libarm -larm
 LDLIBS += -Lgit/libbse -lbse
 LDLIBS += -lcapstone
+LDLIBS += -lsdl2
 
 SRC_DIR = source
 SRCS = $(wildcard $(SRC_DIR)/*.c)

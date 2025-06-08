@@ -162,33 +162,35 @@ csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 	return(soc);
 }
 
-static int x038201000610(csx_ref csx) {
-	switch(PC) {
-		case 0x10020074:
-		case 0x100200f0:
-		case 0x10020168:
-		case 0x1002026c:
-		case 0x10025204:
-		case 0x10025628:
-		case 0x10026146:
-		case 0x1002616a:
-		case 0x10026bb0:
-		case 0x10026dfe:
-		case 0x10026e10:
-		case 0x10026e22:
-		case 0x10027128:
-		case 0x1002a3c0:
-		case 0x100314fc:
-		case 0x10033c66:
-		case 0x10034418:
-			return(1);
-	}
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_timer.h>
 
-	return(0);
+typedef struct sdl_tag* sdl_ptr;
+typedef sdl_ptr const sdl_ref;
+
+struct sdl_tag {
+	armvm_ptr armvm;
+	csx_ptr csx;
+	SDL_Event event;
+	SDL_Renderer* renderer;
+	SDL_Window* window;
+}sdl;
+
+void catch_sig_term(const int sign)
+{
+	printf("\n\n\n\nsignal caught, terminating.\n\n");
+
+	sdl.csx->state = CSX_STATE_HALT;
+
+	return;
+	(void)sign;
 }
 
 int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 {
+	signal(SIGINT, catch_sig_term);
+	signal(SIGTERM, catch_sig_term);
+
 	pARMVM_CORE->config.trace = core_trace;
 
 	int err = 0;
@@ -203,51 +205,89 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);
 	}
 
-//	csx_data_ref cdp = loader_firmware ? &csx->firmware : &csx->loader;
+	err = (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
+	if(err) {
+		LOG("error initializing SDL: %s", SDL_GetError());
+		goto sdl_fail_init;
+	}
+
+	if((err = !(sdl.window = SDL_CreateWindow("csx",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		640, 480, 0))))
+	{
+		LOG("error creating window: %s", SDL_GetError())
+		goto sdl_fail_window;
+	}
+
+	if((err = !(sdl.renderer = SDL_CreateRenderer(sdl.window, -1, SDL_RENDERER_ACCELERATED))))
+	{
+		LOG("error creating renderer: %s", SDL_GetError());
+		goto sdl_fail_renderer;
+	}
+
+	SDL_RenderPresent(sdl.renderer);
 
 	if(!err)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		unsigned saved_trace = pARMVM_CORE->config.trace;
-		unsigned pc_skip = 0;
+		armvm_threaded_start(csx->armvm);
 
-		uint32_t next_pc = 0;
+		const uint32_t frameBuffer_pat = 0x10fda7e0 - 0x10000000;
+//		const uint32_t frameBuffer_pat = 0x10fda800 - 0x10000000;
+		LOGx32(frameBuffer_pat);
 
-		for(;;) {
-			if(pc_skip) {
-				if(PC >= next_pc) {
-					pARMVM_CORE->config.trace = saved_trace;
-					pc_skip = 0;
+		const uint32_t bytes = 32 + (2 * (240 * 320));
+		LOGx32(bytes)
+
+		LOGx32(frameBuffer_pat + bytes);
+
+		const void *const framebuffer = csx->sdram + frameBuffer_pat;
+
+		for(;(CSX_STATE_RUN & csx->state);) {
+			if(CYCLE & 0x7fff) {
+				for(unsigned y = 0; y < 240; y++) {
+					const uint8_t *line = framebuffer + ((y * 320) << 1);
+
+					for(unsigned x = 0; x < 320; x++) {
+						const uint16_t pixel = le16toh(*line++);
+						const uint8_t r = ((pixel >> 10) & 31) << 3;
+						const uint8_t g = ((pixel >> 5) & 077) << 2;
+						const uint8_t b = (pixel & 31) << 3;
+
+						SDL_SetRenderDrawColor(sdl.renderer, r, g, b, 255);
+
+						const unsigned xx = x << 1;
+						const unsigned yy = y << 1;
+
+						SDL_RenderDrawLine(sdl.renderer, xx, yy, xx + 1, yy + 1);
+					}
 				}
-			} else if(pARMVM_CORE->config.trace) {
-				if(0) pc_skip = x038201000610(csx);
 
-				if(pc_skip) {
-					next_pc = PC + (4 >> IF_CPSR(Thumb));
-					armvm_step(pARMVM);
-					saved_trace = pARMVM_CORE->config.trace;
-					pARMVM_CORE->config.trace = 0;
+				SDL_RenderPresent(sdl.renderer);
+
+				SDL_PollEvent(&sdl.event);
+				switch (sdl.event.type) {
+					case	SDL_QUIT:
+						csx->state = CSX_STATE_HALT;
+						break;
+					case	SDL_KEYDOWN: {
+						int scancode = sdl.event.key.keysym.scancode;
+						if(/*0x1b*/ 0x09 == scancode)
+							csx->state = CSX_STATE_HALT;
+					} break;
 				}
 			}
-
-			if(0 > armvm_step(pARMVM))
-				break;
-
-			if((csx->state & CSX_STATE_HALT) || (0 == PC))
-			{
-				LOG_ACTION(break);
-			}
-
-			if(0 && (ICOUNT > 0x100000)) break;
-			if(0 && (ICOUNT > 0x0a0d80)) break;
-			if(0 && (ICOUNT > 0x0a0d80)) break;
-			if(0 && (ICOUNT > 0x070000)) break;
-			if(0 && (ICOUNT > 0x000010)) break;
 		}
 	}
 
 	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);
 
+	SDL_DestroyRenderer(sdl.renderer);
+sdl_fail_renderer:
+	SDL_DestroyWindow(sdl.window);
+sdl_fail_window:
+	SDL_Quit();
+sdl_fail_init:
 	return(err);
 }
