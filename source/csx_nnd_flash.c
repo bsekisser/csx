@@ -11,9 +11,11 @@
 #include "libarmvm/include/armvm_mem.h"
 
 #include "libbse/include/action.h"
+#include "libbse/include/bitops.h"
 #include "libbse/include/dump_hex.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
+#include "libbse/include/ldst_stdint.h"
 #include "libbse/include/log.h"
 #include "libbse/include/mem_access_le.h"
 #include "libbse/include/page.h"
@@ -29,6 +31,10 @@
 #define kPageBits 6
 #define kPageCount (1 << kPageBits)
 #define kPageMask (kPageCount - 1)
+
+#define kRowBits (kBlockBits + kPageBits)
+#define kRowCount (1 << kRowBits)
+#define kRowMask (kRowCount - 1)
 
 #define SIZEOF_ARRAY(_x) (sizeof(_x) / sizeof(_x[0]))
 
@@ -62,10 +68,6 @@ typedef page_hptr const page_href;
 typedef struct block_page_tag {
 	page_ptr page;
 	page_spare_t spare;
-
-	struct {
-		unsigned dirty:1;
-	};
 }block_page_t;
 
 typedef struct block_page_tag* block_page_ptr;
@@ -94,9 +96,11 @@ typedef struct csx_nnd_unit_tag {
 	struct {
 		union {
 			uint64_t u64;
-			unsigned char u8[sizeof(uint64_t)];
+			char u8[sizeof(uint64_t)];
 		};
+		int16_t column;
 		unsigned index;
+		int32_t row;
 	}al;
 
 	unsigned cl;
@@ -104,6 +108,7 @@ typedef struct csx_nnd_unit_tag {
 	uint32_t row;
 	uint8_t status;
 //
+	csx_ptr csx;
 	csx_nnd_ptr nnd;
 }csx_nnd_unit_t;
 
@@ -277,8 +282,12 @@ csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
 
 	/* **** */
 
-	for(unsigned x = 0; x < SIZEOF_ARRAY(nnd->unit); x++)
-		nnd->unit[x].nnd = nnd;
+	for(unsigned x = 0; x < SIZEOF_ARRAY(nnd->unit); x++) {
+		csx_nnd_unit_ref unit = &nnd->unit[x];
+
+		unit->csx = csx;
+		unit->nnd = nnd;
+	}
 
 	/* **** */
 
@@ -308,8 +317,6 @@ block_page_ptr csx_nnd_flash_block2blockPage(csx_nnd_unit_ref unit, block_ref p2
 		csx_nnd_flash_page_alloc(unit, &block_page->page);
 		csx_nnd_flash_block_page_erase(block_page);
 	}
-
-	block_page->dirty = write;
 
 	return(block_page);
 }
@@ -358,14 +365,7 @@ void csx_nnd_flash_block_page_erase(block_page_ref block_page)
 
 		memset(block_page->spare, 0, sizeof(page_spare_t));
 
-		if(1) {
-			*(uint16_t*)(&block_page->spare[0 << 4]) = 0xffff;
-			*(uint16_t*)(&block_page->spare[1 << 4]) = 0xffff;
-			*(uint16_t*)(&block_page->spare[2 << 4]) = 0xffff;
-			*(uint16_t*)(&block_page->spare[3 << 4]) = 0xffff;
-		}
-
-		block_page->dirty = 1;
+		block_page->spare[0] = 0xff;
 	}
 }
 
@@ -398,16 +398,14 @@ void csx_nnd_flash_dskimg_load(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 if(1)				LOG("bpa: 0x%016" PRIx64 ", row: 0x%08x", bpa, row);
 
 					block_page_ref blockPage = csx_nnd_flash_row2blockPage(unit, row, 1);
-					err = !blockPage; if(err) LOG_ACTION(break);
-					err = !blockPage->page; if(err) LOG_ACTION(break);
+					assert(blockPage);
+					assert(blockPage->page);
 
 					count = fread(blockPage->page, 1, sizeof(page_t), fp[1]);
-					if(!count || feof(fp[0])) break;
+					if(!count || feof(fp[1])) break;
 
 					count = fread(blockPage->spare, 1, sizeof(page_spare_t), fp[2]);
-					if(!count || feof(fp[0])) break;
-
-					csx_nnd_flash_page_program(unit, row, 0);
+					if(!count || feof(fp[2])) break;
 				}
 			}
 		}
@@ -464,7 +462,7 @@ void csx_nnd_flash_dskimg_write(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 			const uint64_t bpa = _row2bpa(row, 0);
 
 			block_page_ref blockPage = csx_nnd_flash_block2blockPage(unit, p2block, page, 0);
-			if(!blockPage->dirty) continue;
+			if(!blockPage->page) continue;
 
 if(1)		LOG("block: 0x%08x, page: 0x%02x, bpa: 0x%016" PRIx64 ", row: 0x%08x",
 				block, page, bpa, row);
@@ -585,7 +583,8 @@ void csx_nnd_flash_page_program(csx_nnd_unit_ref unit, const uint32_t row, const
 	block_page_ref p2blockPage = csx_nnd_flash_row2blockPage(unit, row, 1);
 
 	if(log)
-		LOG("row: 0x%08x", row);
+		LOG("row: 0x%08x -- (block: 0x%08x, page: 0x%02x) -- bpa: 0x%016" PRIx64,
+			row, _row2block(row), _row2page(row), _row2bpa(row, 0));
 
 	if(p2blockPage) {
 		if(!p2blockPage->page)
@@ -616,12 +615,7 @@ if(0)	LOG("row: 0x%08x", row);
 			memset(unit->data_register, 255, sizeof(page_t));
 			memset(spare, 0, sizeof(page_spare_t));
 
-			if(1) {
-				*(uint16_t*)(spare + (0 << 4)) = 0xffff;
-				*(uint16_t*)(spare + (1 << 4)) = 0xffff;
-				*(uint16_t*)(spare + (2 << 4)) = 0xffff;
-				*(uint16_t*)(spare + (3 << 4)) = 0xffff;
-			}
+			((uint8_t*)spare)[0] = 0xff;
 		}
 
 		return(unit->data_register);
@@ -732,25 +726,37 @@ page_ptr csx_nnd_flash_row2page(csx_nnd_unit_ref unit, const uint32_t row, const
 static
 void csx_nnd_flash_write_ale(csx_nnd_unit_ref unit, const uint32_t ppa, const uint8_t value)
 {
+	const uint64_t al64u = unit->al.u64;
+
 	if(unit->al.index < sizeof(unit->al.u8))
-		unit->al.u8[++unit->al.index] = value;
+		unit->al.u8[unit->al.index++] = value;
 
-	switch(unit->cl & 255) {
-		case 0x00: // setup for read
-		case 0x05: // setup for random data read
-		case 0x60: // setup for block erase
-		case 0x80: // setup for page program
-			break;
-		case 0x90: // setup for id
-			unit->column = unit->al.u8[0];
-			break;
-		default: {
-			const unsigned uunit = _ppa2unit(ppa);
+	void* al = unit->al.u8;
 
-			LOG("cs: %u, unit: %u(%X), cl: 0x%08x, 0x%016" PRIx64 " <-- 0x%02x",
-				_ppa2cs(ppa), uunit, uunit << 1, unit->cl,
-					unit->al.u64, value);
-		}	break;
+	const unsigned flag_column = (0 <= unit->al.column);
+
+	if(flag_column)
+		unit->al.column = uint16le(&al, ldst_ia) & kColumnMask;
+
+	const unsigned flag_row = (0 <= unit->al.row);
+
+	if(flag_row)
+		unit->al.row = uint32le(&al, ldst_ia) & kRowMask;
+
+	if(0 || (!flag_column && !flag_row)) {
+		const uint16_t column = flag_column ? unit->al.column : 0;
+		const uint32_t row = flag_row ? unit->al.row : 0;
+
+		const uint64_t bpa = _row2bpa(row, column);
+		const unsigned uunit = _ppa2unit(ppa);
+
+		const unsigned a30 = BEXT(bpa, 30);
+
+		LOG_START("cs: %u, unit: %u(%X)", _ppa2cs(ppa), uunit, uunit << 1);
+		_LOG_(", cl: 0x%08x, al.(%u, 0x%016" PRIx64 " <= 0x%02x", unit->cl, unit->al.index, al64u, value);
+		_LOG_(", block: 0x%08x, page: 0x%02x", _row2block(row), _row2page(row));
+		LOG_END(", row: 0x%08x, column: 0x%04x, a30: %u, bpa: 0x%016" PRIx64 ")",
+			row, column, a30, bpa);
 	}
 }
 
@@ -760,20 +766,28 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 	const uint32_t cl = unit->cl;
 	unit->cl = (unit->cl << 8) | value;
 
+	// setup
 	switch(value) {
 		case 0x00: // setup for read
 		case 0x05: // setup for random data read
 		case 0x60: // setup for block erase
+			unit->al.column = (0x60 == value) ? -1 : 0;
 			unit->al.index = 0;
+			unit->al.row = 0;
 			unit->al.u64 = 0;
 			break;
 		case 0x80: // setup for page program
+		case 0x90: // id
+			unit->al.column = 0;
 			unit->al.index = 0;
+			unit->al.row = (0x90 == value) ? -1 : 0;
 			unit->al.u64 = 0;
 			unit->column = 0;
 			break;
 		case 0xff: // reset
+			unit->al.column = 0;
 			unit->al.index = 0;
+			unit->al.row = 0;
 			unit->al.u64 = 0;
 			unit->cl = 0;
 			unit->column = 0;
@@ -781,12 +795,17 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 			unit->status = (1 << 7) | (1 << 6);
 			break;
 		default: switch(value) {
-			case 0x10: break; // page program
-			case 0x30: break; // read
+			case 0x10: // page program
+			case 0x30: // read
+				unit->column = unit->al.column;
+			__attribute__((fallthrough));
+			case 0xd0: // block erase
+				unit->row = unit->al.row;
+				break;
+			case 0xe0: // random data read
+				unit->column = unit->al.column;
+				break;
 			case 0x70: break; // status
-			case 0x90: break; // id
-			case 0xd0: break; // block erase
-			case 0xe0: break; // random data read
 			default: {
 				const unsigned uunit = _ppa2unit(ppa);
 
@@ -796,27 +815,9 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 		}	break;
 	}
 
-	void* al = &unit->al.u8;
+	const uint16_t cl16 = unit->cl;
 
-	switch(unit->cl & 0xffff) {
-		case 0x0030: // data read
-		case 0x05e0: // random data read
-		case 0x8010: // page program
-			unit->column = le16toh(*(uint16_t*)al++) & 0xfff;
-			break;
-		case 0x60d0: // block erase
-			unit->row = le32toh(*(uint32_t*)al++);
-			break;
-	}
-
-	switch(unit->cl & 0xffff) {
-		case 0x0030: // data read
-		case 0x8010: // page program
-			unit->row = le32toh(*(uint32_t*)al++);
-			break;
-	}
-
-	switch(unit->cl & 0xffff) {
+	switch(cl16) {
 		case 0x0030: // page read
 			csx_nnd_flash_page_read(unit, unit->row);
 			break;
@@ -826,6 +827,27 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 		case 0x8010: // page program
 			csx_nnd_flash_page_program(unit, unit->row, 1);
 			break;
+		default: switch(cl16) {
+			case 0x00: // setup read
+			case 0x05: // setup random data read
+			case 0x70: // status
+			case 0xff: // reset
+			case 0x05e0: // random data read
+			case 0x1070: // status after program
+			case 0x3070:
+			case 0x7000:
+			case 0x7060:
+			case 0x7080:
+			case 0x7090:
+			case 0x9000:
+			case 0x90ff:
+			case 0xd070: // status after block erase
+			case 0xe000:
+			case 0xe060:
+				break;
+			default:
+				LOG_ACTION(exit(-1));
+		}	break;
 	}
 }
 
@@ -871,6 +893,7 @@ void csx_nnd_flash_write(csx_nnd_ref nnd, const uint32_t ppa, const size_t size,
 			LOG_START("cs: %u, unit: %u(%X), cl: 0x%08x, ",
 				_ppa2cs(ppa), uunit, uunit << 1, unit->cl);
 			LOG_END("0x%08x => %zu[0x%08x]", *write, size, ppa);
-		}	return((void)csx_nnd_flash_mem_access(unit, ppa, size, (void*)write));
+			return((void)csx_nnd_flash_mem_access(unit, ppa, size, (void*)write));
+		}	break;
 	}
 }
