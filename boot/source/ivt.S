@@ -12,8 +12,8 @@
 	b exception_irq
 	b exception_fiq
 
-.extern boot_main
+.extern reset_handler
 
 exception_reset:
 	ldr sp, =__stack_top
-	bl boot_main
+	bl reset_handler

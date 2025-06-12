@@ -31,7 +31,7 @@ __attribute__((weak, alias("__halt"))) void exception_swi(void);
 __attribute__((weak, alias("__halt"))) void vector_reserved(void);
 
 //__attribute__((naked, noreturn))
-void boot_main(params_ref params)
+void reset_handler(void)
 {
 	zero_table_ptr zt = (void*)&__zero_table_start;
 		void* end = &__zero_table_end;
@@ -43,9 +43,16 @@ void boot_main(params_ref params)
 	for(; (void*)ct < end; ct++)
 		memcpy(ct->start, ct->lma, ct->bytes);
 
+/* **** */
+
+	_preinit();
 	_init();
 
+/* **** */
+
 	(void)main();
+
+/* **** */
 
 	_fini();
 	__halt();

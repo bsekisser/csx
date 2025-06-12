@@ -7,17 +7,25 @@ MEMORY
 	SDRAM(wx) :
 		ORIGIN = 0x10000000, LENGTH = 64M
 	SRAM(wx) :
-		ORIGIN = 0x20000000, LENGTH = 250K - STACK_SPACE
-	MMIO(rw) :
-		ORIGIN = 0xfffe0000, LENGTH = 16M
+		ORIGIN = 0x20000000, LENGTH = 250K
+#	CIF1(wx) :
+#		ORIGIN = 0x2007d800, LENGTH = 2K
+#	CIF2(wx) :
+#		ORIGIN = 0x3007d800, LENGTH = 2K
+#	DSP(wx) :
+#		ORIGIN = 0xe0000000, LENGTH = 260K
+#	MMIO(rw) :
+#		ORIGIN = 0xfffb0000, LENGTH = 256K
 }
 
 SECTIONS
 {
+	SRAM_IVT_SPACE = 1K;
 	STACK_SPACE = 2K;
 
 	.text :
 	{
+		FILL(0);
 		KEEP(*(.text.ivt))
 		*(.text*)
 
@@ -26,11 +34,13 @@ SECTIONS
 
 		*(.rodata*)
 
-		__text_end = .;
+		PROVIDE_HIDDEN(__text_end = .);
+		BYTE(0);
 	} > ROM0
 
 	.text :
 	{
+		FILL(0);
 		*(.glue_7*)
 		*(.glue_7t*)
 		*(.vfp11_veneer*)
@@ -45,6 +55,8 @@ SECTIONS
 		*(.rodata*)
 
 		*(.eh_frame*)
+		. = ORIGIN(ROM1) + LENGTH(ROM1) - 1;
+		BYTE(0);
 	} > ROM1
 
 	.copy.table :
@@ -66,24 +78,19 @@ SECTIONS
 		PROVIDE_HIDDEN(__zero_table_end = .);
 	} > ROM0
 	
-	.fill0 :
+	PROVIDE_HIDDEN(__data_start_lma = .);
+	
+	.ram_ivt (NOLOAD) :
 	{
-		FILL(0);
-		. = ORIGIN(ROM0) + LENGTH(ROM0) - 1;
-		BYTE(0);
-	} > ROM0
-
-	.fill1 :
-	{
-		FILL(0);
-		. = ORIGIN(ROM1) + LENGTH(ROM1) - 1 - (__data_end - __data_start);
-		BYTE(0);
-	} > ROM1
-
-	__data_start_lma = ALIGN(4);
+		. = ORIGIN(SRAM);
+		__ram_ivt_start = .;
+		. += SRAM_IVT_SPACE;
+		__ram_ivt_end = .;
+	} > SRAM
+	
 	.data : AT(__data_start_lma)
 	{
-		__data_start = .;
+		PROVIDE_HIDDEN(__data_start = .);
 		*(.vtable)
 		*(.data*)
 
@@ -105,30 +112,33 @@ SECTIONS
 		PROVIDE_HIDDEN(*__fini_array_end = .);
 
 		. = ALIGN(4);
-		__data_end = .;
+		PROVIDE_HIDDEN(__data_end = .);
 	} > SRAM
 
 	.bss (NOLOAD) :
 	{
 		. = ALIGN(4);
-		__bss_start = .;
+		PROVIDE_HIDDEN(__bss_start = .);
 		*(.bss*)
 		*(COMMON)
 		. = ALIGN(4);
-		__bss_end = .;
+		PROVIDE_HIDDEN(__bss_end = .);
 	} > SRAM
 
 	.heap (COPY) :
 	{
-		__heap_start = .;
+		PROVIDE_HIDDEN(__heap_start = .);
 		*(.heap*)
-		__heap_end = ORIGIN(SRAM) + LENGTH(SRAM);
+		. = ORIGIN(SRAM) + LENGTH(SRAM) - STACK_SPACE;
+		PROVIDE_HIDDEN(__heap_end = .);
 	} > SRAM
 
 	.stack (COPY) :
 	{
+		. = ALIGN(16);
+#		PROVIDE_HIDDEN(__stack_bottom = __stack_top - STACK_SIZE);
 		*(.stack*)
+		. = ALIGN(16);
+		PROVIDE_HIDDEN(__stack_top = ORIGIN(SRAM) + LENGTH(SRAM));
 	} > SRAM
-
-	__stack_top = ORIGIN(SRAM) + LENGTH(SRAM);
 }
