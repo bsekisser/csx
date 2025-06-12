@@ -30,17 +30,17 @@ __attribute__((weak, alias("__halt"))) void exception_undefined(void);
 __attribute__((weak, alias("__halt"))) void exception_swi(void);
 __attribute__((weak, alias("__halt"))) void vector_reserved(void);
 
-//__attribute__((naked, noreturn))
+__attribute__((naked))
 void reset_handler(void)
 {
 	zero_table_ptr zt = (void*)&__zero_table_start;
-		void* end = &__zero_table_end;
-	for(; (void*)zt < end; zt++)
+		zero_table_ptr zt_end = (void*)&__zero_table_end;
+	for(; zt < zt_end; zt++)
 		memset(zt->start, 0, zt->bytes);
 
 	copy_table_ptr ct = (void*)&__copy_table_start;
-		end = &__copy_table_end;
-	for(; (void*)ct < end; ct++)
+		copy_table_ptr ct_end = (void*)&__copy_table_end;
+	for(; ct < ct_end; ct++)
 		memcpy(ct->start, ct->lma, ct->bytes);
 
 /* **** */

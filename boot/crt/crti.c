@@ -1,5 +1,8 @@
 #include <crt.h>
 
+// TODO: GCC borked...
+#pragma GCC optimize "Os"
+
 /* **** */
 
 typedef void (*func_ptr)(void);
@@ -13,10 +16,10 @@ extern func_ptr _preinit_array_start[0], _preinit_array_end[0];
 /* **** */
 
 static inline
-void _process_list(void* start, void *end)
+void _process_list(void *const start, void *const end)
 {
 	for(func_ptr* func = start; func != end; func++)
-		if(func) (*func)();
+		(*func)();
 }
 
 /* **** */

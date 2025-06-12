@@ -1,10 +1,3 @@
-CFLAGS += -ffreestanding
-CFLAGS += -march=armv5t
-CFLAGS += -mtune=arm926ej-s
-#CFLAGS += -mfloat-abi=soft
-CFLAGS += -nostdinc
-CFLAGS += -nostdlib
-
 CRTI_OBJ = \
 	crti.o
 CRTBEGIN_OBJ = \

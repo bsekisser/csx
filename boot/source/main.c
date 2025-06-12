@@ -11,7 +11,7 @@ static __attribute__((naked))
 void _bleep_fn(void_fn fn)
 {
 	register unsigned* r0 asm("r0") = 0;
-	
+
 	asm(
 		"mov r11, sp;"
 		"mov r10, r0;"

@@ -1,10 +1,19 @@
-.PRECIOUS: *.o
+.PRECIOUS: %.o
 
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
 
-CFLAGS += -MMD -MP
+CFLAGS += -ffreestanding
+#CFLAGS += -mfloat-abi=soft
+CFLAGS += -nostdinc
+CFLAGS += -nostdlib
+
+CFLAGS += -march=armv5t
+CFLAGS += -mtune=arm926ej-s
+
 CFLAGS += -O2
+
+CFLAGS += -MMD -MP
 CFLAGS += $(INCLUDE)
 
 INCLUDE += -I$(SRC_DIR)

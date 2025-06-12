@@ -4,10 +4,6 @@
 
 /* **** */
 
-#pragma GGC optimize "Os"
-
-/* **** */
-
 static
 void __memcpy(data_ref dst, data_ref src, const size_t bytes)
 {
