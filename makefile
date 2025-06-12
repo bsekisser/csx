@@ -1,10 +1,14 @@
 CFLAGS += -O1 -march=native
+CFLAGS += $(SDL_CFLAGS)
 
 LDLIBS += -Lgit/libarmvm -larmvm
 LDLIBS += -Lgit/libarm -larm
 LDLIBS += -Lgit/libbse -lbse
 LDLIBS += -lcapstone
-LDLIBS += -lsdl2
+LDLIBS += $(SDL_LIBS)
+
+SDL_CFLAGS := `sdl2-config --cflags`
+SDL_LIBS := `sdl2-config --libs`
 
 SRC_DIR = source
 SRCS = $(wildcard $(SRC_DIR)/*.c)

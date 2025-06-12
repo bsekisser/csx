@@ -4,12 +4,13 @@
 /* **** csx includes */
 
 #include "csx_data.h"
+#include "csx_sdl.h"
 #include "csx_soc_brom.h"
 #include "csx_soc_omap.h"
 #include "csx_soc_sram.h"
+#include "csx_state.h"
 #include "csx_statistics.h"
 #include "csx.h"
-#include "csx_state.h"
 
 /* **** */
 
@@ -30,6 +31,7 @@
 
 #include <errno.h>
 #include <fcntl.h>
+#include <pthread.h>
 #include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -162,35 +164,26 @@ csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 	return(soc);
 }
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_timer.h>
-
-typedef struct sdl_tag* sdl_ptr;
-typedef sdl_ptr const sdl_ref;
-
-struct sdl_tag {
-	armvm_ptr armvm;
-	csx_ptr csx;
-	SDL_Event event;
-	SDL_Renderer* renderer;
-	SDL_Window* window;
-}sdl;
-
-void catch_sig_term(const int sign)
+static
+void* csx_threaded_run(void* param)
 {
-	printf("\n\n\n\nsignal caught, terminating.\n\n");
+	csx_ref csx = param;
 
-	sdl.csx->state = CSX_STATE_HALT;
+	armvm_threaded_run(pARMVM);
 
-	return;
-	(void)sign;
+	csx->state = 0;
+	return(0);
 }
+
+static __attribute__((unused))
+int csx_threaded_start(csx_ref csx)
+{ return(pthread_create(&csx->thread, 0, csx_threaded_run, csx)); }
+
+static const int sdl = 1;
+static const int threaded = 1;
 
 int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 {
-	signal(SIGINT, catch_sig_term);
-	signal(SIGTERM, catch_sig_term);
-
 	pARMVM_CORE->config.trace = core_trace;
 
 	int err = 0;
@@ -200,94 +193,37 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
-	} else {
+	} else if(0) {
 		csx->loader.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);
+
+		armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->loader.base);
 	}
 
-	err = (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) != 0);
-	if(err) {
-		LOG("error initializing SDL: %s", SDL_GetError());
-		goto sdl_fail_init;
-	}
-
-	if((err = !(sdl.window = SDL_CreateWindow("csx",
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		640, 480, 0))))
-	{
-		LOG("error creating window: %s", SDL_GetError())
-		goto sdl_fail_window;
-	}
-
-	if((err = !(sdl.renderer = SDL_CreateRenderer(sdl.window, -1, SDL_RENDERER_ACCELERATED))))
-	{
-		LOG("error creating renderer: %s", SDL_GetError());
-		goto sdl_fail_renderer;
-	}
-
-	SDL_RenderPresent(sdl.renderer);
+	if(sdl)
+		csx_sdl_init(csx);
 
 	if(!err)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		armvm_threaded_start(csx->armvm);
+		if(threaded)
+			armvm_threaded_start(pARMVM);
 
-		const uint32_t frameBuffer_pat = 0x10fda7e0 - 0x10000000;
-//		const uint32_t frameBuffer_pat = 0x10fda800 - 0x10000000;
-		LOGx32(frameBuffer_pat);
-
-		const uint32_t bytes = 32 + (2 * (240 * 320));
-		LOGx32(bytes)
-
-		LOGx32(frameBuffer_pat + bytes);
-
-		const void *const framebuffer = csx->sdram + frameBuffer_pat;
+		unsigned cycle = 0;
 
 		for(;(CSX_STATE_RUN & csx->state);) {
-			if(CYCLE & 0x7fff) {
-				for(unsigned y = 0; y < 240; y++) {
-					const uint8_t *line = framebuffer + ((y * 320) << 1);
-
-					for(unsigned x = 0; x < 320; x++) {
-						const uint16_t pixel = le16toh(*line++);
-						const uint8_t r = ((pixel >> 10) & 31) << 3;
-						const uint8_t g = ((pixel >> 5) & 077) << 2;
-						const uint8_t b = (pixel & 31) << 3;
-
-						SDL_SetRenderDrawColor(sdl.renderer, r, g, b, 255);
-
-						const unsigned xx = x << 1;
-						const unsigned yy = y << 1;
-
-						SDL_RenderDrawLine(sdl.renderer, xx, yy, xx + 1, yy + 1);
-					}
-				}
-
-				SDL_RenderPresent(sdl.renderer);
-
-				SDL_PollEvent(&sdl.event);
-				switch (sdl.event.type) {
-					case	SDL_QUIT:
-						csx->state = CSX_STATE_HALT;
-						break;
-					case	SDL_KEYDOWN: {
-						int scancode = sdl.event.key.keysym.scancode;
-						if(/*0x1b*/ 0x09 == scancode)
-							csx->state = CSX_STATE_HALT;
-					} break;
-				}
+			if(!threaded) {
+				if(0 > armvm_step(pARMVM))
+					csx->state = 0;
 			}
+
+			if(sdl && (cycle++ & 0x7fff))
+				csx_sdl_step(csx);
 		}
 	}
 
 	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);
 
-	SDL_DestroyRenderer(sdl.renderer);
-sdl_fail_renderer:
-	SDL_DestroyWindow(sdl.window);
-sdl_fail_window:
-	SDL_Quit();
-sdl_fail_init:
 	return(err);
 }

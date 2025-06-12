@@ -14,6 +14,7 @@ typedef csx_data_ptr const csx_data_ref;
 /* **** */
 
 #include <assert.h>
+#include <pthread.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -71,6 +72,8 @@ typedef struct csx_tag {
 	csx_data_t						firmware;
 
 	uint8_t							(*sdram)[CSX_SDRAM_ALLOC];
+
+	pthread_t thread;
 }csx_t;
 
 /* **** */
