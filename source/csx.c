@@ -2,7 +2,6 @@
 
 /* **** csx includes */
 
-#include "csx_cache.h"
 #include "csx_mmio.h"
 #include "csx_sdram.h"
 #include "csx_soc.h"
@@ -36,7 +35,6 @@ int csx_action_exit(int err, void *const param, action_ref)
 
 static action_handler_t csx_action_sublist[] = {
 	{{ .list = &armvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
-	{{ .list = &csx_cache_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, cache) },
 	{{ .list = &csx_mmio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, mmio) },
 	{{ .list = &csx_nnd_flash_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, nnd) },
 	{{ .list = &csx_sdram_action_list }, { .is_list = 1 }, 0 },
@@ -66,7 +64,6 @@ csx_ptr csx_alloc(csx_href h2csx)
 	/* **** */
 
 	ERR_NULL(armvm_alloc(&csx->armvm));
-	ERR_NULL(csx_cache_alloc(csx, &csx->cache));
 	ERR_NULL(csx_mmio_alloc(csx, &csx->mmio));
 	ERR_NULL(csx_nnd_flash_alloc(csx, &csx->nnd));
 	ERR_NULL(csx_soc_alloc(csx, &csx->soc));

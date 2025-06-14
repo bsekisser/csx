@@ -20,7 +20,6 @@ typedef csx_data_ptr const csx_data_ref;
 
 /* **** */
 
-#include "csx_cache.h"
 #include "csx_mmio.h"
 #include "csx_nnd_flash.h"
 #include "csx_state.h"
@@ -59,7 +58,6 @@ typedef struct csx_tag {
 	armvm_ptr						armvm;
 	armvm_trace_t					armvm_trace;
 
-	csx_cache_ptr					cache;
 	csx_mmio_ptr					mmio;
 	csx_nnd_ptr						nnd;
 	csx_soc_ptr						soc;
