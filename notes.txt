@@ -68,7 +68,7 @@ sits at wait for interrupt
 0x10D0F030 -- 0x10D0F12F -- initialized to 0xff
 	0x10D0F130 -- sp -- sys
 0x10D0F148 -- 0x10D0F1B4 -- relocated data segment
-
+0x10f00000 -- ttbr
 
 * Credits to inspiring projects, in alphabetical order.
 
