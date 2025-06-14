@@ -188,11 +188,12 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 
 	int err = 0;
 
-//	loader_firmware = 1;
-
 	if(loader_firmware) {
 		csx->firmware.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
+
+		if(0)
+			armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->firmware.base);
 	} else if(0) {
 		csx->loader.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);

@@ -1,3 +1,24 @@
+loader...
+active irq vectors for
+	irq1_uart3
+	irq2_uart1
+	irq2_uart2
+	irq2_usb
+	irq2_usb_non_iso_on
+	software_irq_105
+vectors also provided for (weak hang)
+	irq1_timer1
+	irq1_timer2
+	irq1_timer3
+	irq1_gpio1
+	irq1_gpio2
+	irq1_gpio3
+	irq1_gpio4
+	irq2_os_timer
+all other vectors goto same
+	invalid_irq
+
+
 0x00000000 -- 0x0000ffff -- 64K boot rom
 0x00010000 -- 0x0003ffff -- 192K boot rom reserved
 0x0c000000 -- 0x0fffffff -- 64M cs3 -- K9K8G08U0A-Y -- 1G*8 NAND

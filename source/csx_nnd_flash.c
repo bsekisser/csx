@@ -844,9 +844,15 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 			case 0xd070: // status after block erase
 			case 0xe000:
 			case 0xe060:
+			case 0xe070: // status after random data read
 				break;
-			default:
+			default: {
+				const unsigned uunit = _ppa2unit(ppa);
+
+				LOG("cs: %u, unit: %u(%X), 0x%08x <-- 0x%02x",
+					_ppa2cs(ppa), uunit, uunit << 1, cl, value);
 				LOG_ACTION(exit(-1));
+			} break;
 		}	break;
 	}
 }
