@@ -90,3 +90,12 @@ action_list_t csx_soc_sram_action_list = {
 		[_ACTION_INIT] = {{ csx_soc_sram_action_init }, { 0 } , 0 },
 	}
 };
+
+void csx_soc_sram_save(csx_soc_ref soc)
+{
+	FILE* fp = fopen("sram", "w");
+	if(fp) {
+		fwrite(soc->sram, 1, sizeof(*soc->sram), fp);
+		fclose(fp);
+	}
+}

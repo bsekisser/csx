@@ -87,3 +87,12 @@ action_list_t csx_sdram_action_list = {
 		[_ACTION_INIT] = {{ csx_sdram_action_init }, { 0 } , 0 },
 	}
 };
+
+void csx_sdram_save(csx_ref csx)
+{
+	FILE* fp = fopen("sdram", "w");
+	if(fp) {
+		fwrite(csx->sdram, 1, sizeof(*csx->sdram), fp);
+		fclose(fp);
+	}
+}

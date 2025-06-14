@@ -3,6 +3,11 @@
 
 /* **** */
 
+#include "csx_sdram.h"
+#include "csx_soc_sram.h"
+
+/* **** */
+
 #include "libbse/include/log.h"
 #include "libbse/include/shift_roll.h"
 
@@ -70,6 +75,28 @@ void _catch_sig_term(const int sign)
 }
 
 static
+void _save(csx_ref csx)
+{
+	LOG();
+
+	if(1 == csx_action(0, csx, _ACTION_PAUSE)) {
+		for(;;) {
+			const int rval = csx_action(0, csx, _ACTION_PAUSE_CHECK);
+			if(0 > rval)
+				return;
+
+			if(1 == rval)
+				break;
+		}
+	}
+
+	LOG_ACTION(csx_sdram_save(csx));
+	LOG_ACTION(csx_soc_sram_save(csx->soc));
+
+	csx_action(0, csx, _ACTION_RESUME);
+}
+
+static
 unsigned _xsr(const unsigned data, int *const offset, const unsigned bits, const unsigned lsr_bits)
 {
 	const int ooffset = *offset;
@@ -111,6 +138,16 @@ void csx_sdl_event(csx_ref csx)
 				case 0x48: // pause/break
 					csx->state = CSX_STATE_HALT;
 					break;
+
+				case 0x13: {
+					const int rval = csx_action(0, csx, _ACTION_PAUSE_CHECK);
+					if(0 > rval)
+						break;
+					else if(0 == rval)
+						LOG_ACTION(csx_action(0, csx, _ACTION_PAUSE));
+				}	break;
+
+				case 0x16: _save(csx); break;
 
 				case 0x1e: break;
 
