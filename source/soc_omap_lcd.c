@@ -340,7 +340,15 @@ int soc_omap_lcd_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_lcd_action_linklist[] = {
+	{ offsetof(soc_omap_lcd_t, csx), csx },
+	{ offsetof(soc_omap_lcd_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_lcd_action_list,
+	.link = soc_omap_lcd_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_lcd_action_exit }, { 0 }, 0, },
 		[_ACTION_INIT] = {{ soc_omap_lcd_action_init }, { 0 }, 0, },
@@ -350,21 +358,15 @@ ACTION_LIST(soc_omap_lcd_action_list,
 
 /* **** */
 
-soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd_href h2lcd)
+soc_omap_lcd_ptr soc_omap_lcd_alloc(soc_omap_lcd_href h2lcd)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2lcd);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2lcd);
 
 	/* **** */
 
 	soc_omap_lcd_ref lcd = handle_calloc(h2lcd, 1, sizeof(soc_omap_lcd_t));
 	ERR_NULL(lcd);
-
-	lcd->csx = csx;
-	lcd->mmio = mmio;
 
 	/* **** */
 

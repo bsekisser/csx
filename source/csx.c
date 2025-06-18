@@ -19,6 +19,10 @@
 /* **** system includes */
 /* **** */
 
+static csx_ptr _csx = 0;
+
+/* **** */
+
 static
 int csx_action_exit(int err, void *const param, action_ref)
 {
@@ -47,9 +51,12 @@ ACTION_LIST(csx_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_action_exit }, { 0 }, 0 },
 	},
-
+	.self = &_csx,
 	SUBLIST(csx_action_sublist),
 );
+
+csx_ptr csx(void)
+{ return(_csx); }
 
 int csx_action(int err, csx_ref csx, action_ref action)
 { return(action_handler(err, csx, action, &csx_action_list)); }
@@ -64,10 +71,10 @@ csx_ptr csx_alloc(csx_href h2csx)
 	/* **** */
 
 	ERR_NULL(armvm_alloc(&csx->armvm));
-	ERR_NULL(csx_mmio_alloc(csx, &csx->mmio));
-	ERR_NULL(csx_nnd_flash_alloc(csx, &csx->nnd));
-	ERR_NULL(csx_soc_alloc(csx, &csx->soc));
-	ERR_NULL(csx_statistics_alloc(csx, &csx->statistics));
+	ERR_NULL(csx_mmio_alloc(&csx->mmio));
+	ERR_NULL(csx_nnd_flash_alloc(&csx->nnd));
+	ERR_NULL(csx_soc_alloc(&csx->soc));
+	ERR_NULL(csx_statistics_alloc(&csx->statistics));
 
 	/* **** */
 

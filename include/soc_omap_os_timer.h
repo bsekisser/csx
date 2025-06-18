@@ -21,4 +21,4 @@ typedef soc_omap_os_timer_ptr const soc_omap_os_timer_ref;
 
 extern action_list_t soc_omap_os_timer_action_list;
 
-soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost);
+soc_omap_os_timer_ptr soc_omap_os_timer_alloc(soc_omap_os_timer_href h2ost);

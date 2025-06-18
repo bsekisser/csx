@@ -21,4 +21,4 @@ typedef soc_omap_mpu_ihr_ptr const soc_omap_mpu_ihr_ref;
 
 extern action_list_t soc_omap_mpu_ihr_action_list;
 
-soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_ihr_href h2ihr);
+soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(soc_omap_mpu_ihr_href h2ihr);

@@ -21,4 +21,4 @@ typedef soc_omap_tc_ptr soc_omap_tc_ref;
 
 extern action_list_t soc_omap_tc_action_list;
 
-soc_omap_tc_ptr soc_omap_tc_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_tc_href h2tc);
+soc_omap_tc_ptr soc_omap_tc_alloc(soc_omap_tc_href h2tc);

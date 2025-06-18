@@ -93,6 +93,7 @@ int main(int argc, char **argv)
 	int err = 0;
 
 //	err |= csx_action(0, (void*)&csx, _ACTION_ALLOC);
+	err |= csx_action(err, csx, _ACTION_LINK);
 	err |= csx_action(err, csx, _ACTION_ALLOC_INIT);
 	err |= csx_action(err, csx, _ACTION_INIT);
 	err |= csx_action(err, csx, _ACTION_RESET);

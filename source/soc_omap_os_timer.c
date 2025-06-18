@@ -148,7 +148,15 @@ int soc_omap_os_timer_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_os_timer_action_linklist[] = {
+	{ offsetof(soc_omap_os_timer_t, csx), csx },
+	{ offsetof(soc_omap_os_timer_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_os_timer_action_list,
+	.link = soc_omap_os_timer_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_os_timer_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ soc_omap_os_timer_action_init }, { 0 }, 0 },
@@ -156,21 +164,15 @@ ACTION_LIST(soc_omap_os_timer_action_list,
 	}
 );
 
-soc_omap_os_timer_ptr soc_omap_os_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_os_timer_href h2ost)
+soc_omap_os_timer_ptr soc_omap_os_timer_alloc(soc_omap_os_timer_href h2ost)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2ost);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2ost);
 
 	/* **** */
 
 	soc_omap_os_timer_ref ost = handle_calloc(h2ost, 1, sizeof(soc_omap_os_timer_t));
 	ERR_NULL(ost);
-
-	ost->csx = csx;
-	ost->mmio = mmio;
 
 	/* **** */
 

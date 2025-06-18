@@ -493,7 +493,15 @@ int soc_omap_uart_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_uart_action_linklist[] = {
+	{ offsetof(soc_omap_uart_t, csx), csx },
+	{ offsetof(soc_omap_uart_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_uart_action_list,
+	.link = soc_omap_uart_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_uart_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ soc_omap_uart_action_init }, { 0 }, 0 },
@@ -501,21 +509,15 @@ ACTION_LIST(soc_omap_uart_action_list,
 	}
 );
 
-soc_omap_uart_ptr soc_omap_uart_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_uart_href h2uart)
+soc_omap_uart_ptr soc_omap_uart_alloc(soc_omap_uart_href h2uart)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2uart);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2uart);
 
 	/* **** */
 
 	soc_omap_uart_ref uart = handle_calloc(h2uart, 1, sizeof(soc_omap_uart_t));
 	ERR_NULL(uart);
-
-	uart->csx = csx;
-	uart->mmio = mmio;
 
 	/* **** */
 

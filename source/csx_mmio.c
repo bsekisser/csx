@@ -43,6 +43,10 @@
 
 /* **** */
 
+static csx_mmio_ptr _csx_mmio = 0;
+
+/* **** */
+
 typedef struct csx_mmio_mem_access_tag* csx_mmio_mem_access_ptr;
 typedef csx_mmio_mem_access_ptr const csx_mmio_mem_access_ref;
 
@@ -168,6 +172,12 @@ int csx_mmio_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t csx_mmio_action_linklist[] = {
+	{ offsetof(csx_mmio_t, csx), csx },
+	{ 0, 0 },
+};
+
 static action_handler_t csx_mmio_action_sublist[] = {
 	{{ .list = &soc_omap_cfg_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, cfg) },
 	{{ .list = &soc_omap_dma_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, dma) },
@@ -189,48 +199,48 @@ static action_handler_t csx_mmio_action_sublist[] = {
 };
 
 ACTION_LIST(csx_mmio_action_list,
+	.link = csx_mmio_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_mmio_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ csx_mmio_action_init }, { 0 }, 0 },
 	},
-
+	.self = &_csx_mmio,
 	SUBLIST(csx_mmio_action_sublist),
 );
 
 /* **** */
 
-csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio)
-{
-	ERR_NULL(csx);
-	ERR_NULL(h2mmio);
+csx_mmio_ptr csx_mmio(void)
+{ return(_csx_mmio); }
 
+csx_mmio_ptr csx_mmio_alloc(csx_mmio_href h2mmio)
+{
 	ACTION_LOG(alloc);
+	ERR_NULL(h2mmio);
 
 	/* **** */
 
 	csx_mmio_ref mmio = handle_calloc(h2mmio, 1, sizeof(csx_mmio_t));
 	ERR_NULL(mmio);
 
-	mmio->csx = csx;
-
 	/* **** */
 
-	ERR_NULL(soc_omap_cfg_alloc(csx, mmio, &mmio->cfg));
-	ERR_NULL(soc_omap_dma_alloc(csx, mmio, &mmio->dma));
-	ERR_NULL(soc_omap_dpll_alloc(csx, mmio, &mmio->dpll));
-	ERR_NULL(soc_omap_gp_timer_alloc(csx, mmio, &mmio->gp_timer));
-	ERR_NULL(soc_omap_lcd_alloc(csx, mmio, &mmio->lcd));
-	ERR_NULL(soc_omap_misc_alloc(csx, mmio, &mmio->misc));
-	ERR_NULL(soc_omap_mpu_alloc(csx, mmio, &mmio->mpu));
-	ERR_NULL(soc_omap_mpu_gpio_alloc(csx, mmio, &mmio->mpu_gpio));
-	ERR_NULL(soc_omap_mpu_ihr_alloc(csx, mmio, &mmio->mpu_ihr));
-	ERR_NULL(soc_omap_mpu_mmc_alloc(csx, mmio, &mmio->mpu_mmc));
-	ERR_NULL(soc_omap_mpu_timer_alloc(csx, mmio, &mmio->mpu_timer));
-	ERR_NULL(soc_omap_os_timer_alloc(csx, mmio, &mmio->os_timer));
-	ERR_NULL(soc_omap_tc_alloc(csx, mmio, &mmio->tc));
-	ERR_NULL(soc_omap_uart_alloc(csx, mmio, &mmio->uart));
-	ERR_NULL(soc_omap_usb_alloc(csx, mmio, &mmio->usb));
-	ERR_NULL(soc_omap_watchdog_alloc(csx, mmio, &mmio->wdt));
+	ERR_NULL(soc_omap_cfg_alloc(&mmio->cfg));
+	ERR_NULL(soc_omap_dma_alloc(&mmio->dma));
+	ERR_NULL(soc_omap_dpll_alloc(&mmio->dpll));
+	ERR_NULL(soc_omap_gp_timer_alloc(&mmio->gp_timer));
+	ERR_NULL(soc_omap_lcd_alloc(&mmio->lcd));
+	ERR_NULL(soc_omap_misc_alloc(&mmio->misc));
+	ERR_NULL(soc_omap_mpu_alloc(&mmio->mpu));
+	ERR_NULL(soc_omap_mpu_gpio_alloc(&mmio->mpu_gpio));
+	ERR_NULL(soc_omap_mpu_ihr_alloc(&mmio->mpu_ihr));
+	ERR_NULL(soc_omap_mpu_mmc_alloc(&mmio->mpu_mmc));
+	ERR_NULL(soc_omap_mpu_timer_alloc(&mmio->mpu_timer));
+	ERR_NULL(soc_omap_os_timer_alloc(&mmio->os_timer));
+	ERR_NULL(soc_omap_tc_alloc(&mmio->tc));
+	ERR_NULL(soc_omap_uart_alloc(&mmio->uart));
+	ERR_NULL(soc_omap_usb_alloc(&mmio->usb));
+	ERR_NULL(soc_omap_watchdog_alloc(&mmio->wdt));
 
 	/* **** */
 

@@ -161,7 +161,15 @@ int soc_omap_watchdog_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_watchdog_action_linklist[] = {
+	{ offsetof(soc_omap_watchdog_t, csx), csx },
+	{ offsetof(soc_omap_watchdog_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_watchdog_action_list,
+	.link = soc_omap_watchdog_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = { { soc_omap_watchdog_action_exit }, { 0 }, 0, },
 		[_ACTION_INIT] = { { soc_omap_watchdog_action_init }, { 0 }, 0, },
@@ -169,22 +177,15 @@ ACTION_LIST(soc_omap_watchdog_action_list,
 	}
 );
 
-soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
-	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow)
+soc_omap_watchdog_ptr soc_omap_watchdog_alloc(soc_omap_watchdog_href h2sow)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2sow);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2sow);
 
 	/* **** */
 
 	soc_omap_watchdog_ref sow = handle_calloc(h2sow, 1, sizeof(soc_omap_watchdog_t));
 	ERR_NULL(sow);
-
-	sow->csx = csx;
-	sow->mmio = mmio;
 
 	/* **** */
 

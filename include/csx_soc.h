@@ -26,5 +26,6 @@ typedef struct csx_soc_tag {
 
 extern action_list_t csx_soc_action_list;
 
-csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc);
+csx_soc_ptr csx_soc(void);
+csx_soc_ptr csx_soc_alloc(csx_soc_href h2soc);
 int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware);

@@ -131,7 +131,15 @@ int soc_omap_dpll_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_dpll_action_linklist[] = {
+	{ offsetof(soc_omap_dpll_t, csx), csx },
+	{ offsetof(soc_omap_dpll_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_dpll_action_list,
+	.link = soc_omap_dpll_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_dpll_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ soc_omap_dpll_action_init }, { 0 }, 0 },
@@ -141,21 +149,15 @@ ACTION_LIST(soc_omap_dpll_action_list,
 
 /* **** */
 
-soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dpll_href h2dpll)
+soc_omap_dpll_ptr soc_omap_dpll_alloc(soc_omap_dpll_href h2dpll)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2dpll);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2dpll);
 
 	/* **** */
 
 	soc_omap_dpll_ref dpll = handle_calloc(h2dpll, 1, sizeof(soc_omap_dpll_t));
 	ERR_NULL(dpll);
-
-	dpll->csx = csx;
-	dpll->mmio = mmio;
 
 	/* **** */
 

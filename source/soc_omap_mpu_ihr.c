@@ -238,7 +238,15 @@ int soc_omap_mpu_ihr_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t soc_omap_mpu_ihr_action_linklist[] = {
+	{ offsetof(soc_omap_mpu_ihr_t, csx), csx },
+	{ offsetof(soc_omap_mpu_ihr_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_mpu_ihr_action_list,
+	.link = soc_omap_mpu_ihr_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_mpu_ihr_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ soc_omap_mpu_ihr_action_init }, { 0 }, 0 },
@@ -248,21 +256,15 @@ ACTION_LIST(soc_omap_mpu_ihr_action_list,
 
 /* **** */
 
-soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_ihr_href h2ihr)
+soc_omap_mpu_ihr_ptr soc_omap_mpu_ihr_alloc(soc_omap_mpu_ihr_href h2ihr)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2ihr);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2ihr);
 
 	/* **** */
 
 	soc_omap_mpu_ihr_ref ihr = handle_calloc(h2ihr, 1, sizeof(soc_omap_mpu_ihr_t));
 	ERR_NULL(ihr);
-
-	ihr->csx = csx;
-	ihr->mmio = mmio;
 
 	/* **** */
 

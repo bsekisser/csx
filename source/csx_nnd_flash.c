@@ -197,6 +197,28 @@ uint8_t _row2page(const uint32_t row)
 /* **** */
 
 static
+int csx_nnd_flash_action_alloc_init(int err, void *const param, action_ref)
+{
+	ACTION_LOG(alloc);
+	ERR_NULL(param);
+
+	csx_nnd_ref nnd = param;
+
+	/* **** */
+
+	for(unsigned x = 0; x < SIZEOF_ARRAY(nnd->unit); x++) {
+		csx_nnd_unit_ref unit = &nnd->unit[x];
+
+		unit->csx = csx();
+		unit->nnd = nnd;
+	}
+
+	/* **** */
+
+	return(err);
+}
+
+static
 int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
 {
 	ACTION_LOG(exit);
@@ -259,35 +281,30 @@ int csx_nnd_flash_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
+action_linklist_t csx_nnd_flash_action_linklist[] = {
+	{ offsetof(csx_nnd_t, csx), csx },
+	{ 0, 0 },
+};
+
 ACTION_LIST(csx_nnd_flash_action_list,
+	.link = csx_nnd_flash_action_linklist,
 	.list = {
+		[_ACTION_ALLOC_INIT] = {{ csx_nnd_flash_action_alloc_init }, { 0 }, 0 },
 		[_ACTION_EXIT] = {{ csx_nnd_flash_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ csx_nnd_flash_action_init }, { 0 }, 0 },
 	}
 );
 
-csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
+csx_nnd_ptr csx_nnd_flash_alloc(csx_nnd_href h2nnd)
 {
-	ERR_NULL(csx);
-	ERR_NULL(h2nnd);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2nnd);
 
 	/* **** */
 
 	csx_nnd_ref nnd = handle_calloc(h2nnd, 1, sizeof(csx_nnd_t));
 	ERR_NULL(nnd);
-
-	nnd->csx = csx;
-
-	/* **** */
-
-	for(unsigned x = 0; x < SIZEOF_ARRAY(nnd->unit); x++) {
-		csx_nnd_unit_ref unit = &nnd->unit[x];
-
-		unit->csx = csx;
-		unit->nnd = nnd;
-	}
 
 	/* **** */
 

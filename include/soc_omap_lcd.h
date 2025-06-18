@@ -21,4 +21,4 @@ typedef soc_omap_lcd_ptr const soc_omap_lcd_ref;
 
 extern action_list_t soc_omap_lcd_action_list;
 
-soc_omap_lcd_ptr soc_omap_lcd_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_lcd_href h2lcd);
+soc_omap_lcd_ptr soc_omap_lcd_alloc(soc_omap_lcd_href h2lcd);

@@ -23,4 +23,4 @@ typedef soc_omap_mpu_timer_ptr const soc_omap_mpu_timer_ref;
 
 extern action_list_t soc_omap_mpu_timer_action_list;
 
-soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_mpu_timer_href h2t);
+soc_omap_mpu_timer_ptr soc_omap_mpu_timer_alloc(soc_omap_mpu_timer_href h2t);

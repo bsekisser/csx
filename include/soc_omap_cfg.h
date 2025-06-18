@@ -21,4 +21,4 @@ typedef soc_omap_cfg_ptr const soc_omap_cfg_ref;
 
 extern action_list_t soc_omap_cfg_action_list;
 
-soc_omap_cfg_ptr soc_omap_cfg_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_cfg_href h2cfg);
+soc_omap_cfg_ptr soc_omap_cfg_alloc(soc_omap_cfg_href h2cfg);

@@ -21,4 +21,4 @@ typedef soc_omap_dpll_ptr const soc_omap_dpll_ref;
 
 extern action_list_t soc_omap_dpll_action_list;
 
-soc_omap_dpll_ptr soc_omap_dpll_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_dpll_href h2dpll);
+soc_omap_dpll_ptr soc_omap_dpll_alloc(soc_omap_dpll_href h2dpll);

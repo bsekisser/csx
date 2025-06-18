@@ -44,6 +44,10 @@
 
 /* **** */
 
+csx_soc_ptr _csx_soc = 0;
+
+/* **** */
+
 static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t start, const uint32_t end)
 {
 	if(start > cdp->base)
@@ -118,6 +122,23 @@ static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const cha
 
 /* **** */
 
+csx_soc_ptr csx_soc(void)
+{ return(_csx_soc); }
+
+static
+int csx_soc_action_alloc(int err, void *const param, action_ref)
+{
+	ACTION_LOG(alloc);
+
+	/* **** */
+
+	ERR_NULL(((csx_soc_ref)param)->csx = csx());
+
+	/* **** */
+
+	return(err);
+}
+
 static
 int csx_soc_action_exit(int err, void *const param, action_ref)
 {
@@ -133,6 +154,12 @@ int csx_soc_action_exit(int err, void *const param, action_ref)
 }
 
 static
+action_linklist_t csx_soc_linklist[] = {
+	{ offsetof(csx_soc_t, csx), csx },
+	{ 0, 0 },
+};
+
+static
 action_handler_t csx_soc_action_sublist[] = {
 	{{ .list = &csx_soc_brom_action_list }, { .is_list = 1 }, 0 },
 	{{ .list = &csx_soc_sram_action_list }, { .is_list = 1 }, 0 },
@@ -140,26 +167,24 @@ action_handler_t csx_soc_action_sublist[] = {
 };
 
 ACTION_LIST(csx_soc_action_list,
+	.link = csx_soc_linklist,
 	.list = {
+		[_ACTION_ALLOC] = {{ csx_soc_action_alloc }, { 0 }, 0 },
 		[_ACTION_EXIT] = {{ csx_soc_action_exit }, { 0 }, 0 },
 	},
-
+	.self = &_csx_soc,
 	SUBLIST(csx_soc_action_sublist),
 );
 
-csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
+csx_soc_ptr csx_soc_alloc(csx_soc_href h2soc)
 {
-	ERR_NULL(csx);
-	ERR_NULL(h2soc);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2soc);
 
 	/* **** */
 
 	csx_soc_ref soc = handle_calloc(h2soc, 1, sizeof(csx_soc_t));
 	ERR_NULL(soc);
-
-	soc->csx = csx;
 
 	return(soc);
 }

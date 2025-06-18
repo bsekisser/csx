@@ -37,7 +37,8 @@ typedef struct csx_mmio_access_list_tag {
 
 extern action_list_t csx_mmio_action_list;
 
-csx_mmio_ptr csx_mmio_alloc(csx_ref csx, csx_mmio_href h2mmio);
+csx_mmio_ptr csx_mmio(void);
+csx_mmio_ptr csx_mmio_alloc(csx_mmio_href h2mmio);
 void csx_mmio_access_list_reset(csx_mmio_ref mmio, csx_mmio_access_list_ref acl, const size_t size, void *const param);
 void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param);
 void csx_mmio_register_access_list(csx_mmio_ref mmio, const uint32_t ppa_base, csx_mmio_access_list_ref acl, void *const param);

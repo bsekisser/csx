@@ -78,6 +78,7 @@ typedef struct csx_tag {
 
 #include "config.h"
 
+csx_ptr csx(void);
 int csx_action(int err, csx_ref csx, action_ref action);
 csx_ptr csx_alloc(csx_href h2csx);
 

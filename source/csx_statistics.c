@@ -140,21 +140,29 @@ int csx_statistics_action_reset(int err, void *const param, action_ref)
 
 /* **** */
 
+static
+action_linklist_t csx_statistics_action_linklist[] = {
+	{ offsetof(csx_statistics_t, csx), csx },
+	{ 0, 0 },
+};
+
 ACTION_LIST(csx_statistics_action_list,
+	.link = csx_statistics_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_statistics_action_exit }, { 0 }, 0 },
 		[_ACTION_RESET] = {{ csx_statistics_action_reset }, { 0 }, 0, },
 	}
 );
 
-csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
+csx_statistics_ptr csx_statistics_alloc(csx_statistics_href h2s)
 {
 	ACTION_LOG(alloc);
+	ERR_NULL(h2s);
+
+	/* **** */
 
 	statistics = handle_calloc(h2s, 1, sizeof(csx_statistics_t));
 	ERR_NULL(statistics);
-
-	statistics->csx = csx;
 
 	/* **** */
 

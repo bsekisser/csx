@@ -62,7 +62,7 @@ typedef struct csx_statistics_tag {
 
 extern action_list_t csx_statistics_action_list;
 
-csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s);
+csx_statistics_ptr csx_statistics_alloc(csx_statistics_href h2s);
 
 static inline void csx_counter_add(uint32_t* c, unsigned add) {
 	if(_csx_statistical_counters)

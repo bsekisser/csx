@@ -138,7 +138,15 @@ int soc_omap_usb_action_reset(int err, void *const param, action_ref)
 	UNUSED(param);
 }
 
+static
+action_linklist_t soc_omap_usb_action_linklist[] = {
+	{ offsetof(soc_omap_usb_t, csx), csx },
+	{ offsetof(soc_omap_usb_t, mmio), csx_mmio },
+	{ 0, 0 },
+};
+
 ACTION_LIST(soc_omap_usb_action_list,
+	.link = soc_omap_usb_action_linklist,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_usb_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ soc_omap_usb_action_init }, { 0 }, 0 },
@@ -146,21 +154,15 @@ ACTION_LIST(soc_omap_usb_action_list,
 	}
 );
 
-soc_omap_usb_ptr soc_omap_usb_alloc(csx_ref csx, csx_mmio_ref mmio, soc_omap_usb_href h2usb)
+soc_omap_usb_ptr soc_omap_usb_alloc(soc_omap_usb_href h2usb)
 {
-	ERR_NULL(csx);
-	ERR_NULL(mmio);
-	ERR_NULL(h2usb);
-
 	ACTION_LOG(alloc);
+	ERR_NULL(h2usb);
 
 	/* **** */
 
 	soc_omap_usb_ref usb = handle_calloc(h2usb, 1, sizeof(soc_omap_usb_t));
 	ERR_NULL(usb);
-
-	usb->csx = csx;
-	usb->mmio = mmio;
 
 	/* **** */
 
