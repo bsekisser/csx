@@ -188,14 +188,14 @@ static action_handler_t csx_mmio_action_sublist[] = {
 	{{0}, { 0 }, 0 },
 };
 
-action_list_t csx_mmio_action_list = {
+ACTION_LIST(csx_mmio_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_mmio_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ csx_mmio_action_init }, { 0 }, 0 },
 	},
 
-	.sublist = csx_mmio_action_sublist
-};
+	SUBLIST(csx_mmio_action_sublist),
+);
 
 /* **** */
 

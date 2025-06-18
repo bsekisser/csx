@@ -142,12 +142,12 @@ int soc_omap_gp_timer_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
-action_list_t soc_omap_gp_timer_action_list = {
+ACTION_LIST(soc_omap_gp_timer_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ soc_omap_gp_timer_action_exit }, { 0 }, 0, },
 		[_ACTION_INIT] = {{ soc_omap_gp_timer_action_init }, { 0 }, 0, },
 	}
-};
+);
 
 /* **** */
 

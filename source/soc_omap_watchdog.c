@@ -161,13 +161,13 @@ int soc_omap_watchdog_action_reset(int err, void *const param, action_ref)
 	return(err);
 }
 
-action_list_t soc_omap_watchdog_action_list = {
+ACTION_LIST(soc_omap_watchdog_action_list,
 	.list = {
 		[_ACTION_EXIT] = { { soc_omap_watchdog_action_exit }, { 0 }, 0, },
 		[_ACTION_INIT] = { { soc_omap_watchdog_action_init }, { 0 }, 0, },
 		[_ACTION_RESET] = { { soc_omap_watchdog_action_reset }, { 0 }, 0, },
 	}
-};
+);
 
 soc_omap_watchdog_ptr soc_omap_watchdog_alloc(csx_ref csx,
 	csx_mmio_ref mmio, soc_omap_watchdog_href h2sow)

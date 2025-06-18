@@ -43,13 +43,13 @@ static action_handler_t csx_action_sublist[] = {
 	{{0}, { 0} , 0 }
 };
 
-action_list_t csx_action_list = {
+ACTION_LIST(csx_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_action_exit }, { 0 }, 0 },
 	},
 
-	.sublist = csx_action_sublist,
-};
+	SUBLIST(csx_action_sublist),
+);
 
 int csx_action(int err, csx_ref csx, action_ref action)
 { return(action_handler(err, csx, action, &csx_action_list)); }

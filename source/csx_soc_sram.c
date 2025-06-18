@@ -83,13 +83,13 @@ int csx_soc_sram_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
-action_list_t csx_soc_sram_action_list = {
+ACTION_LIST(csx_soc_sram_action_list,
 	.list = {
 		[_ACTION_ALLOC_INIT] = {{ csx_soc_sram_action_alloc_init }, { 0 } , 0 },
 		[_ACTION_EXIT] = {{ csx_soc_sram_action_exit }, { 0 } , 0 },
 		[_ACTION_INIT] = {{ csx_soc_sram_action_init }, { 0 } , 0 },
 	}
-};
+);
 
 void csx_soc_sram_save(csx_soc_ref soc)
 {

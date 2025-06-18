@@ -259,12 +259,12 @@ int csx_nnd_flash_action_init(int err, void *const param, action_ref)
 	return(err);
 }
 
-action_list_t csx_nnd_flash_action_list = {
+ACTION_LIST(csx_nnd_flash_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_nnd_flash_action_exit }, { 0 }, 0 },
 		[_ACTION_INIT] = {{ csx_nnd_flash_action_init }, { 0 }, 0 },
 	}
-};
+);
 
 csx_nnd_ptr csx_nnd_flash_alloc(csx_ref csx, csx_nnd_href h2nnd)
 {

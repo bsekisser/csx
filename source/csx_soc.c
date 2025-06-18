@@ -139,13 +139,13 @@ action_handler_t csx_soc_action_sublist[] = {
 	{{0}, { 0 }, 0 }
 };
 
-action_list_t csx_soc_action_list = {
+ACTION_LIST(csx_soc_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_soc_action_exit }, { 0 }, 0 },
 	},
 
-	.sublist = csx_soc_action_sublist
-};
+	SUBLIST(csx_soc_action_sublist),
+);
 
 csx_soc_ptr csx_soc_alloc(csx_ref csx, csx_soc_href h2soc)
 {

@@ -140,12 +140,12 @@ int csx_statistics_action_reset(int err, void *const param, action_ref)
 
 /* **** */
 
-action_list_t csx_statistics_action_list = {
+ACTION_LIST(csx_statistics_action_list,
 	.list = {
 		[_ACTION_EXIT] = {{ csx_statistics_action_exit }, { 0 }, 0 },
 		[_ACTION_RESET] = {{ csx_statistics_action_reset }, { 0 }, 0, },
 	}
-};
+);
 
 csx_statistics_ptr csx_statistics_alloc(csx_ref csx, csx_statistics_href h2s)
 {
