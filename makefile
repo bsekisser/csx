@@ -1,27 +1,32 @@
-CFLAGS += -O1 -march=native
+# setup
+
+CFLAGS += -O1
+CFLAGS += -march=native
 CFLAGS += $(SDL_CFLAGS)
+export CFLAGS
 
 LDLIBS += -Lgit/libarmvm -larmvm
 LDLIBS += -Lgit/libarm -larm
 LDLIBS += -Lgit/libbse -lbse
 LDLIBS += -lcapstone
 LDLIBS += $(SDL_LIBS)
+export LDLIBS
 
 SDL_CFLAGS := `sdl2-config --cflags`
 SDL_LIBS := `sdl2-config --libs`
 
-SRC_DIR = source
-SRCS = $(wildcard $(SRC_DIR)/*.c)
+export SRC_DIR = source
 
-TARGET_EXE = csx
+export TARGET = csx
 
-VPATH = source
+# build/recipies
+
+include git/libbse/makefiles/common_setup.mk
+
 
 .PHONY: all
 all: $(TARGET_EXE)
-
-
-include git/libbse/makefile.setup
+#	$(MAKE) -f git/libbse/makefiles/build_exe.mk
 
 $(OBJ_TARGET_EXE): git/libarmvm/libarmvm.a
 
@@ -29,4 +34,6 @@ $(OBJ_TARGET_EXE): git/libarm/libarm.a
 
 $(OBJ_TARGET_EXE): git/libbse/libbse.a
 
-include git/libbse/makefile.build
+
+include git/libbse/makefiles/build_exe.mk
+include git/libbse/makefiles/common.mk
