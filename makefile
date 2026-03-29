@@ -5,9 +5,13 @@ CFLAGS += -march=native
 CFLAGS += $(SDL_CFLAGS)
 export CFLAGS
 
-LDLIBS += -Lgit/libarmvm -larmvm
-LDLIBS += -Lgit/libarm -larm
-LDLIBS += -Lgit/libbse -lbse
+#LDLIBS += -L/home/$(USER)/.local/lib
+#LDLIBS += -Lgit/libarmvm
+	LDLIBS += -larmvm
+#LDLIBS += -Lgit/libarm
+	LDLIBS += -larm
+#LDLIBS += -Lgit/libbse
+	LDLIBS += -lbse
 LDLIBS += -lcapstone
 LDLIBS += $(SDL_LIBS)
 export LDLIBS
@@ -17,23 +21,15 @@ SDL_LIBS := `sdl2-config --libs`
 
 export SRC_DIR = source
 
-export TARGET = csx
+export TARGETs = csx.exe
 
 # build/recipies
 
-include git/libbse/makefiles/common_setup.mk
+include git/makefiles/common.mk
 
 
-.PHONY: all
-all: $(TARGET_EXE)
-#	$(MAKE) -f git/libbse/makefiles/build_exe.mk
+#$(OBJ_TARGET_EXE): git/libarmvm/libarmvm.a
 
-$(OBJ_TARGET_EXE): git/libarmvm/libarmvm.a
+#$(OBJ_TARGET_EXE): git/libarm/libarm.a
 
-$(OBJ_TARGET_EXE): git/libarm/libarm.a
-
-$(OBJ_TARGET_EXE): git/libbse/libbse.a
-
-
-include git/libbse/makefiles/build_exe.mk
-include git/libbse/makefiles/common.mk
+#$(OBJ_TARGET_EXE): git/libbse/libbse.a
