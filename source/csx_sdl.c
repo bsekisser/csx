@@ -104,8 +104,8 @@ unsigned _xsr(const unsigned data, int *const offset, const unsigned bits, const
 
 	const unsigned mask = (1 << bits) - 1;
 	const unsigned data_shifted = (0 > ooffset)
-		? _rol(data, -ooffset)
-		: _ror(data, ooffset);
+		? _ROL_MASKED(data, -ooffset)
+		: _ROR(data, ooffset);
 
 	return((data_shifted & mask) << lsr_bits);
 }
