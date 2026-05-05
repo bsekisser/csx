@@ -10,6 +10,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -82,14 +83,14 @@ static uint32_t soc_omap_tc_emiff_sdram_config(void *const param, const uint32_t
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("SBZ: %01u", mlBFEXT(data, 31, 30));
 			_LOG_(" LG SDRAM: %01u", mlBFEXT(data, 29, 28));
-			_LOG_(" CLK: %01u", BEXT(data, 27));
-			_LOG_(" PWD: %01u", BEXT(data, 26));
+			_LOG_(" CLK: %01u", bext32(data, 27));
+			_LOG_(" PWD: %01u", bext32(data, 26));
 			_LOG_(" SDRAM FRQ: %01u", mlBFEXT(data, 25, 24));
 			_LOG_(" ARCV: x%05u", mlBFEXT(data, 23, 8));
 			_LOG_(" SDRAM Type: %01u", mlBFEXT(data, 7, 4));
 			_LOG_(" ARE: %01u", mlBFEXT(data, 3, 2));
-			_LOG_(" SBO: %01u", BEXT(data, 1));
-			LOG_END(" Slrf: %01u", BEXT(data, 0));
+			_LOG_(" SBO: %01u", bext32(data, 1));
+			LOG_END(" Slrf: %01u", bext32(data, 0));
 		}
 		tc->emiff.sdram_config = data;
 	} else
@@ -114,8 +115,8 @@ static uint32_t soc_omap_tc_emifs_adv_cs_config(void *const param, const uint32_
 	if(write) {
 		if(_trace_mmio_tc_emifs) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG_START("BTMODE: %01u", BEXT(data, 9));
-			_LOG_(", ADVHOLD: %01u", BEXT(data, 8));
+			LOG_START("BTMODE: %01u", bext32(data, 9));
+			_LOG_(", ADVHOLD: %01u", bext32(data, 8));
 			_LOG_(", OEHOLD: %01u", mlBFEXT(data, 7, 4));
 			LOG_END(", OESETUP: %01u", mlBFEXT(data, 3, 0));
 		}
@@ -142,11 +143,11 @@ static uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t pp
 	if(write) {
 		if(_trace_mmio_tc_emifs) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG_START("PGWSTEN: %01u", BEXT(data, 31));
+			LOG_START("PGWSTEN: %01u", bext32(data, 31));
 			_LOG_(", PGWST: %01u", mlBFEXT(data, 30, 27));
 			_LOG_(", BTWST: %01u", mlBFEXT(data, 26, 23));
-			_LOG_(", MAD: %01u", BEXT(data, 22));
-			const unsigned bw = BEXT(data, 20);
+			_LOG_(", MAD: %01u", bext32(data, 22));
+			const unsigned bw = bext32(data, 20);
 			LOG_END(", BW: %01u (data bus width, %s bit)", bw, bw ? "32" : "16");
 
 			const char *rdmodesl[] = {
@@ -164,7 +165,7 @@ static uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t pp
 			LOG_START("PGWST/WELEN: %01u", mlBFEXT(data, 15, 12));
 			_LOG_(", WRWST: %01u", mlBFEXT(data, 11, 8));
 			_LOG_(", RDWST: %01u", mlBFEXT(data, 7, 4));
-			_LOG_(", RT: %01u", BEXT(data, 2));
+			_LOG_(", RT: %01u", bext32(data, 2));
 			LOG_END(", FCLKDIV: %01u", mlBFEXT(data, 1, 0));
 		}
 		*cs_config = data;

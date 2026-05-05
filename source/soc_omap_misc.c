@@ -9,6 +9,7 @@
 /* **** */
 
 #include "libbse/include/action.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -144,7 +145,7 @@ static uint32_t _soc_omap_misc_i2c_sysc(void *const param, const uint32_t ppa, c
 	csx_ref csx = misc->csx;
 
 	const unsigned data = write ? *write : 0;
-	if(write && BEXT(data, 1))
+	if(write && bext32(data, 1))
 		misc->i2c.syss |= 1;
 
 	if(_trace_mmio_misc)

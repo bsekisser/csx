@@ -10,6 +10,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -75,11 +76,11 @@ enum {
 
 static void __mpu_timer_cntl_write(soc_omap_mpu_timer_unit_ref sotu, const uint32_t data)
 {
-	sotu->cntl.ar = BEXT(data, _MPU_CNTL_TIMER_AR);
-	sotu->cntl.clock_enable = BEXT(data, _MPU_CNTL_TIMER_CLOCK_ENABLE);
-	sotu->cntl.free = BEXT(data, _MPU_CNTL_TIMER_FREE);
+	sotu->cntl.ar = bext32(data, _MPU_CNTL_TIMER_AR);
+	sotu->cntl.clock_enable = bext32(data, _MPU_CNTL_TIMER_CLOCK_ENABLE);
+	sotu->cntl.free = bext32(data, _MPU_CNTL_TIMER_FREE);
 	sotu->cntl.ptv = mlBFEXT(data, 4, 2);
-	sotu->cntl.st = BEXT(data, _MPU_CNTL_TIMER_ST);
+	sotu->cntl.st = bext32(data, _MPU_CNTL_TIMER_ST);
 }
 
 static soc_omap_mpu_timer_unit_ptr

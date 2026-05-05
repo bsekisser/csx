@@ -9,6 +9,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -54,9 +55,9 @@ static uint32_t soc_omap_mpu_ckctl(void *const param, const uint32_t ppa, const 
 	if(write) {
 		if(_trace_mmio_mpu) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG_START("ARM_INTHCK_SEL: %01u", BEXT(data, 14));
-			_LOG_(", EN_DSPCK: %01u", BEXT(data, 13));
-			_LOG_(", ARM_TIMXO: %01u", BEXT(data, 12));
+			LOG_START("ARM_INTHCK_SEL: %01u", bext32(data, 14));
+			_LOG_(", EN_DSPCK: %01u", bext32(data, 13));
+			_LOG_(", ARM_TIMXO: %01u", bext32(data, 12));
 			LOG_END(", DSPMMUDIV: %01u", mlBFEXT(data, 11, 10));
 			LOG_START("TCDIV: %01u", mlBFEXT(data, 9, 8));
 			_LOG_(", DSPDIV: %01u", mlBFEXT(data, 7, 6));
@@ -85,15 +86,15 @@ static uint32_t soc_omap_mpu_idlct1(void *const param, const uint32_t ppa, const
 	if(write) {
 		if(_trace_mmio_mpu) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG_START("IDL_CLKOUT_ARM: %01u", BEXT(data, 12));
-			_LOG_(", WKUP_MODE: %01u", BEXT(data, 10));
-			_LOG_(", IDLTIM_ARM: %01u", BEXT(data, 9));
-			LOG_END(", IDLAPI_ARM: %01u", BEXT(data, 8));
-			LOG_START("IDLDPLL_ARM: %01u", BEXT(data, 7));
-			_LOG_(", IDLIF_ARM: %01u", BEXT(data, 6));
-			_LOG_(", IDLPER_ARM: %01u", BEXT(data, 2));
-			_LOG_(", IDLXOPR_ARM: %01u", BEXT(data, 1));
-			LOG_END(", IDLWDT_ARM: %01u", BEXT(data, 0));
+			LOG_START("IDL_CLKOUT_ARM: %01u", bext32(data, 12));
+			_LOG_(", WKUP_MODE: %01u", bext32(data, 10));
+			_LOG_(", IDLTIM_ARM: %01u", bext32(data, 9));
+			LOG_END(", IDLAPI_ARM: %01u", bext32(data, 8));
+			LOG_START("IDLDPLL_ARM: %01u", bext32(data, 7));
+			_LOG_(", IDLIF_ARM: %01u", bext32(data, 6));
+			_LOG_(", IDLPER_ARM: %01u", bext32(data, 2));
+			_LOG_(", IDLXOPR_ARM: %01u", bext32(data, 1));
+			LOG_END(", IDLWDT_ARM: %01u", bext32(data, 0));
 		}
 
 		mpu->idlct[0] = data;
@@ -116,14 +117,14 @@ static uint32_t soc_omap_mpu_idlct2(void *const param, const uint32_t ppa, const
 	if(write) {
 		if(_trace_mmio_mpu) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG_START("EN_CKOUT_ARM: %01u", BEXT(data, 11));
-			_LOG_(", DMACK_REQ: %01u", BEXT(data, 8));
-			_LOG_(", EN_TIMCK: %01u", BEXT(data, 7));
-			LOG_END(", EN_APICK: %01u", BEXT(data, 6));
-			LOG_START("EN_LCDCK: %01u", BEXT(data, 3));
-			_LOG_(", EN_PERCK: %01u", BEXT(data, 2));
-			_LOG_(", EN_XORPCK: %01u", BEXT(data, 1));
-			LOG_END(", EN_WDTCK: %01u", BEXT(data, 0));
+			LOG_START("EN_CKOUT_ARM: %01u", bext32(data, 11));
+			_LOG_(", DMACK_REQ: %01u", bext32(data, 8));
+			_LOG_(", EN_TIMCK: %01u", bext32(data, 7));
+			LOG_END(", EN_APICK: %01u", bext32(data, 6));
+			LOG_START("EN_LCDCK: %01u", bext32(data, 3));
+			_LOG_(", EN_PERCK: %01u", bext32(data, 2));
+			_LOG_(", EN_XORPCK: %01u", bext32(data, 1));
+			LOG_END(", EN_WDTCK: %01u", bext32(data, 0));
 		}
 
 		mpu->idlct[1] = data;
@@ -146,7 +147,7 @@ static uint32_t soc_omap_mpu_rstct2(void *const param, const uint32_t ppa, const
 	if(write) {
 		if(_trace_mmio_mpu) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
-			LOG("PER_EN: %01u", BEXT(data, 0));
+			LOG("PER_EN: %01u", bext32(data, 0));
 		}
 
 		mpu->rstct[1] = data;
@@ -170,13 +171,13 @@ static uint32_t soc_omap_mpu_sysst(void *const param, const uint32_t ppa, const 
 		if(_trace_mmio_mpu) {
 			CSX_MMIO_TRACE_WRITE(csx, ppa, size, data);
 			LOG_START("CLOCK_SELECT: %01u", mlBFEXT(data, 13, 11));
-			_LOG_(", IDLE_DSP: %01u", BEXT(data, 6));
-			_LOG_(", POR: %01u", BEXT(data, 5));
-			LOG_END(", EXT_RST: %01u", BEXT(data, 4));
-			LOG_START("ARM_MCRST: %01u", BEXT(data, 3));
-			_LOG_(", ARM_WDRST: %01u", BEXT(data, 2));
-			_LOG_(", GLOB_SWRST: %01u", BEXT(data, 1));
-			LOG_END(", DSP_WDRST: %01u", BEXT(data, 0));
+			_LOG_(", IDLE_DSP: %01u", bext32(data, 6));
+			_LOG_(", POR: %01u", bext32(data, 5));
+			LOG_END(", EXT_RST: %01u", bext32(data, 4));
+			LOG_START("ARM_MCRST: %01u", bext32(data, 3));
+			_LOG_(", ARM_WDRST: %01u", bext32(data, 2));
+			_LOG_(", GLOB_SWRST: %01u", bext32(data, 1));
+			LOG_END(", DSP_WDRST: %01u", bext32(data, 0));
 		}
 		data &= ~mlBF(5, 0);
 

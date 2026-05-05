@@ -6,7 +6,7 @@
 
 /* **** */
 
-#include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 
 /* **** system includes */
 
@@ -18,7 +18,7 @@
 void csx_data_bit_bmas(void *const p2dst, csx_data_bit_ref sdbp, const unsigned set)
 {
 	unsigned value = csx_data_offset_read(p2dst, sdbp->offset, sdbp->size);
-	BMAS(value, sdbp->bit, set);
+	bmas32p(&value, sdbp->bit, set);
 
 	csx_data_offset_write(p2dst, sdbp->offset, sdbp->size, value);
 }
@@ -27,7 +27,7 @@ unsigned csx_data_bit_read(void *const p2src, csx_data_bit_ref sdbp)
 {
 	const unsigned value = csx_data_offset_read(p2src, sdbp->offset, sdbp->size);
 
-	return(BEXT(value, sdbp->bit));
+	return(bext32(value, sdbp->bit));
 }
 
 #define STRINGIFY(_x) #_x

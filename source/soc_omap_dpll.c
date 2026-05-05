@@ -10,6 +10,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -52,21 +53,21 @@ static uint32_t _soc_omap_dpll_ctl(void *const param, const uint32_t ppa, const 
 	uint32_t data = write ? *write : 0;
 
 	if(write) {
-		const unsigned pll_enable = BEXT(data, DPLL1_CTL_PLL_ENABLE);
-		BSET_AS(dpll->ctl_reg, DPLL1_CTL_LOCK, pll_enable);
+		const unsigned pll_enable = bext32(data, DPLL1_CTL_PLL_ENABLE);
+		bset32p_as(&dpll->ctl_reg, DPLL1_CTL_LOCK, pll_enable);
 
 		if(_trace_mmio_dpll) {
 			CSX_MMIO_TRACE_WRITE(dpll->csx, ppa, size, data);
-			LOG_START("LS_DISABLE: %01u", BEXT(data, 15));
-			_LOG_(", IAI: %01u", BEXT(data, 14));
-			_LOG_(", IOB: %01u", BEXT(data, 13));
-			LOG_END(", TEST: %01u", BEXT(data, 12));
+			LOG_START("LS_DISABLE: %01u", bext32(data, 15));
+			_LOG_(", IAI: %01u", bext32(data, 14));
+			_LOG_(", IOB: %01u", bext32(data, 13));
+			LOG_END(", TEST: %01u", bext32(data, 12));
 			LOG_START("PLL_MULT: %02u", mlBFEXT(data, 11, 7));
 			_LOG_(", PLL_DIV: %01u", mlBFEXT(data, 6, 5));
 			LOG_END(", PLL_ENABLE: %01u", pll_enable);
 			LOG_START("BYPASS_DIV: %01u", mlBFEXT(data, 3, 2));
-			_LOG_(", BREAKLN: %01u", BEXT(data, 1));
-			LOG_END(", LOCK: %01u", BEXT(data, 0));
+			_LOG_(", BREAKLN: %01u", bext32(data, 1));
+			LOG_END(", LOCK: %01u", bext32(data, 0));
 		}
 	} else
 		data = dpll->ctl_reg;

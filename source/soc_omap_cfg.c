@@ -11,6 +11,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -106,19 +107,19 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void *const param, const uint32_t 
 
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Mondule Configuration Control 1\n\t");
-		_LOG_("CONF_CAM_CLKMUX_R: %01u", BEXT(data, 31));
+		_LOG_("CONF_CAM_CLKMUX_R: %01u", bext32(data, 31));
 		_LOG_(", CONF_PMT_DCB_SELECT_R: %01u", mlBFEXT(data, 30, 29));
-		_LOG_(", CONF_OSC1_GZ_R: %01u\n\t", BEXT(data, 28));
-		_LOG_("CONF_OSC1_PWRDN_R: %01u", BEXT(data, 27));
-		_LOG_(", RESERVED[26]: %01u", BEXT(data, 26));
-		_LOG_(", OCP_INTERCON_GATE_EN_R: %01u\n\t", BEXT(data, 25));
-		_LOG_("CONF_MMC2_CLKFB_SEL_R: %01u", BEXT(data, 24));
-		_LOG_(", RESERVED[23]: %01u", BEXT(data, 23));
-		_LOG_(", CONF_MCBSP3_CLK_DIS_R: %01u\n\t", BEXT(data, 22));
-		_LOG_("CONF_MCBSP2_CLK_DIS_R: %01u", BEXT(data, 21));
-		_LOG_(", CONF_MCBSP1_CLK_DIS_R: %01u", BEXT(data, 20));
+		_LOG_(", CONF_OSC1_GZ_R: %01u\n\t", bext32(data, 28));
+		_LOG_("CONF_OSC1_PWRDN_R: %01u", bext32(data, 27));
+		_LOG_(", RESERVED[26]: %01u", bext32(data, 26));
+		_LOG_(", OCP_INTERCON_GATE_EN_R: %01u\n\t", bext32(data, 25));
+		_LOG_("CONF_MMC2_CLKFB_SEL_R: %01u", bext32(data, 24));
+		_LOG_(", RESERVED[23]: %01u", bext32(data, 23));
+		_LOG_(", CONF_MCBSP3_CLK_DIS_R: %01u\n\t", bext32(data, 22));
+		_LOG_("CONF_MCBSP2_CLK_DIS_R: %01u", bext32(data, 21));
+		_LOG_(", CONF_MCBSP1_CLK_DIS_R: %01u", bext32(data, 20));
 		_LOG_(", RESERVED[19:17]: %01u\n\t", mlBFEXT(data, 19, 17));
-		_LOG_("RESERVED[16]: %01u", BEXT(data, 16));
+		_LOG_("RESERVED[16]: %01u", bext32(data, 16));
 		_LOG_(", CONF_MOD_GPTIMER8_CLK_SEL_R: %1u", mlBFEXT(data, 15, 14));
 		_LOG_(", CONF_MOD_GPTIMER7_CLK_SEL_R: %1u\n\t", mlBFEXT(data, 13, 12));
 		_LOG_("CONF_MOD_GPTIMER6_CLK_SEL_R: %1u", mlBFEXT(data, 11, 10));
@@ -152,13 +153,13 @@ static uint32_t _soc_omap_cfg_reset_ctl(void *const param, const uint32_t ppa, c
 	if(write && _trace_mmio_cfg) {
 		LOG_START("CFG: Reset Control Register\n\t");
 		_LOG_("UNUSED[31:7]: 0x%03x", mlBFEXT(data, 31, 7));
-		_LOG_(", CONF_RNG_IDLE_MODE: %01u", BEXT(data, 6));
-		_LOG_(", CONF_CAMERAIF_RESET_R: %01u\n\t", BEXT(data, 5));
-		_LOG_("CONF_UWIRE_RESET_R: %01u", BEXT(data, 4));
-		_LOG_(", CONF_OSTIMER_RESET_R: %01u", BEXT(data, 3));
-		_LOG_(", CONF_ARMIO_RESET_R: %01u\n\t", BEXT(data, 2));
-		_LOG_("RESERVED[1]: %01u", BEXT(data, 1));
-		LOG_END(", CONF_OCP_RESET_R: %01u", BEXT(data, 0));
+		_LOG_(", CONF_RNG_IDLE_MODE: %01u", bext32(data, 6));
+		_LOG_(", CONF_CAMERAIF_RESET_R: %01u\n\t", bext32(data, 5));
+		_LOG_("CONF_UWIRE_RESET_R: %01u", bext32(data, 4));
+		_LOG_(", CONF_OSTIMER_RESET_R: %01u", bext32(data, 3));
+		_LOG_(", CONF_ARMIO_RESET_R: %01u\n\t", bext32(data, 2));
+		_LOG_("RESERVED[1]: %01u", bext32(data, 1));
+		LOG_END(", CONF_OCP_RESET_R: %01u", bext32(data, 0));
 	}
 
 	return(data);

@@ -10,6 +10,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -59,7 +60,7 @@ static uint32_t _soc_omap_os_timer_ctrl(void *const param, const uint32_t ppa, c
 	if(write)
 		ost->ctrl = data;
 	else
-		data = _BCLR(ost->ctrl, 1);
+		bclr32p(&ost->ctrl, 1);
 
 	if(_trace_mmio_os_timer)
 		CSX_MMIO_TRACE_MEM_ACCESS(csx, ppa, size, write, data);

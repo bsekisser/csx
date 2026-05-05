@@ -11,7 +11,7 @@
 #include "libarmvm/include/armvm_mem.h"
 
 #include "libbse/include/action.h"
-#include "libbse/include/bitops.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/dump_hex.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
@@ -767,7 +767,7 @@ void csx_nnd_flash_write_ale(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 		const uint64_t bpa = _row2bpa(row, column);
 		const unsigned uunit = _ppa2unit(ppa);
 
-		const unsigned a30 = BEXT(bpa, 30);
+		const unsigned a30 = bext32(bpa, 30);
 
 		LOG_START("cs: %u, unit: %u(%X)", _ppa2cs(ppa), uunit, uunit << 1);
 		_LOG_(", cl: 0x%08x, al.(%u, 0x%016" PRIx64 " <= 0x%02x", unit->cl, unit->al.index, al64u, value);

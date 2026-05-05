@@ -9,6 +9,8 @@
 /* **** */
 
 #include "libbse/include/action.h"
+#include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/mem_access.h"
@@ -62,23 +64,23 @@ static uint32_t _soc_omap_lcd_ctrl(void *const param, const uint32_t ppa, const 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Control Register\n\t");
 		_LOG_("RESERVED[31:25]: 0x%02x", mlBFEXT(data, 31, 25));
-		_LOG_(", STN_565: %01u", BEXT(data, 24));
-		_LOG_(", TFT_Map: %01u", BEXT(data, 23));
-		_LOG_(", LCDCB1: %01u", BEXT(data, 22));
+		_LOG_(", STN_565: %01u", bext32(data, 24));
+		_LOG_(", TFT_Map: %01u", bext32(data, 23));
+		_LOG_(", LCDCB1: %01u", bext32(data, 22));
 		_LOG_(", PLM: %01u\n\t", mlBFEXT(data, 21, 20));
 		_LOG_("FDD: 0x%02x", mlBFEXT(data, 19, 12));
-		_LOG_(", PXL_GATED: %01u", BEXT(data, 11));
-		_LOG_(", LINE_INT_CLR_SEL: %01u", BEXT(data, 10));
-		_LOG_(", M8B: %01u", BEXT(data, 9));
-		_LOG_(", LCDCB0: %01u\n\t", BEXT(data, 8));
-		_LOG_("LCD_TFT: %01u", BEXT(data, 7));
-		_LOG_(", LINE_INT_MASK: %01u", BEXT(data, 6));
-		_LOG_(", LINE_INT_NIRQ_MASK: %01u", BEXT(data, 5));
-		_LOG_(", LOAD_MASK: %01u\n\t", BEXT(data, 4));
-		_LOG_("DONE_MASK: %01u", BEXT(data, 3));
-		_LOG_(", VSYNC_MASK: %01u", BEXT(data, 2));
-		_LOG_(", LCD_BW: %01u", BEXT(data, 1));
-		LOG_END(", LCD_EN: %01u", BEXT(data, 0));
+		_LOG_(", PXL_GATED: %01u", bext32(data, 11));
+		_LOG_(", LINE_INT_CLR_SEL: %01u", bext32(data, 10));
+		_LOG_(", M8B: %01u", bext32(data, 9));
+		_LOG_(", LCDCB0: %01u\n\t", bext32(data, 8));
+		_LOG_("LCD_TFT: %01u", bext32(data, 7));
+		_LOG_(", LINE_INT_MASK: %01u", bext32(data, 6));
+		_LOG_(", LINE_INT_NIRQ_MASK: %01u", bext32(data, 5));
+		_LOG_(", LOAD_MASK: %01u\n\t", bext32(data, 4));
+		_LOG_("DONE_MASK: %01u", bext32(data, 3));
+		_LOG_(", VSYNC_MASK: %01u", bext32(data, 2));
+		_LOG_(", LCD_BW: %01u", bext32(data, 1));
+		LOG_END(", LCD_EN: %01u", bext32(data, 0));
 	}
 
 	return(data);
@@ -203,12 +205,12 @@ static uint32_t _soc_omap_lcd_timing2(void *const param, const uint32_t ppa, con
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Timing 2 Register\n\t");
 		_LOG_("RESERVED[31:26]: 0x%02x", mlBFEXT(data, 31, 26));
-		_LOG_(", ON_OFF: %01u", BEXT(data, 25));
-		_LOG_(", RF: %01u", BEXT(data, 24));
-		_LOG_(", IEO: %01u", BEXT(data, 23));
-		_LOG_(", IPC: %01u\n\t", BEXT(data, 22));
-		_LOG_("IHS: %01u", BEXT(data, 21));
-		_LOG_(", IVS: %01u", BEXT(data, 20));
+		_LOG_(", ON_OFF: %01u", bext32(data, 25));
+		_LOG_(", RF: %01u", bext32(data, 24));
+		_LOG_(", IEO: %01u", bext32(data, 23));
+		_LOG_(", IPC: %01u\n\t", bext32(data, 22));
+		_LOG_("IHS: %01u", bext32(data, 21));
+		_LOG_(", IVS: %01u", bext32(data, 20));
 		_LOG_(", ACBI: 0x%02x", mlBFEXT(data, 19, 16));
 		_LOG_(", ACB: 0x%02x", mlBFEXT(data, 15, 8));
 		LOG_END(", PCD: 0x%02x", mlBFEXT(data, 7, 0));
@@ -234,13 +236,13 @@ static uint32_t _soc_omap_lcd_status(void *const param, const uint32_t ppa, cons
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Status Register\n\t");
 		_LOG_("RESERVED[31:7]: 0x%02x", mlBFEXT(data, 31, 7));
-		_LOG_(", LP: %01u", BEXT(data, 6));
-		_LOG_(", FUF: %01u", BEXT(data, 5));
-		_LOG_(", LINE_INT: %01u\n\t", BEXT(data, 4));
-		_LOG_("ABC: %01u", BEXT(data, 3));
-		_LOG_(", SYNC_LOST: %01u", BEXT(data, 2));
-		_LOG_(", VS: %01u", BEXT(data, 1));
-		LOG_END(", DONE: %01u", BEXT(data, 0));
+		_LOG_(", LP: %01u", bext32(data, 6));
+		_LOG_(", FUF: %01u", bext32(data, 5));
+		_LOG_(", LINE_INT: %01u\n\t", bext32(data, 4));
+		_LOG_("ABC: %01u", bext32(data, 3));
+		_LOG_(", SYNC_LOST: %01u", bext32(data, 2));
+		_LOG_(", VS: %01u", bext32(data, 1));
+		LOG_END(", DONE: %01u", bext32(data, 0));
 	}
 
 	return(data);
@@ -262,9 +264,9 @@ static uint32_t _soc_omap_lcd_subpanel(void *const param, const uint32_t ppa, co
 
 	if(_trace_mmio_lcd && write) {
 		LOG_START("LCD: Subpanel Register\n\t");
-		_LOG_("SPEN: %01u", BEXT(data, 31));
-		_LOG_(", RESERVED[30]: %01u", BEXT(data, 30));
-		_LOG_(", HOLS: %01u", BEXT(data, 29));
+		_LOG_("SPEN: %01u", bext32(data, 31));
+		_LOG_(", RESERVED[30]: %01u", bext32(data, 30));
+		_LOG_(", HOLS: %01u", bext32(data, 29));
 		_LOG_(", RESERVED[28:26]: 0x%02x\n\t", mlBFEXT(data, 28, 26));
 		_LOG_("LPPT: %04u", mlBFEXT(data, 25, 16));
 		LOG_END(", DPD: 0x%04x", mlBFEXT(data, 15, 0));

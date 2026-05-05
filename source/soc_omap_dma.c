@@ -10,6 +10,7 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/mem_access.h"
 
@@ -189,13 +190,13 @@ static uint32_t _soc_omap_dma_ch_ccr(void *const param, const uint32_t ppa, cons
 		LOG_START("DMA: Channel Control Register\n\t");
 		_LOG_("DST_AMODE: %01u", mlBFEXT(data, 15, 14));
 		_LOG_(", SRC_AMODE: %01u", mlBFEXT(data, 13, 12));
-		_LOG_(", END_PROG: %01u\n\t", BEXT(data, 11));
-		_LOG_("OMAP_3_1_COMPATIBLE_DISABLE: %01u", BEXT(data, 10));
-		_LOG_(", REPEAT: %01u", BEXT(data, 9));
-		_LOG_(", AUTO_INIT: %01u", BEXT(data, 8));
-		_LOG_(", ENABLE: %01u\n\t", BEXT(data, 7));
-		_LOG_("PRIO: %01u", BEXT(data, 6));
-		_LOG_(", FS: %01u", BEXT(data, 5));
+		_LOG_(", END_PROG: %01u\n\t", bext32(data, 11));
+		_LOG_("OMAP_3_1_COMPATIBLE_DISABLE: %01u", bext32(data, 10));
+		_LOG_(", REPEAT: %01u", bext32(data, 9));
+		_LOG_(", AUTO_INIT: %01u", bext32(data, 8));
+		_LOG_(", ENABLE: %01u\n\t", bext32(data, 7));
+		_LOG_("PRIO: %01u", bext32(data, 6));
+		_LOG_(", FS: %01u", bext32(data, 5));
 		LOG_END(", SYNC: %02u", mlBFEXT(data, 4, 0));
 	}
 
@@ -215,9 +216,9 @@ static uint32_t _soc_omap_dma_ch_ccr2(void *const param, const uint32_t ppa, con
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Control Register 2\n\t");
 		_LOG_("RESERVED[15, 3]: 0x%04x", mlBFEXT(data, 15, 3));
-		_LOG_(", BS: %01u", BEXT(data, 2));
-		_LOG_(", TCE: %01u", BEXT(data, 1));
-		LOG_END(", CFE: %01u", BEXT(data, 0));
+		_LOG_(", BS: %01u", bext32(data, 2));
+		_LOG_(", TCE: %01u", bext32(data, 1));
+		LOG_END(", CFE: %01u", bext32(data, 0));
 	}
 
 	return(data);
@@ -277,7 +278,7 @@ static uint32_t _soc_omap_dma_ch_cdfi(void *const param, const uint32_t ppa, con
 static uint32_t _soc_omap_dma_ch_cdsa(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	soc_omap_dma_ref dma = param;
 	soc_omap_dma_ch_ref ch = PPA2p2CHn(ppa);
@@ -338,12 +339,12 @@ static uint32_t _soc_omap_dma_ch_cicr(void *const param, const uint32_t ppa, con
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Interrupt Control Register\n\t");
 		_LOG_("RESERVED[15:6]: 0x%02x", mlBFEXT(data, 15, 6));
-		_LOG_(", BLOCK_IE: %01u", BEXT(data, 5));
-		_LOG_(", LAST_IE: %01u", BEXT(data, 4));
-		_LOG_(", FRAME_IE: %01u\n\t", BEXT(data, 3));
-		_LOG_("HALF_IE: %01u", BEXT(data, 2));
-		_LOG_(", DROP_IE: %01u", BEXT(data, 1));
-		LOG_END(", TOUT_IE: %01u", BEXT(data, 0));
+		_LOG_(", BLOCK_IE: %01u", bext32(data, 5));
+		_LOG_(", LAST_IE: %01u", bext32(data, 4));
+		_LOG_(", FRAME_IE: %01u\n\t", bext32(data, 3));
+		_LOG_("HALF_IE: %01u", bext32(data, 2));
+		_LOG_(", DROP_IE: %01u", bext32(data, 1));
+		LOG_END(", TOUT_IE: %01u", bext32(data, 0));
 	}
 
 	return(data);
@@ -361,10 +362,10 @@ static uint32_t _soc_omap_dma_ch_clnk_ctrl(void *const param, const uint32_t ppa
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Link Control Register\n\t");
-		_LOG_("EL: %01u", BEXT(data, 15));
-		_LOG_(", SL: %01u", BEXT(data, 14));
+		_LOG_("EL: %01u", bext32(data, 15));
+		_LOG_(", SL: %01u", bext32(data, 14));
 		_LOG_(", RESERVED[13, 3]: 0x%04x", mlBFEXT(data, 13, 3));
-		_LOG_(", NID[4]: %01u", BEXT(data, 4));
+		_LOG_(", NID[4]: %01u", bext32(data, 4));
 		LOG_END(", NID[3:0]: %01u", mlBFEXT(data, 3, 0));
 	}
 
@@ -374,7 +375,7 @@ static uint32_t _soc_omap_dma_ch_clnk_ctrl(void *const param, const uint32_t ppa
 static uint32_t _soc_omap_dma_ch_color(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	soc_omap_dma_ref dma = param;
 	soc_omap_dma_ch_ref ch = PPA2p2CHn(ppa);
@@ -418,10 +419,10 @@ static uint32_t _soc_omap_dma_ch_csdp(void *const param, const uint32_t ppa, con
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Channel Source Destination Parameters Register\n\t");
 		_LOG_("DST_BURST_EN: %01u", mlBFEXT(data, 15, 14));
-		_LOG_(", DST_PACK: %01u", BEXT(data, 13));
+		_LOG_(", DST_PACK: %01u", bext32(data, 13));
 		_LOG_(", DST: %02u\n\t", mlBFEXT(data, 12, 9));
 		_LOG_("SRC_BURST_EN: %01u", mlBFEXT(data, 8, 7));
-		_LOG_(", SRC_PACK: %01u", BEXT(data, 6));
+		_LOG_(", SRC_PACK: %01u", bext32(data, 6));
 		_LOG_(", SRC: %02u\n\t", mlBFEXT(data, 5, 2));
 		LOG_END("DATA_TYPE: %01u", mlBFEXT(data, 1, 0));
 	}
@@ -483,7 +484,7 @@ static uint32_t _soc_omap_dma_ch_csr(void *const param, const uint32_t ppa, cons
 static uint32_t _soc_omap_dma_ch_cssa(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	soc_omap_dma_ref dma = param;
 	soc_omap_dma_ch_ref ch = PPA2p2CHn(ppa);
@@ -509,7 +510,7 @@ static uint32_t _soc_omap_dma_ch_lch_ctrl(void *const param, const uint32_t ppa,
 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Logical Channel Control Register\n\t");
-		_LOG_("LID: %01u", BEXT(data, 15));
+		_LOG_("LID: %01u", bext32(data, 15));
 		_LOG_(", RESERVED[14, 4]: 0x%04x", mlBFEXT(data, 14, 4));
 		LOG_END(", LT[3:0]: %01u", mlBFEXT(data, 3, 0));
 	}
@@ -529,9 +530,9 @@ static uint32_t _soc_omap_dma_gcr(void *const param, const uint32_t ppa, const s
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Control Register\n\t");
 		_LOG_("RESERVED[15, 5]: 0x%04x", mlBFEXT(data, 15, 5));
-		_LOG_(", ROUND_ROBIN_DISABLE: %01u", BEXT(data, 4));
-		_LOG_(", CLK_AUTOGATING_ON: %01u\n\t", BEXT(data, 3));
-		_LOG_("FREE: %01u", BEXT(data, 2));
+		_LOG_(", ROUND_ROBIN_DISABLE: %01u", bext32(data, 4));
+		_LOG_(", CLK_AUTOGATING_ON: %01u\n\t", bext32(data, 3));
+		_LOG_("FREE: %01u", bext32(data, 2));
 		LOG_END(", RESERVED[1:0]: %01u", mlBFEXT(data, 1, 0));
 	}
 
@@ -551,7 +552,7 @@ static uint32_t _soc_omap_dma_gscr(void *const param, const uint32_t ppa, const 
 	if(write && _trace_mmio_dma) {
 		LOG_START("DMA: Global Software Compatible Register\n\t");
 		_LOG_("RESERVED[15, 4]: 0x%04x", mlBFEXT(data, 15, 4));
-		_LOG_(", OMAP3_1_MAPPING_DISABLE: %01u", BEXT(data, 3));
+		_LOG_(", OMAP3_1_MAPPING_DISABLE: %01u", bext32(data, 3));
 		LOG_END(", RESERVED[2:0]: %01u", mlBFEXT(data, 2, 0));
 	}
 
@@ -562,12 +563,12 @@ static uint32_t _soc_omap_dma_gscr(void *const param, const uint32_t ppa, const 
 static uint32_t _soc_omap_dma_lcd_b_bot(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	soc_omap_dma_ref dma = param;
 
 	csx_ref csx = dma->csx;
-	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
+	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bext32(ppa, 4)];
 
 	const uint32_t data = mem_32x_access(&lcd_b->bot, (ppa & 3), size, write);
 
@@ -579,7 +580,7 @@ static uint32_t _soc_omap_dma_lcd_b_bot(void *const param, const uint32_t ppa, c
 
 		if(_trace_mmio_dma_lcd) {
 			LOG("DMA: LCD Bottom Address B%0u %c Register -- 0x%08x\n\t",
-				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), lcd_b->bot);
+				(1 + bext32(ppa, 4)), (bext32(ppa, 1) ? 'U' : 'L'), lcd_b->bot);
 		}
 	}
 
@@ -599,7 +600,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_ei(void *const param, const uint32_t ppa
 	soc_omap_dma_ref dma = param;
 
 	csx_ref csx = dma->csx;
-	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[BEXT(ppa, 2)];
+	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bext32(ppa, 2)];
 
 	const uint32_t data = mem_16i_access(&lcd_b->src_ei, write);
 
@@ -608,7 +609,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_ei(void *const param, const uint32_t ppa
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Element Index B%01u Register -- 0x%04x\n\t",
-			(1 + BEXT(ppa, 2)), lcd_b->src_ei);
+			(1 + bext32(ppa, 2)), lcd_b->src_ei);
 	}
 
 	return(data);
@@ -622,7 +623,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_en(void *const param, const uint32_t ppa
 	soc_omap_dma_ref dma = param;
 
 	csx_ref csx = dma->csx;
-	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
+	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bext32(ppa, 1)];
 
 	const uint32_t data = mem_32_access(&lcd_b->src_en, write);
 
@@ -631,7 +632,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_en(void *const param, const uint32_t ppa
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Element Number B%01u Register -- 0x%08x\n\t",
-			(1 + BEXT(ppa, 1)), lcd_b->src_en);
+			(1 + bext32(ppa, 1)), lcd_b->src_en);
 	}
 
 	return(data);
@@ -655,8 +656,8 @@ static uint32_t _soc_omap_dma_lcd_b_src_fi(void *const param, const uint32_t ppa
 	soc_omap_dma_ref dma = param;
 	csx_ref csx = dma->csx;
 
-	const unsigned bit_u = BEXT(ppa, 5);
-	const unsigned bit_b = BEXT(ppa, 2 - bit_u);
+	const unsigned bit_u = bext32(ppa, 5);
+	const unsigned bit_b = bext32(ppa, 2 - bit_u);
 
 	const unsigned offset = (ppa & 1) | (bit_u << 1);
 	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bit_b];
@@ -682,7 +683,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa
 	soc_omap_dma_ref dma = param;
 
 	csx_ref csx = dma->csx;
-	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[BEXT(ppa, 1)];
+	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bext32(ppa, 1)];
 
 	const uint32_t data = mem_32_access(&lcd_b->src_fn, write);
 
@@ -691,7 +692,7 @@ static uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa
 
 	if(write && _trace_mmio_dma_lcd) {
 		LOG("DMA: LCD Source Frame Number B%01u Register -- 0x%08x\n\t",
-			(1 + BEXT(ppa, 1)), lcd_b->src_fn);
+			(1 + bext32(ppa, 1)), lcd_b->src_fn);
 	}
 
 	return(data);
@@ -700,12 +701,12 @@ static uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa
 static uint32_t _soc_omap_dma_lcd_b_top(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
-		assert(BTST((sizeof(uint32_t) | sizeof(uint16_t)), size));
+		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
 
 	soc_omap_dma_ref dma = param;
 
 	csx_ref csx = dma->csx;
-	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[BEXT(ppa, 4)];
+	soc_omap_dma_lcd_b_ref lcd_b = &dma->lcd.b[bext32(ppa, 4)];
 
 	const uint32_t data = mem_32x_access(&lcd_b->top, (ppa & 3), size, write);
 
@@ -717,7 +718,7 @@ static uint32_t _soc_omap_dma_lcd_b_top(void *const param, const uint32_t ppa, c
 
 		if(_trace_mmio_dma_lcd) {
 			LOG("DMA: LCD Top Address B%01u %c Register -- 0x%08x\n\t",
-				(1 + BEXT(ppa, 4)), (BEXT(ppa, 1) ? 'U' : 'L'), lcd_b->top);
+				(1 + bext32(ppa, 4)), (bext32(ppa, 1) ? 'U' : 'L'), lcd_b->top);
 		}
 	}
 
@@ -743,14 +744,14 @@ static uint32_t _soc_omap_dma_lcd_ccr(void *const param, const uint32_t ppa, con
 		LOG_START("DMA: LCD Channel Control Register\n\t");
 		_LOG_("SRC_AMODE_B2: %01u", mlBFEXT(data, 15, 14));
 		_LOG_(", SRC_AMODE_B1: %01u", mlBFEXT(data, 13, 12));
-		_LOG_(", END_PROG: %01u", BEXT(data, 11));
-		_LOG_(", OMAP3_1_COMPATIBLE_DISABLE: %01u\n\t", BEXT(data, 10));
-		_LOG_("REPEAT: %01u", BEXT(data, 9));
-		_LOG_(", AUTOINIT: %01u", BEXT(data, 8));
-		_LOG_(", ENABLE: %01u", BEXT(data, 7));
-		_LOG_(", PRIO: %01u\n\t", BEXT(data, 6));
-		_LOG_("RESERVED[5]: %01u", BEXT(data, 5));
-		_LOG_(", BS: %01u", BEXT(data, 4));
+		_LOG_(", END_PROG: %01u", bext32(data, 11));
+		_LOG_(", OMAP3_1_COMPATIBLE_DISABLE: %01u\n\t", bext32(data, 10));
+		_LOG_("REPEAT: %01u", bext32(data, 9));
+		_LOG_(", AUTOINIT: %01u", bext32(data, 8));
+		_LOG_(", ENABLE: %01u", bext32(data, 7));
+		_LOG_(", PRIO: %01u\n\t", bext32(data, 6));
+		_LOG_("RESERVED[5]: %01u", bext32(data, 5));
+		_LOG_(", BS: %01u", bext32(data, 4));
 		LOG_END(", RESERVED[3:0]: 0x%01u", mlBFEXT(data, 3, 0));
 	}
 
@@ -775,11 +776,11 @@ static uint32_t _soc_omap_dma_lcd_csdp(void *const param, const uint32_t ppa, co
 	if(write && _trace_mmio_dma_lcd) {
 		LOG_START("DMA: LCD Channel Source Destination Parameters Register\n\t");
 		_LOG_("BURST_EN_B2: %01u", mlBFEXT(data, 15, 14));
-		_LOG_(", PACK_EN_B2: %01u", BEXT(data, 13));
+		_LOG_(", PACK_EN_B2: %01u", bext32(data, 13));
 		_LOG_(", DATA_TYPE_B2: %01u", mlBFEXT(data, 12, 11));
 		_LOG_(", RESERVED[10, 9]: 0x%04x\n\t", mlBFEXT(data, 10, 9));
 		_LOG_("BURST_EN_B1: %01u", mlBFEXT(data, 8, 7));
-		_LOG_(", PACK_EN_B1: %01u", BEXT(data, 6));
+		_LOG_(", PACK_EN_B1: %01u", bext32(data, 6));
 		_LOG_(", RESERVED[10, 9]: 0x%04x", mlBFEXT(data, 5, 2));
 		LOG_END(", DATA_TYPE_B1: %01u", mlBFEXT(data, 1, 0));
 	}
@@ -805,14 +806,14 @@ static uint32_t _soc_omap_dma_lcd_ctrl(void *const param, const uint32_t ppa, co
 	if(write && _trace_mmio_dma_lcd) {
 		LOG_START("DMA: LCD Control Register\n\t");
 		_LOG_("RESERVED[15:9]: 0x%02x", mlBFEXT(data, 15, 9));
-		_LOG_(", LDP: %01u", BEXT(data, 8));
+		_LOG_(", LDP: %01u", bext32(data, 8));
 		_LOG_(", LSP: %01u", mlBFEXT(data, 7, 6));
-		_LOG_(", BUSS_ERROR_IT_COND: %01u", BEXT(data, 5));
-		_LOG_(", BUSS_2_IT_COND: %01u\n\t", BEXT(data, 4));
-		_LOG_("BUSS_1_IT_COND: %01u", BEXT(data, 3));
-		_LOG_(", BUSS_ERROR_IT_IE: %01u", BEXT(data, 2));
-		_LOG_(", BLOCK_IT_IE: %01u", BEXT(data, 1));
-		LOG_END(", BLOCK_MODE: %01u", BEXT(data, 0));
+		_LOG_(", BUSS_ERROR_IT_COND: %01u", bext32(data, 5));
+		_LOG_(", BUSS_2_IT_COND: %01u\n\t", bext32(data, 4));
+		_LOG_("BUSS_1_IT_COND: %01u", bext32(data, 3));
+		_LOG_(", BUSS_ERROR_IT_IE: %01u", bext32(data, 2));
+		_LOG_(", BLOCK_IT_IE: %01u", bext32(data, 1));
+		LOG_END(", BLOCK_MODE: %01u", bext32(data, 0));
 	}
 
 	return(data);

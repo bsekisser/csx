@@ -9,6 +9,8 @@
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitfield.h"
+#include "libbse/include/bitops32.h"
+#include "libbse/include/bitops8.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"
@@ -91,7 +93,7 @@ enum {
 static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 	memset(uu, 0, sizeof(soc_omap_uart_unit_t));
 
-	BSET(uu->syss, SYSS_ResetDone);
+	bset8p(&uu->syss, SYSS_ResetDone);
 
 	return(0);
 }
@@ -130,12 +132,12 @@ static uint32_t _soc_omap_uart_lcr(void *const param, const uint32_t ppa, const 
 
 	if(write && _trace_mmio_uart) {
 		LOG_START("UART Line Control Register\n\t");
-		_LOG_("DIV_EN: %01u", BEXT(data, 7));
-		_LOG_(", BREAK_EN: %01u", BEXT(data, 6));
-		_LOG_(", PARITY TYPE2: %01u", BEXT(data, 5));
-		_LOG_(", PARITY TYPE1: %01u", BEXT(data, 4));
-		_LOG_(", PARITY EN: %01u", BEXT(data, 3));
-		_LOG_(", NB STOP: %01u", BEXT(data, 2));
+		_LOG_("DIV_EN: %01u", bext32(data, 7));
+		_LOG_(", BREAK_EN: %01u", bext32(data, 6));
+		_LOG_(", PARITY TYPE2: %01u", bext32(data, 5));
+		_LOG_(", PARITY TYPE1: %01u", bext32(data, 4));
+		_LOG_(", PARITY EN: %01u", bext32(data, 3));
+		_LOG_(", NB STOP: %01u", bext32(data, 2));
 		LOG_END(", CHAR_LENGTH: %01u", mlBFEXT(data, 1, 0));
 	}
 
@@ -153,13 +155,13 @@ static uint32_t _soc_omap_uart_scr(void *const param, const uint32_t ppa, const 
 
 	if(write && _trace_mmio_uart) {
 		LOG_START("UART Supplementary Control Register\n\t");
-		_LOG_("RX_TRIG_GRANU1: %01u", BEXT(data, 7));
-		_LOG_(", TX_TRIG_GRANU1: %01u", BEXT(data, 6));
-		_LOG_(", DSR_IT: %01u", BEXT(data, 5));
-		_LOG_(", RX_CTS_DSR_WAKE_UP_ENABLE: %01u", BEXT(data, 4));
-		_LOG_(", TX_EMPTY_CTL_IT: %01u", BEXT(data, 3));
+		_LOG_("RX_TRIG_GRANU1: %01u", bext32(data, 7));
+		_LOG_(", TX_TRIG_GRANU1: %01u", bext32(data, 6));
+		_LOG_(", DSR_IT: %01u", bext32(data, 5));
+		_LOG_(", RX_CTS_DSR_WAKE_UP_ENABLE: %01u", bext32(data, 4));
+		_LOG_(", TX_EMPTY_CTL_IT: %01u", bext32(data, 3));
 		_LOG_(", DMA_MODE_2: %01u", mlBFEXT(data, 2, 1));
-		LOG_END(", DMA_MODE_CTL: %01u", BEXT(data, 0));
+		LOG_END(", DMA_MODE_CTL: %01u", bext32(data, 0));
 	}
 
 	return(data);
@@ -180,14 +182,14 @@ static uint32_t _soc_omap_uart_sysc(void *const param, const uint32_t ppa, const
 			LOG_START("UART System Configuration Register\n\t");
 			_LOG_("Reserved: %02u", mlBFEXT(data, 7, 5));
 			_LOG_(", IdleMode: %02u", mlBFEXT(data, 4, 3));
-			_LOG_(", EnaWakeUp: %01u", BEXT(data, 2));
-			_LOG_(", SoftReset: %01u", BEXT(data, 1));
-			LOG_END(", AutoIdle: %01u", BEXT(data, 0));
+			_LOG_(", EnaWakeUp: %01u", bext32(data, 2));
+			_LOG_(", SoftReset: %01u", bext32(data, 1));
+			LOG_END(", AutoIdle: %01u", bext32(data, 0));
 		}
 
-		if(BTST(data, SYSC_SoftReset)) {
+		if(btst32(data, SYSC_SoftReset)) {
 			__soc_omap_uart_unit_reset(uart_unit);
-			BCLR(data, SYSC_SoftReset);
+			bclr32p(&data, SYSC_SoftReset);
 		}
 
 		uart_unit->sysc = data;
@@ -228,10 +230,10 @@ static uint32_t _soc_omap_uart_x08_efr(void *const param, const uint32_t ppa, co
 
 	if(write && _trace_mmio_uart) {
 		LOG_START("UART Enhanced Feature Register\n\t");
-		_LOG_("AUTO_CTS_EN: %01u", BEXT(data, 7));
-		_LOG_(", AUTO_RTS_EN: %01u", BEXT(data, 6));
-		_LOG_(", SPECIAL_CHAR_DETECT: %01u", BEXT(data, 5));
-		_LOG_(", ENHANCED_FN: %01u", BEXT(data, 4));
+		_LOG_("AUTO_CTS_EN: %01u", bext32(data, 7));
+		_LOG_(", AUTO_RTS_EN: %01u", bext32(data, 6));
+		_LOG_(", SPECIAL_CHAR_DETECT: %01u", bext32(data, 5));
+		_LOG_(", ENHANCED_FN: %01u", bext32(data, 4));
 		LOG_END(", SW_FLOW_CONTROL: %01u", mlBFEXT(data, 3, 0));
 	}
 
@@ -259,10 +261,10 @@ static uint32_t _soc_omap_uart_x08_fcr(void *const param, const uint32_t ppa, co
 			LOG_START("UART FIFO Control Register\n\t");
 			_LOG_("RX_FIFO_TRIG: %01u", mlBFEXT(data, 7, 6));
 			_LOG_(", TX_FIFO_TRIG: %01u", mlBFEXT(data, 5, 4));
-			_LOG_(", DMA_MODE: %01u", BEXT(data, 3));
-			_LOG_(", TX_FIFO_CLEAR: %01u", BEXT(data, 2));
-			_LOG_(", RX_FIFO_CLEAR: %01u", BEXT(data, 1));
-			LOG_END(", FIFO_EN: %01u", BEXT(data, 0));
+			_LOG_(", DMA_MODE: %01u", bext32(data, 3));
+			_LOG_(", TX_FIFO_CLEAR: %01u", bext32(data, 2));
+			_LOG_(", RX_FIFO_CLEAR: %01u", bext32(data, 1));
+			LOG_END(", FIFO_EN: %01u", bext32(data, 0));
 		}
 
 		uart_unit->fcr = data & ~(4 + 2);
@@ -279,7 +281,7 @@ static uint32_t _soc_omap_uart_x08(void *const param, const uint32_t ppa, const 
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
 
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
-		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
+		uart_unit->lcr, bext32(uart_unit->efr, 4), bext32(uart_unit->mcr, 6)));
 
 	if(0xbf == uart_unit->lcr)
 		return(_soc_omap_uart_x08_efr(param, ppa, size, write));
@@ -311,18 +313,18 @@ static uint32_t _soc_omap_uart_x10_mcr(void *const param, const uint32_t ppa, co
 	uint32_t data = write ? *write : uart_unit->mcr;
 
 	if(write) {
-		const uint8_t mask = BTST(uart_unit->efr, 4) ? 0xff : mlBF(4, 0);
+		const uint8_t mask = btst32(uart_unit->efr, 4) ? 0xff : mlBF(4, 0);
 
 		if(_trace_mmio_uart) {
 			LOG_START("UART Modem Control Register\n\t");
-			_LOG_("RESERVED: %01u", BEXT(data, 7));
-			_LOG_(", TCR_TLR: %01u", BEXT(data, 6));
-			_LOG_(", XON_EN: %01u", BEXT(data, 5));
-			_LOG_(", LOOPBACK_EN: %01u", BEXT(data, 4));
-			_LOG_(", CD_STS_CH: %01u", BEXT(data, 3));
-			_LOG_(", RI_STS_CH: %01u", BEXT(data, 2));
-			_LOG_(", RTS: %01u", BEXT(data, 1));
-			LOG_END(", DTR: %01u", BEXT(data, 0));
+			_LOG_("RESERVED: %01u", bext32(data, 7));
+			_LOG_(", TCR_TLR: %01u", bext32(data, 6));
+			_LOG_(", XON_EN: %01u", bext32(data, 5));
+			_LOG_(", LOOPBACK_EN: %01u", bext32(data, 4));
+			_LOG_(", CD_STS_CH: %01u", bext32(data, 3));
+			_LOG_(", RI_STS_CH: %01u", bext32(data, 2));
+			_LOG_(", RTS: %01u", bext32(data, 1));
+			LOG_END(", DTR: %01u", bext32(data, 0));
 		}
 
 		uart_unit->mcr = (uart_unit->mcr & ~mask) | (data & mask);
@@ -339,7 +341,7 @@ static uint32_t _soc_omap_uart_x10(void *const param, const uint32_t ppa, const 
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
 
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
-		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
+		uart_unit->lcr, bext32(uart_unit->efr, 4), bext32(uart_unit->mcr, 6)));
 
 	if(0xbf == uart_unit->lcr) {
 		LOG_ACTION(exit(-1));
@@ -362,7 +364,7 @@ static uint32_t _soc_omap_uart_x1c_spr(void *const param, const uint32_t ppa, co
 		if(_check_pedantic_mmio_size)
 			assert(sizeof(uint8_t) == size);
 		assert(0xbf != uart_unit->lcr);
-		assert(0 == (BTST(uart_unit->efr, 4) && BTST(uart_unit->mcr, 6)));
+		assert(0 == (btst32(uart_unit->efr, 4) && btst32(uart_unit->mcr, 6)));
 	}
 
 	uint32_t data = csx_data_mem_access(&__uart_unit(uart, ppa)->spr, size, write);
@@ -382,7 +384,7 @@ static uint32_t _soc_omap_uart_x1c_tlr(void *const param, const uint32_t ppa, co
 	if(_check_pedantic_mmio) {
 		if(_check_pedantic_mmio_size)
 			assert(sizeof(uint8_t) == size);
-		assert(BTST(uart_unit->efr, 4) && BTST(uart_unit->mcr, 6));
+		assert(btst32(uart_unit->efr, 4) && btst32(uart_unit->mcr, 6));
 	}
 
 	const uint32_t data = csx_data_mem_access(&uart_unit->tlr, size, write);
@@ -406,9 +408,9 @@ static uint32_t _soc_omap_uart_x1c(void *const param, const uint32_t ppa, const 
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(param, ppa);
 
 	DEBUG(LOG("lcr = 0x%02x, efr[4] = %1u, mcr[6] = %1u",
-		uart_unit->lcr, BEXT(uart_unit->efr, 4), BEXT(uart_unit->mcr, 6)));
+		uart_unit->lcr, bext32(uart_unit->efr, 4), bext32(uart_unit->mcr, 6)));
 
-	if(BTST(uart_unit->efr, 4) && BTST(uart_unit->mcr, 6)) {
+	if(btst32(uart_unit->efr, 4) && btst32(uart_unit->mcr, 6)) {
 			return(_soc_omap_uart_x1c_tlr(param, ppa, size, write));
 	} else {
 		if(0xbf == uart_unit->lcr) {
