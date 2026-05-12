@@ -59,7 +59,8 @@ enum {
  */
 
 #define SOC_OMAP_GP_TIMER_VAR_FN(_name) \
-	static uint32_t _soc_omap_gp_timer_ ## _name(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write) \
+	static uint32_t _soc_omap_gp_timer_ ## _name(void *const param, const uint32_t ppa, \
+		const size_t size, uint32_t *const write) \
 	{ \
 		if(_check_pedantic_mmio_size) \
 			assert(sizeof(uint32_t) == size); \
@@ -92,7 +93,8 @@ SOC_OMAP_GP_TIMER_VAR_FN(twer)
 
 /* **** */
 
-static csx_mmio_access_list_t __soc_omap_gp_timer_acl[] = {
+static
+csx_mmio_access_list_t __soc_omap_gp_timer_acl[] = {
 	MMIO_TRACE_FN(0, _TCLR, 0, 0, TCLR, _soc_omap_gp_timer_tclr)
 	MMIO_TRACE_FN(0, _TIOCP_CFG, 0, 0, TIOCP_CFG, _soc_omap_gp_timer_tiocp_cfg)
 	MMIO_TRACE_FN(0, _TIER, 0, 0, TIER, _soc_omap_gp_timer_tier)

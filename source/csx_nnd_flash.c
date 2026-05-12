@@ -19,6 +19,7 @@
 #include "libbse/include/log.h"
 #include "libbse/include/mem_access_le.h"
 #include "libbse/include/page.h"
+#include "libbse/include/unused.h"
 
 #define kBlockAlloc (1 << kBlockBits)
 #define kBlockBits  19
@@ -138,59 +139,79 @@ static const char csx_nnd_flash_id[7][1 + kUnitID_LEN] = {
 
 /* **** */
 
+__attribute__((warn_unused_result))
 static block_ptr csx_nnd_flash_block(csx_nnd_unit_ref unit, const uint32_t block, const unsigned write);
+
+__attribute__((warn_unused_result))
 static block_page_ptr csx_nnd_flash_block2blockPage(csx_nnd_unit_ref unit, block_ref p2block, const uint32_t page, const unsigned write);
+
+__attribute__((warn_unused_result))
 static block_ptr csx_nnd_flash_block_alloc(csx_nnd_unit_ref unit, block_href h2block);
+
 static void csx_nnd_flash_block_page_erase(block_page_ref block_page);
 static void csx_nnd_flash_dskimg_load(csx_nnd_ref nnd, csx_nnd_unit_ref unit);
 static void csx_nnd_flash_dskimg_write(csx_nnd_ref nnd, csx_nnd_unit_ref unit);
 static uint32_t csx_nnd_flash_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write);
 static uint32_t csx_nnd_flash_mem_access_x(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write);
+
+__attribute__((warn_unused_result))
 static page_ptr csx_nnd_flash_page_alloc(csx_nnd_unit_ref unit, page_href h2page);
+
 static void csx_nnd_flash_page_program(csx_nnd_unit_ref unit, const uint32_t row, const unsigned log);
+
+__attribute__((warn_unused_result))
 static char* csx_nnd_flash_page_read(csx_nnd_unit_ref unit, const uint32_t row);
+
+__attribute__((warn_unused_result))
 static block_page_ptr csx_nnd_flash_ppa2blockPage(csx_nnd_unit_ref unit, const uint32_t ppa, const unsigned write);
+
+__attribute__((warn_unused_result))
 static page_ptr csx_nnd_flash_ppa2page(csx_nnd_unit_ref unit, const uint32_t ppa, const unsigned write);
+
+__attribute__((warn_unused_result))
 static uint32_t csx_nnd_flash_read(csx_nnd_ref unit, const uint32_t ppa, const size_t size);
+
+__attribute__((warn_unused_result))
 static block_page_ptr csx_nnd_flash_row2blockPage(csx_nnd_unit_ref unit, const uint32_t row, const unsigned write);
+
 static void csx_nnd_flash_write(csx_nnd_ref unit, const uint32_t ppa, const size_t size, const uint32_t *const write);
 
 /* **** */
 
-static
+static __attribute__((warn_unused_result))
 uint64_t _blockPage2row(const unsigned block, const unsigned page)
 { return((block << kPageBits) | page); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _ppa2column(const uint32_t ppa)
 { return(ppa & kColumnMask); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _ppa2cs(const uint32_t ppa)
 { return((ppa >> 26) & 3); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _ppa2offset(const uint32_t ppa)
 { return(ppa & 0x01ffffff); }
 //{ return(ppa & 0x03ffffff); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _ppa2row(const uint32_t ppa)
 { return(_ppa2offset(ppa) >> kColumnBits); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _ppa2unit(const uint32_t ppa)
 { return((ppa >> 25) & 7); }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t _row2block(const uint32_t row)
 { return((row >> kPageBits) & kBlockMask); }
 
-static
+static __attribute__((warn_unused_result))
 uint64_t _row2bpa(const uint64_t row, const uint16_t column)
 { return((row << kColumnBits) | column); }
 
-static
+static __attribute__((warn_unused_result))
 uint8_t _row2page(const uint32_t row)
 { return(row & kPageMask); }
 
@@ -311,7 +332,7 @@ csx_nnd_ptr csx_nnd_flash_alloc(csx_nnd_href h2nnd)
 	return(nnd);
 }
 
-static
+static __attribute__((warn_unused_result))
 block_ptr csx_nnd_flash_block(csx_nnd_unit_ref unit, const uint32_t block, const unsigned write)
 {
 	block_href h2block = &unit->device[block];
@@ -323,7 +344,7 @@ block_ptr csx_nnd_flash_block(csx_nnd_unit_ref unit, const uint32_t block, const
 	return(p2block);
 }
 
-static
+static __attribute__((warn_unused_result))
 block_page_ptr csx_nnd_flash_block2blockPage(csx_nnd_unit_ref unit, block_ref p2block, const uint32_t page, const unsigned write)
 {
 	if(0) LOG("page: 0x%02x", page);
@@ -331,14 +352,14 @@ block_page_ptr csx_nnd_flash_block2blockPage(csx_nnd_unit_ref unit, block_ref p2
 	block_page_ref block_page = &(*p2block)[page];
 
 	if(write && !block_page->page) {
-		csx_nnd_flash_page_alloc(unit, &block_page->page);
+		UNUSED(csx_nnd_flash_page_alloc(unit, &block_page->page));
 		csx_nnd_flash_block_page_erase(block_page);
 	}
 
 	return(block_page);
 }
 
-static
+static __attribute__((warn_unused_result))
 block_ptr csx_nnd_flash_block_alloc(csx_nnd_unit_ref unit, block_href h2block)
 {
 	block_href free_block = &unit->nnd->free.block;
@@ -564,7 +585,7 @@ uint32_t csx_nnd_flash_mem_access_x(void *const param, const uint32_t ppa, const
 	return(csx_nnd_flash_read(param, ppa, size));
 }
 
-static
+static __attribute__((warn_unused_result))
 page_ptr csx_nnd_flash_page_alloc(csx_nnd_unit_ref unit, page_href h2page)
 {
 	page_href free_page = &unit->nnd->free.page;
@@ -605,7 +626,7 @@ void csx_nnd_flash_page_program(csx_nnd_unit_ref unit, const uint32_t row, const
 
 	if(p2blockPage) {
 		if(!p2blockPage->page)
-			csx_nnd_flash_page_alloc(unit, &p2blockPage->page);
+			UNUSED(csx_nnd_flash_page_alloc(unit, &p2blockPage->page));
 
 		if(p2blockPage->page)
 			memcpy(p2blockPage->page, unit->data_register, sizeof(page_t));
@@ -615,7 +636,7 @@ void csx_nnd_flash_page_program(csx_nnd_unit_ref unit, const uint32_t row, const
 		LOG("MISSING BLOCK");
 }
 
-static
+static __attribute__((warn_unused_result))
 char* csx_nnd_flash_page_read(csx_nnd_unit_ref unit, const uint32_t row)
 {
 	block_page_ref p2blockPage = csx_nnd_flash_row2blockPage(unit, row, 0);
@@ -641,7 +662,7 @@ if(0)	LOG("row: 0x%08x", row);
 	return(0);
 }
 
-static
+static __attribute__((warn_unused_result))
 block_page_ptr csx_nnd_flash_ppa2blockPage(csx_nnd_unit_ref unit, const uint32_t ppa, const unsigned write)
 {
 	if(0) LOG("ppa: 0x%08x, row: 0x%08x", ppa, _ppa2row(ppa));
@@ -649,7 +670,7 @@ block_page_ptr csx_nnd_flash_ppa2blockPage(csx_nnd_unit_ref unit, const uint32_t
 	return(csx_nnd_flash_row2blockPage(unit, _ppa2row(ppa), write));
 }
 
-static
+static __attribute__((warn_unused_result))
 page_ptr csx_nnd_flash_ppa2page(csx_nnd_unit_ref unit, const uint32_t ppa, const unsigned write)
 {
 	block_page_ref block_page = csx_nnd_flash_ppa2blockPage(unit, ppa, write);
@@ -657,7 +678,7 @@ page_ptr csx_nnd_flash_ppa2page(csx_nnd_unit_ref unit, const uint32_t ppa, const
 	return(block_page ? block_page->page : 0);
 }
 
-static
+static __attribute__((warn_unused_result))
 uint8_t csx_nnd_flash_read_rwd(csx_nnd_unit_ref unit, const uint32_t ppa)
 {
 	const uint16_t column = unit->column;
@@ -695,7 +716,7 @@ uint8_t csx_nnd_flash_read_rwd(csx_nnd_unit_ref unit, const uint32_t ppa)
 	return(data);
 }
 
-static
+static __attribute__((warn_unused_result))
 uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t ppa, const size_t size)
 {
 	const uint32_t offset = _ppa2offset(ppa);
@@ -717,11 +738,11 @@ uint32_t csx_nnd_flash_read(csx_nnd_ref nnd, const uint32_t ppa, const size_t si
 	return(data);
 }
 
-static
+static __attribute__((warn_unused_result))
 block_ptr csx_nnd_flash_row2block(csx_nnd_unit_ref unit, const uint32_t row, const unsigned write)
 { return(csx_nnd_flash_block(unit, _row2block(row), write)); }
 
-static
+static __attribute__((warn_unused_result))
 block_page_ptr csx_nnd_flash_row2blockPage(csx_nnd_unit_ref unit, const uint32_t row, const unsigned write)
 {
 	block_ref p2block = csx_nnd_flash_row2block(unit, row, write);
@@ -731,7 +752,7 @@ block_page_ptr csx_nnd_flash_row2blockPage(csx_nnd_unit_ref unit, const uint32_t
 }
 
 #if 0
-static
+static __attribute__((warn_unused_result))
 page_ptr csx_nnd_flash_row2page(csx_nnd_unit_ref unit, const uint32_t row, const unsigned write)
 {
 	block_page_ref block_page = csx_nnd_flash_row2blockPage(unit, row, write);
@@ -836,7 +857,7 @@ void csx_nnd_flash_write_cle(csx_nnd_unit_ref unit, const uint32_t ppa, const ui
 
 	switch(cl16) {
 		case 0x0030: // page read
-			csx_nnd_flash_page_read(unit, unit->row);
+			UNUSED(csx_nnd_flash_page_read(unit, unit->row));
 			break;
 		case 0x60d0: // block erase
 			csx_nnd_flash_block_erase(unit, unit->row);

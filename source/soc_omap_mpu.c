@@ -42,7 +42,9 @@ typedef struct soc_omap_mpu_tag {
 
 /* **** */
 
-static uint32_t soc_omap_mpu_ckctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_mpu_ckctl(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -73,7 +75,9 @@ static uint32_t soc_omap_mpu_ckctl(void *const param, const uint32_t ppa, const 
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_idlct1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_mpu_idlct1(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -104,7 +108,9 @@ static uint32_t soc_omap_mpu_idlct1(void *const param, const uint32_t ppa, const
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_idlct2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_mpu_idlct2(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -134,7 +140,9 @@ static uint32_t soc_omap_mpu_idlct2(void *const param, const uint32_t ppa, const
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_rstct2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_mpu_rstct2(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -157,7 +165,9 @@ static uint32_t soc_omap_mpu_rstct2(void *const param, const uint32_t ppa, const
 	return(data);
 }
 
-static uint32_t soc_omap_mpu_sysst(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_mpu_sysst(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -188,7 +198,8 @@ static uint32_t soc_omap_mpu_sysst(void *const param, const uint32_t ppa, const 
 	return(data);
 }
 
-static csx_mmio_access_list_t _soc_omap_mpu_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_mpu_acl[] = {
 	SOC_MMIO_MPU_LIST(MMIO_TRACE_FN)
 	{ .ppa = ~0U, },
 };

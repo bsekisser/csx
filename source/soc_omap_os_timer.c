@@ -47,7 +47,8 @@ enum {
 
 /* **** */
 
-static uint32_t _soc_omap_os_timer_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_os_timer_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -68,7 +69,8 @@ static uint32_t _soc_omap_os_timer_ctrl(void *const param, const uint32_t ppa, c
 	return(data);
 }
 
-static uint32_t _soc_omap_os_timer_tick_val(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_os_timer_tick_val(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -91,7 +93,8 @@ static uint32_t _soc_omap_os_timer_tick_val(void *const param, const uint32_t pp
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_os_timer_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_os_timer_acl[] = {
 	SOC_OMAP_OS_TIMER_ACL(MMIO_TRACE_FN)
 	{ .ppa = ~0U, },
 };

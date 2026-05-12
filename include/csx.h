@@ -80,6 +80,8 @@ typedef struct csx_tag {
 
 csx_ptr csx(void);
 int csx_action(int err, csx_ref csx, action_ref action);
+
+__attribute__((warn_unused_result))
 csx_ptr csx_alloc(csx_href h2csx);
 
 /* **** */

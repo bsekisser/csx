@@ -40,7 +40,8 @@ typedef struct soc_omap_usb_tag {
 
 /* **** */
 
-static uint32_t _soc_omap_usb_client_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_usb_client_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -58,7 +59,8 @@ static uint32_t _soc_omap_usb_client_mem_access(void *const param, const uint32_
 	return(data);
 }
 
-static uint32_t _soc_omap_usb_otg_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_usb_otg_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -84,7 +86,8 @@ static uint32_t _soc_omap_usb_otg_mem_access(void *const param, const uint32_t p
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_usb_client_acl[] = {
 	MMIO_TRACE_FN(0xfffb, 0x0404, 0x0000, 0x0000, USB_OTG_SYSCON1, _soc_omap_usb_otg_mem_access)
 	MMIO_TRACE_FN(0xfffb, 0x4018, 0x0000, 0x0000, USB_CLNT_SYSCON1, _soc_omap_usb_client_mem_access)
 	{ .ppa = ~0U, },

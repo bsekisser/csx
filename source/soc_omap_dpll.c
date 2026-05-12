@@ -40,7 +40,9 @@ enum {
 	DPLL1_CTL_PLL_ENABLE = 0x04,
 };
 
-static uint32_t _soc_omap_dpll_ctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dpll_ctl(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 //	LOG("size = 0x%08zx", size);
 
@@ -77,7 +79,8 @@ static uint32_t _soc_omap_dpll_ctl(void *const param, const uint32_t ppa, const 
 	UNUSED(ppa);
 }
 
-static csx_mmio_access_list_t _soc_omap_dpll_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_dpll_acl[] = {
 	MMIO_TRACE_FN(0xfffe, 0xcf00, 0x0000, 0x2002, DPLL1_CTL_REG, _soc_omap_dpll_ctl)
 	{ .ppa = ~0U, },
 };

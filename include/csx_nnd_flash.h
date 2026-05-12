@@ -20,5 +20,6 @@ typedef csx_nnd_ptr const csx_nnd_ref;
 
 extern action_list_t csx_nnd_flash_action_list;
 
+__attribute__((warn_unused_result))
 csx_nnd_ptr csx_nnd_flash_alloc(csx_nnd_href nnd);
 

@@ -48,8 +48,9 @@ typedef struct soc_omap_mpu_gpio_tag {
 
 /* **** */
 
-static soc_omap_mpu_gpio_unit_ptr __soc_omap_mpu_gpio_unit(
-	soc_omap_mpu_gpio_ref gpio, const uint32_t ppa)
+static __attribute__((warn_unused_result))
+soc_omap_mpu_gpio_unit_ptr __soc_omap_mpu_gpio_unit(soc_omap_mpu_gpio_ref gpio,
+	const uint32_t ppa)
 {
 	const uint32_t unit = (((ppa >> 13) & 2) | ((ppa >> 11) & 1)) ^ 3;
 

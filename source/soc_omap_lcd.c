@@ -48,7 +48,9 @@ enum {
 
 /* **** */
 
-static uint32_t _soc_omap_lcd_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_ctrl(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -87,7 +89,9 @@ static uint32_t _soc_omap_lcd_ctrl(void *const param, const uint32_t ppa, const 
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_display_status(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_display_status(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -110,7 +114,9 @@ static uint32_t _soc_omap_lcd_display_status(void *const param, const uint32_t p
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_lineint(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_lineint(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -133,7 +139,9 @@ static uint32_t _soc_omap_lcd_lineint(void *const param, const uint32_t ppa, con
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing0(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_timing0(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -161,7 +169,9 @@ static uint32_t _soc_omap_lcd_timing0(void *const param, const uint32_t ppa, con
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_timing1(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -189,7 +199,9 @@ static uint32_t _soc_omap_lcd_timing1(void *const param, const uint32_t ppa, con
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_timing2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_timing2(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -220,7 +232,9 @@ static uint32_t _soc_omap_lcd_timing2(void *const param, const uint32_t ppa, con
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_status(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_status(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -249,7 +263,9 @@ static uint32_t _soc_omap_lcd_status(void *const param, const uint32_t ppa, cons
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_lcd_subpanel(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_lcd_subpanel(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);

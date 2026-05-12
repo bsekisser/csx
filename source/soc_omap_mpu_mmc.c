@@ -31,7 +31,8 @@ typedef struct soc_omap_mpu_mmc_tag {
 
 /* **** */
 
-static uint32_t _soc_omap_mpu_mmc_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_mpu_mmc_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);

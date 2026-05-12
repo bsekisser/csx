@@ -88,7 +88,9 @@ static csx_mmio_access_list_t _soc_omap_cfg_acl_1[];
 
 /* **** */
 
-static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -133,7 +135,9 @@ static uint32_t _soc_omap_cfg_mod_conf_ctrl_1(void *const param, const uint32_t 
 	return(data);
 }
 
-static uint32_t _soc_omap_cfg_reset_ctl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_cfg_reset_ctl(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -165,7 +169,9 @@ static uint32_t _soc_omap_cfg_reset_ctl(void *const param, const uint32_t ppa, c
 	return(data);
 }
 
-static uint32_t _soc_omap_cfg_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_cfg_mem_access(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -194,12 +200,14 @@ static uint32_t _soc_omap_cfg_mem_access(void *const param, const uint32_t ppa, 
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_cfg_acl_0[] = {
+static
+csx_mmio_access_list_t _soc_omap_cfg_acl_0[] = {
 	SOC_OMAP_CFG_ACL_LIST_0(SOC_OMAP_CFG_ACL_LIST_ACLE)
 	{ .ppa = ~0U, }
 };
 
-static csx_mmio_access_list_t _soc_omap_cfg_acl_1[] = {
+static
+csx_mmio_access_list_t _soc_omap_cfg_acl_1[] = {
 	SOC_OMAP_CFG_ACL_LIST_1(SOC_OMAP_CFG_ACL_LIST_ACLE)
 	{ .ppa = ~0U, }
 };

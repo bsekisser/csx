@@ -67,7 +67,8 @@ enum {
 
 /* **** */
 
-static uint32_t soc_omap_tc_emiff_sdram_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_tc_emiff_sdram_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -99,7 +100,8 @@ static uint32_t soc_omap_tc_emiff_sdram_config(void *const param, const uint32_t
 	return(0);
 }
 
-static uint32_t soc_omap_tc_emifs_adv_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_tc_emifs_adv_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -127,7 +129,8 @@ static uint32_t soc_omap_tc_emifs_adv_cs_config(void *const param, const uint32_
 	return(0);
 }
 
-static uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -175,7 +178,8 @@ static uint32_t soc_omap_tc_emifs_cs_config(void *const param, const uint32_t pp
 	return(0);
 }
 
-static uint32_t soc_omap_tc_ocp_t1_prio(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t soc_omap_tc_ocp_t1_prio(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint32_t) == size);
@@ -203,7 +207,8 @@ static uint32_t soc_omap_tc_ocp_t1_prio(void *const param, const uint32_t ppa, c
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_tc_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_tc_acl[] = {
 	SOC_OMAP_TC_EMIFF_ACL(MMIO_TRACE_FN)
 	SOC_OMAP_TC_EMIFS_ACL(MMIO_TRACE_FN)
 	SOC_OMAP_TC_OCP_T1_ACL(MMIO_TRACE_FN)

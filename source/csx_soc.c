@@ -48,7 +48,8 @@ csx_soc_ptr _csx_soc = 0;
 
 /* **** */
 
-static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t start, const uint32_t end)
+static
+int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t start, const uint32_t end)
 {
 	if(start > cdp->base)
 		return(0);
@@ -81,7 +82,8 @@ static int __csx_soc_init__cdp_copy(void* dst, csx_data_ref cdp, const uint32_t 
 	return(1);
 }
 
-static void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
+static
+void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
 {
 	csx_soc_ref soc = csx->soc;
 
@@ -95,7 +97,8 @@ static void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
 		SOC_BROM_START, SOC_BROM_END);
 }
 
-static void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_path)
+static
+void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_path)
 {
 	int fd;
 
@@ -200,7 +203,7 @@ void* csx_threaded_run(void* param)
 	return(0);
 }
 
-static __attribute__((unused))
+static UNUSED_FN
 int csx_threaded_start(csx_ref csx)
 { return(pthread_create(&csx->thread, 0, csx_threaded_run, csx)); }
 

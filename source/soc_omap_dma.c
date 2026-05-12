@@ -176,7 +176,9 @@ enum {
 
 /* **** */
 
-static uint32_t _soc_omap_dma_ch_ccr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_ccr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -203,7 +205,9 @@ static uint32_t _soc_omap_dma_ch_ccr(void *const param, const uint32_t ppa, cons
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_ccr2(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_ccr2(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -224,7 +228,9 @@ static uint32_t _soc_omap_dma_ch_ccr2(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cdac(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cdac(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -241,7 +247,9 @@ static uint32_t _soc_omap_dma_ch_cdac(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cdei(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cdei(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -258,7 +266,9 @@ static uint32_t _soc_omap_dma_ch_cdei(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cdfi(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cdfi(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -275,7 +285,9 @@ static uint32_t _soc_omap_dma_ch_cdfi(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cdsa(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cdsa(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
@@ -292,7 +304,9 @@ static uint32_t _soc_omap_dma_ch_cdsa(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cen(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cen(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -309,7 +323,9 @@ static uint32_t _soc_omap_dma_ch_cen(void *const param, const uint32_t ppa, cons
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cfn(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cfn(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -326,7 +342,9 @@ static uint32_t _soc_omap_dma_ch_cfn(void *const param, const uint32_t ppa, cons
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cicr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cicr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -350,7 +368,9 @@ static uint32_t _soc_omap_dma_ch_cicr(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_clnk_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_clnk_ctrl(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -372,7 +392,9 @@ static uint32_t _soc_omap_dma_ch_clnk_ctrl(void *const param, const uint32_t ppa
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_color(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_color(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
@@ -389,7 +411,9 @@ static uint32_t _soc_omap_dma_ch_color(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_csac(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_csac(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -406,7 +430,9 @@ static uint32_t _soc_omap_dma_ch_csac(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_csdp(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_csdp(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -430,7 +456,9 @@ static uint32_t _soc_omap_dma_ch_csdp(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_csei(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_csei(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -447,7 +475,9 @@ static uint32_t _soc_omap_dma_ch_csei(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_csfi(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_csfi(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -464,7 +494,9 @@ static uint32_t _soc_omap_dma_ch_csfi(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_csr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_csr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -481,7 +513,9 @@ static uint32_t _soc_omap_dma_ch_csr(void *const param, const uint32_t ppa, cons
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_cssa(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_cssa(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
@@ -498,7 +532,9 @@ static uint32_t _soc_omap_dma_ch_cssa(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_ch_lch_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_ch_lch_ctrl(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -518,7 +554,9 @@ static uint32_t _soc_omap_dma_ch_lch_ctrl(void *const param, const uint32_t ppa,
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_gcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_gcr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -540,7 +578,9 @@ static uint32_t _soc_omap_dma_gcr(void *const param, const uint32_t ppa, const s
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_dma_gscr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_gscr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -560,7 +600,9 @@ static uint32_t _soc_omap_dma_gscr(void *const param, const uint32_t ppa, const 
 	UNUSED(ppa);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_bot(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_bot(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
@@ -587,7 +629,9 @@ static uint32_t _soc_omap_dma_lcd_b_bot(void *const param, const uint32_t ppa, c
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_src_ei(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_src_ei(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -615,7 +659,9 @@ static uint32_t _soc_omap_dma_lcd_b_src_ei(void *const param, const uint32_t ppa
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_src_en(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_src_en(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -638,7 +684,9 @@ static uint32_t _soc_omap_dma_lcd_b_src_en(void *const param, const uint32_t ppa
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_src_fi(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_src_fi(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -675,7 +723,9 @@ static uint32_t _soc_omap_dma_lcd_b_src_fi(void *const param, const uint32_t ppa
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -698,7 +748,9 @@ static uint32_t _soc_omap_dma_lcd_b_src_fn(void *const param, const uint32_t ppa
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_b_top(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_b_top(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(btst32((sizeof(uint32_t) | sizeof(uint16_t)), size));
@@ -725,7 +777,9 @@ static uint32_t _soc_omap_dma_lcd_b_top(void *const param, const uint32_t ppa, c
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_ccr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_ccr(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -758,7 +812,9 @@ static uint32_t _soc_omap_dma_lcd_ccr(void *const param, const uint32_t ppa, con
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_csdp(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_csdp(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -788,7 +844,9 @@ static uint32_t _soc_omap_dma_lcd_csdp(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_ctrl(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);
@@ -819,7 +877,9 @@ static uint32_t _soc_omap_dma_lcd_ctrl(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_dma_lcd_lch_ctrl(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_dma_lcd_lch_ctrl(void *const param, const uint32_t ppa,
+	const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint16_t) == size);

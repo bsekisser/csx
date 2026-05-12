@@ -22,8 +22,8 @@ csx_statistics_ptr statistics;
 
 /* **** */
 
-UNUSED_FN
-static void _stat_profile_assert_zero(csx_profile_stat_ref s, const char* name) {
+UNUSED_FN static
+void _stat_profile_assert_zero(csx_profile_stat_ref s, const char* name) {
 	int fail = (0 != s->count);
 	fail |= (0 != s->elapsed);
 
@@ -32,14 +32,14 @@ static void _stat_profile_assert_zero(csx_profile_stat_ref s, const char* name) 
 	}
 }
 
-UNUSED_FN
-static void _stat_profile_clear(csx_profile_stat_ref s) {
+UNUSED_FN static
+void _stat_profile_clear(csx_profile_stat_ref s) {
 	s->count = 0;
 	s->elapsed = 0;
 }
 
-UNUSED_FN
-static void _stat_profile_log(csx_profile_stat_ref s, const char* name) {
+UNUSED_FN static
+void _stat_profile_log(csx_profile_stat_ref s, const char* name) {
 	const uint32_t count = s->count ?: 1;
 
 	LOG_ERR("count = 0x%08x, elapsed = 0x%016" PRIx64 " dtime/count = 0x%016" PRIx64 " -- %s",
@@ -61,7 +61,8 @@ static void _stat_profile_log(csx_profile_stat_ref s, const char* name) {
 
 /* **** */
 
-static void _stat_counter_log(const uint32_t c, const char* name) {
+static
+void _stat_counter_log(const uint32_t c, const char* name) {
 	LOG_ERR("0x%08x -- %s", c, name);
 }
 

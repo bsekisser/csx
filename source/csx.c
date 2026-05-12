@@ -37,7 +37,8 @@ int csx_action_exit(int err, void *const param, action_ref)
 	return(err);
 }
 
-static action_handler_t csx_action_sublist[] = {
+static
+action_handler_t csx_action_sublist[] = {
 	{{ .list = &armvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
 	{{ .list = &csx_mmio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, mmio) },
 	{{ .list = &csx_nnd_flash_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, nnd) },

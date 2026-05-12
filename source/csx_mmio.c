@@ -85,11 +85,14 @@ typedef struct csx_mmio_tag {
 
 /* **** */
 
-static csx_mmio_mem_access_ptr __csx_mmio_mem_access(csx_mmio_ref mmio, const uint32_t ppa) {
+static __attribute__((warn_unused_result))
+csx_mmio_mem_access_ptr __csx_mmio_mem_access(csx_mmio_ref mmio, const uint32_t ppa) {
 	return(&mmio->mem_access[ppa - TIPB_MMIO_START]);
 }
 
-static csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param)
+static __attribute__((warn_unused_result))
+csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa,
+	armvm_mem_fn const fn, void *const param)
 {
 	csx_mmio_mem_access_ref cmmap = __csx_mmio_mem_access(mmio, ppa);
 
@@ -101,7 +104,9 @@ static csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, con
 
 /* **** */
 
-static uint32_t _csx_mmio_mem_access(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _csx_mmio_mem_access(void *const param, const uint32_t ppa, const size_t size,
+	uint32_t *const write)
 {
 	assert(0 != param);
 
@@ -178,7 +183,8 @@ action_linklist_t csx_mmio_action_linklist[] = {
 	{ 0, 0 },
 };
 
-static action_handler_t csx_mmio_action_sublist[] = {
+static
+action_handler_t csx_mmio_action_sublist[] = {
 	{{ .list = &soc_omap_cfg_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, cfg) },
 	{{ .list = &soc_omap_dma_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, dma) },
 	{{ .list = &soc_omap_dpll_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_mmio_t, dpll) },
@@ -253,7 +259,7 @@ void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_f
 		LOG("ppa 0x%08x, param = 0x%08" PRIxPTR, ppa, (uintptr_t)param);
 	}
 
-	__csx_mmio_register_access(mmio, ppa, fn, param);
+	UNUSED(__csx_mmio_register_access(mmio, ppa, fn, param));
 }
 
 void csx_mmio_register_access_list(csx_mmio_ref mmio, const uint32_t ppa_base, csx_mmio_access_list_ref acl, void *const param)

@@ -20,7 +20,8 @@
 
 /* **** */
 
-static void _preflight_tests(void)
+static
+void _preflight_tests(void)
 {
 	assert(-1U == ~0U);
 	assert(1 == (0 == 0));

@@ -96,7 +96,7 @@ void _save(csx_ref csx)
 	csx_action(0, csx, _ACTION_RESUME);
 }
 
-static
+static __attribute__((warn_unused_result))
 unsigned _xsr(const unsigned data, int *const offset, const unsigned bits, const unsigned lsr_bits)
 {
 	const int ooffset = *offset;
@@ -123,6 +123,7 @@ int csx_sdl_exit(csx_ref csx)
 	SDL_Quit();
 
 	return(-1);
+	UNUSED(csx);
 }
 
 void csx_sdl_event(csx_ref csx)
@@ -219,7 +220,7 @@ int csx_sdl_init(csx_ref csx)
 	at->y = ((extent->y >> 1) - (height >> 1)) >> 1;
 
 	const uint32_t bytes = (2 * (240 * 320)) /* + 32 */;
-	LOGx32(bytes)
+	LOGx32(bytes);
 
 	const uint32_t frameBuffer_pat = 0x01000000 - bytes;
 	LOGx32(frameBuffer_pat);
@@ -243,7 +244,7 @@ void csx_sdl_step(csx_ref csx) {
 	SDL_RenderClear(sdl.renderer);
 
 	point_ref at = &sdl.frame.at;
-	point_ref extent = &sdl.frame.extent;
+//	point_ref extent = &sdl.frame.extent;
 
 	void *const fb = sdl.framebuffer + sdl.skew.fb;
 

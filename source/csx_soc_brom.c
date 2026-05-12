@@ -21,7 +21,8 @@
 
 /* **** */
 
-static const int prot_w = 0 ? PROT_WRITE : 0;
+static const
+int prot_w = 0 ? PROT_WRITE : 0;
 
 static
 int csx_soc_brom_action_alloc_init(int err, void *const param, action_ref)
@@ -70,6 +71,7 @@ int csx_soc_brom_action_exit(int err, void *const param, action_ref)
 	return(err);
 }
 
+static
 int csx_soc_brom_action_init(int err, void *const param, action_ref)
 {
 	ACTION_LOG(init);

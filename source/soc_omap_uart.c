@@ -90,7 +90,8 @@ enum {
 
 /* **** */
 
-static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
+static
+int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 	memset(uu, 0, sizeof(soc_omap_uart_unit_t));
 
 	bset8p(&uu->syss, SYSS_ResetDone);
@@ -98,7 +99,8 @@ static int __soc_omap_uart_unit_reset(soc_omap_uart_unit_ref uu) {
 	return(0);
 }
 
-static soc_omap_uart_unit_ptr __uart_unit(soc_omap_uart_ref uart, const uint32_t ppa) {
+static __attribute__((warn_unused_result))
+soc_omap_uart_unit_ptr __uart_unit(soc_omap_uart_ref uart, const uint32_t ppa) {
 	uint8_t uux = 0;
 
 	switch(ppa & ~0xffU) {
@@ -120,7 +122,8 @@ static soc_omap_uart_unit_ptr __uart_unit(soc_omap_uart_ref uart, const uint32_t
 
 /* **** */
 
-static uint32_t _soc_omap_uart_lcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_lcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -144,7 +147,8 @@ static uint32_t _soc_omap_uart_lcr(void *const param, const uint32_t ppa, const 
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_scr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_scr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -167,7 +171,8 @@ static uint32_t _soc_omap_uart_scr(void *const param, const uint32_t ppa, const 
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_sysc(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_sysc(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -198,7 +203,8 @@ static uint32_t _soc_omap_uart_sysc(void *const param, const uint32_t ppa, const
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_syss(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_syss(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -215,7 +221,8 @@ static uint32_t _soc_omap_uart_syss(void *const param, const uint32_t ppa, const
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x08_efr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x08_efr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x08
 	soc_omap_uart_ref uart = param;
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
@@ -240,7 +247,8 @@ static uint32_t _soc_omap_uart_x08_efr(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x08_fcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x08_fcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x08
 	soc_omap_uart_ref uart = param;
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
@@ -273,7 +281,8 @@ static uint32_t _soc_omap_uart_x08_fcr(void *const param, const uint32_t ppa, co
 	return(0);
 }
 
-static uint32_t _soc_omap_uart_x08(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x08(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // efr, fcr, iir
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -299,7 +308,8 @@ static uint32_t _soc_omap_uart_x08(void *const param, const uint32_t ppa, const 
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x10_mcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x10_mcr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	soc_omap_uart_ref uart = param;
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
@@ -333,7 +343,8 @@ static uint32_t _soc_omap_uart_x10_mcr(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x10(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x10(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // mcr, xon1
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);
@@ -355,7 +366,8 @@ static uint32_t _soc_omap_uart_x10(void *const param, const uint32_t ppa, const 
 
 /* **** */
 
-static uint32_t _soc_omap_uart_x1c_spr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x1c_spr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 {
 	soc_omap_uart_ref uart = param;
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
@@ -376,7 +388,8 @@ static uint32_t _soc_omap_uart_x1c_spr(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x1c_tlr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x1c_tlr(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // 0x1c
 	soc_omap_uart_ref uart = param;
 	soc_omap_uart_unit_ref uart_unit = __uart_unit(uart, ppa);
@@ -400,7 +413,8 @@ static uint32_t _soc_omap_uart_x1c_tlr(void *const param, const uint32_t ppa, co
 	return(data);
 }
 
-static uint32_t _soc_omap_uart_x1c(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
+static
+uint32_t _soc_omap_uart_x1c(void *const param, const uint32_t ppa, const size_t size, uint32_t *const write)
 { // spr, tlr, xoff2
 	if(_check_pedantic_mmio_size)
 		assert(sizeof(uint8_t) == size);

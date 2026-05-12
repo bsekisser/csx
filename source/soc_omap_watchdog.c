@@ -40,7 +40,8 @@ enum {
 
 /* **** */
 
-static uint32_t _soc_omap_watchdog_timer_mode(void *const param,
+static
+uint32_t _soc_omap_watchdog_timer_mode(void *const param,
 	const uint32_t ppa,
 	const size_t size,
 	uint32_t *const write)
@@ -64,7 +65,8 @@ static uint32_t _soc_omap_watchdog_timer_mode(void *const param,
 	return(data);
 }
 
-static uint32_t _soc_omap_watchdog_wspr(void *const param,
+static
+uint32_t _soc_omap_watchdog_wspr(void *const param,
 	const uint32_t ppa,
 	const size_t size,
 	uint32_t *const write)
@@ -104,7 +106,8 @@ static uint32_t _soc_omap_watchdog_wwps(void *const param,
 
 /* **** */
 
-static csx_mmio_access_list_t _soc_omap_watchdog_acl[] = {
+static
+csx_mmio_access_list_t _soc_omap_watchdog_acl[] = {
 	SOC_OMAP_WATCHDOG_ACL(MMIO_TRACE_FN)
 	{ .ppa = ~0U, },
 };
