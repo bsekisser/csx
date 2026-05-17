@@ -32,4 +32,4 @@ csx_soc_ptr csx_soc(void);
 __attribute__((warn_unused_result))
 csx_soc_ptr csx_soc_alloc(csx_soc_href h2soc);
 
-int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware);
+int csx_soc_main(csx_ref csx, csx_option_t csx_options);

@@ -11,6 +11,16 @@ typedef csx_hptr const csx_href;
 typedef struct csx_data_tag* csx_data_ptr;
 typedef csx_data_ptr const csx_data_ref;
 
+typedef union csx_option_tag {
+	char raw_flags;
+	struct {
+		char core_trace:1;
+		char loader_firmware:1;
+		char sdl:1;
+		char threaded:1;
+	};
+}csx_option_t;
+
 /* **** */
 
 #include <assert.h>
@@ -63,7 +73,7 @@ typedef struct csx_tag {
 	csx_soc_ptr						soc;
 	csx_statistics_ptr				statistics;
 
-	csx_state_t						state;
+	csx_state_t						volatile state;
 
 	csx_data_t						x0x10000000;
 	csx_data_t						loader;
@@ -72,6 +82,9 @@ typedef struct csx_tag {
 	uint8_t							(*sdram)[CSX_SDRAM_ALLOC];
 
 	pthread_t thread;
+
+	csx_option_t					option;
+#define OPTION(_) (csx->option._)
 }csx_t;
 
 /* **** */

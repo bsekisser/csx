@@ -200,6 +200,7 @@ void* csx_threaded_run(void* param)
 	armvm_threaded_run(pARMVM);
 
 	csx->state = 0;
+
 	return(0);
 }
 
@@ -207,16 +208,17 @@ static UNUSED_FN
 int csx_threaded_start(csx_ref csx)
 { return(pthread_create(&csx->thread, 0, csx_threaded_run, csx)); }
 
-static const int sdl = 1;
-static const int threaded = 1;
-
-int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
+int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 {
-	pARMVM_CORE->config.trace = core_trace;
+	if(!csx) return(-1);
+
+	csx->option.raw_flags = csx_options.raw_flags;
+
+	pARMVM_CORE->config.trace = OPTION(core_trace);
 
 	int err = 0;
 
-	if(loader_firmware) {
+	if(OPTION(loader_firmware)) {
 		csx->firmware.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
 
@@ -229,27 +231,30 @@ int csx_soc_main(csx_ref csx, const int core_trace, const int loader_firmware)
 		armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->loader.base);
 	}
 
-	if(sdl)
+	if(OPTION(sdl))
 		csx_sdl_init(csx);
 
 	if(!err)
 	{
 		csx->state = CSX_STATE_RUN;
 
-		if(threaded)
-			armvm_threaded_start(pARMVM);
+		if(OPTION(threaded))
+//			armvm_threaded_start(pARMVM);
+			csx_threaded_start(csx);
 
 		unsigned cycle = 0;
 
 		for(;(CSX_STATE_RUN & csx->state);) {
-			if(!threaded) {
+			if(!OPTION(threaded)) {
 				if(0 > armvm_step(pARMVM))
 					csx->state = 0;
 			}
 
-			if(sdl && (cycle++ & 0x7fff))
+			if(OPTION(sdl))// && (0 == (cycle++ & 1)))
 				csx_sdl_step(csx);
 		}
+
+		LOGx32(cycle);
 	}
 
 	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);

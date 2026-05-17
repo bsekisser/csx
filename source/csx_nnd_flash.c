@@ -51,10 +51,18 @@ typedef struct dskimg_conf_tag {
 	unsigned dump:1;
 	unsigned load:1;
 	unsigned write:1;
+	struct {
+		unsigned load:1;
+		unsigned write:1;
+	}trace;
 }dskimg_conf_t;
 
 static const dskimg_conf_t dskimg = {
-	.dump = 0, .load = 1, .write = 0
+	.dump = 0, .load = 1, .write = 0,
+	.trace = {
+			.load = 0,
+			.write = 0,
+	},
 };
 
 typedef char page_t[512 << 2];
@@ -433,7 +441,8 @@ void csx_nnd_flash_dskimg_load(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 					if(!count || feof(fp[0])) break;
 
 					const uint64_t bpa = _row2bpa(row, 0);
-if(1)				LOG("bpa: 0x%016" PRIx64 ", row: 0x%08x", bpa, row);
+if(dskimg.trace.load)
+					LOG("bpa: 0x%016" PRIx64 ", row: 0x%08x", bpa, row);
 
 					block_page_ref blockPage = csx_nnd_flash_row2blockPage(unit, row, 1);
 					assert(blockPage);
@@ -502,7 +511,8 @@ void csx_nnd_flash_dskimg_write(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 			block_page_ref blockPage = csx_nnd_flash_block2blockPage(unit, p2block, page, 0);
 			if(!blockPage->page) continue;
 
-if(1)		LOG("block: 0x%08x, page: 0x%02x, bpa: 0x%016" PRIx64 ", row: 0x%08x",
+if(dskimg.trace.write)
+			LOG("block: 0x%08x, page: 0x%02x, bpa: 0x%016" PRIx64 ", row: 0x%08x",
 				block, page, bpa, row);
 
 			if(dskimg.write) {
