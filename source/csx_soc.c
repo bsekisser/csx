@@ -197,9 +197,12 @@ void* csx_threaded_run(void* param)
 {
 	csx_ref csx = param;
 
+	csx->state.halt = 0;
+	csx->state.run = 0;
+
 	armvm_threaded_run(pARMVM);
 
-	csx->state = 0;
+	csx->state.run = 1;
 
 	return(0);
 }
@@ -236,7 +239,7 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 	if(!err)
 	{
-		csx->state = CSX_STATE_RUN;
+		csx->state.run = 1;
 
 		if(OPTION(threaded))
 //			armvm_threaded_start(pARMVM);
@@ -244,10 +247,10 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 		unsigned cycle = 0;
 
-		for(;(CSX_STATE_RUN & csx->state);) {
+		for(;(!csx->state.halt && csx->state.run);) {
 			if(!OPTION(threaded)) {
 				if(0 > armvm_step(pARMVM))
-					csx->state = 0;
+					csx->state.halt = 1;
 			}
 
 			if(OPTION(sdl))// && (0 == (cycle++ & 1)))

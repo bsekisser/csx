@@ -68,7 +68,7 @@ void _catch_sig_term(const int sign)
 {
 	printf("\n\n\n\nsignal caught, terminating.\n\n");
 
-	sdl.csx->state = CSX_STATE_HALT;
+	sdl.csx->state.halt = 1;
 
 	return;
 	(void)sign;
@@ -131,13 +131,13 @@ void csx_sdl_event(csx_ref csx)
 	SDL_PollEvent(&sdl.event);
 	switch (sdl.event.type) {
 		case	SDL_QUIT:
-			csx->state = CSX_STATE_HALT;
+			csx->state.halt = 1;
 			break;
 		case	SDL_KEYDOWN: {
 			int scancode = sdl.event.key.keysym.scancode;
 			switch(scancode) {
 				case 0x48: // pause/break
-					csx->state = CSX_STATE_HALT;
+					csx->state.halt = 1;
 					break;
 
 				case 0x13: {
