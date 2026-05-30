@@ -84,7 +84,7 @@ int csx_soc_brom_action_init(int err, void *const param, action_ref)
 
 	/* **** */
 
-	armvm_mem_mmap_ro(pARMVM_MEM, SOC_BROM_START, SOC_BROM_END, soc->brom);
+	libarmvm_mem_mmap_ro(pARMVM, SOC_BROM_START, SOC_BROM_END, soc->brom);
 
 	/* **** */
 

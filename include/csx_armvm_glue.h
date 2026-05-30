@@ -8,7 +8,7 @@
 
 //#include "libarmvm/include/armvm_glue.h"
 //#include "libarmvm/include/armvm_core.h"
-#include "libarmvm/include/armvm.h"
+#include "libarmvm/include/libarmvm.h"
 
 /* **** */
 
@@ -33,7 +33,7 @@
 #endif
 
 #ifndef IP
-	#define IP armvm_spr32(pARMVM, ARMVM_SPR32(IP))
+	#define IP libarmvm_ip(pARMVM)
 #endif
 
 #ifndef IR
@@ -41,7 +41,7 @@
 #endif
 
 #ifndef PC
-	#define PC armvm_gpr(pARMVM, ARMVM_GPR(PC), 0)
+	#define PC libarmvm_pc(pARMVM)
 #endif
 
 #if 0 // TODO: remove

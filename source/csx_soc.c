@@ -14,8 +14,8 @@
 
 /* **** */
 
-#include "libarmvm/include/armvm_mem.h"
-#include "libarmvm/include/armvm.h"
+#include "libarmvm/include/libarmvm_mem.h"
+#include "libarmvm/include/libarmvm.h"
 
 /* **** */
 
@@ -200,7 +200,7 @@ void* csx_threaded_run(void* param)
 	csx->state.halt = 0;
 	csx->state.run = 0;
 
-	armvm_threaded_run(pARMVM);
+	libarmvm_threaded_run(pARMVM); // TODO: should this be public???
 
 	csx->state.run = 1;
 
@@ -217,7 +217,7 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 	csx->option.raw_flags = csx_options.raw_flags;
 
-	pARMVM_CORE->config.trace = OPTION(core_trace);
+	libarmvm_trace(pARMVM, OPTION(core_trace));
 
 	int err = 0;
 
@@ -225,13 +225,13 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 		csx->firmware.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
 
-		if(0)
-			armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->firmware.base);
+//		if(0)
+;//			armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->firmware.base);
 	} else if(0) {
 		csx->loader.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);
 
-		armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->loader.base);
+//		armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->loader.base);
 	}
 
 	if(OPTION(sdl))
@@ -249,7 +249,7 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 		for(;(!csx->state.halt && csx->state.run);) {
 			if(!OPTION(threaded)) {
-				if(0 > armvm_step(pARMVM))
+				if(0 > libarmvm_step(pARMVM))
 					csx->state.halt = 1;
 			}
 

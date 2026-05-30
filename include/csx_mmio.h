@@ -15,7 +15,7 @@ typedef csx_mmio_ptr const csx_mmio_ref;
 
 /* **** */
 
-#include "libarmvm/include/armvm_mem.h"
+#include "libarmvm/include/libarmvm_mem.h"
 
 /* **** local library level includes */
 
@@ -28,7 +28,7 @@ typedef struct csx_mmio_access_list_tag* csx_mmio_access_list_ptr;
 typedef csx_mmio_access_list_ptr const csx_mmio_access_list_ref;
 
 typedef struct csx_mmio_access_list_tag {
-	armvm_mem_fn fn;
+	libarmvm_mem_fn fn; // TODO: should this be exported?
 	const char* name;
 
 	uint32_t ppa;
@@ -44,7 +44,7 @@ __attribute__((warn_unused_result))
 csx_mmio_ptr csx_mmio_alloc(csx_mmio_href h2mmio);
 
 void csx_mmio_access_list_reset(csx_mmio_ref mmio, csx_mmio_access_list_ref acl, const size_t size, void *const param);
-void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param);
+void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, libarmvm_mem_fn const fn, void *const param);
 void csx_mmio_register_access_list(csx_mmio_ref mmio, const uint32_t ppa_base, csx_mmio_access_list_ref acl, void *const param);
 void csx_mmio_trace_mem_access(csx_ref csx, const uint32_t ppa, const size_t size, uint32_t *const write, const uint32_t read);
 

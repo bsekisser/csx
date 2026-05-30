@@ -9,7 +9,7 @@
 
 /* **** local includes */
 
-#include "libarmvm/include/armvm.h"
+#include "libarmvm/include/libarmvm.h"
 
 #include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
@@ -39,7 +39,7 @@ int csx_action_exit(int err, void *const param, action_ref)
 
 static
 action_handler_t csx_action_sublist[] = {
-	{{ .list = &armvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
+	{{ .list = &libarmvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
 	{{ .list = &csx_mmio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, mmio) },
 	{{ .list = &csx_nnd_flash_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, nnd) },
 	{{ .list = &csx_sdram_action_list }, { .is_list = 1 }, 0 },
@@ -71,7 +71,7 @@ csx_ptr csx_alloc(csx_href h2csx)
 
 	/* **** */
 
-	ERR_NULL(armvm_alloc(&csx->armvm));
+	ERR_NULL(libarmvm_halloc(&csx->armvm));
 	ERR_NULL(csx_mmio_alloc(&csx->mmio));
 	ERR_NULL(csx_nnd_flash_alloc(&csx->nnd));
 	ERR_NULL(csx_soc_alloc(&csx->soc));

@@ -39,7 +39,7 @@ typedef union csx_option_tag {
 
 /* **** */
 
-#include "libarmvm/include/armvm.h"
+#include "libarmvm/include/libarmvm.h"
 
 /* **** */
 
@@ -65,8 +65,8 @@ typedef struct csx_data_tag {
 }csx_data_t;
 
 typedef struct csx_tag {
-	armvm_ptr						armvm;
-	armvm_trace_t					armvm_trace;
+	libarmvm_ptr						armvm;
+//	armvm_trace_t					armvm_trace;
 
 	csx_mmio_ptr					mmio;
 	csx_nnd_ptr						nnd;
@@ -103,14 +103,10 @@ csx_ptr csx_alloc(csx_href h2csx);
 	#define pARMVM csx->armvm
 #endif
 
-#ifndef pARMVM_MEM
-	#define pARMVM_MEM pARMVM->mem
-#endif
-
 #ifndef CYCLE
-	#define CYCLE armvm_spr64(pARMVM, ARMVM_SPR64(CYCLE))
+	#define CYCLE libarmvm_cycle(pARMVM)
 #endif
 
 #ifndef ICOUNT
-	#define ICOUNT armvm_spr64(pARMVM, ARMVM_SPR64(ICOUNT))
+	#define ICOUNT libarmvm_icount(pARMVM)
 #endif

@@ -7,7 +7,7 @@
 
 /* **** */
 
-#include "libarmvm/include/armvm.h"
+#include "libarmvm/include/libarmvm_mem.h"
 
 #include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
@@ -76,7 +76,7 @@ int csx_soc_sram_action_init(int err, void *const param, action_ref)
 
 	/* **** */
 
-	armvm_mem_mmap_rw(pARMVM_MEM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
+	libarmvm_mem_mmap_rw(pARMVM, SOC_SRAM_START, SOC_SRAM_END, soc->sram);
 
 	/* **** */
 

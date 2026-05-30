@@ -29,6 +29,8 @@
 
 /* **** local library level includes */
 
+#include "git/libarmvm/include/libarmvm_mem.h"
+
 #include "libbse/include/action.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
@@ -51,7 +53,7 @@ typedef struct csx_mmio_mem_access_tag* csx_mmio_mem_access_ptr;
 typedef csx_mmio_mem_access_ptr const csx_mmio_mem_access_ref;
 
 typedef struct csx_mmio_mem_access_tag {
-	armvm_mem_fn fn;
+	libarmvm_mem_fn fn;
 	void* param;
 	const char* name;
 	csx_mmio_access_list_ptr acle;
@@ -92,7 +94,7 @@ csx_mmio_mem_access_ptr __csx_mmio_mem_access(csx_mmio_ref mmio, const uint32_t 
 
 static __attribute__((warn_unused_result))
 csx_mmio_mem_access_ptr __csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa,
-	armvm_mem_fn const fn, void *const param)
+	libarmvm_mem_fn const fn, void *const param)
 {
 	csx_mmio_mem_access_ref cmmap = __csx_mmio_mem_access(mmio, ppa);
 
@@ -170,7 +172,7 @@ int csx_mmio_action_init(int err, void *const param, action_ref)
 
 	/* **** */
 
-	armvm_mem_mmap_cb(csx->armvm->mem, TIPB_MMIO_START, TIPB_MMIO_END, _csx_mmio_mem_access, mmio);
+	libarmvm_mem_mmap_cb(pARMVM, TIPB_MMIO_START, TIPB_MMIO_END, _csx_mmio_mem_access, mmio);
 
 	/* **** */
 
@@ -253,7 +255,7 @@ csx_mmio_ptr csx_mmio_alloc(csx_mmio_href h2mmio)
 	return(mmio);
 }
 
-void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, armvm_mem_fn const fn, void *const param)
+void csx_mmio_register_access(csx_mmio_ref mmio, const uint32_t ppa, libarmvm_mem_fn const fn, void *const param)
 {
 	if(_trace_mmio) {
 		LOG("ppa 0x%08x, param = 0x%08" PRIxPTR, ppa, (uintptr_t)param);

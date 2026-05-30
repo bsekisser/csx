@@ -9,6 +9,7 @@
 /* **** local library level includes */
 
 #include "git/libbse/include/action.h"
+#include "git/libbse/include/bitop_macros.h"
 #include "libbse/include/err_test.h"
 #include "libbse/include/handle.h"
 #include "libbse/include/log.h"

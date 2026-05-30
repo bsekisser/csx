@@ -8,6 +8,7 @@
 
 /* **** */
 
+#include "git/libbse/include/bitop_macros.h"
 #include "libbse/include/log.h"
 #include "libbse/include/shift_roll.h"
 
@@ -43,7 +44,7 @@ typedef struct sdl_tag* sdl_ptr;
 typedef sdl_ptr const sdl_ref;
 
 struct sdl_tag {
-	armvm_ptr armvm;
+	libarmvm_ptr armvm;
 	csx_ptr csx;
 	SDL_Event event;
 	rect_t frame;

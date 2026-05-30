@@ -8,7 +8,7 @@
 
 /* **** */
 
-#include "libarmvm/include/armvm_mem.h"
+#include "libarmvm/include/libarmvm_mem.h"
 
 #include "libbse/include/action.h"
 #include "libbse/include/bitops32.h"
@@ -273,11 +273,8 @@ int csx_nnd_flash_action_init(int err, void *const param, action_ref)
 	csx_nnd_ref nnd = param;
 	ERR_NULL(nnd);
 
-	armvm_ref armvm = nnd->csx->armvm;
-	ERR_NULL(armvm);
-
-	armvm_mem_ref mem = armvm->mem;
-	ERR_NULL(mem);
+	csx_ref csx = nnd->csx;
+	ERR_NULL(csx);
 
 	/* **** */
 
@@ -301,8 +298,8 @@ int csx_nnd_flash_action_init(int err, void *const param, action_ref)
 				cs, uunit, ppa_start0, ppa_end0, ppa_end1);
 		}
 
-		armvm_mem_mmap_cb(mem, ppa_start0, ppa_end0, csx_nnd_flash_mem_access_x, nnd);
-		armvm_mem_mmap_cb(mem, ppa_start1, ppa_end1, csx_nnd_flash_mem_access, unit);
+		libarmvm_mem_mmap_cb(pARMVM, ppa_start0, ppa_end0, csx_nnd_flash_mem_access_x, nnd);
+		libarmvm_mem_mmap_cb(pARMVM, ppa_start1, ppa_end1, csx_nnd_flash_mem_access, unit);
 	}
 
 	/* **** */
