@@ -574,7 +574,7 @@ uint32_t csx_nnd_flash_mem_access(void *const param, const uint32_t ppa, const s
 		if(write)
 			_LOG_("0x%08x => ", data);
 
-		_LOG_("%zu[0x%08x]", size, ppa)
+		_LOG_("%zu[0x%08x]", size, ppa);
 
 		if(!write) {
 			LOG_END(" => 0x%08x", data);

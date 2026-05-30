@@ -202,7 +202,7 @@ int csx_sdl_init(csx_ref csx)
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		extent->x, extent->y, 0))))
 	{
-		LOG("error creating window: %s", SDL_GetError())
+		LOG("error creating window: %s", SDL_GetError());
 		return(csx_sdl_exit(csx));
 	}
 
