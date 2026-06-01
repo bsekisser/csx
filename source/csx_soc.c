@@ -198,11 +198,12 @@ void* csx_threaded_run(void* param)
 	csx_ref csx = param;
 
 	csx->state.halt = 0;
-	csx->state.run = 0;
+	csx->state.run = 1;
 
 	libarmvm_threaded_run(pARMVM); // TODO: should this be public???
 
-	csx->state.run = 1;
+	csx->state.run = 0;
+	csx->state.halt = 1;
 
 	return(0);
 }
@@ -242,14 +243,16 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 		csx->state.run = 1;
 
 		if(OPTION(threaded))
-//			armvm_threaded_start(pARMVM);
+//			libarmvm_threaded_start(pARMVM);
 			csx_threaded_start(csx);
 
 		unsigned cycle = 0;
 
 		for(;(!csx->state.halt && csx->state.run);) {
 			if(!OPTION(threaded)) {
-				if(0 > libarmvm_step(pARMVM))
+				libarmvm_state_t libstate = libarmvm_step(pARMVM);
+
+				if(libstate.error || libstate.halt)
 					csx->state.halt = 1;
 			}
 
