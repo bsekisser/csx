@@ -125,7 +125,7 @@ uint32_t __timer_update_count(soc_omap_mpu_timer_ref sot, soc_omap_mpu_timer_uni
 	const int64_t delta_count = sub64(sotu->count, elapsed_cycles);
 
 	if(0) {
-		LOG_START("elapsed_cycles = 0x%016" PRIx64, (uint64_t)elapsed_cycles)
+		LOG_START("elapsed_cycles = 0x%016" PRIx64, (uint64_t)elapsed_cycles);
 		_LOG_(", delta_count = 0x%016" PRIx64, (uint64_t)delta_count);
 		LOG_END();
 	}
