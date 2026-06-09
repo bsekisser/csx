@@ -106,10 +106,14 @@ int main(int argc, char **argv)
 		}
 		else if(0 == strcmp(arg, "-firmware"))
 			OPTION(loader_firmware) = 1;
+		else if(0 == strcmp(arg, "-hot"))
+			OPTION(hot) = 1;
 		else if(0 == strcmp(arg, "-sdl"))
 			OPTION(sdl) = 1;
 		else if(0 == strcmp(arg, "-sdl-no"))
 			OPTION(sdl) = 0;
+		else if(0 == strcmp(arg, "-stats"))
+			OPTION(stats) = 1;
 		else if(0 == strcmp(arg, "-threaded"))
 			OPTION(threaded) = 1;
 		else if(0 == strcmp(arg, "-threaded-no"))
@@ -170,6 +174,11 @@ int main(int argc, char **argv)
 	} else {
 		LOG_ERR("est mips = %0.16f", icount_second * mips_ratio);
 	}
+
+	if(OPTION(hot))
+		libarmvm_hot(pARMVM);
+	if(OPTION(stats))
+		libarmvm_stats(pARMVM);
 
 	err |= csx_action(err, csx, _ACTION_EXIT);
 	(void)argc, (void)argv;

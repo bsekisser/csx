@@ -205,6 +205,8 @@ void* csx_threaded_run(void* param)
 	csx->state.run = 0;
 	csx->state.halt = 1;
 
+	pthread_exit(0);
+
 	return(0);
 }
 
@@ -262,6 +264,12 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 		LOGx32(cycle);
 	}
+
+	if(OPTION(sdl))// && (0 == (cycle++ & 1)))
+		csx_sdl_step(csx);
+
+	if(OPTION(threaded))
+		pthread_join(csx->thread, 0);
 
 	LOG("CYCLE = 0x%016" PRIx64 ", IP = 0x%08x, PC = 0x%08x", CYCLE, IP, PC);
 
