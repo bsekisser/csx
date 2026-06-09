@@ -52,6 +52,7 @@ typedef struct dskimg_conf_tag {
 	unsigned load:1;
 	unsigned write:1;
 	struct {
+		unsigned exit:1;
 		unsigned load:1;
 		unsigned write:1;
 	}trace;
@@ -258,6 +259,35 @@ int csx_nnd_flash_action_exit(int err, void *const param, action_ref)
 
 	csx_nnd_flash_dskimg_write(nnd, &nnd->unit[6]);
 
+	for(unsigned unit = 0; unit < 7; unit++) {
+		csx_nnd_unit_ref p2unit = &nnd->unit[unit];
+
+if(dskimg.trace.exit)
+		LOG("unit: %01u", unit);
+
+		for(unsigned block = 0; block < kBlockAlloc; block++) {
+			block_ref p2block = csx_nnd_flash_block(p2unit, block, 0);
+			if(!p2block) continue;
+
+if(dskimg.trace.exit)
+			LOG("unit: %01u, block: 0x%08x(0x%016" PRIxPTR ")",
+				unit, block, (uintptr_t)p2block);
+
+			for(unsigned page = 0; page < kPageCount; page++) {
+				block_page_ref blockPage = csx_nnd_flash_block2blockPage(p2unit, p2block, page, 0);
+				if(!blockPage->page) continue;
+
+if(dskimg.trace.exit)
+				LOG("unit: %01u, block: 0x%08x(0x%016" PRIxPTR "), page: 0x%02u(0x%016" PRIxPTR ")",
+					unit, block, (uintptr_t)p2block, page, (uintptr_t)blockPage->page);
+
+				munmap(blockPage->page, sizeof(page_t));
+			}
+
+			free(p2block);
+		}
+	}
+
 	handle_ptrfree(param);
 
 	/* **** */
@@ -376,8 +406,10 @@ block_ptr csx_nnd_flash_block_alloc(csx_nnd_unit_ref unit, block_href h2block)
 	} else
 		p2block = calloc(1, sizeof(block_t));
 
-if(0)	LOG("h2block: 0x%016" PRIxPTR ", p2block: 0x%016" PRIxPTR,
+if(0) {
+	LOG("h2block: 0x%016" PRIxPTR ", p2block: 0x%016" PRIxPTR,
 		(uintptr_t)h2block, (uintptr_t)p2block);
+}
 
 	if(h2block) *h2block = p2block;
 
@@ -389,7 +421,9 @@ if(0)	LOG("h2block: 0x%016" PRIxPTR ", p2block: 0x%016" PRIxPTR,
 static
 void csx_nnd_flash_block_erase(csx_nnd_unit_ref unit, const uint32_t row)
 {
-if(0)	LOG("row: 0x%08x", row);
+if(0) {
+	LOG("row: 0x%08x", row);
+}
 
 	for(unsigned page = 0; page < 64; page++) {
 		block_page_ref p2blockPage = csx_nnd_flash_row2blockPage(unit, row + page, 0);
@@ -438,9 +472,9 @@ void csx_nnd_flash_dskimg_load(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 					if(!count || feof(fp[0])) break;
 
 					const uint64_t bpa = _row2bpa(row, 0);
-if(dskimg.trace.load)
+if(dskimg.trace.load) {
 					LOG("bpa: 0x%016" PRIx64 ", row: 0x%08x", bpa, row);
-
+}
 					block_page_ref blockPage = csx_nnd_flash_row2blockPage(unit, row, 1);
 					assert(blockPage);
 					assert(blockPage->page);
@@ -508,9 +542,10 @@ void csx_nnd_flash_dskimg_write(csx_nnd_ref nnd, csx_nnd_unit_ref unit)
 			block_page_ref blockPage = csx_nnd_flash_block2blockPage(unit, p2block, page, 0);
 			if(!blockPage->page) continue;
 
-if(dskimg.trace.write)
+if(dskimg.trace.write) {
 			LOG("block: 0x%08x, page: 0x%02x, bpa: 0x%016" PRIx64 ", row: 0x%08x",
 				block, page, bpa, row);
+}
 
 			if(dskimg.write) {
 				htole32(row);
@@ -612,8 +647,10 @@ page_ptr csx_nnd_flash_page_alloc(csx_nnd_unit_ref unit, page_href h2page)
 			LOG_ACTION(MMAP_FAILED);
 	}
 
-if(0)	LOG("h2page: 0x%016" PRIxPTR ", p2page: 0x%016" PRIxPTR,
+if(0) {
+	LOG("h2page: 0x%016" PRIxPTR ", p2page: 0x%016" PRIxPTR,
 		(uintptr_t)h2page, (uintptr_t)p2page);
+}
 
 	if(h2page) *h2page = p2page;
 
@@ -648,7 +685,9 @@ char* csx_nnd_flash_page_read(csx_nnd_unit_ref unit, const uint32_t row)
 {
 	block_page_ref p2blockPage = csx_nnd_flash_row2blockPage(unit, row, 0);
 
-if(0)	LOG("row: 0x%08x", row);
+if(0) {
+	LOG("row: 0x%08x", row);
+}
 
 	if(p2blockPage) {
 		if(p2blockPage->page) {
