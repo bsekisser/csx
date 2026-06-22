@@ -100,27 +100,32 @@ void __csx_soc_init_cdp(csx_ref csx, csx_data_ref cdp)
 static
 void _csx_soc_init_load_rgn_file(csx_ref csx, csx_data_ref cdp, const char* file_path)
 {
-	int fd;
+	if(!cdp->flags.loaded) {
+		LOG("opening %s", file_path);
 
-	LOG("opening %s", file_path);
+		int fd;
+		ERR(fd = open(file_path, O_RDONLY));
 
-	ERR(fd = open(file_path, O_RDONLY));
+		struct stat sb;
+		ERR(fstat(fd, &sb));
 
-	struct stat sb;
-	ERR(fstat(fd, &sb));
+		void *const data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+		ERR_NULL(data);
 
-	void *const data = mmap(NULL, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-	ERR_NULL(data);
+		cdp->data = data;
+		cdp->size = sb.st_size;
 
-	cdp->data = data;
-	cdp->size = sb.st_size;
+		close(fd);
+
+		cdp->flags.loaded = 1;
+	} else {
+		LOG("using %s, already loaded", file_path);
+	}
 
 	__csx_soc_init_cdp(csx, cdp);
 
 	LOG("base = 0x%08x, data = 0x%08" PRIxPTR ", size = 0x%08zx",
 		cdp->base, (uintptr_t)cdp->data, cdp->size);
-
-	close(fd);
 }
 
 /* **** */

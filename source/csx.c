@@ -38,6 +38,22 @@ int csx_action_exit(int err, void *const param, action_ref)
 }
 
 static
+int csx_action_reset(int err, void *const param, action_ref)
+{
+	ACTION_LOG(reset);
+
+	csx_ref csx = param;
+
+	/* **** */
+
+	csx->state.raw_flags = 0;
+
+	/* **** */
+
+	return(err);
+}
+
+static
 action_handler_t csx_action_sublist[] = {
 	{{ .list = &libarmvm_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, armvm) },
 	{{ .list = &csx_mmio_action_list }, { .dereference = 1, .is_list = 1 }, offsetof(csx_t, mmio) },
@@ -50,6 +66,7 @@ action_handler_t csx_action_sublist[] = {
 
 ACTION_LIST(csx_action_list,
 	.list = {
+		[_ACTION_RESET] = {{ csx_action_reset }, { 0 }, 0 },
 		[_ACTION_EXIT] = {{ csx_action_exit }, { 0 }, 0 },
 	},
 	.self = &_csx,

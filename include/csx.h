@@ -64,6 +64,12 @@ typedef struct csx_data_tag {
 		uint32_t					base;
 		void*						data;
 		size_t						size;
+		union {
+			unsigned raw_flags;
+			struct {
+				char loaded:1;
+			};
+		}flags;
 }csx_data_t;
 
 typedef struct csx_tag {
