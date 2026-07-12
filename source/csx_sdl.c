@@ -154,22 +154,39 @@ void csx_sdl_event(csx_ref csx)
 
 				case 0x1e: break;
 
-				case 0x59: sdl.skew.fb--; break;
-				case 0x5b: sdl.skew.fb++; break;
+				case 0x59: // keypad -- 1/end
+					sdl.skew.fb--;
+					break;
+				case 0x5b: // keypad -- 3/page-down
+					sdl.skew.fb++;
+					break;
 
-				case 0x5e: sdl.skew.frame.x--; break;
-				case 0x5c: sdl.skew.frame.x++; break;
+				case 0x5e: // keypad -- 4/left
+					sdl.skew.frame.x--;
+					break;
+				case 0x5c: // keypad -- 6/right
+					sdl.skew.frame.x++;
+					break;
 
-				case 0x5a: sdl.skew.frame.y--; break;
-				case 0x60: sdl.skew.frame.y++; break;
+				case 0x5a: // keypad -- 2/down
+					sdl.skew.frame.y++;
+					break;
 
-				case 0x5f: sdl.skew.ppos--; break;
-				case 0x61: sdl.skew.ppos++; break;
+				case 0x60: // keypad -- 8/up
+					sdl.skew.frame.y--;
+					break;
 
-				case 0x54:
+				case 0x5f: // keypad -- 7/home
+					sdl.skew.ppos--;
+					break;
+				case 0x61: // keypad -- 9/page-up
+					sdl.skew.ppos++;
+					break;
+
+				case 0x54: // keypad -- /
 					sdl.swap.xy = !!(!sdl.swap.xy);
 					break;
-				case 0x55:
+				case 0x55: // keypad -- *
 					sdl.swap.hw = !!(!sdl.swap.hw);
 					break;
 
