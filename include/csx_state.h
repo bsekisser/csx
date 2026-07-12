@@ -3,6 +3,7 @@
 typedef union csx_state_tag {
 	unsigned raw_flags;
 	struct {
+		char exit:1;
 		char halt:1;
 		char run:1;
 		struct {

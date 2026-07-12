@@ -265,8 +265,10 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 		LOGx32(cycle);
 	}
 
-	if(OPTION(sdl))// && (0 == (cycle++ & 1)))
-		csx_sdl_step(csx);
+	if(OPTION(sdl)) { // && (0 == (cycle++ & 1)))
+		while(!csx->state.exit)
+			csx_sdl_step(csx);
+	}
 
 	if(OPTION(threaded))
 		pthread_join(csx->thread, 0);

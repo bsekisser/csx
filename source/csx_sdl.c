@@ -138,6 +138,7 @@ void csx_sdl_event(csx_ref csx)
 			int scancode = sdl.event.key.keysym.scancode;
 			switch(scancode) {
 				case 0x48: // pause/break
+					csx->state.exit = csx->state.halt;
 					csx->state.halt = 1;
 					break;
 
