@@ -15,8 +15,9 @@ typedef union csx_option_tag {
 	char raw_flags;
 	struct {
 		char core_trace:1;
+		char firmware:1;
 		char hot:1;
-		char loader_firmware:1;
+		char loader:1;
 		char sdl:1;
 		char stats:1;
 		char threaded:1;

@@ -68,8 +68,11 @@ void _preflight_tests(void)
 static void default_options(csx_option_t csx_options)
 {
 	LOGu(OPTION(core_trace));
-	LOGu(OPTION(loader_firmware));
+	LOGu(OPTION(firmware));
+	LOGu(OPTION(hot));
+	LOGu(OPTION(loader));
 	LOGu(OPTION(sdl));
+	LOGu(OPTION(stats));
 	LOGu(OPTION(threaded));
 }
 
@@ -90,7 +93,6 @@ int main(int argc, char **argv)
 
 	csx_option_t csx_options = {
 		.core_trace = 0,
-		.loader_firmware = 1,
 		.sdl = 1,
 		.threaded = 1,
 	};
@@ -100,14 +102,12 @@ int main(int argc, char **argv)
 
 		if(0 == strcmp(arg, "-core-trace"))
 			OPTION(core_trace) = 1;
-		else if(0 == strcmp(arg, "-v")) {
-			default_options(csx_options);
-			exit(0);
-		}
 		else if(0 == strcmp(arg, "-firmware"))
-			OPTION(loader_firmware) = 1;
+			OPTION(firmware) = 1;
 		else if(0 == strcmp(arg, "-hot"))
 			OPTION(hot) = 1;
+		else if(0 == strcmp(arg, "-loader"))
+			OPTION(loader) = 1;
 		else if(0 == strcmp(arg, "-sdl"))
 			OPTION(sdl) = 1;
 		else if(0 == strcmp(arg, "-sdl-no"))
@@ -118,6 +118,11 @@ int main(int argc, char **argv)
 			OPTION(threaded) = 1;
 		else if(0 == strcmp(arg, "-threaded-no"))
 			OPTION(threaded) = 0;
+		else if(0 == strcmp(arg, "-v")) {
+			default_options(csx_options);
+			exit(0);
+		}
+
 	}
 
 	const uint64_t dtime_second = dtime_calibrate();

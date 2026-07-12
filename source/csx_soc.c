@@ -229,17 +229,12 @@ int csx_soc_main(csx_ref csx, csx_option_t csx_options)
 
 	int err = 0;
 
-	if(OPTION(loader_firmware)) {
+	if(OPTION(firmware)) {
 		csx->firmware.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->firmware, kGARMIN_RGN_FIRMWARE);
-
-//		if(0)
-;//			armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->firmware.base);
-	} else if(0) {
+	} else if(OPTION(loader)) {
 		csx->loader.base = 0x10020000;
 		_csx_soc_init_load_rgn_file(csx, &csx->loader, kGARMIN_RGN_LOADER);
-
-//		armvm_gpr(pARMVM, ARMVM_GPR(PC), &csx->loader.base);
 	}
 
 	if(OPTION(sdl))
