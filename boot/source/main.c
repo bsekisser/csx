@@ -53,6 +53,6 @@ int main(void)
 
 	(void)memcpy(dst, src, ((1 << 6) << 11));
 
-	bleep(dst);
 	bleep((void*)0x10020000);
+	bleep(dst);
 }

@@ -44,6 +44,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 /* **** */
 
@@ -676,6 +677,8 @@ void csx_nnd_flash_page_program(csx_nnd_unit_ref unit, const uint32_t row, const
 			memcpy(p2blockPage->page, unit->data_register, sizeof(page_t));
 
 		memcpy(p2blockPage->spare, &unit->data_register[sizeof(page_t)], sizeof(p2blockPage->spare));
+
+if(0)	usleep(10000);
 	} else
 		LOG("MISSING BLOCK");
 }

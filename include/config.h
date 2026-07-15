@@ -23,7 +23,7 @@
 #define _trace_mmio_dma_lcd IF_TRACE_MMIO(1)
 #define _trace_mmio_dpll IF_TRACE_MMIO(1)
 #define _trace_mmio_gp_timer IF_TRACE_MMIO(1)
-#define _trace_mmio_lcd IF_TRACE_MMIO(1)
+#define _trace_mmio_lcd (0 || IF_TRACE_MMIO(1))
 #define _trace_mmio_misc IF_TRACE_MMIO(1)
 #define _trace_mmio_mpu IF_TRACE_MMIO(1)
 #define _trace_mmio_mpu_gpio IF_TRACE_MMIO(1)
